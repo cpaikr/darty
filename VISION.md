@@ -34,6 +34,7 @@ This is worth standardizing because DART work is repetitive, citation-sensitive,
 
 The product should eventually support a narrow set of agent-facing capabilities:
 
+- mimic the integrated filing search surface at `dsab007/main.do`
 - search filings by body content
 - search filings by company and date window
 - list filings for a company or time window
@@ -48,6 +49,7 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - `discovery and retrieval`: search alone is not enough
 - `structured over prose`: return typed records, not generated explanations
 - `source-explicit`: state whether a result came from DART search HTML, viewer HTML, RSS, or a fallback
+- `dart-shaped first`: keep low-level DART search details explicit before adding higher-level wrappers
 - `transport-light`: start with a reusable core and a CLI; add MCP later if justified
 - `public-read first`: v1 should target read-only access
 

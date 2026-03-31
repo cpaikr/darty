@@ -1,13 +1,13 @@
 import * as cheerio from "cheerio";
 import { Effect, Schema } from "effect";
 
-import { ParseFailure, SourceChanged } from "./errors.ts";
+import { ParseFailure, SourceChanged } from "../../errors.ts";
 import {
-  BodySearchResult,
-  type BodySearchQuery,
-  type FilingSearchHit,
-  type PaginationInfo,
-} from "./body-search-schema.ts";
+  Dsab007ContentsSearchResult,
+  type Dsab007ContentsRow,
+  type Dsab007Pagination,
+} from "../models.ts";
+import type { Dsab007ContentsSearchInput } from "../contracts.ts";
 
 const absoluteUrl = (href: string): string =>
   new URL(href, "https://dart.fss.or.kr").toString();
@@ -39,8 +39,8 @@ const parseCorpId = (href: string | undefined): string | undefined => {
 const parseInfoCell = (
   rawInfo: string,
 ): Pick<
-  FilingSearchHit,
-  "disclosureCategory" | "contentScope" | "presenterName"
+  Dsab007ContentsRow,
+  "disclosureTypeLabel" | "contentTypeLabel" | "presenterName" | "rawInfoText"
 > => {
   const labels = [...rawInfo.matchAll(/\[([^\]]+)\]/g)].map((match) =>
     collapseWhitespace(match[1] ?? ""),
@@ -48,30 +48,43 @@ const parseInfoCell = (
   const presenterMatch = rawInfo.match(/제출인\s*:\s*(.+)$/);
 
   return {
-    disclosureCategory: labels[0] || undefined,
-    contentScope: labels[1] || undefined,
+    disclosureTypeLabel: labels[0] || undefined,
+    contentTypeLabel: labels[1] || undefined,
     presenterName: presenterMatch
       ? collapseWhitespace(presenterMatch[1] ?? "")
       : undefined,
+    rawInfoText: rawInfo,
   };
 };
 
 const parseReportParts = (
   reportText: string,
-): Pick<FilingSearchHit, "reportTitle" | "reportSubtitle" | "reportModifier"> => {
+): Pick<
+  Dsab007ContentsRow,
+  "reportNameRaw" | "reportModifier" | "reportTitle" | "reportPeriod" | "reportNameSuffix"
+> => {
   const modifierMatch = reportText.match(/^\[([^\]]+)\]\s*/);
   const reportModifier = modifierMatch?.[1];
   const withoutModifier = reportText.replace(/^\[[^\]]+\]\s*/, "");
-  const subtitleMatch = withoutModifier.match(/\(([^()]+)\)\s*$/);
-  const reportSubtitle = subtitleMatch?.[1];
+  const periodMatch = withoutModifier.match(/\(([^()]+)\)/);
+  const reportPeriod = periodMatch?.[1];
   const reportTitle = collapseWhitespace(
-    withoutModifier.replace(/\(([^()]+)\)\s*$/, ""),
+    periodMatch
+      ? withoutModifier.slice(0, periodMatch.index ?? withoutModifier.length)
+      : withoutModifier,
+  );
+  const reportNameSuffix = collapseWhitespace(
+    periodMatch
+      ? withoutModifier.slice((periodMatch.index ?? 0) + periodMatch[0].length)
+      : "",
   );
 
   return {
-    reportTitle,
-    reportSubtitle,
+    reportNameRaw: reportText,
     reportModifier,
+    reportTitle,
+    reportPeriod,
+    reportNameSuffix: reportNameSuffix || undefined,
   };
 };
 
@@ -88,7 +101,7 @@ const parseDate = (value: string): string => {
 const parsePagination = (
   $: cheerio.CheerioAPI,
   sourceUrl: string,
-): Effect.Effect<PaginationInfo, SourceChanged> =>
+): Effect.Effect<Dsab007Pagination, SourceChanged> =>
   Effect.gen(function* () {
     const totalCountValue =
       $("#totalCnt").attr("value") ?? $("#searchCnt").text() ?? "";
@@ -105,16 +118,16 @@ const parsePagination = (
       );
     }
 
-    const page = pageInfoMatch
+    const currentPage = pageInfoMatch
       ? Number.parseInt(pageInfoMatch[1] ?? "1", 10)
       : 1;
-    const pageCount = pageInfoMatch
+    const totalPages = pageInfoMatch
       ? Number.parseInt(pageInfoMatch[2] ?? "0", 10)
       : 0;
 
     return {
-      page,
-      pageCount,
+      currentPage,
+      totalPages,
       totalCount,
       returnedCount: 0,
     };
@@ -123,7 +136,7 @@ const parsePagination = (
 const parseRows = (
   $: cheerio.CheerioAPI,
   sourceUrl: string,
-): Effect.Effect<ReadonlyArray<FilingSearchHit>, ParseFailure> =>
+): Effect.Effect<ReadonlyArray<Dsab007ContentsRow>, ParseFailure> =>
   Effect.try({
     try: () =>
       $("table.tbWideList tbody tr")
@@ -154,22 +167,24 @@ const parseRows = (
 
           return {
             companyName: collapseWhitespace(companyLink.text()),
-            companyMarket:
+            companyMarketLabel:
               collapseWhitespace(
-                element.find(".companyName span[title]").first().attr("title") ?? "",
+                element.find(".companyName > span[title]").first().attr("title") ?? "",
               ) || undefined,
-            corpId: parseCorpId(companyLink.attr("href")),
+            corpCik: parseCorpId(companyLink.attr("href")),
             ...reportParts,
             rcpNo,
             dcmNo: params.get("dcmNo") ?? undefined,
             snippetHtml: snippetCell.html()?.trim() ?? "",
             snippetText: collapseWhitespace(snippetCell.text()),
-            disclosureCategory: infoParts.disclosureCategory,
-            contentScope: infoParts.contentScope,
+            disclosureTypeLabel: infoParts.disclosureTypeLabel,
+            contentTypeLabel: infoParts.contentTypeLabel,
             presenterName: infoParts.presenterName,
-            filedAt: parseDate(dateCell.text()),
+            rawInfoText: infoParts.rawInfoText,
+            viewerPath: href,
             viewerUrl: absoluteUrl(href),
-          } satisfies FilingSearchHit;
+            receiptDate: parseDate(dateCell.text()),
+          } satisfies Dsab007ContentsRow;
         }),
     catch: (error) =>
       new ParseFailure({
@@ -178,23 +193,26 @@ const parseRows = (
       }),
   });
 
-export const parseBodySearchResponse = (
+export const parseDsab007ContentsSearchResponse = (
   html: string,
-  query: BodySearchQuery,
+  request: Dsab007ContentsSearchInput,
   sourceUrl: string,
-): Effect.Effect<Schema.Schema.Type<typeof BodySearchResult>, SourceChanged | ParseFailure> =>
+): Effect.Effect<
+  Schema.Schema.Type<typeof Dsab007ContentsSearchResult>,
+  SourceChanged | ParseFailure
+> =>
   Effect.gen(function* () {
     const $ = cheerio.load(html);
     const results = yield* parseRows($, sourceUrl);
     const pagination = yield* parsePagination($, sourceUrl);
 
-    return yield* Schema.decodeUnknown(BodySearchResult)({
-      query,
+    return yield* Schema.decodeUnknown(Dsab007ContentsSearchResult)({
+      request,
       pagination: {
         ...pagination,
         returnedCount: results.length,
       },
-      results,
+      rows: results,
       fetchedAt: new Date().toISOString(),
       sourceUrl,
     });

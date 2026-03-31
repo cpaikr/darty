@@ -1,55 +1,56 @@
 # Plan
 
-Current job: harden the first filing-level search slice after the initial `bun` + TypeScript + `effect` scaffold.
+Current job: refactor the first implementation slice around `dsab007` as the primary DART search surface.
 
 ## Goal
 
-Turn the first working search slice into a more reliable filing-level contract by tightening result normalization and grounding tests in captured live HTML.
+Turn the first working contents-mode slice into a shared `dsab007` search core with DART-shaped contracts, a shared request/client seam, and a mode-specific contents parser on top.
 
 ## Deliverable
 
-- clearer normalization rules for report title, subtitle, and attachment rows
-- live HTML fixtures for at least one populated response and one no-result response
-- any schema adjustments required by that hardening work
+- shared `dsab007` contracts and request builder
+- a `contents` parser that sits under the shared `dsab007` core
+- CLI wiring that targets the `dsab007` surface instead of a one-off semantic body-search command
+- docs and specs updated to treat `dsab007` as the main unit
 
 ## In Scope
 
-- keep the stack and current source tree intact
-- inspect live rows that mix filing titles with attachment labels
-- decide whether `report_title` and `report_subtitle` are sufficient or need one more normalized field
-- add fixture-backed tests from real DART HTML, not only inline snippets
-- keep the code read-only and filing-level only
+- keep the stack intact
+- refactor the source tree around `src/dart/dsab007`
+- expose DART-shaped request fields more explicitly than the first semantic body-search slice did
+- keep `contents` as the only implemented mode for now
+- preserve read-only behavior
 
 ## Out Of Scope
 
 - transport adapters beyond a local CLI
 - authenticated workflows
-- full reverse engineering of every search mode
+- implementing every `dsab007` mode in this step
 - section-level retrieval
 - broad financial statement normalization
 - Playwright fallback
 
 ## Inputs
 
-- the current search contract in [docs/specs/dart-body-search-v1.md](docs/specs/dart-body-search-v1.md)
+- the current search contract in [docs/specs/dsab007-search-v1.md](docs/specs/dsab007-search-v1.md)
 - the current source map in [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
 - the first implementation slice in `src/` and `test/`
 
 ## Work Plan
 
-1. Capture one populated and one empty DART body-search HTML fixture from the live site.
-2. Review title and attachment-row patterns against those fixtures.
-3. Tighten the parser and result schema where the current normalization is lossy.
-4. Expand tests to assert the hardened behavior on captured fixtures.
+1. Introduce shared `dsab007` contracts and request-building code.
+2. Move the current contents implementation under `src/dart/dsab007/parsers/contents.ts`.
+3. Rename the CLI and output model around `dsab007-contents`.
+4. Update docs/specs to treat `dsab007` as the main capability surface.
 5. Re-run typecheck, tests, and one live CLI check.
 
 ## Open Questions
 
-- Is `snippetHtml` durable enough to keep public, or should it be demoted once the parser is more stable?
-- Should attachment rows become a separate normalized field instead of being folded into `reportTitle`?
+- How far should the public `dsab007` contract go toward raw DART form fields before a higher-level wrapper is added?
+- Which `dsab007` mode should be implemented second once the shared core is stable?
 
 ## Exit Criteria
 
-- fixture-backed tests cover real populated and empty search responses
-- attachment-row normalization is explicit instead of incidental
-- the core result model is still filing-level and read-only
+- `src/` is organized around `dsab007`, not one semantic body-search flow
+- the first mode still works live after the refactor
+- docs and code agree that `contents` is the first implemented mode, not the full architecture

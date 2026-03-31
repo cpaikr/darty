@@ -123,8 +123,8 @@ Observed no-result behavior:
 Current implication:
 
 - body-content search is replayable today without browser automation
-- the response still needs HTML parsing, so the tool should expose a semantic result model rather than raw DART form semantics
-- v1 should choose this one search workflow first instead of promising broad search coverage up front
+- the response still needs HTML parsing, but the implementation should keep `dsab007` field semantics explicit instead of normalizing too early
+- v1 should start with one mode, but under a shared `dsab007` search core rather than a one-off body-search module
 
 ## Adjacent Feeds And Supporting Surfaces
 

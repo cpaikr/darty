@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "search": "bun run src/cli.ts search"
+    "search": "bun run src/cli.ts dsab007-contents"
   },
   "dependencies": {
     "@effect/platform": "^0.91.0",
