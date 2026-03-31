@@ -9,7 +9,7 @@
 ## Read First
 
 - Start with `README.md`.
-- For product direction and active work, read `VISION.md`, `ROADMAP.md`, `TODO.md`, and `PLAN.md` in that order.
+- For product direction, read `VISION.md`.
 - For `dsab007` contract or parser work, read `docs/research/dart-source-map.md` and `docs/specs/dsab007-search-v1.md`.
 - Use `ARCHITECTURE.md` for document ownership and placement.
 
@@ -24,9 +24,6 @@
 ## Where Changes Go
 
 - Product scope and non-goals: `VISION.md`
-- Strategic sequencing and deferrals: `ROADMAP.md`
-- Ordered near-term queue: `TODO.md`
-- One active execution plan: `PLAN.md`
 - Live DART investigation and source evidence: `docs/research/dart-source-map.md`
 - Stable, evidence-backed capability contracts: `docs/specs/`
 - Shared tool-design guidance: `docs/tools/`

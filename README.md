@@ -17,32 +17,23 @@ This repo starts from first principles: define the product, investigate the live
 
 1. [VISION.md](VISION.md)
    Product-level goal and scope for the current project.
-2. [ROADMAP.md](ROADMAP.md)
-   Strategic sequencing from investigation to implementation.
-3. [TODO.md](TODO.md)
-   Ordered near-term work queue.
-4. [PLAN.md](PLAN.md)
-   Detailed plan for the one active job.
-5. [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
+2. [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
    Current evidence about DART body-content search and the report viewer surface.
-6. [docs/specs/dsab007-search-v1.md](docs/specs/dsab007-search-v1.md)
+3. [docs/specs/dsab007-search-v1.md](docs/specs/dsab007-search-v1.md)
    First concrete spec draft for `dsab007` search, with `본문내용` as the first implemented mode.
-7. [docs/tools/foundations.md](docs/tools/foundations.md)
+4. [docs/tools/foundations.md](docs/tools/foundations.md)
    Core principles for tool design.
-8. Tool track:
+5. Tool track:
    [docs/tools/contracts.md](docs/tools/contracts.md), [docs/tools/transport-decision.md](docs/tools/transport-decision.md), [docs/tools/evaluation.md](docs/tools/evaluation.md)
-9. Templates:
+6. Templates:
    [docs/tools/templates/tool-spec-template.md](docs/tools/templates/tool-spec-template.md)
-10. Relevant tool playbook in [docs/tools/playbooks/](docs/tools/playbooks/)
+7. Relevant tool playbook in [docs/tools/playbooks/](docs/tools/playbooks/)
    Tool-family-specific guidance.
 
 ## Repo Map
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): document ownership and contributor flow
 - [VISION.md](VISION.md): product vision for the DART access tool
-- [ROADMAP.md](ROADMAP.md): strategic direction and phased sequencing
-- [TODO.md](TODO.md): ordered near-term work queue
-- [PLAN.md](PLAN.md): the one active detailed plan
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md): captured source evidence and initial complexity map
 - [docs/specs/dsab007-search-v1.md](docs/specs/dsab007-search-v1.md): first `dsab007` search spec
 - [docs/specs/](docs/specs/README.md): stable capability specs once the evidence exists

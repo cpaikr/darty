@@ -97,5 +97,3 @@ These belong to investigation, not the vision:
 - which identifier mapping is stable enough for public contracts
 - how much of the report viewer can be accessed cleanly without browser automation
 - whether financial statement and XBRL retrieval belong in v1 or a later phase
-
-See [PLAN.md](PLAN.md) for the active investigation step.
