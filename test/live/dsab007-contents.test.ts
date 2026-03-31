@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "effect";
 
-import { searchDsab007Contents } from "../src/dart/dsab007/client.ts";
+import { searchDsab007Contents } from "../../src/dart/dsab007/client.ts";
 
 const liveTest = process.env.LIVE_DART_TESTS === "1" ? test : test.skip;
 

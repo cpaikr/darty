@@ -3,7 +3,7 @@
 This repo now has two layers:
 
 - root docs that hold product, planning, and source-contract decisions
-- a small implementation slice under `src/` and `test/` for the first `dsab007` search capability
+- a small implementation slice under `src/` plus opt-in live checks under `test/` for the first `dsab007` search capability
 
 ## Document Ownership
 
@@ -24,9 +24,9 @@ This repo now has two layers:
 - [docs/specs/](docs/specs/)
   Stable, evidence-backed capability specs once the contract is ready.
 - `src/`
-  Current implementation root for `dsab007` contracts, request building, parsers, and CLI commands.
+  Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
 - `test/`
-  Parser-first tests for the current capability slice.
+  Opt-in live or broader integration checks that should stay separate from module-local fixture tests.
 
 ## Contributor Flow
 
@@ -63,9 +63,11 @@ This repo now has two layers:
 - `src/dart/dsab007/models.ts`
   Parsed `dsab007` response models.
 - `src/dart/dsab007/parsers/`
-  Mode-specific HTML parsers under the shared search surface.
+  Mode-specific HTML parsers under the shared search surface, with colocated fixture-backed parser tests.
 - `src/dart/errors.ts`
   Tagged error types for invalid input, source failures, and parser drift.
+- `test/live/`
+  Opt-in live DART checks that exercise the shared client seam against the source.
 
 ## Expected Expansion
 

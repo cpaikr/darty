@@ -2,15 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { Effect } from "effect";
 
-import { parseDsab007ContentsSearchResponse } from "../src/dart/dsab007/parsers/contents.ts";
+import { parseDsab007ContentsSearchResponse } from "./contents.ts";
 
 const populatedHtml = readFileSync(
-  new URL("./fixtures/dsab007/contents-populated-2026-03-31.html", import.meta.url),
+  new URL("./fixtures/contents-populated-2026-03-31.html", import.meta.url),
   "utf8",
 );
 
 const noResultsHtml = readFileSync(
-  new URL("./fixtures/dsab007/contents-no-results-2026-03-31.html", import.meta.url),
+  new URL("./fixtures/contents-no-results-2026-03-31.html", import.meta.url),
   "utf8",
 );
 
