@@ -1,6 +1,9 @@
 # Architecture
 
-This repo is a documentation system for the future DART tool implementation. The architecture is the document boundary: each file should own one layer of the design, and shared guidance should live in exactly one canonical place.
+This repo now has two layers:
+
+- root docs that hold product, planning, and source-contract decisions
+- a small implementation slice under `src/` and `test/` for the first DART body-search capability
 
 ## Document Ownership
 
@@ -15,11 +18,15 @@ This repo is a documentation system for the future DART tool implementation. The
 - [PLAN.md](PLAN.md)
   The one active detailed plan for the current job.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
-  Durable source investigation notes for DART, OpenDART, and the report viewer.
+  Durable source investigation notes for DART body-content search and the report viewer.
 - [docs/tools/](docs/tools/)
   Canonical home for single-tool design.
 - [docs/specs/](docs/specs/)
   Stable, evidence-backed capability specs once the contract is ready.
+- `src/`
+  Current implementation root for schemas, errors, DART search client, parser, and CLI.
+- `test/`
+  Parser-first tests for the current capability slice.
 
 ## Contributor Flow
 
@@ -29,7 +36,8 @@ This repo is a documentation system for the future DART tool implementation. The
 4. Put strategic sequencing in [ROADMAP.md](ROADMAP.md), the near-term queue in [TODO.md](TODO.md), and the active job breakdown in [PLAN.md](PLAN.md).
 5. Use [docs/tools/foundations.md](docs/tools/foundations.md) and the linked tool docs to shape the contract.
 6. Promote only evidence-backed, implementation-ready capability specs into [docs/specs/](docs/specs/README.md).
-7. Keep tool rules in the tool docs; link to canonical guidance instead of duplicating it.
+7. Keep the first implementation slice small: query schema, search client, parser, and CLI before section retrieval.
+8. Keep tool rules in the tool docs; link to canonical guidance instead of duplicating it.
 
 ## Invariants
 
@@ -40,12 +48,25 @@ This repo is a documentation system for the future DART tool implementation. The
 - Prefer links to canonical guidance over repeating the same rule in multiple files.
 - Mark source observations as observed, inferred, or unverified; do not blur them together.
 
+## Current Code Shape
+
+- `src/cli.ts`
+  Local CLI entrypoint for manual and scripted search runs.
+- `src/dart/body-search.ts`
+  End-to-end workflow from validated semantic query to parsed search result.
+- `src/dart/body-search-parser.ts`
+  HTML-to-typed-result parser for `/dsab007/search.ax`.
+- `src/dart/body-search-schema.ts`
+  `effect` schemas for query, results, and supporting enums.
+- `src/dart/errors.ts`
+  Tagged error types for invalid input, source failures, and parser drift.
+
 ## Expected Expansion
 
-If implementations are added later, preserve the same split:
+If the current single-package shape holds up, expand carefully:
 
 - `docs/specs/` for stable capability specs
-- `packages/core` or similar for capability logic
-- `packages/cli` for local scripting and human debugging
+- `src/` for the core capability while the surface is still small
+- `packages/cli` only if the CLI outgrows a single-package layout
 - `packages/mcp` only after the core contract is stable
 - `evals/` for scenario-driven tests and transcripts

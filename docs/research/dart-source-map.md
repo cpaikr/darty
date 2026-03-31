@@ -7,9 +7,9 @@ Method:
 - inspected the live home page and search page in a browser session
 - replayed representative pages with `curl`
 - inspected the report viewer HTML and embedded viewer state
-- checked the adjacent OpenDART home page and API list
+- replayed direct POST requests to `/dsab007/search.ax`
 
-This document records source evidence for the DART ecosystem. It is not yet the public tool spec.
+This document records source evidence for the DART site. It is not yet the public tool spec.
 
 ## Surface Map
 
@@ -20,12 +20,10 @@ This document records source evidence for the DART ecosystem. It is not yet the 
 - Main search page observed: `https://dart.fss.or.kr/dsab007/main.do?option=corp`
 - Report viewer observed: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcpNo}`
 
-### OpenDART
+Current project decision:
 
-- Adjacent site origin: `https://opendart.fss.or.kr/`
-- Home page title observed: `전자공시 OPENDART 시스템`
-- API-list page observed: `https://opendart.fss.or.kr/intro/infoApiList.do`
-- Home page visibly exposes login and API-key flows
+- v1 targets `dart.fss.or.kr` directly
+- v1 does not use the official OpenDART API
 
 ## Observed UI And Route Responsibilities
 
@@ -42,8 +40,6 @@ This document records source evidence for the DART ecosystem. It is not yet the 
   PDF download endpoint referenced by the report viewer source.
 - `/dsaf002/main.do?rcpNo={rcpNo}[&dcmNo={dcmNo}]`
   XBRL preview route referenced by the report viewer source.
-- `https://opendart.fss.or.kr/xbrl/viewer/main.do?rcpNo={rcpNo}`
-  OpenDART-linked XBRL viewer route referenced by the report viewer source.
 
 ## Report Viewer Identifier Spaces
 
@@ -85,17 +81,50 @@ This suggests that section retrieval may be possible without full browser automa
 
 ## Search Surface Notes
 
-Observed from the live search page and home-page source:
+Observed from the live body-content search page, page source, and direct POST replay:
 
-- the integrated filing search page is HTML-driven, not obviously a public JSON API
+- the integrated filing search page is HTML-driven, not a public JSON API
 - search modes include company, report name, TOC name, body content, and advanced search
 - the page exposes date-range filters, final-report filtering, and multiple find-popup flows
 - the home page references classic `.do` and `.ax` module routes rather than one clean API surface
+- direct POST to `/dsab007/search.ax` works without an authenticated browser session in tested cases
+- `/dsab007/search.ax` returns an HTML fragment containing:
+  result count, sort links, result rows, `totalCnt`, and pagination markup
+
+Observed replay payload shape for `option=contents`:
+
+- `currentPage`, `maxResults`, `maxLinks`
+- `sort`, `sortType`
+- `option=contents`
+- `keyword`
+- `startDate`, `endDate`
+- duplicated or replay-only fields such as `b_keyword`, `b_startDate`, `b_endDate`
+- optional company and presenter fields such as `textCrpCik`, `textCrpNm`, `textPresenterNm`
+
+Observed replay result shape:
+
+- `검색건수 : N`
+- filing rows with company badge, company name, filing link, snippet, info tags, and filing date
+- filing links like `/dsaf001/main.do?rcpNo={rcpNo}&dcmNo={dcmNo}&keyword={keyword}`
+- `totalCnt` as a hidden input
+- pagination like `[1/4] [총 32건]`
+
+Observed pagination constraint:
+
+- live validation on 2026-03-31 suggests `maxResults` is not a stable public control for `option=contents`
+- replayed requests with `maxResults=2` still returned 10 rows and page counts consistent with 10-row paging
+- treat page size as upstream-controlled for now
+
+Observed no-result behavior:
+
+- `검색건수 : 0`
+- table body containing `조회 결과가 없습니다.`
 
 Current implication:
 
-- DART search is likely more fragmented than KASB search
-- v1 may need to choose one narrow search workflow first instead of promising broad search coverage up front
+- body-content search is replayable today without browser automation
+- the response still needs HTML parsing, so the tool should expose a semantic result model rather than raw DART form semantics
+- v1 should choose this one search workflow first instead of promising broad search coverage up front
 
 ## Adjacent Feeds And Supporting Surfaces
 
@@ -106,23 +135,11 @@ Observed in the report viewer source:
 
 These may be useful for lightweight feed operations, but they are supporting surfaces, not yet the primary contract.
 
-## OpenDART Notes
-
-Observed from the live OpenDART pages:
-
-- the site clearly separates API information, API-key management, and developer guides
-- API access likely introduces authentication and coverage tradeoffs compared with anonymous browsing on the main DART site
-- OpenDART is adjacent, not a drop-in replacement for every DART page flow
-
-Current implication:
-
-- OpenDART may be the right source for some operations, but the project should not assume one surface fully subsumes the other before evidence exists
-
 ## Current v1 Recommendation
 
-Treat the source strategy as undecided, but bias the contract design toward a hybrid-friendly model:
+Treat body-content search as the first-class v1 entrypoint:
 
-- public ids should prefer company and filing identifiers that can survive source changes
+- public ids should prefer filing identifiers and search inputs that survive UI changes
 - section byte ranges and low-level viewer offsets should stay internal unless proven necessary
 - keep search and retrieval separate
 - keep XBRL as an explicit extension point, not an assumed v1 dependency
@@ -130,6 +147,6 @@ Treat the source strategy as undecided, but bias the contract design toward a hy
 ## Immediate Follow-Ups
 
 - confirm what request shape `/report/viewer.do` accepts directly and what it returns
-- map the site-side company code conventions to OpenDART identifiers
-- determine whether a narrow filing-search flow can be replayed without a browser
-- choose whether v1 starts from filing metadata, filing content, or both
+- classify which `/dsab007/search.ax` fields are public inputs versus replay-only noise
+- define the parsed result row model for the tool contract
+- choose whether v1 section retrieval starts at full filing documents or specific TOC sections

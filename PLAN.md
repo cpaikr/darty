@@ -1,59 +1,55 @@
 # Plan
 
-Current job: derive the initial DART surface map and the first credible v1 boundary.
+Current job: harden the first filing-level search slice after the initial `bun` + TypeScript + `effect` scaffold.
 
 ## Goal
 
-Turn the current live observations about `dart.fss.or.kr` and `opendart.fss.or.kr` into an evidence-backed decision frame for the first tool contract.
+Turn the first working search slice into a more reliable filing-level contract by tightening result normalization and grounding tests in captured live HTML.
 
 ## Deliverable
 
-- a short source map covering the main DART site, the report viewer, and OpenDART
-- an explicit list of identifier spaces already observed
-- a short recommendation for what v1 should treat as public ids versus internal retrieval details
-- a short list of unresolved decisions that must be answered before spec drafting
+- clearer normalization rules for report title, subtitle, and attachment rows
+- live HTML fixtures for at least one populated response and one no-result response
+- any schema adjustments required by that hardening work
 
 ## In Scope
 
-- confirm the public routes already visible from the home page and report viewer
-- capture the report viewer's observed identifier model: `rcpNo`, `dcmNo`, `eleId`, `offset`, `length`, `tocNo`, `atocId`
-- note where OpenDART is clearly adjacent and where it may overlap or diverge
-- classify each source surface as likely primary, supporting, or deferred for v1
-- leave the next spec step with enough clarity to draft a narrow read-only contract
+- keep the stack and current source tree intact
+- inspect live rows that mix filing titles with attachment labels
+- decide whether `report_title` and `report_subtitle` are sufficient or need one more normalized field
+- add fixture-backed tests from real DART HTML, not only inline snippets
+- keep the code read-only and filing-level only
 
 ## Out Of Scope
 
-- drafting the full capability schema
-- implementing transport adapters
-- authenticated workflows or API key management
-- full reverse engineering of every search endpoint
+- transport adapters beyond a local CLI
+- authenticated workflows
+- full reverse engineering of every search mode
+- section-level retrieval
 - broad financial statement normalization
+- Playwright fallback
 
 ## Inputs
 
-- the live DART home page and search page
-- the live report viewer for a representative filing
-- the live OpenDART home page and API-list page
-- the current `TODO.md` item that promotes this work ahead of spec drafting
+- the current search contract in [docs/specs/dart-body-search-v1.md](docs/specs/dart-body-search-v1.md)
+- the current source map in [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
+- the first implementation slice in `src/` and `test/`
 
 ## Work Plan
 
-1. Record the main public surfaces and their visible responsibilities.
-2. Record the identifier spaces already visible in HTML and viewer state.
-3. Separate observed facts from likely but unverified inferences.
-4. State the main design fork for v1:
-   site-driven, OpenDART-driven, or hybrid.
-5. Leave the next step with enough clarity to draft the first tool spec without pretending the source is simpler than it is.
+1. Capture one populated and one empty DART body-search HTML fixture from the live site.
+2. Review title and attachment-row patterns against those fixtures.
+3. Tighten the parser and result schema where the current normalization is lossy.
+4. Expand tests to assert the hardened behavior on captured fixtures.
+5. Re-run typecheck, tests, and one live CLI check.
 
 ## Open Questions
 
-- Should v1 prioritize anonymous access to `dart.fss.or.kr`, OpenDART with API keys, or a hybrid contract with graceful degradation?
-- Is `rcpNo` plus `dcmNo` enough for reliable section retrieval, or does the public contract need `eleId` and byte ranges too?
-- Should XBRL access be a first-class v1 operation or a later extension once the filing/document contract is stable?
+- Is `snippetHtml` durable enough to keep public, or should it be demoted once the parser is more stable?
+- Should attachment rows become a separate normalized field instead of being folded into `reportTitle`?
 
 ## Exit Criteria
 
-- the current source map is clear enough to support a real scope discussion
-- each observed identifier is classified as public candidate, internal detail, or unresolved
-- the DART-vs-OpenDART boundary is explicit rather than implied
-- follow-up spec work can start without redoing basic source reconnaissance
+- fixture-backed tests cover real populated and empty search responses
+- attachment-row normalization is explicit instead of incidental
+- the core result model is still filing-level and read-only

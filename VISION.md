@@ -4,12 +4,12 @@
 
 - `name`: `darty`
 - `status`: vision
-- `domain`: Korean corporate disclosures, filing metadata, document sections, and adjacent OpenDART data
+- `domain`: Korean corporate disclosures, filing metadata, and document sections from DART
 - `users`: LLM agents, agent developers, investors, researchers, and internal automation that need reliable DART access
 
 ## Goal
 
-Build a tool that gives agents a stable, programmatic way to search and retrieve filing data from `https://dart.fss.or.kr/`, with explicit consideration of `https://opendart.fss.or.kr/` where it materially improves the contract.
+Build a tool that gives agents a stable, programmatic way to search and retrieve filing data from `https://dart.fss.or.kr/`.
 
 The target experience should be closer to `yfinance` than browser automation:
 
@@ -34,7 +34,8 @@ This is worth standardizing because DART work is repetitive, citation-sensitive,
 
 The product should eventually support a narrow set of agent-facing capabilities:
 
-- search companies and filings
+- search filings by body content
+- search filings by company and date window
 - list filings for a company or time window
 - fetch filing metadata and source links
 - list documents or sections within a filing
@@ -46,7 +47,7 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - `reference first`: every returned item should be easy to cite and revisit
 - `discovery and retrieval`: search alone is not enough
 - `structured over prose`: return typed records, not generated explanations
-- `source-explicit`: state whether a result came from DART, OpenDART, viewer HTML, RSS, or a fallback
+- `source-explicit`: state whether a result came from DART search HTML, viewer HTML, RSS, or a fallback
 - `transport-light`: start with a reusable core and a CLI; add MCP later if justified
 - `public-read first`: v1 should target read-only access
 
@@ -90,7 +91,7 @@ The product is successful when an agent can reliably:
 
 These belong to investigation, not the vision:
 
-- should v1 rely on the main DART site, OpenDART, or a hybrid of both
+- how closely the public search contract should mirror DART's native search form
 - which identifier mapping is stable enough for public contracts
 - how much of the report viewer can be accessed cleanly without browser automation
 - whether financial statement and XBRL retrieval belong in v1 or a later phase

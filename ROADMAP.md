@@ -1,33 +1,46 @@
 # Roadmap
 
-Recommendation: move from source investigation to a narrow, evidence-backed DART access tool. Keep the first release read-only and citation-focused.
+Recommendation: move from source investigation to a narrow, evidence-backed DART access tool. Keep the first release read-only, citation-focused, and centered on `공시통합검색 > 본문내용`.
 
-## Phase 1: Surface Investigation
+Development style:
+
+- ship the smallest useful capability first
+- keep each phase independently reviewable
+- promote only proven behavior into the public contract
+
+## Phase 1: Body Search Investigation
 
 Deliverables:
 
-- request and route inventory for `dart.fss.or.kr`
-- request and route inventory for `opendart.fss.or.kr`
-- validated identifier map for company, filing, document, section, and download surfaces
+- validated request contract for `/dsab007/search.ax`
+- response parser for result count, rows, and pagination
+- validated identifier map for filing, document, section, and viewer surfaces
 - source constraints: auth, rate limits, anti-bot behavior, and terms notes
 
 ## Phase 2: Capability Boundary
 
 Deliverables:
 
-- explicit v1 source policy: DART only, OpenDART only, or hybrid
-- stable public reference model for company, filing, document, and section retrieval
-- v1 operation set shaped around agent tasks, not UI flows
+- stable public reference model for semantic query inputs and filing-level search hits
+- v1 operation set shaped around body-content search and filing-level retrieval only
 
 ## Phase 3: Core Implementation
 
 Deliverables:
 
-- reusable read-only core against the validated source surface
+- `bun` + strict TypeScript + `effect` stack locked as the first implementation path
+- reusable read-only core for semantic body-content search
 - local CLI for human and script use
-- fixture-backed tests for key search and retrieval scenarios
+- fixture-backed tests for key search scenarios
 
-## Phase 4: Hardening And Adapters
+## Phase 4: Section Retrieval Expansion
+
+Deliverables:
+
+- deterministic filing viewer open flow from `rcpNo` and `dcmNo`
+- evidence-backed section retrieval contract if the viewer identifiers prove stable enough
+- follow-on tests for filing-to-section traversal
+## Phase 5: Hardening And Adapters
 
 Deliverables:
 
@@ -39,5 +52,5 @@ Deliverables:
 
 - mutation or submission flows
 - authenticated account features unless they prove essential
-- broad multi-source abstraction beyond DART/OpenDART
 - answer synthesis inside the tool
+- official OpenDART API integration

@@ -4,6 +4,7 @@ Keep this as the ordered near-term queue. Expand only the active item in `PLAN.m
 
 ## Next Up
 
-1. Capture the stable source map for company search, filing search, report viewer, PDF, XBRL, and OpenDART overlaps in [docs/research/dart-source-map.md](docs/research/dart-source-map.md).
-2. Decide the v1 source policy: site-driven, OpenDART-driven, or hybrid.
-3. Define the minimal v1 read-only operation set around company lookup, filing search, filing retrieval, and section retrieval.
+1. Harden search-result normalization, especially report title/subtitle handling for attachment rows such as `정관` and `감사보고서`.
+2. Add fixture capture for live DART HTML so parser drift can be detected against real responses.
+3. Add a narrow `get_filing_viewer` helper around filing-level references and viewer URLs.
+4. Defer TOC-aware section retrieval until the filing-level contract is stable.
