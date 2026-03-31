@@ -20,6 +20,8 @@ import {
 } from "../errors.ts";
 
 export const dsab007SearchUrl = "https://dart.fss.or.kr/dsab007/search.ax";
+const chromeDesktopUserAgent =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 
 const decodeQuery = (
   input: unknown,
@@ -33,6 +35,13 @@ const decodeQuery = (
     ),
   );
 
+/**
+ * Executes the observed `dsab007/search.ax` form replay and returns the raw
+ * HTML fragment DART uses to render the result table.
+ *
+ * Transport failures and body decoding failures are narrowed here so the parser
+ * can treat the response body as the only remaining source of change.
+ */
 export const fetchDsab007SearchHtml = (
   form: URLSearchParams,
 ): Effect.Effect<
@@ -49,7 +58,7 @@ export const fetchDsab007SearchHtml = (
       ),
       HttpClientRequest.setHeader(
         "user-agent",
-        "darty/0.1 (+https://dart.fss.or.kr)",
+        chromeDesktopUserAgent,
       ),
       HttpClientRequest.bodyText(
         form.toString(),

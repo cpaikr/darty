@@ -36,6 +36,11 @@ const parseCorpId = (href: string | undefined): string | undefined => {
   return match?.[1];
 };
 
+/**
+ * The info column currently encodes two bracketed labels followed by a freeform
+ * presenter segment. The raw cell text is preserved because only the label order
+ * is observed, not formally guaranteed.
+ */
 const parseInfoCell = (
   rawInfo: string,
 ): Pick<
@@ -57,6 +62,13 @@ const parseInfoCell = (
   };
 };
 
+/**
+ * Splits the display report name into the stable segments that downstream
+ * consumers are likely to filter on while preserving the original string.
+ *
+ * This intentionally avoids deeper normalization because attachment-style rows
+ * can append meaningful trailing text after the reporting period.
+ */
 const parseReportParts = (
   reportText: string,
 ): Pick<
@@ -98,6 +110,11 @@ const parseDate = (value: string): string => {
   return `${match[1]}-${match[2]}-${match[3]}`;
 };
 
+/**
+ * Extracts page-level counters from the surrounding fragment. Missing `totalCnt`
+ * is treated as a source-contract break because downstream callers rely on it to
+ * distinguish empty results from parser loss.
+ */
 const parsePagination = (
   $: cheerio.CheerioAPI,
   sourceUrl: string,

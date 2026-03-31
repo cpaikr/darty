@@ -30,6 +30,13 @@ export const Dsab007ContentsRow = Schema.Struct({
 });
 export type Dsab007ContentsRow = typeof Dsab007ContentsRow.Type;
 
+/**
+ * Pagination state as exposed by the rendered `dsab007` fragment.
+ *
+ * `returnedCount` is derived from parsed rows rather than trusted from source
+ * markup so callers can compare what the page claimed with what was actually
+ * recoverable.
+ */
 export const Dsab007Pagination = Schema.Struct({
   currentPage: Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)),
   totalPages: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
