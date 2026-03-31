@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Scope
-- This repo is a documentation-first planning workspace for a future DART access tool.
+- This repo is for the `darty` DART access tool. The current tree is mostly vision, research, and tool-contract documents.
 - Treat repository documents as the source of truth. Do not invent implementation details, commands, or package structure that the repo does not already define.
 
 ## Read Order
