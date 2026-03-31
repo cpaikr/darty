@@ -112,6 +112,31 @@ Prefer an explicit DART-shaped layer first:
 - optional `textPresenterNm`
 - optional mode-known fields such as `docType`, `reportName`, `tocSrch`
 
+Stable public inputs for the current external API:
+
+- `option`
+- `currentPage`
+- `maxResults`
+- `maxLinks`
+- `sort`
+- `sortType`
+- `keyword`
+- `startDate`
+- `endDate`
+- optional `textCrpCik`
+- optional `textCrpNm`
+- optional `textPresenterNm`
+- optional `reportName`
+
+Status labels used in this spec and in the contract tests:
+
+- `observed`
+  direct live evidence confirms the field shape or behavior
+- `inferred`
+  the field appears in replay/source inspection but is not yet proven stable live
+- `unverified`
+  the field is named or suspected but still lacks stable evidence
+
 Keep these replay helpers internal unless proven necessary:
 
 - duplicated `b_*` fields
@@ -146,6 +171,8 @@ Current implementation note:
 
 - live validation on 2026-03-31 still suggests DART may ignore caller-controlled `maxResults`
 - the low-level contract should expose the field anyway, but callers must not assume the site honors it
+- live validation on 2026-04-01 still shows `maxLinks` being accepted but ignored for `option=contents`
+- live validation on 2026-04-01 shows `textCrpCik`, `textPresenterNm`, and `reportName` affecting results, while `textCrpNm` is currently accepted but ignored for the replay shape used here
 
 Observed response:
 

@@ -18,6 +18,7 @@
 - Install deps: `bun install`
 - Typecheck: `bun run typecheck`
 - Test: `bun test`
+- Live tests: `bun run test:live`
 - Manual search check: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
 - Do not add placeholder build, lint, or format commands to docs. Only document commands that exist in the repo.
 
