@@ -2,7 +2,7 @@
 
 Markdown-first guidance for building a DART access tool.
 
-This repo starts the same way as `../kasb`: define the product, investigate the live source, and only then lock the tool contract. The target, though, is broader and messier: `https://dart.fss.or.kr/`, especially the integrated filing search and report viewer flows.
+This repo starts from first principles: define the product, investigate the live source, and only then lock the tool contract. The target is broader and messier than a single endpoint: `https://dart.fss.or.kr/`, especially the integrated filing search and report viewer flows.
 
 ## Core Stance
 
@@ -57,7 +57,7 @@ This repo starts the same way as `../kasb`: define the product, investigate the 
 - [docs/tools/playbooks/filesystem-tool.md](docs/tools/playbooks/filesystem-tool.md): workspace tool guidance
 - [docs/tools/templates/tool-spec-template.md](docs/tools/templates/tool-spec-template.md): spec template for new tools
 
-## Why This Is Harder Than kasb
+## Why This Is Hard
 
 - The main site is a server-rendered application with `.do` and `.ax` endpoints, popup flows, and embedded viewer state.
 - `본문내용` search returns HTML fragments, not a clean JSON payload.
