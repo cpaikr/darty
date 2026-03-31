@@ -1,26 +1,41 @@
 # AGENTS.md
 
 ## Scope
-- This repo is for the `darty` DART access tool. The current tree is mostly vision, research, and tool-contract documents.
-- Treat repository documents as the source of truth. Do not invent implementation details, commands, or package structure that the repo does not already define.
 
-## Read Order
-- Start with [README.md](/Users/sejunpark/IT/darty/README.md).
-- Read [VISION.md](/Users/sejunpark/IT/darty/VISION.md), [ROADMAP.md](/Users/sejunpark/IT/darty/ROADMAP.md), [TODO.md](/Users/sejunpark/IT/darty/TODO.md), and [PLAN.md](/Users/sejunpark/IT/darty/PLAN.md) in that order for current product and planning context.
-- Use [ARCHITECTURE.md](/Users/sejunpark/IT/darty/ARCHITECTURE.md) for document ownership and placement rules.
+- This repo is for a DART querying/searching tool, not only `본문내용` body search.
+- The current code in `src/` and `test/` is an early slice, so do not mistake the first implementation path for the full product scope.
+- Treat repo docs and the current code as the source of truth. Do not invent commands, packages, or product scope that the repo does not define.
+
+## Read First
+
+- Start with `README.md`.
+- For product direction and active work, read `VISION.md`, `ROADMAP.md`, `TODO.md`, and `PLAN.md` in that order.
+- For `dsab007` contract or parser work, read `docs/research/dart-source-map.md` and `docs/specs/dsab007-search-v1.md`.
+- Use `ARCHITECTURE.md` for document ownership and placement.
+
+## Commands
+
+- Install deps: `bun install`
+- Typecheck: `bun run typecheck`
+- Test: `bun test`
+- Manual search check: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
+- Do not add placeholder build, lint, or format commands to docs. Only document commands that exist in the repo.
+
+## Where Changes Go
+
+- Product scope and non-goals: `VISION.md`
+- Strategic sequencing and deferrals: `ROADMAP.md`
+- Ordered near-term queue: `TODO.md`
+- One active execution plan: `PLAN.md`
+- Live DART investigation and source evidence: `docs/research/dart-source-map.md`
+- Stable, evidence-backed capability contracts: `docs/specs/`
+- Shared tool-design guidance: `docs/tools/`
 
 ## Working Rules
-- Keep diffs small and reviewable. Prefer editing the canonical document over repeating guidance elsewhere.
-- Put strategic sequencing in [ROADMAP.md](/Users/sejunpark/IT/darty/ROADMAP.md), the near-term queue in [TODO.md](/Users/sejunpark/IT/darty/TODO.md), and the active execution plan in [PLAN.md](/Users/sejunpark/IT/darty/PLAN.md).
-- Record live DART investigation in [docs/research/dart-source-map.md](/Users/sejunpark/IT/darty/docs/research/dart-source-map.md).
-- Promote only stable, evidence-backed capability decisions into [docs/specs/](/Users/sejunpark/IT/darty/docs/specs/README.md).
-- Keep shared tool-design guidance in [docs/tools/](/Users/sejunpark/IT/darty/docs/tools/foundations.md) and link to canonical docs instead of duplicating rules.
-- Mark source claims as observed, inferred, or unverified when the distinction matters.
 
-## Commands And Validation
-- No package manager, build, lint, format, or test commands are defined in this repo yet.
-- Do not add placeholder workflow commands to docs or instructions. If implementation scaffolding is added later, document only commands that exist in the repo.
-
-## Change Expectations
-- Update nearby planning or research docs in the same change when the scope, evidence, or contract changes.
-- Keep writing concise. Preserve necessary detail, but avoid restating the same point across multiple files.
+- Keep diffs small and edit the canonical document instead of repeating guidance elsewhere.
+- Distinguish between current implementation limits and intended product scope. Broader DART query/search work is in scope even when the current code only covers an initial slice.
+- Keep the current implementation read-only and citation-first unless the repo docs change that contract.
+- Use the existing stack: Bun, strict TypeScript, `effect`, and `cheerio`.
+- Update nearby tests and docs in the same change when behavior, contracts, or evidence changes.
+- Mark source claims as observed, inferred, or unverified when that distinction matters.
