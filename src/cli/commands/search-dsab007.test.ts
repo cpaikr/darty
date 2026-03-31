@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseDsab007CommandArgs } from "./search-dsab007.ts";
+import {
+  dsab007Usage,
+  parseDsab007CommandArgs,
+} from "./search-dsab007.ts";
 
 describe("parseDsab007CommandArgs", () => {
   test("parses the observed contents sort unions", () => {
@@ -49,5 +52,38 @@ describe("parseDsab007CommandArgs", () => {
         "down",
       ])
     ).toThrow('Invalid --sort-type "down". Expected one of: asc, desc.');
+  });
+
+  test("accepts semantic aliases while preserving DART-shaped option keys", () => {
+    const options = parseDsab007CommandArgs([
+      "--company-name",
+      "삼성전자",
+      "--presenter-name",
+      "IR",
+      "--page",
+      "2",
+      "--limit",
+      "25",
+      "--sort-direction",
+      "asc",
+    ]);
+
+    expect(options.textCrpNm).toBe("삼성전자");
+    expect(options.textPresenterNm).toBe("IR");
+    expect(options.currentPage).toBe("2");
+    expect(options.maxResults).toBe("25");
+    expect(options.sortType).toBe("asc");
+  });
+
+  test("renders parameter descriptions in CLI usage", () => {
+    expect(dsab007Usage).toContain(
+      "--presenter-name <text>, --text-presenter-nm <text>",
+    );
+    expect(dsab007Usage).toContain(
+      "Filter by presenter name when DART exposes that field. [observed]",
+    );
+    expect(dsab007Usage).toContain(
+      "Semantic flags are preferred when available; raw DART aliases remain accepted for debugging.",
+    );
   });
 });

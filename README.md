@@ -73,5 +73,6 @@ The first job is not broad implementation. It is locking a credible `dsab007` se
 bun install
 bun run typecheck
 bun test
+bun run src/cli.ts dsab007-contents --help
 bun run src/cli.ts dsab007-contents --keyword 배당 --start-date 20250331 --end-date 20260331
 ```

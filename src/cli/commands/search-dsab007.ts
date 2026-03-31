@@ -2,33 +2,29 @@ import { Effect } from "effect";
 
 import { searchDsab007Contents } from "../../dart/dsab007/client.ts";
 import {
+  describeDsab007ContentsSearchInput,
   dsab007ContentsSortDirections,
   dsab007ContentsSortFields,
   type Dsab007ContentsSortDirection,
   type Dsab007ContentsSortField,
+  type Dsab007ContentsSearchInput,
 } from "../../dart/dsab007/contracts.ts";
 
-type CliOptions = {
-  keyword?: string;
-  query?: string;
-  startDate?: string;
-  endDate?: string;
-  currentPage?: string;
-  maxResults?: string;
-  maxLinks?: string;
-  sort?: Dsab007ContentsSortField;
-  sortType?: Dsab007ContentsSortDirection;
-  textCrpCik?: string;
-  textCrpNm?: string;
-  textPresenterNm?: string;
-  lateKeyword?: string;
-  flrCik?: string;
-  dspTypeTab?: string;
-  tocSrch?: string;
-  docType?: string;
-  reportName?: string;
-  decadeType?: string;
+type CliOptionKey = Exclude<keyof Dsab007ContentsSearchInput, "option">;
+type CliOptionValue = string | Dsab007ContentsSortField | Dsab007ContentsSortDirection;
+type CliOptions = Partial<Record<CliOptionKey, CliOptionValue>> & {
+  help?: boolean;
 };
+
+const dsab007CliParameterDocs = describeDsab007ContentsSearchInput().filter(
+  (parameter) => parameter.cliFlags.length > 0,
+);
+
+const dsab007CliFlagToKey = new Map<string, CliOptionKey>(
+  dsab007CliParameterDocs.flatMap((parameter) =>
+    parameter.cliFlags.map((flag) => [flag, parameter.key as CliOptionKey]),
+  ),
+);
 
 const parseLiteralOption = <Literal extends string>(
   flag: string,
@@ -44,9 +40,46 @@ const parseLiteralOption = <Literal extends string>(
   );
 };
 
+const formatOptionUsage = (flags: readonly string[], valueHint?: string): string =>
+  flags
+    .map((flag) => (valueHint === undefined ? flag : `${flag} ${valueHint}`))
+    .join(", ");
+
+const formatParameterHelp = (): string =>
+  dsab007CliParameterDocs
+    .map(
+      (parameter) =>
+        `  ${formatOptionUsage(parameter.cliFlags, parameter.valueHint)}\n    ${parameter.description} [${parameter.status}]`,
+    )
+    .join("\n");
+
 export const dsab007Usage = `Usage:
-  bun run src/cli.ts dsab007-contents --keyword <text> --start-date <YYYYMMDD> --end-date <YYYYMMDD> [--current-page 1] [--max-results 10] [--max-links 10] [--sort ${dsab007ContentsSortFields.join("|")}] [--sort-type ${dsab007ContentsSortDirections.join("|")}]
+  bun run src/cli.ts dsab007-contents --keyword <text> --start-date <YYYYMMDD> --end-date <YYYYMMDD> [options]
+
+Options:
+  --help
+    Show parameter descriptions.
+${formatParameterHelp()}
+
+Notes:
+  Semantic flags are preferred when available; raw DART aliases remain accepted for debugging.
+  Status labels show how directly the upstream meaning is confirmed: observed, inferred, unverified.
 `;
+
+const parseCliValue = (
+  key: CliOptionKey,
+  flag: string,
+  value: string,
+): CliOptionValue => {
+  switch (key) {
+    case "sort":
+      return parseLiteralOption(flag, value, dsab007ContentsSortFields);
+    case "sortType":
+      return parseLiteralOption(flag, value, dsab007ContentsSortDirections);
+    default:
+      return value;
+  }
+};
 
 export const parseDsab007CommandArgs = (
   argv: string[],
@@ -55,9 +88,20 @@ export const parseDsab007CommandArgs = (
 
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
+    if (token === "--help") {
+      options.help = true;
+      continue;
+    }
+
     const value = argv[index + 1];
 
     if (token === undefined || !token.startsWith("--")) {
+      continue;
+    }
+
+    const key = dsab007CliFlagToKey.get(token);
+
+    if (key === undefined) {
       continue;
     }
 
@@ -65,75 +109,7 @@ export const parseDsab007CommandArgs = (
       continue;
     }
 
-    switch (token) {
-      case "--keyword":
-        options.keyword = value;
-        break;
-      case "--query":
-        options.query = value;
-        break;
-      case "--start-date":
-        options.startDate = value;
-        break;
-      case "--end-date":
-        options.endDate = value;
-        break;
-      case "--current-page":
-        options.currentPage = value;
-        break;
-      case "--max-results":
-        options.maxResults = value;
-        break;
-      case "--max-links":
-        options.maxLinks = value;
-        break;
-      case "--sort":
-        options.sort = parseLiteralOption(
-          "--sort",
-          value,
-          dsab007ContentsSortFields,
-        );
-        break;
-      case "--sort-type":
-        options.sortType = parseLiteralOption(
-          "--sort-type",
-          value,
-          dsab007ContentsSortDirections,
-        );
-        break;
-      case "--text-crp-cik":
-        options.textCrpCik = value;
-        break;
-      case "--text-crp-nm":
-        options.textCrpNm = value;
-        break;
-      case "--text-presenter-nm":
-        options.textPresenterNm = value;
-        break;
-      case "--late-keyword":
-        options.lateKeyword = value;
-        break;
-      case "--flr-cik":
-        options.flrCik = value;
-        break;
-      case "--dsp-type-tab":
-        options.dspTypeTab = value;
-        break;
-      case "--toc-srch":
-        options.tocSrch = value;
-        break;
-      case "--doc-type":
-        options.docType = value;
-        break;
-      case "--report-name":
-        options.reportName = value;
-        break;
-      case "--decade-type":
-        options.decadeType = value;
-        break;
-      default:
-        break;
-    }
+    options[key] = parseCliValue(key, token, value);
 
     index += 1;
   }
@@ -145,29 +121,46 @@ export const runDsab007ContentsCommand = (
   argv: string[],
 ): Effect.Effect<void, unknown> =>
   Effect.gen(function* () {
-    // The CLI mirrors DART names on purpose so manual debugging matches the
-    // captured upstream contract without another translation layer.
+    // The command keeps the DART-shaped core internally while exposing clearer
+    // aliases and runtime help text for humans.
     const options = parseDsab007CommandArgs(argv);
+
+    if (options.help === true) {
+      return yield* Effect.sync(() => {
+        console.log(dsab007Usage);
+      });
+    }
+
     const result = yield* searchDsab007Contents({
       option: "contents",
-      currentPage: Number.parseInt(options.currentPage ?? "1", 10),
-      maxResults: Number.parseInt(options.maxResults ?? "10", 10),
-      maxLinks: Number.parseInt(options.maxLinks ?? "10", 10),
+      currentPage: Number.parseInt(String(options.currentPage ?? "1"), 10),
+      maxResults: Number.parseInt(String(options.maxResults ?? "10"), 10),
+      maxLinks: Number.parseInt(String(options.maxLinks ?? "10"), 10),
       sort: options.sort ?? "DATE",
       sortType: options.sortType ?? "desc",
-      keyword: options.keyword ?? options.query ?? "",
-      startDate: options.startDate ?? "",
-      endDate: options.endDate ?? "",
-      textCrpCik: options.textCrpCik,
-      textCrpNm: options.textCrpNm,
-      textPresenterNm: options.textPresenterNm,
-      lateKeyword: options.lateKeyword,
-      flrCik: options.flrCik,
-      dspTypeTab: options.dspTypeTab,
-      tocSrch: options.tocSrch,
-      docType: options.docType,
-      reportName: options.reportName,
-      decadeType: options.decadeType,
+      keyword: String(options.keyword ?? ""),
+      startDate: String(options.startDate ?? ""),
+      endDate: String(options.endDate ?? ""),
+      textCrpCik:
+        typeof options.textCrpCik === "string" ? options.textCrpCik : undefined,
+      textCrpNm:
+        typeof options.textCrpNm === "string" ? options.textCrpNm : undefined,
+      textPresenterNm:
+        typeof options.textPresenterNm === "string"
+          ? options.textPresenterNm
+          : undefined,
+      lateKeyword:
+        typeof options.lateKeyword === "string" ? options.lateKeyword : undefined,
+      flrCik: typeof options.flrCik === "string" ? options.flrCik : undefined,
+      dspTypeTab:
+        typeof options.dspTypeTab === "string" ? options.dspTypeTab : undefined,
+      tocSrch:
+        typeof options.tocSrch === "string" ? options.tocSrch : undefined,
+      docType: typeof options.docType === "string" ? options.docType : undefined,
+      reportName:
+        typeof options.reportName === "string" ? options.reportName : undefined,
+      decadeType:
+        typeof options.decadeType === "string" ? options.decadeType : undefined,
     });
 
     yield* Effect.sync(() => {
