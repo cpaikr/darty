@@ -15,6 +15,8 @@ const absoluteUrl = (href: string): string =>
 const collapseWhitespace = (value: string): string =>
   value.replace(/\s+/g, " ").trim();
 
+const noResultsMessage = "조회 결과가 없습니다.";
+
 const parseNumber = (value: string): number | undefined => {
   const digits = value.replace(/[^\d]/g, "");
   if (digits.length === 0) {
@@ -150,13 +152,40 @@ const parsePagination = (
     };
   });
 
+const hasNoResultsPlaceholder = ($: cheerio.CheerioAPI): boolean => {
+  const tbody = $("table.tbWideList tbody").first();
+  const directCellText = collapseWhitespace(
+    tbody
+      .children("td[colspan]")
+      .toArray()
+      .map((cell) => $(cell).text())
+      .join(" "),
+  );
+  const wrappedCellText = collapseWhitespace(
+    tbody
+      .children("tr")
+      .children("td[colspan]")
+      .toArray()
+      .map((cell) => $(cell).text())
+      .join(" "),
+  );
+
+  return (
+    directCellText === noResultsMessage || wrappedCellText === noResultsMessage
+  );
+};
+
 const parseRows = (
   $: cheerio.CheerioAPI,
   sourceUrl: string,
 ): Effect.Effect<ReadonlyArray<Dsab007ContentsRow>, ParseFailure> =>
   Effect.try({
-    try: () =>
-      $("table.tbWideList tbody tr")
+    try: () => {
+      if (hasNoResultsPlaceholder($)) {
+        return [];
+      }
+
+      return $("table.tbWideList tbody tr")
         .toArray()
         .map((row) => {
           const element = $(row);
@@ -202,7 +231,8 @@ const parseRows = (
             viewerUrl: absoluteUrl(href),
             receiptDate: parseDate(dateCell.text()),
           } satisfies Dsab007ContentsRow;
-        }),
+        });
+    },
     catch: (error) =>
       new ParseFailure({
         message: error instanceof Error ? error.message : "Failed to parse DART rows.",

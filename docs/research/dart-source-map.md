@@ -119,6 +119,8 @@ Observed no-result behavior:
 
 - `검색건수 : 0`
 - table body containing `조회 결과가 없습니다.`
+- on 2026-03-31, the placeholder appeared as a bare `td colspan="3">조회 결과가 없습니다.</td>` directly under `tbody`
+- on 2026-03-31, the no-result fragment omitted the `.pageInfo` pagination block entirely
 
 Current implication:
 

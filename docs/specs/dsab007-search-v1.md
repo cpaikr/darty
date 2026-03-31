@@ -148,6 +148,7 @@ Observed response:
 - count header, sort controls, result table, hidden `totalCnt`, pagination block
 - result row viewer link includes `rcpNo`, `dcmNo`, and the original keyword
 - attachment rows require preserving more of the raw report-name structure than a simple title/subtitle split
+- no-result responses may omit the pagination block entirely and currently render `조회 결과가 없습니다.` as a bare `td[colspan]` placeholder under `tbody`
 
 ## 9. Open Questions
 
