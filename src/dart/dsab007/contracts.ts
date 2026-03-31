@@ -11,11 +11,26 @@ const DateString = Schema.String.pipe(
 export const Dsab007Option = Schema.Literal("contents");
 export type Dsab007Option = typeof Dsab007Option.Type;
 
-export const Dsab007SortField = Schema.Literal("DATE", "rpt_nm");
-export type Dsab007SortField = typeof Dsab007SortField.Type;
+/**
+ * Observed in live `/dsab007/search.ax` contents fragments on 2026-03-31:
+ * `clickSort(this, 'DATE')` and `clickSort(this, 'rpt_nm')`.
+ */
+export const dsab007ContentsSortFields = ["DATE", "rpt_nm"] as const;
+export const Dsab007ContentsSortField = Schema.Literal(
+  ...dsab007ContentsSortFields,
+);
+export type Dsab007ContentsSortField = typeof Dsab007ContentsSortField.Type;
 
-export const Dsab007SortDirection = Schema.Literal("asc", "desc");
-export type Dsab007SortDirection = typeof Dsab007SortDirection.Type;
+/**
+ * Observed in live `/dsab007/search.ax` contents fragments on 2026-03-31:
+ * active sort anchors render `오름차순`/`내림차순`, matching `asc`/`desc`.
+ */
+export const dsab007ContentsSortDirections = ["asc", "desc"] as const;
+export const Dsab007ContentsSortDirection = Schema.Literal(
+  ...dsab007ContentsSortDirections,
+);
+export type Dsab007ContentsSortDirection =
+  typeof Dsab007ContentsSortDirection.Type;
 
 /**
  * Low-level request contract for the implemented `dsab007` contents mode.
@@ -35,8 +50,8 @@ export const Dsab007ContentsSearchInput = Schema.Struct({
     Schema.greaterThanOrEqualTo(1),
     Schema.lessThanOrEqualTo(100),
   ),
-  sort: Dsab007SortField,
-  sortType: Dsab007SortDirection,
+  sort: Dsab007ContentsSortField,
+  sortType: Dsab007ContentsSortDirection,
   keyword: Schema.NonEmptyString,
   startDate: DateString,
   endDate: DateString,

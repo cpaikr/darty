@@ -101,6 +101,12 @@ Observed replay payload shape for `option=contents`:
 - duplicated or replay-only fields such as `b_keyword`, `b_startDate`, `b_endDate`
 - optional company and presenter fields such as `textCrpCik`, `textCrpNm`, `textPresenterNm`
 
+Observed `option=contents` sort controls from the live `/dsab007/search.ax` fragment:
+
+- sort anchors render `clickSort(this, 'DATE')` and `clickSort(this, 'rpt_nm')`
+- the active sort direction toggles between `오름차순` and `내림차순`, matching `sortType=asc|desc`
+- no third sort field was observed in the fragment for this mode on 2026-03-31
+
 Observed replay result shape:
 
 - `검색건수 : N`

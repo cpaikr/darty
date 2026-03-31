@@ -120,6 +120,11 @@ Keep these replay helpers internal unless proven necessary:
 - `autoSearch`
 - `reportNamePopYn`
 
+Observed `option=contents` restriction:
+
+- `sort` is currently limited to `DATE | rpt_nm`
+- `sortType` is currently limited to `asc | desc`
+
 ## 7. Output Modes
 
 - `structured`

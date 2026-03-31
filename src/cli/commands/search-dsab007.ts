@@ -1,6 +1,12 @@
 import { Effect } from "effect";
 
 import { searchDsab007Contents } from "../../dart/dsab007/client.ts";
+import {
+  dsab007ContentsSortDirections,
+  dsab007ContentsSortFields,
+  type Dsab007ContentsSortDirection,
+  type Dsab007ContentsSortField,
+} from "../../dart/dsab007/contracts.ts";
 
 type CliOptions = {
   keyword?: string;
@@ -10,8 +16,8 @@ type CliOptions = {
   currentPage?: string;
   maxResults?: string;
   maxLinks?: string;
-  sort?: string;
-  sortType?: string;
+  sort?: Dsab007ContentsSortField;
+  sortType?: Dsab007ContentsSortDirection;
   textCrpCik?: string;
   textCrpNm?: string;
   textPresenterNm?: string;
@@ -24,8 +30,22 @@ type CliOptions = {
   decadeType?: string;
 };
 
+const parseLiteralOption = <Literal extends string>(
+  flag: string,
+  value: string,
+  allowed: readonly Literal[],
+): Literal => {
+  if (allowed.includes(value as Literal)) {
+    return value as Literal;
+  }
+
+  throw new Error(
+    `Invalid ${flag} "${value}". Expected one of: ${allowed.join(", ")}.`,
+  );
+};
+
 export const dsab007Usage = `Usage:
-  bun run src/cli.ts dsab007-contents --keyword <text> --start-date <YYYYMMDD> --end-date <YYYYMMDD> [--current-page 1] [--max-results 10] [--max-links 10] [--sort DATE|rpt_nm] [--sort-type asc|desc]
+  bun run src/cli.ts dsab007-contents --keyword <text> --start-date <YYYYMMDD> --end-date <YYYYMMDD> [--current-page 1] [--max-results 10] [--max-links 10] [--sort ${dsab007ContentsSortFields.join("|")}] [--sort-type ${dsab007ContentsSortDirections.join("|")}]
 `;
 
 export const parseDsab007CommandArgs = (
@@ -68,10 +88,18 @@ export const parseDsab007CommandArgs = (
         options.maxLinks = value;
         break;
       case "--sort":
-        options.sort = value;
+        options.sort = parseLiteralOption(
+          "--sort",
+          value,
+          dsab007ContentsSortFields,
+        );
         break;
       case "--sort-type":
-        options.sortType = value;
+        options.sortType = parseLiteralOption(
+          "--sort-type",
+          value,
+          dsab007ContentsSortDirections,
+        );
         break;
       case "--text-crp-cik":
         options.textCrpCik = value;
