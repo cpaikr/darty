@@ -117,6 +117,8 @@ export const runDsab007ContentsCommand = (
   argv: string[],
 ): Effect.Effect<void, unknown> =>
   Effect.gen(function* () {
+    // The CLI mirrors DART names on purpose so manual debugging matches the
+    // captured upstream contract without another translation layer.
     const options = parseDsab007CommandArgs(argv);
     const result = yield* searchDsab007Contents({
       option: "contents",

@@ -2,6 +2,12 @@ import type { Dsab007ContentsSearchInput } from "./contracts.ts";
 
 const orEmpty = (value: string | undefined): string => value ?? "";
 
+/**
+ * Expands the public low-level request into the full form payload DART expects.
+ *
+ * The duplicated `b_*` fields and fixed flags are part of the observed replay
+ * contract today, even though they are not all meaningful at the caller boundary.
+ */
 export const buildDsab007ContentsSearchForm = (
   input: Dsab007ContentsSearchInput,
 ): URLSearchParams => {

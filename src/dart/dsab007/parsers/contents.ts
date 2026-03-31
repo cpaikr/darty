@@ -193,6 +193,13 @@ const parseRows = (
       }),
   });
 
+/**
+ * Parses the HTML fragment returned by `dsab007/search.ax` for `option=contents`.
+ *
+ * The parser preserves the raw report-name string and only extracts a few stable
+ * segments from it. Attachment-style rows already show that aggressive
+ * normalization would lose information needed by later callers.
+ */
 export const parseDsab007ContentsSearchResponse = (
   html: string,
   request: Dsab007ContentsSearchInput,

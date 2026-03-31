@@ -82,6 +82,13 @@ export const fetchDsab007SearchHtml = (
     );
   });
 
+/**
+ * Validates a DART-shaped contents request, executes the `dsab007` replay, and
+ * parses the returned HTML fragment into the current contents-mode model.
+ *
+ * This is intentionally mode-specific at the parser layer and shared at the
+ * transport layer so additional `dsab007` modes can reuse the same client seam.
+ */
 export const searchDsab007Contents = (
   input: unknown,
 ): Effect.Effect<
