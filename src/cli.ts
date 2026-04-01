@@ -1,26 +1,17 @@
-import { Effect } from "effect";
+import { Command } from "commander";
 
-import {
-  dsab007Usage,
-  runDsab007ContentsCommand,
-} from "./cli/commands/search-dsab007.ts";
+import { createDsab007ContentsCommand } from "./cli/commands/search-dsab007.ts";
 
-const usage = `${dsab007Usage}`;
+const program = new Command()
+  .name("darty")
+  .description("Tool-oriented access to DART search and retrieval surfaces.")
+  .addCommand(createDsab007ContentsCommand());
 
-const main = Effect.gen(function* () {
-  const [command, ...rest] = process.argv.slice(2);
-
-  if (command !== "dsab007-contents") {
-    yield* Effect.sync(() => {
-      console.error(usage);
-    });
-    return yield* Effect.fail(new Error("Unsupported command."));
+program.parseAsync(process.argv).catch((error) => {
+  if (error instanceof Error) {
+    console.error(error.message);
+  } else {
+    console.error(String(error));
   }
-
-  yield* runDsab007ContentsCommand(rest);
-});
-
-Effect.runPromise(main).catch((error) => {
-  console.error(error);
   process.exitCode = 1;
 });

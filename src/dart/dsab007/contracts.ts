@@ -33,6 +33,7 @@ export type Dsab007ContentsSortDirection =
   typeof Dsab007ContentsSortDirection.Type;
 
 type CliFlag = `--${string}`;
+type ParameterAlias = string;
 
 export type Dsab007ContentsSearchParameterStatus =
   | "observed"
@@ -41,7 +42,7 @@ export type Dsab007ContentsSearchParameterStatus =
 
 export type Dsab007ContentsSearchParameterMetadata = {
   readonly description: string;
-  readonly cliFlags?: readonly CliFlag[];
+  readonly aliases?: readonly ParameterAlias[];
   readonly valueHint?: string;
   readonly status?: Dsab007ContentsSearchParameterStatus;
 };
@@ -49,6 +50,7 @@ export type Dsab007ContentsSearchParameterMetadata = {
 export type Dsab007ContentsSearchParameterDoc =
   Dsab007ContentsSearchParameterMetadata & {
     readonly key: string;
+    readonly aliases: readonly ParameterAlias[];
     readonly cliFlags: readonly CliFlag[];
     readonly status: Dsab007ContentsSearchParameterStatus;
   };
@@ -80,7 +82,7 @@ const dsab007ContentsSearchFields = {
   currentPage: annotateParameter(
     Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)),
     {
-      cliFlags: ["--page", "--current-page"],
+      aliases: ["page", "current-page"],
       valueHint: "<number>",
       description: "1-based search results page to request.",
       status: "observed",
@@ -92,7 +94,7 @@ const dsab007ContentsSearchFields = {
       Schema.lessThanOrEqualTo(100),
     ),
     {
-      cliFlags: ["--limit", "--max-results"],
+      aliases: ["limit", "max-results"],
       valueHint: "<number>",
       description: "Requested result count per page.",
       status: "observed",
@@ -104,98 +106,98 @@ const dsab007ContentsSearchFields = {
       Schema.lessThanOrEqualTo(100),
     ),
     {
-      cliFlags: ["--max-links"],
+      aliases: ["max-links"],
       valueHint: "<number>",
       description: "Requested number of pagination links in the DART pager.",
       status: "observed",
     },
   ),
   sort: annotateParameter(Dsab007ContentsSortField, {
-    cliFlags: ["--sort"],
+    aliases: ["sort"],
     valueHint: `<${dsab007ContentsSortFields.join("|")}>`,
     description: "Sort field for results.",
     status: "observed",
   }),
   sortType: annotateParameter(Dsab007ContentsSortDirection, {
-    cliFlags: ["--sort-direction", "--sort-type"],
+    aliases: ["sort-direction", "sort-type"],
     valueHint: `<${dsab007ContentsSortDirections.join("|")}>`,
     description: "Sort direction for the selected sort field.",
     status: "observed",
   }),
   keyword: annotateParameter(Schema.NonEmptyString, {
-    cliFlags: ["--keyword", "--query"],
+    aliases: ["keyword", "query"],
     valueHint: "<text>",
     description: "Main body-content search text.",
     status: "observed",
   }),
   startDate: annotateParameter(DateString, {
-    cliFlags: ["--start-date"],
+    aliases: ["start-date"],
     valueHint: "<YYYYMMDD>",
     description: "Inclusive receipt start date in YYYYMMDD format.",
     status: "observed",
   }),
   endDate: annotateParameter(DateString, {
-    cliFlags: ["--end-date"],
+    aliases: ["end-date"],
     valueHint: "<YYYYMMDD>",
     description: "Inclusive receipt end date in YYYYMMDD format.",
     status: "observed",
   }),
   textCrpCik: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--company-code", "--text-crp-cik"],
+    aliases: ["company-code", "text-crp-cik"],
     valueHint: "<text>",
     description: "Filter by DART company code.",
     status: "observed",
   }),
   textCrpNm: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--company-name", "--text-crp-nm"],
+    aliases: ["company-name", "text-crp-nm"],
     valueHint: "<text>",
     description: "Filter by company name as shown in DART search.",
     status: "observed",
   }),
   textPresenterNm: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--presenter-name", "--text-presenter-nm"],
+    aliases: ["presenter-name", "text-presenter-nm"],
     valueHint: "<text>",
     description: "Filter by presenter name when DART exposes that field.",
     status: "observed",
   }),
   lateKeyword: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--late-keyword"],
+    aliases: ["late-keyword"],
     valueHint: "<text>",
     description: "Secondary keyword field sent to DART.",
     status: "inferred",
   }),
   flrCik: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--filer-code", "--flr-cik"],
+    aliases: ["filer-code", "flr-cik"],
     valueHint: "<text>",
     description: "Filer-code filter sent to DART.",
     status: "inferred",
   }),
   dspTypeTab: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--disclosure-type-tab", "--dsp-type-tab"],
+    aliases: ["disclosure-type-tab", "dsp-type-tab"],
     valueHint: "<text>",
     description: "Disclosure-type tab selector sent to DART.",
     status: "inferred",
   }),
   tocSrch: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--toc-search", "--toc-srch"],
+    aliases: ["toc-search", "toc-srch"],
     valueHint: "<text>",
     description: "Table-of-contents search toggle or mode field.",
     status: "inferred",
   }),
   docType: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--document-type", "--doc-type"],
+    aliases: ["document-type", "doc-type"],
     valueHint: "<text>",
     description: "Document type filter label or code sent to DART.",
     status: "inferred",
   }),
   reportName: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--report-name"],
+    aliases: ["report-name"],
     valueHint: "<text>",
     description: "Report-name filter sent to DART.",
     status: "observed",
   }),
   decadeType: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    cliFlags: ["--decade-type"],
+    aliases: ["decade-type"],
     valueHint: "<text>",
     description: "Date-grouping selector sent to DART.",
     status: "inferred",
@@ -255,7 +257,10 @@ export const describeDsab007ContentsSearchInput =
           ...metadata,
           key: String(property.name),
           description: getParameterDescription(property),
-          cliFlags: metadata.cliFlags ?? [],
+          aliases: metadata.aliases ?? [],
+          cliFlags: (metadata.aliases ?? []).map(
+            (alias) => `--${alias}` as const,
+          ),
           status: metadata.status ?? "observed",
         };
       },

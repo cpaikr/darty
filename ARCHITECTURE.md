@@ -46,6 +46,8 @@ This repo now has two layers:
   Local CLI entrypoint and command dispatch.
 - `src/cli/commands/`
   Mode-specific CLI commands over the shared `dsab007` surface.
+- `src/tools/operations/`
+  Transport-agnostic operation metadata that CLI, MCP, or SDK layers can share.
 - `src/dart/dsab007/contracts.ts`
   DART-shaped request contracts for the implemented `dsab007` mode.
 - `src/dart/dsab007/request.ts`
