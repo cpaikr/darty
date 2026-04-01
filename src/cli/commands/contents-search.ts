@@ -6,8 +6,12 @@ import {
   type ContentsSearchRawInput,
   type ContentsSearchResult,
 } from "../../capabilities/contents-search/contract.ts";
-import { contentsSearchCapability } from "../../capabilities/contents-search/spec.ts";
-import type { CapabilityParameter } from "../../capabilities/types.ts";
+import { contentsSearchManifest } from "../../capabilities/contents-search/spec.ts";
+import {
+  capabilityExampleToArgv,
+  capabilityInputPropertyToCliValueHint,
+  type CapabilityInputProperty,
+} from "../../capabilities/types.ts";
 
 type CliOptionKey = keyof ContentsSearchRawInput;
 type CliOptionValue = number | string;
@@ -41,14 +45,14 @@ const parseIntegerOption = (value: string): number => {
   return Number.parseInt(value, 10);
 };
 
-const formatOptionFlags = (parameter: CapabilityParameter): string => {
+const formatOptionFlags = (parameter: CapabilityInputProperty): string => {
   const flags = parameter.cliFlags.join(", ");
-  return parameter.valueHint === undefined
-    ? flags
-    : `${flags} ${parameter.valueHint}`;
+  return `${flags} ${capabilityInputPropertyToCliValueHint(parameter)}`;
 };
 
-const formatParameterDescription = (parameter: CapabilityParameter): string => {
+const formatParameterDescription = (
+  parameter: CapabilityInputProperty,
+): string => {
   const details = [
     `${parameter.description} [${parameter.status}]`,
     parameter.required ? "Required." : undefined,
@@ -61,17 +65,15 @@ const formatParameterDescription = (parameter: CapabilityParameter): string => {
 };
 
 const buildRegisteredOption = (
-  parameter: CapabilityParameter,
+  parameter: CapabilityInputProperty,
 ): RegisteredOption => {
   const option = new Option(
     formatOptionFlags(parameter),
     formatParameterDescription(parameter),
   );
 
-  switch (parameter.key) {
-    case "page":
-      option.argParser((value) => parseIntegerOption(value));
-      break;
+  if (parameter.type === "integer") {
+    option.argParser((value) => parseIntegerOption(value));
   }
 
   return {
@@ -98,14 +100,17 @@ const extractCliOptions = (
 };
 
 const renderSupplementalHelp = (): string => {
-  const examples = contentsSearchCapability.examples
+  const examples = contentsSearchManifest.examples
     .map(
       (example) =>
-        `  # ${example.description}\n  bun run src/cli.ts ${contentsSearchCapability.name} ${example.argv.join(" ")}`,
+        `  # ${example.description}\n  bun run src/cli.ts ${contentsSearchManifest.name} ${capabilityExampleToArgv(
+          contentsSearchManifest.inputProperties,
+          example.input,
+        ).join(" ")}`,
     )
     .join("\n\n");
 
-  const notes = contentsSearchCapability.notes
+  const notes = contentsSearchManifest.notes
     .map((note) => `  - ${note}`)
     .join("\n");
 
@@ -115,12 +120,12 @@ const renderSupplementalHelp = (): string => {
 const buildContentsSearchCommand = (
   onRun?: (options: CliOptions) => Promise<void>,
 ): Command => {
-  const registeredOptions = contentsSearchCapability.parameters.map(
+  const registeredOptions = contentsSearchManifest.inputProperties.map(
     buildRegisteredOption,
   );
-  const command = new Command(contentsSearchCapability.name)
-    .summary(contentsSearchCapability.summary)
-    .description(contentsSearchCapability.description)
+  const command = new Command(contentsSearchManifest.name)
+    .summary(contentsSearchManifest.summary)
+    .description(contentsSearchManifest.description)
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {
@@ -181,7 +186,7 @@ export const parseContentsSearchCommandArgs = (argv: string[]): CliOptions => {
   });
   command.parse(argv, { from: "user" });
 
-  const registeredOptions = contentsSearchCapability.parameters.map(
+  const registeredOptions = contentsSearchManifest.inputProperties.map(
     buildRegisteredOption,
   );
 

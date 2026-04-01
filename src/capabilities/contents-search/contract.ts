@@ -1,40 +1,134 @@
 import { Schema } from "effect";
 
-import type { CapabilityParameter } from "../types.ts";
+import {
+  annotateCapabilityInput,
+  describeCapabilityInput,
+  type CapabilityInputProperty,
+} from "../types.ts";
 
 const datePattern = /^\d{8}$/;
+
+const ContentsSearchDateString = Schema.String.pipe(
+  Schema.pattern(datePattern),
+  Schema.annotations({
+    identifier: "ContentsSearchDateString",
+    description: "Date string in YYYYMMDD format.",
+  }),
+);
 
 export const contentsSearchSortByValues = ["date", "reportName"] as const;
 export type ContentsSearchSortBy =
   (typeof contentsSearchSortByValues)[number];
 
+const ContentsSearchSortBySchema = Schema.Literal(...contentsSearchSortByValues);
+
 export const contentsSearchSortDirectionValues = ["asc", "desc"] as const;
 export type ContentsSearchSortDirection =
   (typeof contentsSearchSortDirectionValues)[number];
 
-export type ContentsSearchRawInput = {
-  readonly page?: number | undefined;
-  readonly sortBy?: ContentsSearchSortBy | undefined;
-  readonly sortDirection?: ContentsSearchSortDirection | undefined;
-  readonly keyword?: string | undefined;
-  readonly startDate?: string | undefined;
-  readonly endDate?: string | undefined;
-  readonly companyCode?: string | undefined;
-  readonly presenterName?: string | undefined;
-  readonly reportName?: string | undefined;
-};
+const ContentsSearchSortDirectionSchema = Schema.Literal(
+  ...contentsSearchSortDirectionValues,
+);
 
-export type ContentsSearchRequest = {
-  readonly page: number;
-  readonly sortBy: ContentsSearchSortBy;
-  readonly sortDirection: ContentsSearchSortDirection;
-  readonly keyword: string;
-  readonly startDate: string;
-  readonly endDate: string;
-  readonly companyCode?: string | undefined;
-  readonly presenterName?: string | undefined;
-  readonly reportName?: string | undefined;
-};
+const defaultRequest = {
+  page: 1,
+  sortBy: "date",
+  sortDirection: "desc",
+} as const;
+
+const contentsSearchRequestFields = {
+  page: annotateCapabilityInput(
+    Schema.optionalWith(
+      Schema.Int.pipe(
+        Schema.greaterThanOrEqualTo(1),
+        Schema.lessThanOrEqualTo(100),
+      ),
+      { default: () => defaultRequest.page },
+    ),
+    {
+      aliases: ["page"],
+      cliValueHint: "<number>",
+      description: "1-based search results page to request.",
+      status: "observed",
+      defaultValue: defaultRequest.page,
+    },
+  ),
+  sortBy: annotateCapabilityInput(
+    Schema.optionalWith(ContentsSearchSortBySchema, {
+      default: () => defaultRequest.sortBy,
+    }),
+    {
+      aliases: ["sort-by"],
+      description: "Sort field for results.",
+      status: "observed",
+      defaultValue: defaultRequest.sortBy,
+    },
+  ),
+  sortDirection: annotateCapabilityInput(
+    Schema.optionalWith(ContentsSearchSortDirectionSchema, {
+      default: () => defaultRequest.sortDirection,
+    }),
+    {
+      aliases: ["sort-direction"],
+      description: "Sort direction for the selected sort field.",
+      status: "observed",
+      defaultValue: defaultRequest.sortDirection,
+    },
+  ),
+  keyword: annotateCapabilityInput(Schema.NonEmptyString, {
+    aliases: ["keyword"],
+    description: "Main body-content search text.",
+    status: "observed",
+  }),
+  startDate: annotateCapabilityInput(ContentsSearchDateString, {
+    aliases: ["start-date"],
+    cliValueHint: "<YYYYMMDD>",
+    description: "Inclusive receipt start date in YYYYMMDD format.",
+    status: "observed",
+  }),
+  endDate: annotateCapabilityInput(ContentsSearchDateString, {
+    aliases: ["end-date"],
+    cliValueHint: "<YYYYMMDD>",
+    description: "Inclusive receipt end date in YYYYMMDD format.",
+    status: "observed",
+  }),
+  companyCode: annotateCapabilityInput(Schema.optional(Schema.NonEmptyString), {
+    aliases: ["company-code"],
+    description: "Filter by DART company code.",
+    status: "observed",
+  }),
+  presenterName: annotateCapabilityInput(
+    Schema.optional(Schema.NonEmptyString),
+    {
+      aliases: ["presenter-name"],
+      description: "Filter by presenter name when DART exposes that field.",
+      status: "observed",
+    },
+  ),
+  reportName: annotateCapabilityInput(Schema.optional(Schema.NonEmptyString), {
+    aliases: ["report-name"],
+    description: "Filter by report title as currently honored by DART.",
+    status: "observed",
+  }),
+} as const;
+
+export const ContentsSearchRequestSchema = Schema.Struct(
+  contentsSearchRequestFields,
+).annotations({
+  identifier: "ContentsSearchRequest",
+  description: "Public semantic input contract for `contents-search`.",
+});
+
+export type ContentsSearchRawInput = typeof ContentsSearchRequestSchema.Encoded;
+export type ContentsSearchRequest = typeof ContentsSearchRequestSchema.Type;
+
+export const contentsSearchInputProperties = describeCapabilityInput(
+  ContentsSearchRequestSchema,
+);
+
+const contentsSearchInputPropertyByKey = new Map(
+  contentsSearchInputProperties.map((property) => [property.key, property]),
+);
 
 export type ContentsSearchItem = {
   readonly company: {
@@ -146,107 +240,76 @@ export class ContentsSearchFailure extends Schema.TaggedError<ContentsSearchFail
   },
 ) {}
 
-const defaultRequest = {
-  page: 1,
-  sortBy: "date",
-  sortDirection: "desc",
-} as const satisfies Pick<
-  ContentsSearchRequest,
-  "page" | "sortBy" | "sortDirection"
->;
-
-const formatDefaultValue = (value: string | number): string => String(value);
-
-export const contentsSearchParameters = [
-  {
-    key: "page",
-    aliases: ["page"],
-    cliFlags: ["--page"],
-    valueHint: "<number>",
-    description: "1-based search results page to request.",
-    status: "observed",
-    required: false,
-    defaultValue: formatDefaultValue(defaultRequest.page),
-  },
-  {
-    key: "sortBy",
-    aliases: ["sort-by"],
-    cliFlags: ["--sort-by"],
-    valueHint: `<${contentsSearchSortByValues.join("|")}>`,
-    description: "Sort field for results.",
-    status: "observed",
-    required: false,
-    defaultValue: defaultRequest.sortBy,
-  },
-  {
-    key: "sortDirection",
-    aliases: ["sort-direction"],
-    cliFlags: ["--sort-direction"],
-    valueHint: `<${contentsSearchSortDirectionValues.join("|")}>`,
-    description: "Sort direction for the selected sort field.",
-    status: "observed",
-    required: false,
-    defaultValue: defaultRequest.sortDirection,
-  },
-  {
-    key: "keyword",
-    aliases: ["keyword"],
-    cliFlags: ["--keyword"],
-    valueHint: "<text>",
-    description: "Main body-content search text.",
-    status: "observed",
-    required: true,
-  },
-  {
-    key: "startDate",
-    aliases: ["start-date"],
-    cliFlags: ["--start-date"],
-    valueHint: "<YYYYMMDD>",
-    description: "Inclusive receipt start date in YYYYMMDD format.",
-    status: "observed",
-    required: true,
-  },
-  {
-    key: "endDate",
-    aliases: ["end-date"],
-    cliFlags: ["--end-date"],
-    valueHint: "<YYYYMMDD>",
-    description: "Inclusive receipt end date in YYYYMMDD format.",
-    status: "observed",
-    required: true,
-  },
-  {
-    key: "companyCode",
-    aliases: ["company-code"],
-    cliFlags: ["--company-code"],
-    valueHint: "<text>",
-    description: "Filter by DART company code.",
-    status: "observed",
-    required: false,
-  },
-  {
-    key: "presenterName",
-    aliases: ["presenter-name"],
-    cliFlags: ["--presenter-name"],
-    valueHint: "<text>",
-    description: "Filter by presenter name when DART exposes that field.",
-    status: "observed",
-    required: false,
-  },
-  {
-    key: "reportName",
-    aliases: ["report-name"],
-    cliFlags: ["--report-name"],
-    valueHint: "<text>",
-    description: "Filter by report title as currently honored by DART.",
-    status: "observed",
-    required: false,
-  },
-] as const satisfies readonly CapabilityParameter[];
+type ContentsSearchInputKey = keyof ContentsSearchRawInput;
 
 const allowedKeys = new Set<string>(
-  contentsSearchParameters.map((parameter) => parameter.key),
+  contentsSearchInputProperties.map((property) => property.key),
 );
+
+const getContentsSearchInputProperty = (
+  key: ContentsSearchInputKey,
+): CapabilityInputProperty => {
+  const property = contentsSearchInputPropertyByKey.get(key);
+
+  if (property === undefined) {
+    throw new Error(`Missing contents-search input property metadata for "${key}".`);
+  }
+
+  return property;
+};
+
+const getDefaultValue = <Value extends string | number>(
+  property: CapabilityInputProperty,
+): Value => {
+  const defaultValue = property.defaultValue;
+
+  if (typeof defaultValue === "string" || typeof defaultValue === "number") {
+    return defaultValue as Value;
+  }
+
+  throw new Error(`Missing default value metadata for "${property.key}".`);
+};
+
+const getEnumValues = (
+  property: CapabilityInputProperty,
+): readonly string[] => {
+  if (property.enumValues === undefined) {
+    throw new Error(`Missing enum values for "${property.key}".`);
+  }
+
+  return property.enumValues.filter(
+    (value): value is string => typeof value === "string",
+  );
+};
+
+const getNumberBounds = (
+  property: CapabilityInputProperty,
+): {
+  readonly minimum: number;
+  readonly maximum: number;
+} => {
+  if (
+    typeof property.minimum === "number" &&
+    typeof property.maximum === "number"
+  ) {
+    return {
+      minimum: property.minimum,
+      maximum: property.maximum,
+    };
+  }
+
+  throw new Error(`Missing numeric bounds for "${property.key}".`);
+};
+
+const getExpectedRequiredValue = (
+  property: CapabilityInputProperty,
+): string => {
+  if (property.pattern !== undefined && property.cliValueHint !== undefined) {
+    return `a ${property.cliValueHint.slice(1, -1)} date string`;
+  }
+
+  return "a non-empty string";
+};
 
 const failInvalidParameter = (
   parameter: string,
@@ -280,10 +343,13 @@ const failMissingParameter = (
   });
 };
 
-const readOptionalText = (
+const readOptionalText = <
+  Key extends "companyCode" | "presenterName" | "reportName",
+>(
   input: Partial<ContentsSearchRawInput>,
-  key: keyof ContentsSearchRawInput,
+  key: Key,
 ): string | undefined => {
+  const property = getContentsSearchInputProperty(key);
   const value = input[key];
 
   if (value === undefined) {
@@ -299,7 +365,9 @@ const readOptionalText = (
     );
   }
 
-  if (value.length === 0) {
+  const minLength = property.minLength;
+
+  if (typeof minLength === "number" && minLength > 0 && value.length < minLength) {
     return failInvalidParameter(
       key,
       "empty_string",
@@ -311,12 +379,15 @@ const readOptionalText = (
   return value;
 };
 
-const readRequiredText = (
+const readRequiredText = <
+  Key extends "keyword" | "startDate" | "endDate",
+>(
   input: Partial<ContentsSearchRawInput>,
-  key: "keyword" | "startDate" | "endDate",
-  expected: string,
+  key: Key,
 ): string => {
+  const property = getContentsSearchInputProperty(key);
   const value = input[key];
+  const expected = getExpectedRequiredValue(property);
 
   if (value === undefined) {
     return failMissingParameter(key, expected);
@@ -331,7 +402,9 @@ const readRequiredText = (
     );
   }
 
-  if (value.length === 0) {
+  const minLength = property.minLength;
+
+  if (typeof minLength === "number" && minLength > 0 && value.length < minLength) {
     return failInvalidParameter(
       key,
       "empty_string",
@@ -346,11 +419,11 @@ const readRequiredText = (
 const readIntegerWithDefault = (
   input: Partial<ContentsSearchRawInput>,
   key: "page",
-  fallback: number,
-  min: number,
-  max: number,
 ): number => {
+  const property = getContentsSearchInputProperty(key);
   const value = input[key];
+  const fallback = getDefaultValue<number>(property);
+  const { minimum, maximum } = getNumberBounds(property);
 
   if (value === undefined) {
     return fallback;
@@ -365,25 +438,31 @@ const readIntegerWithDefault = (
     );
   }
 
-  if (value < min || value > max) {
+  if (value < minimum || value > maximum) {
     return failInvalidParameter(
       key,
       "out_of_range",
-      `Parameter "${key}" must be between ${min} and ${max}.`,
-      { actual: value, expected: `an integer between ${min} and ${max}` },
+      `Parameter "${key}" must be between ${minimum} and ${maximum}.`,
+      {
+        actual: value,
+        expected: `an integer between ${minimum} and ${maximum}`,
+      },
     );
   }
 
   return value;
 };
 
-const readChoiceWithDefault = <Choice extends string>(
+const readChoiceWithDefault = <
+  Key extends "sortBy" | "sortDirection",
+>(
   input: Partial<ContentsSearchRawInput>,
-  key: "sortBy" | "sortDirection",
-  choices: readonly Choice[],
-  fallback: Choice,
-): Choice => {
+  key: Key,
+): ContentsSearchRequest[Key] => {
+  const property = getContentsSearchInputProperty(key);
   const value = input[key];
+  const fallback = getDefaultValue<ContentsSearchRequest[Key]>(property);
+  const choices = getEnumValues(property);
 
   if (value === undefined) {
     return fallback;
@@ -398,8 +477,8 @@ const readChoiceWithDefault = <Choice extends string>(
     );
   }
 
-  if (choices.includes(value as Choice)) {
-    return value as Choice;
+  if (choices.includes(value)) {
+    return value as ContentsSearchRequest[Key];
   }
 
   return failInvalidParameter(
@@ -414,9 +493,14 @@ const readDateString = (
   input: Partial<ContentsSearchRawInput>,
   key: "startDate" | "endDate",
 ): string => {
-  const value = readRequiredText(input, key, "a YYYYMMDD date string");
+  const property = getContentsSearchInputProperty(key);
+  const value = readRequiredText(input, key);
 
-  if (!datePattern.test(value)) {
+  if (property.pattern === undefined) {
+    throw new Error(`Missing date pattern metadata for "${key}".`);
+  }
+
+  if (!new RegExp(property.pattern).test(value)) {
     return failInvalidParameter(
       key,
       "invalid_format",
@@ -444,20 +528,10 @@ export const resolveContentsSearchRequest = (
   }
 
   return {
-    page: readIntegerWithDefault(input, "page", defaultRequest.page, 1, 100),
-    sortBy: readChoiceWithDefault(
-      input,
-      "sortBy",
-      contentsSearchSortByValues,
-      defaultRequest.sortBy,
-    ),
-    sortDirection: readChoiceWithDefault(
-      input,
-      "sortDirection",
-      contentsSearchSortDirectionValues,
-      defaultRequest.sortDirection,
-    ),
-    keyword: readRequiredText(input, "keyword", "a non-empty string"),
+    page: readIntegerWithDefault(input, "page"),
+    sortBy: readChoiceWithDefault(input, "sortBy"),
+    sortDirection: readChoiceWithDefault(input, "sortDirection"),
+    keyword: readRequiredText(input, "keyword"),
     startDate: readDateString(input, "startDate"),
     endDate: readDateString(input, "endDate"),
     companyCode: readOptionalText(input, "companyCode"),

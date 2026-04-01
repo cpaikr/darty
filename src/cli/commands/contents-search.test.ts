@@ -4,8 +4,11 @@ import {
   ContentsSearchFailure,
   resolveContentsSearchRequest,
 } from "../../capabilities/contents-search/contract.ts";
-import { contentsSearchCapability } from "../../capabilities/contents-search/spec.ts";
-import type { CapabilityParameter } from "../../capabilities/types.ts";
+import { contentsSearchManifest } from "../../capabilities/contents-search/spec.ts";
+import {
+  capabilityInputPropertyToCliValueHint,
+  type CapabilityInputProperty,
+} from "../../capabilities/types.ts";
 import {
   createContentsSearchCommandWithRunner,
   contentsSearchUsage,
@@ -13,11 +16,8 @@ import {
   parseContentsSearchCommandArgs,
 } from "./contents-search.ts";
 
-const formatFlags = ({
-  cliFlags,
-  valueHint,
-}: CapabilityParameter) =>
-  valueHint === undefined ? cliFlags.join(", ") : `${cliFlags.join(", ")} ${valueHint}`;
+const formatFlags = (parameter: CapabilityInputProperty) =>
+  `${parameter.cliFlags.join(", ")} ${capabilityInputPropertyToCliValueHint(parameter)}`;
 
 describe("parseContentsSearchCommandArgs", () => {
   test("parses semantic flags into public capability keys", () => {
@@ -77,7 +77,7 @@ describe("parseContentsSearchCommandArgs", () => {
   });
 
   test("keeps help flags in sync with the shared capability spec", () => {
-    for (const parameter of contentsSearchCapability.parameters) {
+    for (const parameter of contentsSearchManifest.inputProperties) {
       expect(contentsSearchUsage).toContain(formatFlags(parameter));
     }
   });
