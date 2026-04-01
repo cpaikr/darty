@@ -16,6 +16,18 @@ const decode = (value: Uint8Array<ArrayBufferLike>) =>
   new TextDecoder().decode(value);
 
 describe("dsab007-contents CLI subprocess", () => {
+  test("prints root help to stdout", () => {
+    const result = runCli(["--help"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stdout).toContain("Usage: darty [options] [command]");
+    expect(stdout).toContain("Tool-oriented access to DART search and retrieval surfaces.");
+    expect(stdout).toContain("dsab007-contents [options]");
+    expect(stderr).toBe("");
+  });
+
   test("prints shared help text", () => {
     const result = runCli(["dsab007-contents", "--help"]);
     const stdout = decode(result.stdout);
@@ -30,6 +42,41 @@ describe("dsab007-contents CLI subprocess", () => {
       "The command always prints JSON to stdout and reserves stderr for errors.",
     );
     expect(stderr).toBe("");
+  });
+
+  test("fails missing required arguments with stderr only", () => {
+    const result = runCli(["dsab007-contents"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain(
+      "required option '--keyword, --query <text>' not specified",
+    );
+  });
+
+  test("fails invalid integer arguments with a non-zero exit code", () => {
+    const result = runCli([
+      "dsab007-contents",
+      "--keyword",
+      "배당",
+      "--start-date",
+      "20250331",
+      "--end-date",
+      "20260331",
+      "--page",
+      "nope",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain(
+      "option '--page, --current-page <number>' argument 'nope' is invalid",
+    );
+    expect(stderr).toContain('Expected an integer but received "nope".');
   });
 
   test("fails invalid enum arguments with a non-zero exit code", () => {

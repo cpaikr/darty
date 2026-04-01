@@ -1,13 +1,27 @@
 import { describe, expect, test } from "bun:test";
 
+import { dsab007ContentsOperationSpec } from "../../tools/operations/dsab007-contents.ts";
 import {
   buildDsab007ContentsSearchInput,
   createDsab007ContentsCommandWithRunner,
   dsab007Usage,
+  executeDsab007ContentsCommand,
   parseDsab007CommandArgs,
 } from "./search-dsab007.ts";
 
+const formatFlags = ({
+  cliFlags,
+  valueHint,
+}: (typeof dsab007ContentsOperationSpec.parameters)[number]) =>
+  valueHint === undefined ? cliFlags.join(", ") : `${cliFlags.join(", ")} ${valueHint}`;
+
 describe("parseDsab007CommandArgs", () => {
+  test("rejects missing required arguments early", () => {
+    expect(() => parseDsab007CommandArgs([])).toThrow(
+      "required option '--keyword, --query <text>' not specified",
+    );
+  });
+
   test("parses the observed contents sort unions", () => {
     const options = parseDsab007CommandArgs([
       "--keyword",
@@ -56,6 +70,23 @@ describe("parseDsab007CommandArgs", () => {
     ).toThrow("Allowed choices are asc, desc.");
   });
 
+  test("rejects invalid integer options early", () => {
+    expect(() =>
+      parseDsab007CommandArgs([
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20250331",
+        "--end-date",
+        "20260331",
+        "--page",
+        "nope",
+      ])
+    ).toThrow(
+      "option '--page, --current-page <number>' argument 'nope' is invalid. Expected an integer but received \"nope\".",
+    );
+  });
+
   test("accepts semantic aliases while preserving DART-shaped option keys", () => {
     const options = parseDsab007CommandArgs([
       "--keyword",
@@ -81,6 +112,12 @@ describe("parseDsab007CommandArgs", () => {
     expect(options.currentPage).toBe(2);
     expect(options.maxResults).toBe(25);
     expect(options.sortType).toBe("asc");
+  });
+
+  test("keeps help flags in sync with the shared operation spec", () => {
+    for (const parameter of dsab007ContentsOperationSpec.parameters) {
+      expect(dsab007Usage).toContain(formatFlags(parameter));
+    }
   });
 
   test("renders parameter descriptions in CLI usage", () => {
@@ -170,5 +207,83 @@ describe("parseDsab007CommandArgs", () => {
       currentPage: 2,
       sortType: "asc",
     });
+  });
+
+  test("prints a single JSON payload for successful command execution", async () => {
+    const writes: string[] = [];
+    let receivedInput:
+      | ReturnType<typeof buildDsab007ContentsSearchInput>
+      | undefined;
+
+    const result = {
+      request: {
+        option: "contents",
+        currentPage: 2,
+        maxResults: 10,
+        maxLinks: 10,
+        sort: "DATE",
+        sortType: "desc",
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        textCrpCik: undefined,
+        textCrpNm: undefined,
+        textPresenterNm: undefined,
+        lateKeyword: undefined,
+        flrCik: undefined,
+        dspTypeTab: undefined,
+        tocSrch: undefined,
+        docType: undefined,
+        reportName: undefined,
+        decadeType: undefined,
+      },
+      pagination: {
+        currentPage: 2,
+        totalPages: 3,
+        totalCount: 21,
+        returnedCount: 10,
+      },
+      rows: [],
+      fetchedAt: "2026-03-31T00:00:00.000Z",
+      sourceUrl: "https://dart.fss.or.kr/dsab007/search.ax",
+    } as const;
+
+    const command = createDsab007ContentsCommandWithRunner((options) =>
+      executeDsab007ContentsCommand(options, {
+        runSearch: async (input) => {
+          receivedInput = input;
+          return result;
+        },
+        writeStdout: (text) => {
+          writes.push(text);
+        },
+      }),
+    );
+
+    await command.parseAsync(
+      [
+        "node",
+        "dsab007-contents",
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20250331",
+        "--end-date",
+        "20260331",
+        "--page",
+        "2",
+      ],
+      { from: "node" },
+    );
+
+    expect(receivedInput).toEqual(
+      buildDsab007ContentsSearchInput({
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        currentPage: 2,
+      }),
+    );
+    expect(writes).toEqual([JSON.stringify(result, null, 2)]);
   });
 });
