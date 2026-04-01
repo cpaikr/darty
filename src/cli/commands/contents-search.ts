@@ -1,13 +1,13 @@
 import { Command, InvalidArgumentError, Option } from "commander";
 import { Effect } from "effect";
 
-import { contentsSearchOperationSpec } from "../../tools/operations/contents-search.ts";
+import { executeDefaultContentsSearch } from "../../app/contents-search.ts";
 import {
-  type ContentsSearchOperationResult,
   type ContentsSearchRawInput,
-} from "../../tools/operations/contents-search-input.ts";
-import { executeContentsSearch } from "../../tools/operations/contents-search-operation.ts";
-import type { OperationParameter } from "../../tools/operations/types.ts";
+  type ContentsSearchResult,
+} from "../../capabilities/contents-search/contract.ts";
+import { contentsSearchCapability } from "../../capabilities/contents-search/spec.ts";
+import type { CapabilityParameter } from "../../capabilities/types.ts";
 
 type CliOptionKey = keyof ContentsSearchRawInput;
 type CliOptionValue = number | string;
@@ -29,7 +29,7 @@ type RegisteredOption = {
 type ContentsSearchCommandExecutor = {
   readonly runOperation: (
     input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
-  ) => Promise<ContentsSearchOperationResult>;
+  ) => Promise<ContentsSearchResult>;
   readonly writeStdout: (text: string) => void;
 };
 
@@ -41,14 +41,14 @@ const parseIntegerOption = (value: string): number => {
   return Number.parseInt(value, 10);
 };
 
-const formatOptionFlags = (parameter: OperationParameter): string => {
+const formatOptionFlags = (parameter: CapabilityParameter): string => {
   const flags = parameter.cliFlags.join(", ");
   return parameter.valueHint === undefined
     ? flags
     : `${flags} ${parameter.valueHint}`;
 };
 
-const formatParameterDescription = (parameter: OperationParameter): string => {
+const formatParameterDescription = (parameter: CapabilityParameter): string => {
   const details = [
     `${parameter.description} [${parameter.status}]`,
     parameter.required ? "Required." : undefined,
@@ -61,7 +61,7 @@ const formatParameterDescription = (parameter: OperationParameter): string => {
 };
 
 const buildRegisteredOption = (
-  parameter: OperationParameter,
+  parameter: CapabilityParameter,
 ): RegisteredOption => {
   const option = new Option(
     formatOptionFlags(parameter),
@@ -70,8 +70,6 @@ const buildRegisteredOption = (
 
   switch (parameter.key) {
     case "page":
-    case "limit":
-    case "maxLinks":
       option.argParser((value) => parseIntegerOption(value));
       break;
   }
@@ -100,14 +98,14 @@ const extractCliOptions = (
 };
 
 const renderSupplementalHelp = (): string => {
-  const examples = contentsSearchOperationSpec.examples
+  const examples = contentsSearchCapability.examples
     .map(
       (example) =>
-        `  # ${example.description}\n  bun run src/cli.ts ${contentsSearchOperationSpec.name} ${example.argv.join(" ")}`,
+        `  # ${example.description}\n  bun run src/cli.ts ${contentsSearchCapability.name} ${example.argv.join(" ")}`,
     )
     .join("\n\n");
 
-  const notes = contentsSearchOperationSpec.notes
+  const notes = contentsSearchCapability.notes
     .map((note) => `  - ${note}`)
     .join("\n");
 
@@ -117,12 +115,12 @@ const renderSupplementalHelp = (): string => {
 const buildContentsSearchCommand = (
   onRun?: (options: CliOptions) => Promise<void>,
 ): Command => {
-  const registeredOptions = contentsSearchOperationSpec.parameters.map(
+  const registeredOptions = contentsSearchCapability.parameters.map(
     buildRegisteredOption,
   );
-  const command = new Command(contentsSearchOperationSpec.name)
-    .summary(contentsSearchOperationSpec.summary)
-    .description(contentsSearchOperationSpec.description)
+  const command = new Command(contentsSearchCapability.name)
+    .summary(contentsSearchCapability.summary)
+    .description(contentsSearchCapability.description)
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {
@@ -144,11 +142,11 @@ const buildContentsSearchCommand = (
 };
 
 const renderContentsSearchResult = (
-  result: ContentsSearchOperationResult,
+  result: ContentsSearchResult,
 ): string => JSON.stringify(result, null, 2);
 
 const defaultCommandExecutor: ContentsSearchCommandExecutor = {
-  runOperation: (input) => executeContentsSearch(input),
+  runOperation: (input) => executeDefaultContentsSearch(input),
   writeStdout: (text) => {
     console.log(text);
   },
@@ -183,7 +181,7 @@ export const parseContentsSearchCommandArgs = (argv: string[]): CliOptions => {
   });
   command.parse(argv, { from: "user" });
 
-  const registeredOptions = contentsSearchOperationSpec.parameters.map(
+  const registeredOptions = contentsSearchCapability.parameters.map(
     buildRegisteredOption,
   );
 

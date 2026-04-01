@@ -2,17 +2,17 @@ import { describe, expect, test } from "bun:test";
 import { Effect, Schema } from "effect";
 
 import {
-  ContentsSearchInput,
-  type ContentsSearchInput as ContentsSearchInputType,
-} from "./contracts.ts";
+  SourceContentsReplayInput,
+  type SourceContentsReplayInput as SourceContentsReplayInputType,
+} from "./replay-schema.ts";
 import {
   contentsReplayFieldContracts,
   contentsReplayFields,
 } from "./replay-contract.ts";
-import { buildContentsSearchForm } from "./request.ts";
+import { buildContentsSearchForm } from "./build-form.ts";
 
 const decodeInput = (input: unknown) =>
-  Effect.runPromise(Schema.decodeUnknown(ContentsSearchInput)(input));
+  Effect.runPromise(Schema.decodeUnknown(SourceContentsReplayInput)(input));
 
 const expectDecodeSuccess = async (input: unknown): Promise<void> => {
   const decoded = await decodeInput(input);
@@ -59,7 +59,7 @@ describe("dsab007 contents DART replay contract", () => {
         for (const testCase of fieldContract.serialization) {
           test(testCase.name, () => {
             const form = buildContentsSearchForm(
-              testCase.input as ContentsSearchInputType,
+              testCase.input as SourceContentsReplayInputType,
             );
 
             for (const [key, expectedValue] of Object.entries(

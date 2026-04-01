@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { Effect } from "effect";
 
-import { parseContentsSearchResponse } from "./contents.ts";
+import { parseContentsSearchHtml } from "./parse-html.ts";
 
 const populatedHtml = readFileSync(
   new URL("./fixtures/contents-populated-2026-03-31.html", import.meta.url),
@@ -48,10 +48,10 @@ const attachmentHtml = `
 </div>
 `;
 
-describe("parseContentsSearchResponse", () => {
+describe("parseContentsSearchHtml", () => {
   test("parses a selected live populated fixture captured on 2026-03-31", async () => {
     const result = await Effect.runPromise(
-      parseContentsSearchResponse(
+      parseContentsSearchHtml(
         populatedHtml,
         {
           option: "contents",
@@ -71,6 +71,8 @@ describe("parseContentsSearchResponse", () => {
     expect(result.pagination.totalCount).toBe(172171);
     expect(result.pagination.currentPage).toBe(1);
     expect(result.pagination.returnedCount).toBe(2);
+    expect(result.warnings).toEqual([]);
+    expect(result.droppedRowCount).toBe(0);
     expect(result.rows).toHaveLength(2);
     expect(result.rows[0]).toMatchObject({
       companyName: "유일에너테크",
@@ -104,7 +106,7 @@ describe("parseContentsSearchResponse", () => {
 
   test("parses the live no-result row shape with no pagination block", async () => {
     const result = await Effect.runPromise(
-      parseContentsSearchResponse(
+      parseContentsSearchHtml(
         noResultsHtml,
         {
           option: "contents",
@@ -124,12 +126,13 @@ describe("parseContentsSearchResponse", () => {
     expect(result.pagination.totalCount).toBe(0);
     expect(result.pagination.totalPages).toBe(0);
     expect(result.pagination.returnedCount).toBe(0);
+    expect(result.warnings).toEqual([]);
     expect(result.rows).toHaveLength(0);
   });
 
   test("preserves attachment-style report suffixes", async () => {
     const result = await Effect.runPromise(
-      parseContentsSearchResponse(
+      parseContentsSearchHtml(
         attachmentHtml,
         {
           option: "contents",

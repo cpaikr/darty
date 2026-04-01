@@ -59,6 +59,12 @@ This repo starts from first principles: define the product, investigate the live
 
 The first job is not broad implementation. It is locking a credible `dsab007` search core with `본문내용` as the first implemented mode.
 
+Current implementation stance:
+
+- public capability contract first
+- internal `dsab007` replay adapter second
+- one public result envelope that keeps references and source evidence explicit without exposing replay fields as the default API
+
 ## Implementation Baseline
 
 - runtime and package manager: `bun`

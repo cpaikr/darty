@@ -21,7 +21,7 @@
 
 The first tool should:
 
-- expose a DART-shaped contract for `dsab007/search.ax`
+- expose a semantic capability contract for contents search
 - share one execution core for `dsab007` mode replays
 - parse the returned HTML fragment into structured mode-specific results
 - start with `option=contents`
@@ -38,9 +38,13 @@ The first tool should not yet:
 ### Primary entities
 
 - `contents_search_input`
-  DART-shaped request for the implemented `contents` mode.
+  Semantic request for the public `contents-search` capability.
+- `source_contents_replay_input`
+  Internal DART replay request for the implemented `contents` mode.
 - `contents_row`
-  One parsed search result row returned by the `contents` mode.
+  One public search item returned by the capability.
+- `source_contents_row`
+  One parsed DART source row before public result mapping.
 - `filing_reference`
   Stable filing-level reference built around `rcpNo` and usually `dcmNo`.
 
@@ -68,15 +72,17 @@ These appear in the viewer contract, not the first search-result contract.
 ### `search_contents`
 
 - `purpose`
-  Replay `dsab007` contents search through a semantic contents-search operation backed by explicit DART-shaped request fields.
+  Search DART filing contents through a semantic capability backed by an internal `dsab007` replay adapter.
 - `inputs`
-  `option`, `currentPage`, `maxResults`, `maxLinks`, `sort`, `sortType`, `keyword`, `startDate`, `endDate`, and optional known `dsab007` contents fields
+  `page`, `sortBy`, `sortDirection`, `keyword`, `startDate`, `endDate`, and optional stable filters such as `companyCode`, `presenterName`, and `reportName`
 - `output`
-  `request`, `pagination`, `rows[]`
+  `result`, `metadata`, `references`, `warnings`
 - `result item`
-  `companyName`, `companyMarketLabel`, `corpCik`, `reportNameRaw`, `reportModifier`, `reportTitle`, `reportPeriod`, `reportNameSuffix`, `rcpNo`, `dcmNo`, `snippetHtml`, `snippetText`, `disclosureTypeLabel`, `contentTypeLabel`, `presenterName`, `receiptDate`, `rawInfoText`, `viewerPath`, `viewerUrl`
+  stable company, filing, match, reference, and evidence fields derived from parsed DART rows
 - `error cases`
-  `invalid_input`, `source_unavailable`, `source_changed`, `partial_retrieval`
+  `invalid_request`, `source_unavailable`, `source_changed`, `source_parse_failure`, `internal_error`
+- `warning cases`
+  `partial_retrieval`
 - `safety class`
   read-only
 
@@ -97,22 +103,19 @@ Section retrieval is intentionally deferred to a later spec once the filing-leve
 
 ## 6. Current Contract Stance
 
-Prefer an explicit DART-shaped layer first:
+Public external inputs should stay semantic:
 
-- `currentPage`
-- `maxResults`
-- `maxLinks`
-- `sort`
-- `sortType`
+- `page`
+- `sortBy`
+- `sortDirection`
 - `keyword`
 - `startDate`
 - `endDate`
-- optional `textCrpCik`
-- optional `textCrpNm`
-- optional `textPresenterNm`
-- optional mode-known fields such as `docType`, `reportName`, `tocSrch`
+- optional `companyCode`
+- optional `presenterName`
+- optional `reportName`
 
-Stable public inputs for the current external API:
+Keep the low-level DART replay layer internal:
 
 - `option`
 - `currentPage`
@@ -124,7 +127,6 @@ Stable public inputs for the current external API:
 - `startDate`
 - `endDate`
 - optional `textCrpCik`
-- optional `textCrpNm`
 - optional `textPresenterNm`
 - optional `reportName`
 
@@ -153,7 +155,7 @@ Observed `option=contents` restriction:
 ## 7. Output Modes
 
 - `structured`
-  parsed mode-specific rows plus references and pagination
+  capability-owned result envelope with public items, metadata, references, and warnings
 - `raw`
   original HTML fragment from `/dsab007/search.ax`
 
@@ -170,9 +172,12 @@ Observed request:
 Current implementation note:
 
 - live validation on 2026-03-31 still suggests DART may ignore caller-controlled `maxResults`
-- the low-level contract should expose the field anyway, but callers must not assume the site honors it
+- the replay adapter should expose the field internally, but the public capability should not present it as a stable caller-controlled input
 - live validation on 2026-04-01 still shows `maxLinks` being accepted but ignored for `option=contents`
+- the public capability should treat page size and pager width as upstream-controlled for now
 - live validation on 2026-04-01 shows `textCrpCik`, `textPresenterNm`, and `reportName` affecting results, while `textCrpNm` is currently accepted but ignored for the replay shape used here
+- the capability should depend on a capability-owned provider result, not on parsed DART source pages directly
+- provider-specific source failures should be normalized into capability-owned provider errors before they reach capability execution
 
 Observed response:
 
@@ -185,4 +190,4 @@ Observed response:
 ## 9. Open Questions
 
 - Which `dsab007` mode should be implemented second?
-- How much of the low-level DART request shape should remain public once a semantic wrapper layer exists?
+- Which additional filters, if any, deserve promotion from the replay adapter into the stable public capability contract?

@@ -1,5 +1,5 @@
-import type { ContentsSearchInput } from "./contracts.ts";
-import type { ContentsSearchResult } from "./models.ts";
+import type { SourceContentsReplayInput } from "./replay-schema.ts";
+import type { SourceContentsSearchPage } from "./source-model.ts";
 
 /**
  * Internal replay probes for the low-level DART-shaped contents contract.
@@ -18,7 +18,7 @@ export const baselineContentsReplayInput = {
   keyword: "배당",
   startDate: "20250331",
   endDate: "20260331",
-} as const satisfies ContentsSearchInput;
+} as const satisfies SourceContentsReplayInput;
 
 export type ContentsReplayField =
   | "option"
@@ -47,13 +47,13 @@ export type ContentsLocalCase = {
 
 export type ContentsSerializationCase = {
   readonly name: string;
-  readonly input: ContentsSearchInput;
+  readonly input: SourceContentsReplayInput;
   readonly expectedEntries: Readonly<Record<string, string>>;
 };
 
 type LiveProbeBaselineContext = {
-  readonly request: ContentsSearchInput;
-  readonly result: ContentsSearchResult;
+  readonly request: SourceContentsReplayInput;
+  readonly result: SourceContentsSearchPage;
 };
 
 type LiveProbeContext = {
@@ -91,7 +91,7 @@ export type ContentsLiveProbe = {
   readonly expectation: ContentsLiveExpectation;
   readonly buildRequest: (
     context: LiveProbeContext,
-  ) => ContentsSearchInput;
+  ) => SourceContentsReplayInput;
 };
 
 export type ContentsReplayFieldContract = {
@@ -104,8 +104,8 @@ export type ContentsReplayFieldContract = {
 };
 
 const withInput = (
-  overrides: Partial<ContentsSearchInput>,
-): ContentsSearchInput => ({
+  overrides: Partial<SourceContentsReplayInput>,
+): SourceContentsReplayInput => ({
   ...baselineContentsReplayInput,
   ...overrides,
 });
@@ -119,7 +119,7 @@ const withUnknownInput = (
 
 const buildSerializationCase = (
   name: string,
-  overrides: Partial<ContentsSearchInput>,
+  overrides: Partial<SourceContentsReplayInput>,
   expectedEntries: Readonly<Record<string, string>>,
 ): ContentsSerializationCase => ({
   name,
@@ -131,7 +131,7 @@ const buildLiveRequestProbe = (
   name: string,
   classification: ContentsLiveClassification,
   expectation: ContentsLiveExpectation,
-  overrides: Partial<ContentsSearchInput>,
+  overrides: Partial<SourceContentsReplayInput>,
 ): ContentsLiveProbe => ({
   name,
   classification,
@@ -141,7 +141,7 @@ const buildLiveRequestProbe = (
 
 const getRequiredBaselineRow = (
   context: LiveProbeContext,
-): ContentsSearchResult["rows"][number] => {
+): SourceContentsSearchPage["rows"][number] => {
   const row = context.baseline.result.rows[0];
   if (row === undefined) {
     throw new Error("Baseline live probe returned no rows.");

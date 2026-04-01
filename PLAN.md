@@ -1,64 +1,79 @@
 # Active Plan
 
-Current job: rename the public contents-search surface so `dsab007` stays at the adapter boundary instead of leaking through semantic command, operation, and symbol names.
+Current job: finish the `contents-search` provider boundary so the capability layer is free of source imports and provider errors are normalized before they cross the seam.
 
 ## Goal
 
-Keep defaults, validation, and structured input errors centralized for the semantic contents-search capability while preserving `src/dart/dsab007` as the internal replay adapter.
+Finish the boundary refactor:
+
+- transports depend only on a stable semantic capability contract
+- the capability depends on a capability-owned provider port and provider result
+- provider errors are normalized before they reach the capability executor
+- DART replay fields, source page models, and default provider wiring stay outside `src/capabilities/`
 
 ## In Scope
 
-- Rename the public CLI command from `dsab007-contents` to `contents-search`
-- Rename semantic operation modules and symbols to drop `dsab007`
-- Keep `src/dart/dsab007` as the upstream-specific module boundary
-- Add structured domain validation errors for operation input resolution
-- Map resolved semantic input into the existing internal DART replay contract
-- Update the CLI to expose only semantic flags and reject invalid domain input before execution
-- Make operation metadata derive from the semantic contract instead of a duplicated required/default table
-- Update tests to match the new semantic public surface
+- Remove remaining `src/sources/*` imports from `src/capabilities/contents-search/`
+- Add a capability-owned provider error and normalize `dsab007` failures into it
+- Move default provider wiring into a small composition root outside the capability layer
+- Update tests and nearby docs to reflect the tighter seam
 
 ## Out Of Scope
 
 - MCP implementation
-- SDK implementation
-- Broad redesign of unrelated `dsab007` client or parser modules
-- Multi-operation planning beyond contents search
+- New DART operations beyond `contents-search`
+- Viewer or section retrieval redesign
+- Broad schema unification across all capabilities
 
 ## Work Plan
 
-- [x] Review current CLI, operation metadata, and internal DART contract seams
-- [x] Add semantic input definitions, defaults, and structured resolution errors
-- [x] Add semantic-to-DART mapping and wire execution through it
-- [x] Switch CLI parsing/help/tests to semantic names only
-- [x] Derive operation metadata from the semantic input definition
-- [x] Run targeted tests and update this plan with results
+- [x] Confirm the remaining leak and restate the targeted refactor scope
+- [x] Remove source imports from `src/capabilities/contents-search/`
+- [x] Add a capability-owned provider error and normalize `dsab007` failures into it
+- [x] Move default provider wiring outside the capability layer
+- [x] Update tests/docs and rerun typecheck/tests
 
 ## Progress
 
-- Renamed the public semantic capability to `contents-search` while leaving the upstream adapter under `src/dart/dsab007/`
-- Renamed the semantic input, operation, and CLI modules to `contents-search*`
-- Removed `Dsab007`/`dsab007` prefixes from module-local exports inside `src/dart/dsab007/`
-- Kept low-level replay behavior and upstream URLs explicit at the adapter boundary
-- Preserved the semantic input module with:
-  raw input, resolved input, structured validation errors, internal DART mapper, and semantic result echoing
-- Added a shared semantic operation executor so CLI and future transports can reuse the same resolve -> replay -> result-shaping flow
-- Rewired the CLI so Commander handles only flag syntax while the shared operation layer handles required fields, defaults, choices, date format, and result shaping
-- Removed raw DART-shaped public aliases from the CLI and shared operation help
-- Updated command output to echo the resolved semantic request instead of the internal DART replay input
-- Re-scoped the old DART-shaped probe catalog as an internal replay contract rather than a public tool contract
-- Added semantic resolver, operation executor, replay-contract, CLI unit, and CLI subprocess coverage
+- Reused the existing root `PLAN.md` instead of creating another competing plan file
+- Moved the public surface under `src/capabilities/contents-search/`
+- Moved the DART replay adapter under `src/sources/dart/dsab007/contents/`
+- Removed the old `src/tools/operations/` public seam
+- Narrowed the public input contract to:
+  `page`, `sortBy`, `sortDirection`, `keyword`, `startDate`, `endDate`, optional `companyCode`, `presenterName`, and `reportName`
+- Removed caller-facing `limit`, `maxLinks`, and `companyName` from the public contract because they are not robust external controls for the current source behavior
+- Replaced the public result with a capability-owned envelope:
+  `result`, `metadata`, `references`, `warnings`
+- Split public items from source rows so parser-owned fields now sit under `evidence` and `references` rather than leaking through as the default API
+- Added row-level partial parsing in the DART adapter with dropped-row warnings instead of unconditional whole-request failure
+- Added capability-owned structured failure mapping so CLI and future MCP transports do not depend on source-adapter error types
+- Moved semantic-to-replay mapping behind a source-adapter entrypoint instead of keeping raw DART field translation in the capability executor
+- Added explicit observed upstream paging metadata to the public result envelope
+- Rewired the CLI to import only the public capability contract and metadata
+- Updated the architecture and spec docs to describe one external semantic contract and one internal replay contract
+- Post-implementation review showed one remaining leak: the capability executor still depended on `SourceContentsSearchPage`, so capability tests had to mock DART-shaped pages directly
+- The next step is to replace that seam with a capability-owned provider result and move source-page mapping into the `dsab007` adapter
+- Added `src/capabilities/contents-search/provider.ts` so the capability now owns the provider port and result shape used by transports and adapters
+- Moved source-row and source-page mapping into `src/sources/dart/dsab007/contents/search.ts`, so the `dsab007` adapter now owns both replay translation and source-to-provider translation
+- Simplified capability tests so they now mock provider-owned results instead of DART-shaped parsed pages
+- Added `internal_error` to the capability failure taxonomy so unexpected internal bugs are no longer mislabeled as source parse failures
+- Updated architecture/spec docs to describe the provider seam explicitly
+- Post-implementation review showed two remaining leaks: `src/capabilities/contents-search/execute.ts` still imported `dsab007` as the default provider, and capability failure mapping still depended on source-adapter error classes
+- The last cleanup step is to normalize provider errors at the provider boundary and move default provider selection into a composition module outside `src/capabilities/`
+- Added `ContentsSearchProviderError` in `src/capabilities/contents-search/provider.ts`, so providers now normalize retryability and failure shape before crossing the seam
+- Removed all `src/sources/*` imports from `src/capabilities/contents-search/` and made capability execution fully provider-injected
+- Added `src/app/contents-search.ts` as the composition root that wires the default `dsab007` provider for CLI and other hosts
+- Updated source-adapter tests to cover provider-error normalization and capability tests to use provider-owned errors instead of DART-specific error classes
 
 ## Verification
 
 - `bun run typecheck`
-- `bun test src/tools/operations/contents-search-input.test.ts src/tools/operations/contents-search-operation.test.ts src/cli/commands/contents-search.test.ts test/cli/contents-search-cli.test.ts src/dart/dsab007/replay-contract.test.ts`
+- `bun test`
 
 ## Exit Criteria
 
-- The public `contents-search` CLI no longer exposes raw DART-shaped aliases
-- `dsab007` remains the explicit upstream adapter boundary instead of the default public prefix
-- Defaults and validation come from one shared semantic resolver
-- Invalid semantic input is rejected before any network execution
-- Internal DART replay details remain isolated behind a mapper
-- The low-level DART probe catalog is clearly internal replay coverage, not the public tool contract
-- Tests cover the new semantic contract, shared execution path, and internal replay seam
+- `src/capabilities/contents-search/*` no longer imports from `src/sources/*`
+- Provider errors are capability-owned rather than source-adapter error classes
+- Default provider selection happens outside the capability layer
+- Capability tests no longer need DART-specific imports for error cases
+- Docs still describe one external contract and one internal replay contract

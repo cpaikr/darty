@@ -5,28 +5,28 @@ import {
 } from "@effect/platform";
 import { Effect, ParseResult, Schema } from "effect";
 
+import { buildContentsSearchForm } from "./build-form.ts";
+import { parseContentsSearchHtml } from "./parse-html.ts";
 import {
-  ContentsSearchInput,
-  type ContentsSearchInput as ContentsSearchInputType,
-} from "./contracts.ts";
-import { buildContentsSearchForm } from "./request.ts";
-import { parseContentsSearchResponse } from "./parsers/contents.ts";
-import { type ContentsSearchResult } from "./models.ts";
+  SourceContentsReplayInput,
+  type SourceContentsReplayInput as SourceContentsReplayInputType,
+} from "./replay-schema.ts";
+import { type SourceContentsSearchPage } from "./source-model.ts";
 import {
   InvalidInput,
   ParseFailure,
   SourceChanged,
   SourceUnavailable,
-} from "../errors.ts";
+} from "../../errors.ts";
 
 export const searchUrl = "https://dart.fss.or.kr/dsab007/search.ax";
 const chromeDesktopUserAgent =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 
-const decodeQuery = (
+const decodeReplayInput = (
   input: unknown,
-): Effect.Effect<ContentsSearchInputType, InvalidInput> =>
-  Schema.decodeUnknown(ContentsSearchInput)(input).pipe(
+): Effect.Effect<SourceContentsReplayInputType, InvalidInput> =>
+  Schema.decodeUnknown(SourceContentsReplayInput)(input).pipe(
     Effect.mapError(
       (error) =>
         new InvalidInput({
@@ -35,14 +35,7 @@ const decodeQuery = (
     ),
   );
 
-/**
- * Executes the observed `dsab007/search.ax` form replay and returns the raw
- * HTML fragment DART uses to render the result table.
- *
- * Transport failures and body decoding failures are narrowed here so the parser
- * can treat the response body as the only remaining source of change.
- */
-export const fetchSearchHtml = (
+export const fetchContentsSearchHtml = (
   form: URLSearchParams,
 ): Effect.Effect<
   string,
@@ -56,10 +49,7 @@ export const fetchSearchHtml = (
         "content-type",
         "application/x-www-form-urlencoded; charset=UTF-8",
       ),
-      HttpClientRequest.setHeader(
-        "user-agent",
-        chromeDesktopUserAgent,
-      ),
+      HttpClientRequest.setHeader("user-agent", chromeDesktopUserAgent),
       HttpClientRequest.bodyText(
         form.toString(),
         "application/x-www-form-urlencoded; charset=UTF-8",
@@ -91,22 +81,15 @@ export const fetchSearchHtml = (
     );
   });
 
-/**
- * Validates a DART-shaped contents request, executes the `dsab007` replay, and
- * parses the returned HTML fragment into the current contents-mode model.
- *
- * This is intentionally mode-specific at the parser layer and shared at the
- * transport layer so additional `dsab007` modes can reuse the same client seam.
- */
-export const searchContents = (
+export const searchContentsSourcePage = (
   input: unknown,
 ): Effect.Effect<
-  ContentsSearchResult,
+  SourceContentsSearchPage,
   InvalidInput | SourceUnavailable | SourceChanged | ParseFailure
 > =>
   Effect.gen(function* () {
-    const request = yield* decodeQuery(input);
+    const request = yield* decodeReplayInput(input);
     const form = buildContentsSearchForm(request);
-    const html = yield* fetchSearchHtml(form);
-    return yield* parseContentsSearchResponse(html, request, searchUrl);
+    const html = yield* fetchContentsSearchHtml(form);
+    return yield* parseContentsSearchHtml(html, request, searchUrl);
   }).pipe(Effect.provide(FetchHttpClient.layer));

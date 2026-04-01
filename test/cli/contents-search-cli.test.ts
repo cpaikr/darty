@@ -36,12 +36,15 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty contents-search [options]");
     expect(stdout).toContain(
-      "Semantic, read-only access to DART filing contents search backed by dsab007.",
+      "Semantic, read-only access to DART filing contents search backed by an internal",
     );
+    expect(stdout).toContain("dsab007 replay adapter.");
     expect(stdout).toContain(
-      "The command always prints JSON to stdout and reserves stderr for errors.",
+      "DART currently controls page size and pager width for this mode",
     );
     expect(stdout).not.toContain("text-crp-nm");
+    expect(stdout).not.toContain("--limit");
+    expect(stdout).not.toContain("--company-name");
     expect(stderr).toBe("");
   });
 

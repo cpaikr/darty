@@ -8,55 +8,47 @@ const DateString = Schema.String.pipe(
   }),
 );
 
-export const ContentsOption = Schema.Literal("contents");
-export type ContentsOption = typeof ContentsOption.Type;
+export const SourceContentsOption = Schema.Literal("contents");
+export type SourceContentsOption = typeof SourceContentsOption.Type;
 
-/**
- * Observed in live `/dsab007/search.ax` contents fragments on 2026-03-31:
- * `clickSort(this, 'DATE')` and `clickSort(this, 'rpt_nm')`.
- */
-export const contentsSortFields = ["DATE", "rpt_nm"] as const;
-export const ContentsSortField = Schema.Literal(
-  ...contentsSortFields,
+export const sourceContentsSortFields = ["DATE", "rpt_nm"] as const;
+export const SourceContentsSortField = Schema.Literal(
+  ...sourceContentsSortFields,
 );
-export type ContentsSortField = typeof ContentsSortField.Type;
+export type SourceContentsSortField = typeof SourceContentsSortField.Type;
 
-/**
- * Observed in live `/dsab007/search.ax` contents fragments on 2026-03-31:
- * active sort anchors render `오름차순`/`내림차순`, matching `asc`/`desc`.
- */
-export const contentsSortDirections = ["asc", "desc"] as const;
-export const ContentsSortDirection = Schema.Literal(
-  ...contentsSortDirections,
+export const sourceContentsSortDirections = ["asc", "desc"] as const;
+export const SourceContentsSortDirection = Schema.Literal(
+  ...sourceContentsSortDirections,
 );
-export type ContentsSortDirection =
-  typeof ContentsSortDirection.Type;
+export type SourceContentsSortDirection =
+  typeof SourceContentsSortDirection.Type;
 
 type CliFlag = `--${string}`;
 type ParameterAlias = string;
 
-export type SearchParameterStatus =
+export type SourceParameterStatus =
   | "observed"
   | "inferred"
   | "unverified";
 
-export type SearchParameterMetadata = {
+export type SourceParameterMetadata = {
   readonly description: string;
   readonly aliases?: readonly ParameterAlias[];
   readonly valueHint?: string;
-  readonly status?: SearchParameterStatus;
+  readonly status?: SourceParameterStatus;
 };
 
-export type SearchParameterDoc =
-  SearchParameterMetadata & {
+export type SourceParameterDoc =
+  SourceParameterMetadata & {
     readonly key: string;
     readonly aliases: readonly ParameterAlias[];
     readonly cliFlags: readonly CliFlag[];
-    readonly status: SearchParameterStatus;
+    readonly status: SourceParameterStatus;
   };
 
-const searchParameterMetadataAnnotationId = Symbol.for(
-  "darty/dsab007/contents/parameterMetadata",
+const sourceParameterMetadataAnnotationId = Symbol.for(
+  "darty/source/dart/dsab007/contents/parameterMetadata",
 );
 
 type AnnotatableParameter<S> = S & {
@@ -67,24 +59,24 @@ type AnnotatableParameter<S> = S & {
 
 const annotateParameter = <S>(
   schema: S,
-  metadata: SearchParameterMetadata,
+  metadata: SourceParameterMetadata,
 ): S =>
   (schema as AnnotatableParameter<S>).annotations({
     description: metadata.description,
-    [searchParameterMetadataAnnotationId]: metadata,
+    [sourceParameterMetadataAnnotationId]: metadata,
   }) as S;
 
-const contentsSearchFields = {
-  option: annotateParameter(ContentsOption, {
-    description: "DART search mode. Fixed to `contents` for this command.",
+const sourceContentsReplayFields = {
+  option: annotateParameter(SourceContentsOption, {
+    description: "DART search mode. Fixed to `contents` for this adapter.",
     status: "observed",
   }),
   currentPage: annotateParameter(
     Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)),
     {
-      aliases: ["page", "current-page"],
+      aliases: ["current-page"],
       valueHint: "<number>",
-      description: "1-based search results page to request.",
+      description: "1-based results page sent to DART.",
       status: "observed",
     },
   ),
@@ -94,9 +86,9 @@ const contentsSearchFields = {
       Schema.lessThanOrEqualTo(100),
     ),
     {
-      aliases: ["limit", "max-results"],
+      aliases: ["max-results"],
       valueHint: "<number>",
-      description: "Requested result count per page.",
+      description: "Requested result count per page sent to DART.",
       status: "observed",
     },
   ),
@@ -108,24 +100,24 @@ const contentsSearchFields = {
     {
       aliases: ["max-links"],
       valueHint: "<number>",
-      description: "Requested number of pagination links in the DART pager.",
+      description: "Requested pager width sent to DART.",
       status: "observed",
     },
   ),
-  sort: annotateParameter(ContentsSortField, {
+  sort: annotateParameter(SourceContentsSortField, {
     aliases: ["sort"],
-    valueHint: `<${contentsSortFields.join("|")}>`,
-    description: "Sort field for results.",
+    valueHint: `<${sourceContentsSortFields.join("|")}>`,
+    description: "Sort field for the replay request.",
     status: "observed",
   }),
-  sortType: annotateParameter(ContentsSortDirection, {
-    aliases: ["sort-direction", "sort-type"],
-    valueHint: `<${contentsSortDirections.join("|")}>`,
-    description: "Sort direction for the selected sort field.",
+  sortType: annotateParameter(SourceContentsSortDirection, {
+    aliases: ["sort-type"],
+    valueHint: `<${sourceContentsSortDirections.join("|")}>`,
+    description: "Sort direction for the replay request.",
     status: "observed",
   }),
   keyword: annotateParameter(Schema.NonEmptyString, {
-    aliases: ["keyword", "query"],
+    aliases: ["keyword"],
     valueHint: "<text>",
     description: "Main body-content search text.",
     status: "observed",
@@ -133,31 +125,31 @@ const contentsSearchFields = {
   startDate: annotateParameter(DateString, {
     aliases: ["start-date"],
     valueHint: "<YYYYMMDD>",
-    description: "Inclusive receipt start date in YYYYMMDD format.",
+    description: "Inclusive receipt start date.",
     status: "observed",
   }),
   endDate: annotateParameter(DateString, {
     aliases: ["end-date"],
     valueHint: "<YYYYMMDD>",
-    description: "Inclusive receipt end date in YYYYMMDD format.",
+    description: "Inclusive receipt end date.",
     status: "observed",
   }),
   textCrpCik: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["company-code", "text-crp-cik"],
+    aliases: ["text-crp-cik"],
     valueHint: "<text>",
-    description: "Filter by DART company code.",
+    description: "Company code field sent to DART.",
     status: "observed",
   }),
   textCrpNm: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["company-name", "text-crp-nm"],
+    aliases: ["text-crp-nm"],
     valueHint: "<text>",
-    description: "Filter by company name as shown in DART search.",
+    description: "Company name field sent to DART.",
     status: "observed",
   }),
   textPresenterNm: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["presenter-name", "text-presenter-nm"],
+    aliases: ["text-presenter-nm"],
     valueHint: "<text>",
-    description: "Filter by presenter name when DART exposes that field.",
+    description: "Presenter-name field sent to DART.",
     status: "observed",
   }),
   lateKeyword: annotateParameter(Schema.optional(Schema.NonEmptyString), {
@@ -167,33 +159,33 @@ const contentsSearchFields = {
     status: "inferred",
   }),
   flrCik: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["filer-code", "flr-cik"],
+    aliases: ["flr-cik"],
     valueHint: "<text>",
-    description: "Filer-code filter sent to DART.",
+    description: "Filer-code field sent to DART.",
     status: "inferred",
   }),
   dspTypeTab: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["disclosure-type-tab", "dsp-type-tab"],
+    aliases: ["dsp-type-tab"],
     valueHint: "<text>",
-    description: "Disclosure-type tab selector sent to DART.",
+    description: "Disclosure-type tab field sent to DART.",
     status: "inferred",
   }),
   tocSrch: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["toc-search", "toc-srch"],
+    aliases: ["toc-srch"],
     valueHint: "<text>",
-    description: "Table-of-contents search toggle or mode field.",
+    description: "TOC search field sent to DART.",
     status: "inferred",
   }),
   docType: annotateParameter(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["document-type", "doc-type"],
+    aliases: ["doc-type"],
     valueHint: "<text>",
-    description: "Document type filter label or code sent to DART.",
+    description: "Document-type field sent to DART.",
     status: "inferred",
   }),
   reportName: annotateParameter(Schema.optional(Schema.NonEmptyString), {
     aliases: ["report-name"],
     valueHint: "<text>",
-    description: "Report-name filter sent to DART.",
+    description: "Report-name field sent to DART.",
     status: "observed",
   }),
   decadeType: annotateParameter(Schema.optional(Schema.NonEmptyString), {
@@ -204,29 +196,22 @@ const contentsSearchFields = {
   }),
 } as const;
 
-/**
- * Low-level request contract for the implemented `dsab007` contents mode.
- *
- * This intentionally stays close to DART field names so other `dsab007` modes can
- * share the same execution core. Callers should treat this as a replay contract,
- * not as a guarantee that DART will honor every supplied field exactly.
- */
-export const ContentsSearchInput = Schema.Struct(
-  contentsSearchFields,
+export const SourceContentsReplayInput = Schema.Struct(
+  sourceContentsReplayFields,
 ).annotations({
-  identifier: "ContentsSearchInput",
+  identifier: "SourceContentsReplayInput",
   description:
-    "Low-level replay contract for the implemented `dsab007` contents mode.",
+    "Low-level DART replay contract for `dsab007` contents search.",
 });
-export type ContentsSearchInput = typeof ContentsSearchInput.Type;
+export type SourceContentsReplayInput = typeof SourceContentsReplayInput.Type;
 
 const getParameterMetadata = (
   annotated: SchemaAST.Annotated,
-): SearchParameterMetadata | undefined =>
+): SourceParameterMetadata | undefined =>
   Option.getOrUndefined(
-    SchemaAST.getAnnotation<SearchParameterMetadata>(
+    SchemaAST.getAnnotation<SourceParameterMetadata>(
       annotated,
-      searchParameterMetadataAnnotationId,
+      sourceParameterMetadataAnnotationId,
     ),
   );
 
@@ -240,9 +225,9 @@ const getParameterDescription = (property: SchemaAST.PropertySignature): string 
       ),
   );
 
-export const describeContentsSearchInput =
-  (): readonly SearchParameterDoc[] =>
-    SchemaAST.getPropertySignatures(ContentsSearchInput.ast).map(
+export const describeSourceContentsReplayInput =
+  (): readonly SourceParameterDoc[] =>
+    SchemaAST.getPropertySignatures(SourceContentsReplayInput.ast).map(
       (property) => {
         const metadata =
           getParameterMetadata(property) ?? getParameterMetadata(property.type);

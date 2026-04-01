@@ -1,15 +1,9 @@
-import type { ContentsSearchInput } from "./contracts.ts";
+import type { SourceContentsReplayInput } from "./replay-schema.ts";
 
 const orEmpty = (value: string | undefined): string => value ?? "";
 
-/**
- * Expands the public low-level request into the full form payload DART expects.
- *
- * The duplicated `b_*` fields and fixed flags are part of the observed replay
- * contract today, even though they are not all meaningful at the caller boundary.
- */
 export const buildContentsSearchForm = (
-  input: ContentsSearchInput,
+  input: SourceContentsReplayInput,
 ): URLSearchParams => {
   const params = new URLSearchParams();
 

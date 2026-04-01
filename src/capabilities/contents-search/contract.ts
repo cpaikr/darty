@@ -1,8 +1,6 @@
 import { Schema } from "effect";
 
-import type { ContentsSearchInput } from "../../dart/dsab007/contracts.ts";
-import type { ContentsSearchResult } from "../../dart/dsab007/models.ts";
-import type { OperationParameter } from "./types.ts";
+import type { CapabilityParameter } from "../types.ts";
 
 const datePattern = /^\d{8}$/;
 
@@ -14,70 +12,109 @@ export const contentsSearchSortDirectionValues = ["asc", "desc"] as const;
 export type ContentsSearchSortDirection =
   (typeof contentsSearchSortDirectionValues)[number];
 
-/**
- * Raw semantic operation input accepted from transport layers such as CLI, MCP,
- * or a future SDK.
- *
- * Defaults are not applied here so transports can preserve which fields callers
- * omitted before passing the payload through the shared resolver.
- */
 export type ContentsSearchRawInput = {
   readonly page?: number | undefined;
-  readonly limit?: number | undefined;
-  readonly maxLinks?: number | undefined;
   readonly sortBy?: ContentsSearchSortBy | undefined;
   readonly sortDirection?: ContentsSearchSortDirection | undefined;
   readonly keyword?: string | undefined;
   readonly startDate?: string | undefined;
   readonly endDate?: string | undefined;
   readonly companyCode?: string | undefined;
-  readonly companyName?: string | undefined;
   readonly presenterName?: string | undefined;
-  readonly secondaryKeyword?: string | undefined;
-  readonly filerCode?: string | undefined;
-  readonly disclosureTypeTab?: string | undefined;
-  readonly tocSearch?: string | undefined;
-  readonly documentType?: string | undefined;
   readonly reportName?: string | undefined;
-  readonly decadeType?: string | undefined;
 };
 
-/**
- * Canonical semantic request shape after defaults and validation.
- *
- * Callers should execute the operation only after they have this resolved
- * contract.
- */
-export type ContentsSearchResolvedInput = {
+export type ContentsSearchRequest = {
   readonly page: number;
-  readonly limit: number;
-  readonly maxLinks: number;
   readonly sortBy: ContentsSearchSortBy;
   readonly sortDirection: ContentsSearchSortDirection;
   readonly keyword: string;
   readonly startDate: string;
   readonly endDate: string;
   readonly companyCode?: string | undefined;
-  readonly companyName?: string | undefined;
   readonly presenterName?: string | undefined;
-  readonly secondaryKeyword?: string | undefined;
-  readonly filerCode?: string | undefined;
-  readonly disclosureTypeTab?: string | undefined;
-  readonly tocSearch?: string | undefined;
-  readonly documentType?: string | undefined;
   readonly reportName?: string | undefined;
-  readonly decadeType?: string | undefined;
 };
 
-export type ContentsSearchOperationResult = Omit<
-  ContentsSearchResult,
-  "request"
-> & {
-  readonly request: ContentsSearchResolvedInput;
+export type ContentsSearchItem = {
+  readonly company: {
+    readonly name: string;
+    readonly marketLabel?: string | undefined;
+    readonly companyCode?: string | undefined;
+  };
+  readonly filing: {
+    readonly receiptNumber: string;
+    readonly documentNumber?: string | undefined;
+    readonly reportTitle: string;
+    readonly reportModifier?: string | undefined;
+    readonly reportPeriod?: string | undefined;
+    readonly reportNameSuffix?: string | undefined;
+    readonly receiptDate: string;
+  };
+  readonly match: {
+    readonly snippetText: string;
+    readonly disclosureTypeLabel?: string | undefined;
+    readonly contentTypeLabel?: string | undefined;
+    readonly presenterName?: string | undefined;
+  };
+  readonly references: {
+    readonly viewerUrl: string;
+  };
+  readonly evidence: {
+    readonly reportNameRaw: string;
+    readonly rawInfoText: string;
+    readonly snippetHtml: string;
+  };
 };
 
-export class InvalidContentsSearchInput extends Schema.TaggedError<InvalidContentsSearchInput>()(
-  "InvalidContentsSearchInput",
+export type ContentsSearchPagination = {
+  readonly currentPage: number;
+  readonly totalPages: number;
+  readonly totalCount: number;
+  readonly returnedCount: number;
+};
+
+export type ContentsSearchMetadata = {
+  readonly fetchedAt: string;
+  readonly source: {
+    readonly system: "dart";
+    readonly surface: "dsab007";
+    readonly endpoint: string;
+  };
+  readonly sourceBehavior: {
+    readonly effectivePageSize: number;
+    readonly effectivePagerWidth: number;
+    readonly callerControlsPageSize: false;
+    readonly callerControlsPagerWidth: false;
+    readonly observationStatus: "observed";
+  };
+  readonly completeness: "complete" | "partial";
+  readonly droppedItemCount: number;
+};
+
+export type ContentsSearchReferences = {
+  readonly searchUrl: string;
+};
+
+export type ContentsSearchWarning = {
+  readonly code: "partial_rows_dropped";
+  readonly message: string;
+  readonly droppedItemCount: number;
+};
+
+export type ContentsSearchResult = {
+  readonly result: {
+    readonly request: ContentsSearchRequest;
+    readonly pagination: ContentsSearchPagination;
+    readonly items: readonly ContentsSearchItem[];
+  };
+  readonly metadata: ContentsSearchMetadata;
+  readonly references: ContentsSearchReferences;
+  readonly warnings: readonly ContentsSearchWarning[];
+};
+
+export class InvalidContentsSearchRequest extends Schema.TaggedError<InvalidContentsSearchRequest>()(
+  "InvalidContentsSearchRequest",
   {
     code: Schema.Literal(
       "missing_parameter",
@@ -92,26 +129,35 @@ export class InvalidContentsSearchInput extends Schema.TaggedError<InvalidConten
   },
 ) {}
 
-const defaultResolvedInput = {
+export class ContentsSearchFailure extends Schema.TaggedError<ContentsSearchFailure>()(
+  "ContentsSearchFailure",
+  {
+    code: Schema.Literal(
+      "invalid_request",
+      "source_unavailable",
+      "source_changed",
+      "source_parse_failure",
+      "internal_error",
+    ),
+    message: Schema.String,
+    retryable: Schema.Boolean,
+    parameter: Schema.optional(Schema.String),
+    sourceUrl: Schema.optional(Schema.String),
+  },
+) {}
+
+const defaultRequest = {
   page: 1,
-  limit: 10,
-  maxLinks: 10,
   sortBy: "date",
   sortDirection: "desc",
 } as const satisfies Pick<
-  ContentsSearchResolvedInput,
-  "page" | "limit" | "maxLinks" | "sortBy" | "sortDirection"
+  ContentsSearchRequest,
+  "page" | "sortBy" | "sortDirection"
 >;
 
 const formatDefaultValue = (value: string | number): string => String(value);
 
-/**
- * Shared semantic parameter definitions for `contents-search`.
- *
- * This is the human-readable surface exposed to agents. Any DART-shaped field
- * names stay behind the internal mapper.
- */
-export const contentsSearchInputParameters = [
+export const contentsSearchParameters = [
   {
     key: "page",
     aliases: ["page"],
@@ -120,27 +166,7 @@ export const contentsSearchInputParameters = [
     description: "1-based search results page to request.",
     status: "observed",
     required: false,
-    defaultValue: formatDefaultValue(defaultResolvedInput.page),
-  },
-  {
-    key: "limit",
-    aliases: ["limit"],
-    cliFlags: ["--limit"],
-    valueHint: "<number>",
-    description: "Requested result count per page.",
-    status: "observed",
-    required: false,
-    defaultValue: formatDefaultValue(defaultResolvedInput.limit),
-  },
-  {
-    key: "maxLinks",
-    aliases: ["max-links"],
-    cliFlags: ["--max-links"],
-    valueHint: "<number>",
-    description: "Requested number of pagination links in the DART pager.",
-    status: "observed",
-    required: false,
-    defaultValue: formatDefaultValue(defaultResolvedInput.maxLinks),
+    defaultValue: formatDefaultValue(defaultRequest.page),
   },
   {
     key: "sortBy",
@@ -150,7 +176,7 @@ export const contentsSearchInputParameters = [
     description: "Sort field for results.",
     status: "observed",
     required: false,
-    defaultValue: defaultResolvedInput.sortBy,
+    defaultValue: defaultRequest.sortBy,
   },
   {
     key: "sortDirection",
@@ -160,7 +186,7 @@ export const contentsSearchInputParameters = [
     description: "Sort direction for the selected sort field.",
     status: "observed",
     required: false,
-    defaultValue: defaultResolvedInput.sortDirection,
+    defaultValue: defaultRequest.sortDirection,
   },
   {
     key: "keyword",
@@ -199,15 +225,6 @@ export const contentsSearchInputParameters = [
     required: false,
   },
   {
-    key: "companyName",
-    aliases: ["company-name"],
-    cliFlags: ["--company-name"],
-    valueHint: "<text>",
-    description: "Filter by company name as shown in DART search.",
-    status: "observed",
-    required: false,
-  },
-  {
     key: "presenterName",
     aliases: ["presenter-name"],
     cliFlags: ["--presenter-name"],
@@ -217,72 +234,18 @@ export const contentsSearchInputParameters = [
     required: false,
   },
   {
-    key: "secondaryKeyword",
-    aliases: ["secondary-keyword"],
-    cliFlags: ["--secondary-keyword"],
-    valueHint: "<text>",
-    description: "Secondary keyword field sent to DART.",
-    status: "inferred",
-    required: false,
-  },
-  {
-    key: "filerCode",
-    aliases: ["filer-code"],
-    cliFlags: ["--filer-code"],
-    valueHint: "<text>",
-    description: "Filer-code filter sent to DART.",
-    status: "inferred",
-    required: false,
-  },
-  {
-    key: "disclosureTypeTab",
-    aliases: ["disclosure-type-tab"],
-    cliFlags: ["--disclosure-type-tab"],
-    valueHint: "<text>",
-    description: "Disclosure-type tab selector sent to DART.",
-    status: "inferred",
-    required: false,
-  },
-  {
-    key: "tocSearch",
-    aliases: ["toc-search"],
-    cliFlags: ["--toc-search"],
-    valueHint: "<text>",
-    description: "Table-of-contents search toggle or mode field.",
-    status: "inferred",
-    required: false,
-  },
-  {
-    key: "documentType",
-    aliases: ["document-type"],
-    cliFlags: ["--document-type"],
-    valueHint: "<text>",
-    description: "Document type filter label or code sent to DART.",
-    status: "inferred",
-    required: false,
-  },
-  {
     key: "reportName",
     aliases: ["report-name"],
     cliFlags: ["--report-name"],
     valueHint: "<text>",
-    description: "Report-name filter sent to DART.",
+    description: "Filter by report title as currently honored by DART.",
     status: "observed",
     required: false,
   },
-  {
-    key: "decadeType",
-    aliases: ["decade-type"],
-    cliFlags: ["--decade-type"],
-    valueHint: "<text>",
-    description: "Date-grouping selector sent to DART.",
-    status: "inferred",
-    required: false,
-  },
-] as const satisfies readonly OperationParameter[];
+] as const satisfies readonly CapabilityParameter[];
 
-const contentsSearchAllowedKeys = new Set<string>(
-  contentsSearchInputParameters.map((parameter) => parameter.key),
+const allowedKeys = new Set<string>(
+  contentsSearchParameters.map((parameter) => parameter.key),
 );
 
 const failInvalidParameter = (
@@ -294,7 +257,7 @@ const failInvalidParameter = (
     readonly expected?: string;
   },
 ): never => {
-  throw new InvalidContentsSearchInput({
+  throw new InvalidContentsSearchRequest({
     code: "invalid_parameter",
     parameter,
     reason,
@@ -308,7 +271,7 @@ const failMissingParameter = (
   parameter: string,
   expected: string,
 ): never => {
-  throw new InvalidContentsSearchInput({
+  throw new InvalidContentsSearchRequest({
     code: "missing_parameter",
     parameter,
     reason: "required",
@@ -373,7 +336,7 @@ const readRequiredText = (
       key,
       "empty_string",
       `Parameter "${key}" must not be empty.`,
-      { actual: value, expected: expected },
+      { actual: value, expected },
     );
   }
 
@@ -382,7 +345,7 @@ const readRequiredText = (
 
 const readIntegerWithDefault = (
   input: Partial<ContentsSearchRawInput>,
-  key: "page" | "limit" | "maxLinks",
+  key: "page",
   fallback: number,
   min: number,
   max: number,
@@ -465,16 +428,12 @@ const readDateString = (
   return value;
 };
 
-/**
- * Applies defaults, rejects unknown keys, and validates the shared semantic
- * request contract before any DART-specific mapping or network execution.
- */
-export const resolveContentsSearchInput = (
+export const resolveContentsSearchRequest = (
   input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
-): ContentsSearchResolvedInput => {
+): ContentsSearchRequest => {
   for (const key of Object.keys(input)) {
-    if (!contentsSearchAllowedKeys.has(key)) {
-      throw new InvalidContentsSearchInput({
+    if (!allowedKeys.has(key)) {
+      throw new InvalidContentsSearchRequest({
         code: "unknown_parameter",
         parameter: key,
         reason: "unknown_parameter",
@@ -485,87 +444,24 @@ export const resolveContentsSearchInput = (
   }
 
   return {
-    page: readIntegerWithDefault(input, "page", defaultResolvedInput.page, 1, 100),
-    limit: readIntegerWithDefault(
-      input,
-      "limit",
-      defaultResolvedInput.limit,
-      1,
-      100,
-    ),
-    maxLinks: readIntegerWithDefault(
-      input,
-      "maxLinks",
-      defaultResolvedInput.maxLinks,
-      1,
-      100,
-    ),
+    page: readIntegerWithDefault(input, "page", defaultRequest.page, 1, 100),
     sortBy: readChoiceWithDefault(
       input,
       "sortBy",
       contentsSearchSortByValues,
-      defaultResolvedInput.sortBy,
+      defaultRequest.sortBy,
     ),
     sortDirection: readChoiceWithDefault(
       input,
       "sortDirection",
       contentsSearchSortDirectionValues,
-      defaultResolvedInput.sortDirection,
+      defaultRequest.sortDirection,
     ),
     keyword: readRequiredText(input, "keyword", "a non-empty string"),
     startDate: readDateString(input, "startDate"),
     endDate: readDateString(input, "endDate"),
     companyCode: readOptionalText(input, "companyCode"),
-    companyName: readOptionalText(input, "companyName"),
     presenterName: readOptionalText(input, "presenterName"),
-    secondaryKeyword: readOptionalText(input, "secondaryKeyword"),
-    filerCode: readOptionalText(input, "filerCode"),
-    disclosureTypeTab: readOptionalText(input, "disclosureTypeTab"),
-    tocSearch: readOptionalText(input, "tocSearch"),
-    documentType: readOptionalText(input, "documentType"),
     reportName: readOptionalText(input, "reportName"),
-    decadeType: readOptionalText(input, "decadeType"),
   };
 };
-
-/**
- * Maps the public semantic request into the internal DART replay contract.
- *
- * This is the only operation-level seam that should know the DART-shaped field
- * names.
- */
-export const toContentsSearchReplayInput = (
-  input: ContentsSearchResolvedInput,
-): ContentsSearchInput => ({
-  option: "contents",
-  currentPage: input.page,
-  maxResults: input.limit,
-  maxLinks: input.maxLinks,
-  sort: input.sortBy === "reportName" ? "rpt_nm" : "DATE",
-  sortType: input.sortDirection,
-  keyword: input.keyword,
-  startDate: input.startDate,
-  endDate: input.endDate,
-  textCrpCik: input.companyCode,
-  textCrpNm: input.companyName,
-  textPresenterNm: input.presenterName,
-  lateKeyword: input.secondaryKeyword,
-  flrCik: input.filerCode,
-  dspTypeTab: input.disclosureTypeTab,
-  tocSrch: input.tocSearch,
-  docType: input.documentType,
-  reportName: input.reportName,
-  decadeType: input.decadeType,
-});
-
-/**
- * Re-exposes the shared search result with the public semantic request echoed
- * back to callers instead of the internal DART replay request.
- */
-export const toContentsSearchResult = (
-  request: ContentsSearchResolvedInput,
-  result: ContentsSearchResult,
-): ContentsSearchOperationResult => ({
-  ...result,
-  request,
-});

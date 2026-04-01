@@ -45,22 +45,17 @@ This repo now has two layers:
 
 - `src/cli.ts`
   Local CLI entrypoint and command dispatch.
+- `src/app/`
+  Composition roots that wire public capabilities to concrete providers without pushing source imports into `src/capabilities/`.
 - `src/cli/commands/`
-  Mode-specific CLI commands over the shared `dsab007` surface.
-- `src/tools/operations/`
-  Transport-agnostic operation metadata that CLI, MCP, or SDK layers can share.
-- `src/dart/dsab007/contracts.ts`
-  DART-shaped request contracts for the implemented `dsab007` mode.
-- `src/dart/dsab007/request.ts`
-  Request builder that expands the public contract into the full DART form replay.
-- `src/dart/dsab007/client.ts`
-  Shared transport and execution for `/dsab007/search.ax`.
-- `src/dart/dsab007/models.ts`
-  Parsed `dsab007` response models.
-- `src/dart/dsab007/parsers/`
-  Mode-specific HTML parsers under the shared search surface, with colocated fixture-backed parser tests.
-- `src/dart/errors.ts`
-  Tagged error types for invalid input, source failures, and parser drift.
+  Transport adapters that depend only on capability-owned public contracts.
+- `src/capabilities/`
+  Public capability contracts, provider ports, provider-owned error types, execution flow, and transport-neutral metadata shared by CLI, MCP, or SDK layers.
+- `src/sources/dart/dsab007/contents/`
+  Internal DART replay adapter for the implemented `contents` mode:
+  replay schema, form builder, HTML parser, source models, provider implementation, and replay probes.
+- `src/sources/dart/errors.ts`
+  Tagged source-adapter errors for invalid replay input, source failures, and parser drift.
 - `test/live/`
   Opt-in live DART checks that exercise the shared client seam against the source.
 

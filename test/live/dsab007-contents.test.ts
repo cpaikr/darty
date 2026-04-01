@@ -4,22 +4,22 @@ import * as cheerio from "cheerio";
 import { Effect } from "effect";
 
 import {
-  searchContents,
-  fetchSearchHtml,
-} from "../../src/dart/dsab007/client.ts";
+  fetchContentsSearchHtml,
+  searchContentsSourcePage,
+} from "../../src/sources/dart/dsab007/contents/fetch.ts";
 import {
   baselineContentsReplayInput,
   contentsReplayFieldContracts,
   type ContentsLiveExpectation,
   type ContentsLiveProbe,
-} from "../../src/dart/dsab007/replay-contract.ts";
-import type { ContentsSearchInput } from "../../src/dart/dsab007/contracts.ts";
-import { buildContentsSearchForm } from "../../src/dart/dsab007/request.ts";
+} from "../../src/sources/dart/dsab007/contents/replay-contract.ts";
+import type { SourceContentsReplayInput } from "../../src/sources/dart/dsab007/contents/replay-schema.ts";
+import { buildContentsSearchForm } from "../../src/sources/dart/dsab007/contents/build-form.ts";
 
 const liveTest = process.env.LIVE_DART_TESTS === "1" ? test : test.skip;
 
 type BaselineSnapshot = {
-  readonly request: ContentsSearchInput;
+  readonly request: SourceContentsReplayInput;
   readonly result: Awaited<ReturnType<typeof runSearch>>;
   readonly pagerAnchorTexts: readonly string[];
 };
@@ -27,14 +27,14 @@ type BaselineSnapshot = {
 let baselineSnapshotPromise: Promise<BaselineSnapshot> | undefined;
 
 const runSearch = async (
-  input: ContentsSearchInput,
-) => Effect.runPromise(searchContents(input));
+  input: SourceContentsReplayInput,
+) => Effect.runPromise(searchContentsSourcePage(input));
 
 const fetchPagerAnchorTexts = async (
-  input: ContentsSearchInput,
+  input: SourceContentsReplayInput,
 ): Promise<readonly string[]> => {
   const html = await Effect.runPromise(
-    fetchSearchHtml(
+    fetchContentsSearchHtml(
       buildContentsSearchForm(input),
     ).pipe(Effect.provide(FetchHttpClient.layer)),
   );
@@ -74,7 +74,7 @@ const expectProbeClassification = (
 const assertExpectation = async (
   probe: ContentsLiveProbe,
   expectation: ContentsLiveExpectation,
-  request: ContentsSearchInput,
+  request: SourceContentsReplayInput,
   result: Awaited<ReturnType<typeof runSearch>>,
   baseline: BaselineSnapshot,
 ): Promise<void> => {
