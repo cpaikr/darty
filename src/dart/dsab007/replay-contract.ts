@@ -1,7 +1,14 @@
 import type { Dsab007ContentsSearchInput } from "./contracts.ts";
 import type { Dsab007ContentsSearchResult } from "./models.ts";
 
-export const baselineDsab007ContentsSearchInput = {
+/**
+ * Internal replay probes for the low-level DART-shaped contents contract.
+ *
+ * These fixtures and live expectations document what the upstream source
+ * accepts and honors today. They are not the public semantic operation
+ * contract exposed to tools.
+ */
+export const baselineDsab007ContentsReplayInput = {
   option: "contents",
   currentPage: 1,
   maxResults: 10,
@@ -13,7 +20,7 @@ export const baselineDsab007ContentsSearchInput = {
   endDate: "20260331",
 } as const satisfies Dsab007ContentsSearchInput;
 
-export type Dsab007ContentsStablePublicField =
+export type Dsab007ContentsReplayField =
   | "option"
   | "currentPage"
   | "maxResults"
@@ -87,8 +94,8 @@ export type Dsab007ContentsLiveProbe = {
   ) => Dsab007ContentsSearchInput;
 };
 
-export type Dsab007ContentsFieldContract = {
-  readonly key: Dsab007ContentsStablePublicField;
+export type Dsab007ContentsReplayFieldContract = {
+  readonly key: Dsab007ContentsReplayField;
   readonly observedStatus: "observed";
   readonly accepts: readonly Dsab007ContentsLocalCase[];
   readonly rejects: readonly Dsab007ContentsLocalCase[];
@@ -99,14 +106,14 @@ export type Dsab007ContentsFieldContract = {
 const withInput = (
   overrides: Partial<Dsab007ContentsSearchInput>,
 ): Dsab007ContentsSearchInput => ({
-  ...baselineDsab007ContentsSearchInput,
+  ...baselineDsab007ContentsReplayInput,
   ...overrides,
 });
 
 const withUnknownInput = (
   overrides: Record<string, unknown>,
 ): Record<string, unknown> => ({
-  ...baselineDsab007ContentsSearchInput,
+  ...baselineDsab007ContentsReplayInput,
   ...overrides,
 });
 
@@ -143,7 +150,7 @@ const getRequiredBaselineRow = (
   return row;
 };
 
-export const dsab007ContentsStablePublicFields = [
+export const dsab007ContentsReplayFields = [
   "option",
   "currentPage",
   "maxResults",
@@ -157,9 +164,9 @@ export const dsab007ContentsStablePublicFields = [
   "textCrpNm",
   "textPresenterNm",
   "reportName",
-] as const satisfies readonly Dsab007ContentsStablePublicField[];
+] as const satisfies readonly Dsab007ContentsReplayField[];
 
-export const dsab007ContentsFieldContracts = [
+export const dsab007ContentsReplayFieldContracts = [
   {
     key: "option",
     observedStatus: "observed",
@@ -605,7 +612,7 @@ export const dsab007ContentsFieldContracts = [
           kind: "seeded_filter_honored",
           field: "textCrpCik",
         },
-        buildRequest: (context) => {
+        buildRequest: (context: LiveProbeContext) => {
           const row = getRequiredBaselineRow(context);
           if (row.corpCik === undefined) {
             throw new Error("Baseline row is missing corpCik for textCrpCik probe.");
@@ -701,7 +708,7 @@ export const dsab007ContentsFieldContracts = [
           kind: "seeded_filter_honored",
           field: "textPresenterNm",
         },
-        buildRequest: (context) => {
+        buildRequest: (context: LiveProbeContext) => {
           const row = getRequiredBaselineRow(context);
           if (row.presenterName === undefined) {
             throw new Error(
@@ -760,4 +767,4 @@ export const dsab007ContentsFieldContracts = [
       },
     ],
   },
-] as const satisfies readonly Dsab007ContentsFieldContract[];
+] as const satisfies readonly Dsab007ContentsReplayFieldContract[];

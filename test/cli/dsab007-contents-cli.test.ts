@@ -36,11 +36,12 @@ describe("dsab007-contents CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty dsab007-contents [options]");
     expect(stdout).toContain(
-      "Low-level read-only replay of DART's dsab007 contents search.",
+      "Semantic, read-only access to DART's dsab007 contents search.",
     );
     expect(stdout).toContain(
       "The command always prints JSON to stdout and reserves stderr for errors.",
     );
+    expect(stdout).not.toContain("text-crp-nm");
     expect(stderr).toBe("");
   });
 
@@ -52,7 +53,7 @@ describe("dsab007-contents CLI subprocess", () => {
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      "required option '--keyword, --query <text>' not specified",
+      'Missing required parameter "keyword". Expected a non-empty string.',
     );
   });
 
@@ -74,7 +75,7 @@ describe("dsab007-contents CLI subprocess", () => {
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      "option '--page, --current-page <number>' argument 'nope' is invalid",
+      "option '--page <number>' argument 'nope' is invalid",
     );
     expect(stderr).toContain('Expected an integer but received "nope".');
   });
@@ -84,20 +85,20 @@ describe("dsab007-contents CLI subprocess", () => {
       "dsab007-contents",
       "--keyword",
       "배당",
-      "--start-date",
-      "20250331",
-      "--end-date",
-      "20260331",
-      "--sort",
-      "corp",
-    ]);
+        "--start-date",
+        "20250331",
+        "--end-date",
+        "20260331",
+        "--sort-by",
+        "corp",
+      ]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      "option '--sort <DATE|rpt_nm>' argument 'corp' is invalid",
+      'Parameter "sortBy" must be one of: date, reportName.',
     );
   });
 });

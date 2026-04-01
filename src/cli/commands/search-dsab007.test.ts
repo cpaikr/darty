@@ -2,92 +2,25 @@ import { describe, expect, test } from "bun:test";
 
 import { dsab007ContentsOperationSpec } from "../../tools/operations/dsab007-contents.ts";
 import {
-  buildDsab007ContentsSearchInput,
+  InvalidDsab007ContentsOperationInput,
+  resolveDsab007ContentsInput,
+} from "../../tools/operations/dsab007-contents-input.ts";
+import {
   createDsab007ContentsCommandWithRunner,
   dsab007Usage,
   executeDsab007ContentsCommand,
   parseDsab007CommandArgs,
 } from "./search-dsab007.ts";
+import type { OperationParameter } from "../../tools/operations/types.ts";
 
 const formatFlags = ({
   cliFlags,
   valueHint,
-}: (typeof dsab007ContentsOperationSpec.parameters)[number]) =>
+}: OperationParameter) =>
   valueHint === undefined ? cliFlags.join(", ") : `${cliFlags.join(", ")} ${valueHint}`;
 
 describe("parseDsab007CommandArgs", () => {
-  test("rejects missing required arguments early", () => {
-    expect(() => parseDsab007CommandArgs([])).toThrow(
-      "required option '--keyword, --query <text>' not specified",
-    );
-  });
-
-  test("parses the observed contents sort unions", () => {
-    const options = parseDsab007CommandArgs([
-      "--keyword",
-      "배당",
-      "--start-date",
-      "20250331",
-      "--end-date",
-      "20260331",
-      "--sort",
-      "DATE",
-      "--sort-type",
-      "desc",
-    ]);
-
-    expect(options.sort).toBe("DATE");
-    expect(options.sortType).toBe("desc");
-  });
-
-  test("rejects unsupported sort fields early", () => {
-    expect(() =>
-      parseDsab007CommandArgs([
-        "--keyword",
-        "배당",
-        "--start-date",
-        "20250331",
-        "--end-date",
-        "20260331",
-        "--sort",
-        "crp",
-      ])
-    ).toThrow("Allowed choices are DATE, rpt_nm.");
-  });
-
-  test("rejects unsupported sort directions early", () => {
-    expect(() =>
-      parseDsab007CommandArgs([
-        "--keyword",
-        "배당",
-        "--start-date",
-        "20250331",
-        "--end-date",
-        "20260331",
-        "--sort-type",
-        "down",
-      ])
-    ).toThrow("Allowed choices are asc, desc.");
-  });
-
-  test("rejects invalid integer options early", () => {
-    expect(() =>
-      parseDsab007CommandArgs([
-        "--keyword",
-        "배당",
-        "--start-date",
-        "20250331",
-        "--end-date",
-        "20260331",
-        "--page",
-        "nope",
-      ])
-    ).toThrow(
-      "option '--page, --current-page <number>' argument 'nope' is invalid. Expected an integer but received \"nope\".",
-    );
-  });
-
-  test("accepts semantic aliases while preserving DART-shaped option keys", () => {
+  test("parses semantic flags into semantic keys", () => {
     const options = parseDsab007CommandArgs([
       "--keyword",
       "배당",
@@ -103,15 +36,44 @@ describe("parseDsab007CommandArgs", () => {
       "2",
       "--limit",
       "25",
+      "--sort-by",
+      "reportName",
       "--sort-direction",
       "asc",
     ]);
 
-    expect(options.textCrpNm).toBe("삼성전자");
-    expect(options.textPresenterNm).toBe("IR");
-    expect(options.currentPage).toBe(2);
-    expect(options.maxResults).toBe(25);
-    expect(options.sortType).toBe("asc");
+    expect(options).toEqual({
+      keyword: "배당",
+      startDate: "20250331",
+      endDate: "20260331",
+      companyName: "삼성전자",
+      presenterName: "IR",
+      page: 2,
+      limit: 25,
+      sortBy: "reportName",
+      sortDirection: "asc",
+    });
+  });
+
+  test("parses transport syntax without enforcing required fields", () => {
+    expect(parseDsab007CommandArgs([])).toEqual({});
+  });
+
+  test("rejects invalid integer options early", () => {
+    expect(() =>
+      parseDsab007CommandArgs([
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20250331",
+        "--end-date",
+        "20260331",
+        "--page",
+        "nope",
+      ])
+    ).toThrow(
+      "option '--page <number>' argument 'nope' is invalid. Expected an integer but received \"nope\".",
+    );
   });
 
   test("keeps help flags in sync with the shared operation spec", () => {
@@ -120,23 +82,19 @@ describe("parseDsab007CommandArgs", () => {
     }
   });
 
-  test("renders parameter descriptions in CLI usage", () => {
+  test("renders semantic parameter descriptions in CLI usage", () => {
+    expect(dsab007Usage).toContain("--company-name <text>");
+    expect(dsab007Usage).toContain("Filter by company name as shown in DART search.");
+    expect(dsab007Usage).toContain("[observed]");
     expect(dsab007Usage).toContain(
-      "--presenter-name, --text-presenter-nm <text>",
+      "The command accepts semantic parameter names only; DART replay field names stay internal.",
     );
-    expect(dsab007Usage).toContain(
-      "Filter by presenter name when DART exposes that field. [observed]",
-    );
-    expect(dsab007Usage).toContain(
-      "Semantic aliases are preferred when available; raw DART-shaped aliases remain accepted for debugging.",
-    );
-    expect(dsab007Usage).toContain(
-      "The command always prints JSON to stdout and reserves stderr for errors.",
-    );
+    expect(dsab007Usage).not.toContain("text-crp-nm");
+    expect(dsab007Usage).not.toContain("--query");
   });
 
-  test("builds a validated DART-shaped search input with defaults", () => {
-    const input = buildDsab007ContentsSearchInput(
+  test("resolves parsed options through the shared semantic resolver", () => {
+    const request = resolveDsab007ContentsInput(
       parseDsab007CommandArgs([
         "--keyword",
         "배당",
@@ -144,33 +102,32 @@ describe("parseDsab007CommandArgs", () => {
         "20250331",
         "--end-date",
         "20260331",
-      ]),
+      ]) as Record<string, unknown>,
     );
 
-    expect(input).toEqual({
-      option: "contents",
-      currentPage: 1,
-      maxResults: 10,
+    expect(request).toEqual({
+      page: 1,
+      limit: 10,
       maxLinks: 10,
-      sort: "DATE",
-      sortType: "desc",
+      sortBy: "date",
+      sortDirection: "desc",
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
-      textCrpCik: undefined,
-      textCrpNm: undefined,
-      textPresenterNm: undefined,
-      lateKeyword: undefined,
-      flrCik: undefined,
-      dspTypeTab: undefined,
-      tocSrch: undefined,
-      docType: undefined,
+      companyCode: undefined,
+      companyName: undefined,
+      presenterName: undefined,
+      secondaryKeyword: undefined,
+      filerCode: undefined,
+      disclosureTypeTab: undefined,
+      tocSearch: undefined,
+      documentType: undefined,
       reportName: undefined,
       decadeType: undefined,
     });
   });
 
-  test("passes parsed options to the command runner", async () => {
+  test("passes parsed semantic options to the command runner", async () => {
     let received:
       | ReturnType<typeof parseDsab007CommandArgs>
       | undefined;
@@ -193,7 +150,7 @@ describe("parseDsab007CommandArgs", () => {
         "삼성전자",
         "--page",
         "2",
-        "--sort-type",
+        "--sort-direction",
         "asc",
       ],
       { from: "node" },
@@ -203,37 +160,58 @@ describe("parseDsab007CommandArgs", () => {
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
-      textCrpNm: "삼성전자",
-      currentPage: 2,
-      sortType: "asc",
+      companyName: "삼성전자",
+      page: 2,
+      sortDirection: "asc",
     });
   });
 
-  test("prints a single JSON payload for successful command execution", async () => {
+  test("rejects invalid semantic input before execution", async () => {
+    try {
+      await executeDsab007ContentsCommand({
+        startDate: "20250331",
+        endDate: "20260331",
+      });
+      throw new Error("Expected execution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidDsab007ContentsOperationInput);
+
+      if (!(error instanceof InvalidDsab007ContentsOperationInput)) {
+        throw error;
+      }
+
+      expect(error.code).toBe("missing_parameter");
+      expect(error.parameter).toBe("keyword");
+      expect(error.message).toBe(
+        'Missing required parameter "keyword". Expected a non-empty string.',
+      );
+    }
+  });
+
+  test("prints a single JSON payload with the semantic request", async () => {
     const writes: string[] = [];
     let receivedInput:
-      | ReturnType<typeof buildDsab007ContentsSearchInput>
+      | Record<string, unknown>
       | undefined;
 
     const result = {
       request: {
-        option: "contents",
-        currentPage: 2,
-        maxResults: 10,
+        page: 2,
+        limit: 10,
         maxLinks: 10,
-        sort: "DATE",
-        sortType: "desc",
+        sortBy: "date",
+        sortDirection: "desc",
         keyword: "배당",
         startDate: "20250331",
         endDate: "20260331",
-        textCrpCik: undefined,
-        textCrpNm: undefined,
-        textPresenterNm: undefined,
-        lateKeyword: undefined,
-        flrCik: undefined,
-        dspTypeTab: undefined,
-        tocSrch: undefined,
-        docType: undefined,
+        companyCode: undefined,
+        companyName: undefined,
+        presenterName: undefined,
+        secondaryKeyword: undefined,
+        filerCode: undefined,
+        disclosureTypeTab: undefined,
+        tocSearch: undefined,
+        documentType: undefined,
         reportName: undefined,
         decadeType: undefined,
       },
@@ -250,7 +228,7 @@ describe("parseDsab007CommandArgs", () => {
 
     const command = createDsab007ContentsCommandWithRunner((options) =>
       executeDsab007ContentsCommand(options, {
-        runSearch: async (input) => {
+        runOperation: async (input) => {
           receivedInput = input;
           return result;
         },
@@ -277,12 +255,12 @@ describe("parseDsab007CommandArgs", () => {
     );
 
     expect(receivedInput).toEqual(
-      buildDsab007ContentsSearchInput({
+      {
         keyword: "배당",
         startDate: "20250331",
         endDate: "20260331",
-        currentPage: 2,
-      }),
+        page: 2,
+      },
     );
     expect(writes).toEqual([JSON.stringify(result, null, 2)]);
   });

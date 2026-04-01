@@ -8,11 +8,11 @@ import {
   fetchDsab007SearchHtml,
 } from "../../src/dart/dsab007/client.ts";
 import {
-  baselineDsab007ContentsSearchInput,
-  dsab007ContentsFieldContracts,
+  baselineDsab007ContentsReplayInput,
+  dsab007ContentsReplayFieldContracts,
   type Dsab007ContentsLiveExpectation,
   type Dsab007ContentsLiveProbe,
-} from "../../src/dart/dsab007/external-api-contract.ts";
+} from "../../src/dart/dsab007/replay-contract.ts";
 import type { Dsab007ContentsSearchInput } from "../../src/dart/dsab007/contracts.ts";
 import { buildDsab007ContentsSearchForm } from "../../src/dart/dsab007/request.ts";
 
@@ -48,13 +48,13 @@ const fetchPagerAnchorTexts = async (
 const getBaselineSnapshot = async (): Promise<BaselineSnapshot> => {
   if (baselineSnapshotPromise === undefined) {
     baselineSnapshotPromise = (async () => {
-      const result = await runSearch(baselineDsab007ContentsSearchInput);
+      const result = await runSearch(baselineDsab007ContentsReplayInput);
       const pagerAnchorTexts = await fetchPagerAnchorTexts(
-        baselineDsab007ContentsSearchInput,
+        baselineDsab007ContentsReplayInput,
       );
 
       return {
-        request: baselineDsab007ContentsSearchInput,
+        request: baselineDsab007ContentsReplayInput,
         result,
         pagerAnchorTexts,
       };
@@ -182,8 +182,8 @@ const assertExpectation = async (
   }
 };
 
-describe("searchDsab007Contents live against DART", () => {
-  for (const fieldContract of dsab007ContentsFieldContracts) {
+describe("searchDsab007Contents live DART replay probes", () => {
+  for (const fieldContract of dsab007ContentsReplayFieldContracts) {
     describe(fieldContract.key, () => {
       for (const probe of fieldContract.live) {
         liveTest(probe.name, async () => {

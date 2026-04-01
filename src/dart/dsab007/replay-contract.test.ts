@@ -6,9 +6,9 @@ import {
   type Dsab007ContentsSearchInput as Dsab007ContentsSearchInputType,
 } from "./contracts.ts";
 import {
-  dsab007ContentsFieldContracts,
-  dsab007ContentsStablePublicFields,
-} from "./external-api-contract.ts";
+  dsab007ContentsReplayFieldContracts,
+  dsab007ContentsReplayFields,
+} from "./replay-contract.ts";
 import { buildDsab007ContentsSearchForm } from "./request.ts";
 
 const decodeInput = (input: unknown) =>
@@ -28,15 +28,15 @@ const getSerializedValue = (
   key: string,
 ): string | null => form.get(key);
 
-describe("dsab007 contents external API contract", () => {
-  test("tracks the stable public argument list explicitly", () => {
-    expect(dsab007ContentsFieldContracts.map(({ key }) => key)).toEqual(
-      [...dsab007ContentsStablePublicFields],
+describe("dsab007 contents DART replay contract", () => {
+  test("tracks the internal replay field list explicitly", () => {
+    expect(dsab007ContentsReplayFieldContracts.map(({ key }) => key)).toEqual(
+      [...dsab007ContentsReplayFields],
     );
   });
 
   describe("schema boundaries", () => {
-    for (const fieldContract of dsab007ContentsFieldContracts) {
+    for (const fieldContract of dsab007ContentsReplayFieldContracts) {
       describe(fieldContract.key, () => {
         for (const testCase of fieldContract.accepts) {
           test(testCase.name, async () => {
@@ -54,7 +54,7 @@ describe("dsab007 contents external API contract", () => {
   });
 
   describe("form serialization", () => {
-    for (const fieldContract of dsab007ContentsFieldContracts) {
+    for (const fieldContract of dsab007ContentsReplayFieldContracts) {
       describe(fieldContract.key, () => {
         for (const testCase of fieldContract.serialization) {
           test(testCase.name, () => {

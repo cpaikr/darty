@@ -1,31 +1,24 @@
 import { Command, InvalidArgumentError, Option } from "commander";
 import { Effect } from "effect";
 
-import { searchDsab007Contents } from "../../dart/dsab007/client.ts";
-import {
-  dsab007ContentsSortDirections,
-  dsab007ContentsSortFields,
-  type Dsab007ContentsSortDirection,
-  type Dsab007ContentsSortField,
-  type Dsab007ContentsSearchInput,
-} from "../../dart/dsab007/contracts.ts";
-import type { Dsab007ContentsSearchResult } from "../../dart/dsab007/models.ts";
 import { dsab007ContentsOperationSpec } from "../../tools/operations/dsab007-contents.ts";
+import {
+  type Dsab007ContentsOperationResult,
+  type Dsab007ContentsRawInput,
+} from "../../tools/operations/dsab007-contents-input.ts";
+import { executeDsab007ContentsOperation } from "../../tools/operations/dsab007-contents-operation.ts";
 import type { OperationParameter } from "../../tools/operations/types.ts";
 
-type CliOptionKey = Exclude<keyof Dsab007ContentsSearchInput, "option">;
-type CliOptionValue =
-  | Dsab007ContentsSortDirection
-  | Dsab007ContentsSortField
-  | number
-  | string;
+type CliOptionKey = keyof Dsab007ContentsRawInput;
+type CliOptionValue = number | string;
 
 /**
  * Commander returns only the flags the caller provided. This partial shape lets
- * the CLI keep user intent separate from the DART request defaults applied
- * later in `buildDsab007ContentsSearchInput`.
+ * the CLI preserve caller intent until the shared semantic resolver applies
+ * defaults and validates the domain contract.
  */
-export type CliOptions = Partial<Record<CliOptionKey, CliOptionValue>>;
+export type CliOptions = Partial<Record<CliOptionKey, CliOptionValue>> &
+  Record<string, unknown>;
 
 type RegisteredOption = {
   readonly key: CliOptionKey;
@@ -34,9 +27,9 @@ type RegisteredOption = {
 };
 
 type Dsab007ContentsCommandExecutor = {
-  readonly runSearch: (
-    input: Dsab007ContentsSearchInput,
-  ) => Promise<Dsab007ContentsSearchResult>;
+  readonly runOperation: (
+    input: Partial<Dsab007ContentsRawInput> & Record<string, unknown>,
+  ) => Promise<Dsab007ContentsOperationResult>;
   readonly writeStdout: (text: string) => void;
 };
 
@@ -75,21 +68,11 @@ const buildRegisteredOption = (
     formatParameterDescription(parameter),
   );
 
-  if (parameter.required) {
-    option.makeOptionMandatory();
-  }
-
   switch (parameter.key) {
-    case "currentPage":
+    case "page":
+    case "limit":
     case "maxLinks":
-    case "maxResults":
       option.argParser((value) => parseIntegerOption(value));
-      break;
-    case "sort":
-      option.choices(dsab007ContentsSortFields);
-      break;
-    case "sortType":
-      option.choices(dsab007ContentsSortDirections);
       break;
   }
 
@@ -115,46 +98,6 @@ const extractCliOptions = (
 
   return options;
 };
-
-/**
- * Normalizes parsed CLI flags into the DART-shaped contents request.
- *
- * Defaults live here instead of in Commander so tests and non-CLI callers share
- * the same fallback behavior, while omitted optional filters remain `undefined`.
- */
-export const buildDsab007ContentsSearchInput = (
-  options: CliOptions,
-): Dsab007ContentsSearchInput => ({
-  option: "contents",
-  currentPage:
-    typeof options.currentPage === "number" ? options.currentPage : 1,
-  maxResults: typeof options.maxResults === "number" ? options.maxResults : 10,
-  maxLinks: typeof options.maxLinks === "number" ? options.maxLinks : 10,
-  sort: options.sort === "rpt_nm" ? "rpt_nm" : "DATE",
-  sortType: options.sortType === "asc" ? "asc" : "desc",
-  keyword: typeof options.keyword === "string" ? options.keyword : "",
-  startDate: typeof options.startDate === "string" ? options.startDate : "",
-  endDate: typeof options.endDate === "string" ? options.endDate : "",
-  textCrpCik:
-    typeof options.textCrpCik === "string" ? options.textCrpCik : undefined,
-  textCrpNm:
-    typeof options.textCrpNm === "string" ? options.textCrpNm : undefined,
-  textPresenterNm:
-    typeof options.textPresenterNm === "string"
-      ? options.textPresenterNm
-      : undefined,
-  lateKeyword:
-    typeof options.lateKeyword === "string" ? options.lateKeyword : undefined,
-  flrCik: typeof options.flrCik === "string" ? options.flrCik : undefined,
-  dspTypeTab:
-    typeof options.dspTypeTab === "string" ? options.dspTypeTab : undefined,
-  tocSrch: typeof options.tocSrch === "string" ? options.tocSrch : undefined,
-  docType: typeof options.docType === "string" ? options.docType : undefined,
-  reportName:
-    typeof options.reportName === "string" ? options.reportName : undefined,
-  decadeType:
-    typeof options.decadeType === "string" ? options.decadeType : undefined,
-});
 
 const renderSupplementalHelp = (): string => {
   const examples = dsab007ContentsOperationSpec.examples
@@ -201,28 +144,26 @@ const buildDsab007ContentsCommand = (
 };
 
 const renderDsab007ContentsSearchResult = (
-  result: Dsab007ContentsSearchResult,
+  result: Dsab007ContentsOperationResult,
 ): string => JSON.stringify(result, null, 2);
 
 const defaultCommandExecutor: Dsab007ContentsCommandExecutor = {
-  runSearch: (input) => Effect.runPromise(searchDsab007Contents(input)),
+  runOperation: (input) => executeDsab007ContentsOperation(input),
   writeStdout: (text) => {
     console.log(text);
   },
 };
 
 /**
- * Runs the contents search and writes exactly one JSON payload to stdout.
- *
- * The executor seam keeps transport and output wiring replaceable in tests
- * without changing the command contract exposed to real CLI callers.
+ * Runs the contents search only after the shared semantic resolver has accepted
+ * the request, then writes exactly one JSON payload to stdout.
  */
 export const executeDsab007ContentsCommand = (
   options: CliOptions,
   executor: Dsab007ContentsCommandExecutor = defaultCommandExecutor,
 ): Promise<void> =>
   executor
-    .runSearch(buildDsab007ContentsSearchInput(options))
+    .runOperation(options as Partial<Dsab007ContentsRawInput> & Record<string, unknown>)
     .then((result) => executor.writeStdout(renderDsab007ContentsSearchResult(result)));
 
 export const dsab007Usage = `${buildDsab007ContentsCommand().helpInformation()}${renderSupplementalHelp()}`;
@@ -230,8 +171,9 @@ export const dsab007Usage = `${buildDsab007ContentsCommand().helpInformation()}$
 /**
  * Parses user-supplied flags without printing help or exiting the process.
  *
- * Callers still get Commander validation errors, but they can decide how to
- * surface those errors instead of letting Commander write directly to stdio.
+ * This is intentionally transport-only: required fields, defaults, enum
+ * choices, and date formats are validated later by the shared semantic
+ * resolver.
  */
 export const parseDsab007CommandArgs = (argv: string[]): CliOptions => {
   const command = buildDsab007ContentsCommand().exitOverride();

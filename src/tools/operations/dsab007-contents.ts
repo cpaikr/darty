@@ -1,49 +1,25 @@
-import {
-  describeDsab007ContentsSearchInput,
-} from "../../dart/dsab007/contracts.ts";
 import type { OperationSpec } from "./types.ts";
+import { dsab007ContentsInputParameters } from "./dsab007-contents-input.ts";
 
-const requiredParameterKeys = new Set(["keyword", "startDate", "endDate"]);
-
-const defaultValues = {
-  currentPage: "1",
-  maxResults: "10",
-  maxLinks: "10",
-  sort: "DATE",
-  sortType: "desc",
-} as const satisfies Partial<Record<
-  | "currentPage"
-  | "maxLinks"
-  | "maxResults"
-  | "sort"
-  | "sortType",
-  string
->>;
-
+/**
+ * Shared operation contract for the first implemented `dsab007` search mode.
+ *
+ * The CLI already consumes this spec to build flags, help text, examples, and
+ * default reporting. Keeping that metadata here leaves room for later MCP or
+ * SDK transports to expose the same semantic operation surface without drifting
+ * from the shared resolver.
+ */
 export const dsab007ContentsOperationSpec = {
   name: "dsab007-contents",
-  summary: "Replay DART dsab007 contents search and return structured JSON.",
+  summary: "Search DART dsab007 contents and return structured JSON.",
   description:
-    "Low-level read-only replay of DART's dsab007 contents search. The output stays DART-shaped so the same operation metadata can back CLI, MCP, or SDK layers.",
-  parameters: describeDsab007ContentsSearchInput()
-    .filter((parameter) => parameter.key !== "option")
-    .map((parameter) => ({
-      key: parameter.key,
-      aliases: parameter.aliases,
-      cliFlags: parameter.cliFlags,
-      valueHint: parameter.valueHint,
-      description: parameter.description,
-      status: parameter.status,
-      required: requiredParameterKeys.has(parameter.key),
-      defaultValue:
-        parameter.key in defaultValues
-          ? defaultValues[parameter.key as keyof typeof defaultValues]
-          : undefined,
-    })),
+    "Semantic, read-only access to DART's dsab007 contents search. Public inputs stay agent-friendly while the DART replay contract remains internal.",
+  parameters: dsab007ContentsInputParameters,
   notes: [
-    "Semantic aliases are preferred when available; raw DART-shaped aliases remain accepted for debugging.",
+    "The command accepts semantic parameter names only; DART replay field names stay internal.",
     "Status labels show how directly the upstream field meaning is confirmed: observed, inferred, unverified.",
     "The command always prints JSON to stdout and reserves stderr for errors.",
+    "The echoed request payload uses resolved semantic parameter names.",
   ],
   examples: [
     {
@@ -55,6 +31,8 @@ export const dsab007ContentsOperationSpec = {
         "20250331",
         "--end-date",
         "20260331",
+        "--sort-by",
+        "date",
       ],
     },
     {
@@ -68,6 +46,8 @@ export const dsab007ContentsOperationSpec = {
         "20260331",
         "--presenter-name",
         "IR",
+        "--sort-direction",
+        "asc",
       ],
     },
   ],
