@@ -1,19 +1,25 @@
 import { ParseResult, Schema } from "effect";
 
-import {
-  annotateCapabilityInput,
-  describeCapabilityInput,
-  type CapabilityInputProperty,
-} from "../types.ts";
-
 const datePattern = /^\d{8}$/;
 
-const ContentsSearchDateString = Schema.String.pipe(
-  Schema.pattern(datePattern),
-  Schema.annotations({
+type AnnotatableSchema<S> = S & {
+  annotations: (
+    annotations: Record<PropertyKey, unknown>,
+  ) => S;
+};
+
+const annotateSchema = <S>(
+  schema: S,
+  annotations: Record<PropertyKey, unknown>,
+): S =>
+  (schema as AnnotatableSchema<S>).annotations(annotations) as S;
+
+const ContentsSearchDateString = annotateSchema(
+  Schema.String.pipe(Schema.pattern(datePattern)),
+  {
     identifier: "ContentsSearchDateString",
     description: "Date string in YYYYMMDD format.",
-  }),
+  },
 );
 
 export const contentsSearchSortByValues = ["date", "reportName"] as const;
@@ -36,80 +42,132 @@ const defaultRequest = {
   sortDirection: "desc",
 } as const;
 
+const contentsSearchInputRules = {
+  page: {
+    kind: "integer",
+    required: false,
+    minimum: 1,
+    maximum: 100,
+    expectedRequiredValue: "an integer between 1 and 100",
+  },
+  sortBy: {
+    kind: "enum",
+    required: false,
+    enumValues: contentsSearchSortByValues,
+    expectedRequiredValue: `one of ${contentsSearchSortByValues.join(", ")}`,
+  },
+  sortDirection: {
+    kind: "enum",
+    required: false,
+    enumValues: contentsSearchSortDirectionValues,
+    expectedRequiredValue: `one of ${contentsSearchSortDirectionValues.join(", ")}`,
+  },
+  keyword: {
+    kind: "string",
+    required: true,
+    nonEmpty: true,
+    expectedRequiredValue: "a non-empty string",
+  },
+  startDate: {
+    kind: "date",
+    required: true,
+    expectedRequiredValue: "a YYYYMMDD date string",
+  },
+  endDate: {
+    kind: "date",
+    required: true,
+    expectedRequiredValue: "a YYYYMMDD date string",
+  },
+  companyCode: {
+    kind: "string",
+    required: false,
+    nonEmpty: true,
+    expectedRequiredValue: "a non-empty string",
+  },
+  presenterName: {
+    kind: "string",
+    required: false,
+    nonEmpty: true,
+    expectedRequiredValue: "a non-empty string",
+  },
+  reportName: {
+    kind: "string",
+    required: false,
+    nonEmpty: true,
+    expectedRequiredValue: "a non-empty string",
+  },
+} as const;
+
+type ContentsSearchInputKey = keyof typeof contentsSearchInputRules;
+
 const contentsSearchRequestFields = {
-  page: annotateCapabilityInput(
+  page: annotateSchema(
     Schema.optionalWith(
-      Schema.Int.pipe(
-        Schema.greaterThanOrEqualTo(1),
-        Schema.lessThanOrEqualTo(100),
+      annotateSchema(
+        Schema.Int.pipe(
+          Schema.greaterThanOrEqualTo(1),
+          Schema.lessThanOrEqualTo(100),
+        ),
+        {
+          description: "1-based search results page to request.",
+        },
       ),
       { default: () => defaultRequest.page },
     ),
     {
-      aliases: ["page"],
-      cliValueHint: "<number>",
-      description: "1-based search results page to request.",
-      status: "observed",
-      defaultValue: defaultRequest.page,
+      default: defaultRequest.page,
     },
   ),
-  sortBy: annotateCapabilityInput(
-    Schema.optionalWith(ContentsSearchSortBySchema, {
-      default: () => defaultRequest.sortBy,
-    }),
+  sortBy: annotateSchema(
+    Schema.optionalWith(
+      annotateSchema(ContentsSearchSortBySchema, {
+        description: "Sort field for results.",
+      }),
+      {
+        default: () => defaultRequest.sortBy,
+      },
+    ),
     {
-      aliases: ["sort-by"],
-      description: "Sort field for results.",
-      status: "observed",
-      defaultValue: defaultRequest.sortBy,
+      default: defaultRequest.sortBy,
     },
   ),
-  sortDirection: annotateCapabilityInput(
-    Schema.optionalWith(ContentsSearchSortDirectionSchema, {
-      default: () => defaultRequest.sortDirection,
-    }),
+  sortDirection: annotateSchema(
+    Schema.optionalWith(
+      annotateSchema(ContentsSearchSortDirectionSchema, {
+        description: "Sort direction for the selected sort field.",
+      }),
+      {
+        default: () => defaultRequest.sortDirection,
+      },
+    ),
     {
-      aliases: ["sort-direction"],
-      description: "Sort direction for the selected sort field.",
-      status: "observed",
-      defaultValue: defaultRequest.sortDirection,
+      default: defaultRequest.sortDirection,
     },
   ),
-  keyword: annotateCapabilityInput(Schema.NonEmptyString, {
-    aliases: ["keyword"],
+  keyword: annotateSchema(Schema.NonEmptyString, {
     description: "Main body-content search text.",
-    status: "observed",
   }),
-  startDate: annotateCapabilityInput(ContentsSearchDateString, {
-    aliases: ["start-date"],
-    cliValueHint: "<YYYYMMDD>",
+  startDate: annotateSchema(ContentsSearchDateString, {
     description: "Inclusive receipt start date in YYYYMMDD format.",
-    status: "observed",
   }),
-  endDate: annotateCapabilityInput(ContentsSearchDateString, {
-    aliases: ["end-date"],
-    cliValueHint: "<YYYYMMDD>",
+  endDate: annotateSchema(ContentsSearchDateString, {
     description: "Inclusive receipt end date in YYYYMMDD format.",
-    status: "observed",
   }),
-  companyCode: annotateCapabilityInput(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["company-code"],
-    description: "Filter by DART company code.",
-    status: "observed",
-  }),
-  presenterName: annotateCapabilityInput(
-    Schema.optional(Schema.NonEmptyString),
-    {
-      aliases: ["presenter-name"],
-      description: "Filter by presenter name when DART exposes that field.",
-      status: "observed",
-    },
+  companyCode: Schema.optional(
+    annotateSchema(Schema.NonEmptyString, {
+      description: "Filter by DART company code.",
+    }),
   ),
-  reportName: annotateCapabilityInput(Schema.optional(Schema.NonEmptyString), {
-    aliases: ["report-name"],
-    description: "Filter by report title as currently honored by DART.",
-    status: "observed",
-  }),
+  presenterName: Schema.optional(
+    annotateSchema(Schema.NonEmptyString, {
+      description: "Filter by presenter name when DART exposes that field.",
+    }),
+  ),
+  reportName: Schema.optional(
+    annotateSchema(Schema.NonEmptyString, {
+      description: "Filter by report title as currently honored by DART.",
+    }),
+  ),
 } as const;
 
 export const ContentsSearchRequestSchema = Schema.Struct(
@@ -122,94 +180,113 @@ export const ContentsSearchRequestSchema = Schema.Struct(
 export type ContentsSearchRawInput = typeof ContentsSearchRequestSchema.Encoded;
 export type ContentsSearchRequest = typeof ContentsSearchRequestSchema.Type;
 
-export const contentsSearchInputProperties = describeCapabilityInput(
-  ContentsSearchRequestSchema,
-);
-
-const contentsSearchInputPropertyByKey = new Map(
-  contentsSearchInputProperties.map((property) => [property.key, property]),
-);
-
 const decodeContentsSearchRequest = Schema.decodeUnknownEither(
   ContentsSearchRequestSchema,
 );
 
-export type ContentsSearchItem = {
-  readonly company: {
-    readonly name: string;
-    readonly marketLabel?: string | undefined;
-    readonly companyCode?: string | undefined;
-  };
-  readonly filing: {
-    readonly receiptNumber: string;
-    readonly documentNumber?: string | undefined;
-    readonly reportTitle: string;
-    readonly reportModifier?: string | undefined;
-    readonly reportPeriod?: string | undefined;
-    readonly reportNameSuffix?: string | undefined;
-    readonly receiptDate: string;
-  };
-  readonly match: {
-    readonly snippetText: string;
-    readonly disclosureTypeLabel?: string | undefined;
-    readonly contentTypeLabel?: string | undefined;
-    readonly presenterName?: string | undefined;
-  };
-  readonly references: {
-    readonly viewerUrl: string;
-  };
-  readonly evidence: {
-    readonly reportNameRaw: string;
-    readonly rawInfoText: string;
-    readonly snippetHtml: string;
-  };
-};
+export const ContentsSearchCompanySchema = Schema.Struct({
+  name: Schema.String,
+  marketLabel: Schema.optional(Schema.String),
+  companyCode: Schema.optional(Schema.String),
+});
+export type ContentsSearchCompany = typeof ContentsSearchCompanySchema.Type;
 
-export type ContentsSearchPagination = {
-  readonly currentPage: number;
-  readonly totalPages: number;
-  readonly totalCount: number;
-  readonly returnedCount: number;
-};
+export const ContentsSearchFilingSchema = Schema.Struct({
+  receiptNumber: Schema.String,
+  documentNumber: Schema.optional(Schema.String),
+  reportTitle: Schema.String,
+  reportModifier: Schema.optional(Schema.String),
+  reportPeriod: Schema.optional(Schema.String),
+  reportNameSuffix: Schema.optional(Schema.String),
+  receiptDate: Schema.String,
+});
+export type ContentsSearchFiling = typeof ContentsSearchFilingSchema.Type;
 
-export type ContentsSearchMetadata = {
-  readonly fetchedAt: string;
-  readonly source: {
-    readonly system: "dart";
-    readonly surface: "dsab007";
-    readonly endpoint: string;
-  };
-  readonly sourceBehavior: {
-    readonly effectivePageSize: number;
-    readonly effectivePagerWidth: number;
-    readonly callerControlsPageSize: false;
-    readonly callerControlsPagerWidth: false;
-    readonly observationStatus: "observed";
-  };
-  readonly completeness: "complete" | "partial";
-  readonly droppedItemCount: number;
-};
+export const ContentsSearchMatchSchema = Schema.Struct({
+  snippetText: Schema.String,
+  disclosureTypeLabel: Schema.optional(Schema.String),
+  contentTypeLabel: Schema.optional(Schema.String),
+  presenterName: Schema.optional(Schema.String),
+});
+export type ContentsSearchMatch = typeof ContentsSearchMatchSchema.Type;
 
-export type ContentsSearchReferences = {
-  readonly searchUrl: string;
-};
+export const ContentsSearchItemReferencesSchema = Schema.Struct({
+  viewerUrl: Schema.String,
+});
+export type ContentsSearchItemReferences =
+  typeof ContentsSearchItemReferencesSchema.Type;
 
-export type ContentsSearchWarning = {
-  readonly code: "partial_rows_dropped";
-  readonly message: string;
-  readonly droppedItemCount: number;
-};
+export const ContentsSearchEvidenceSchema = Schema.Struct({
+  reportNameRaw: Schema.String,
+  rawInfoText: Schema.String,
+  snippetHtml: Schema.String,
+});
+export type ContentsSearchEvidence = typeof ContentsSearchEvidenceSchema.Type;
 
-export type ContentsSearchResult = {
-  readonly result: {
-    readonly request: ContentsSearchRequest;
-    readonly pagination: ContentsSearchPagination;
-    readonly items: readonly ContentsSearchItem[];
-  };
-  readonly metadata: ContentsSearchMetadata;
-  readonly references: ContentsSearchReferences;
-  readonly warnings: readonly ContentsSearchWarning[];
-};
+export const ContentsSearchItemSchema = Schema.Struct({
+  company: ContentsSearchCompanySchema,
+  filing: ContentsSearchFilingSchema,
+  match: ContentsSearchMatchSchema,
+  references: ContentsSearchItemReferencesSchema,
+  evidence: ContentsSearchEvidenceSchema,
+});
+export type ContentsSearchItem = typeof ContentsSearchItemSchema.Type;
+
+export const ContentsSearchPaginationSchema = Schema.Struct({
+  currentPage: Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)),
+  totalPages: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+  totalCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+  returnedCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+});
+export type ContentsSearchPagination =
+  typeof ContentsSearchPaginationSchema.Type;
+
+export const ContentsSearchMetadataSchema = Schema.Struct({
+  fetchedAt: Schema.String,
+  source: Schema.Struct({
+    system: Schema.Literal("dart"),
+    surface: Schema.Literal("dsab007"),
+    endpoint: Schema.String,
+  }),
+  sourceBehavior: Schema.Struct({
+    effectivePageSize: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+    effectivePagerWidth: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+    callerControlsPageSize: Schema.Literal(false),
+    callerControlsPagerWidth: Schema.Literal(false),
+    observationStatus: Schema.Literal("observed"),
+  }),
+  completeness: Schema.Literal("complete", "partial"),
+  droppedItemCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+});
+export type ContentsSearchMetadata = typeof ContentsSearchMetadataSchema.Type;
+
+export const ContentsSearchReferencesSchema = Schema.Struct({
+  searchUrl: Schema.String,
+});
+export type ContentsSearchReferences =
+  typeof ContentsSearchReferencesSchema.Type;
+
+export const ContentsSearchWarningSchema = Schema.Struct({
+  code: Schema.Literal("partial_rows_dropped"),
+  message: Schema.String,
+  droppedItemCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+});
+export type ContentsSearchWarning = typeof ContentsSearchWarningSchema.Type;
+
+export const ContentsSearchResultSchema = Schema.Struct({
+  result: Schema.Struct({
+    request: ContentsSearchRequestSchema,
+    pagination: ContentsSearchPaginationSchema,
+    items: Schema.Array(ContentsSearchItemSchema),
+  }),
+  metadata: ContentsSearchMetadataSchema,
+  references: ContentsSearchReferencesSchema,
+  warnings: Schema.Array(ContentsSearchWarningSchema),
+}).annotations({
+  identifier: "ContentsSearchResult",
+  description: "Successful contents-search result envelope.",
+});
+export type ContentsSearchResult = typeof ContentsSearchResultSchema.Type;
 
 export class InvalidContentsSearchRequest extends Schema.TaggedError<InvalidContentsSearchRequest>()(
   "InvalidContentsSearchRequest",
@@ -244,33 +321,10 @@ export class ContentsSearchFailure extends Schema.TaggedError<ContentsSearchFail
   },
 ) {}
 
-type ContentsSearchInputKey = keyof ContentsSearchRawInput;
-
-const allowedKeys = new Set<string>(
-  contentsSearchInputProperties.map((property) => property.key),
-);
-
-const getContentsSearchInputProperty = (
-  key: ContentsSearchInputKey,
-): CapabilityInputProperty => {
-  const property = contentsSearchInputPropertyByKey.get(key);
-
-  if (property === undefined) {
-    throw new Error(`Missing contents-search input property metadata for "${key}".`);
-  }
-
-  return property;
-};
-
-const getExpectedRequiredValue = (
-  property: CapabilityInputProperty,
-): string => {
-  if (property.pattern !== undefined && property.cliValueHint !== undefined) {
-    return `a ${property.cliValueHint.slice(1, -1)} date string`;
-  }
-
-  return "a non-empty string";
-};
+const allowedKeys = new Set<string>(Object.keys(contentsSearchInputRules));
+const orderedInputKeys = Object.keys(
+  contentsSearchInputRules,
+) as readonly ContentsSearchInputKey[];
 
 type CollectedParseIssue = {
   readonly path: readonly PropertyKey[];
@@ -309,14 +363,14 @@ const getParameterIssues = (
 } => {
   const collectedIssues = collectParseIssues(error.issue);
 
-  for (const property of contentsSearchInputProperties) {
+  for (const key of orderedInputKeys) {
     const matchingIssues = collectedIssues
-      .filter((issue) => issue.path[0] === property.key)
+      .filter((issue) => issue.path[0] === key)
       .map((issue) => issue.issue);
 
     if (matchingIssues.length > 0) {
       return {
-        parameter: property.key as ContentsSearchInputKey,
+        parameter: key,
         issues: matchingIssues,
       };
     }
@@ -363,7 +417,7 @@ const toInvalidContentsSearchRequest = (
     });
   }
 
-  const property = getContentsSearchInputProperty(parameter);
+  const rule = contentsSearchInputRules[parameter];
   const actual = input[parameter];
 
   if (issues.some((issue) => issue._tag === "Missing")) {
@@ -371,17 +425,13 @@ const toInvalidContentsSearchRequest = (
       code: "missing_parameter",
       parameter,
       reason: "required",
-      expected: getExpectedRequiredValue(property),
-      message: `Missing required parameter "${parameter}". Expected ${getExpectedRequiredValue(
-        property,
-      )}.`,
+      expected: rule.expectedRequiredValue,
+      message: `Missing required parameter "${parameter}". Expected ${rule.expectedRequiredValue}.`,
     });
   }
 
-  if (property.enumValues !== undefined) {
-    const choices = property.enumValues.filter(
-      (value): value is string => typeof value === "string",
-    );
+  if (rule.kind === "enum") {
+    const choices = [...rule.enumValues];
 
     if (typeof actual !== "string") {
       return new InvalidContentsSearchRequest({
@@ -404,7 +454,7 @@ const toInvalidContentsSearchRequest = (
     });
   }
 
-  if (property.type === "integer") {
+  if (rule.kind === "integer") {
     if (!Number.isInteger(actual)) {
       return new InvalidContentsSearchRequest({
         code: "invalid_parameter",
@@ -416,19 +466,16 @@ const toInvalidContentsSearchRequest = (
       });
     }
 
-    if (
-      typeof property.minimum === "number" &&
-      typeof property.maximum === "number" &&
-      typeof actual === "number" &&
-      (actual < property.minimum || actual > property.maximum)
-    ) {
+    const numericActual = actual as number;
+
+    if (numericActual < rule.minimum || numericActual > rule.maximum) {
       return new InvalidContentsSearchRequest({
         code: "invalid_parameter",
         parameter,
         reason: "out_of_range",
-        expected: `an integer between ${property.minimum} and ${property.maximum}`,
-        actual,
-        message: `Parameter "${parameter}" must be between ${property.minimum} and ${property.maximum}.`,
+        expected: `an integer between ${rule.minimum} and ${rule.maximum}`,
+        actual: numericActual,
+        message: `Parameter "${parameter}" must be between ${rule.minimum} and ${rule.maximum}.`,
       });
     }
   }
@@ -444,24 +491,18 @@ const toInvalidContentsSearchRequest = (
     });
   }
 
-  if (
-    typeof property.minLength === "number" &&
-    property.minLength > 0 &&
-    actual.length < property.minLength
-  ) {
+  if (rule.kind === "string" && rule.nonEmpty && actual.length === 0) {
     return new InvalidContentsSearchRequest({
       code: "invalid_parameter",
       parameter,
       reason: "empty_string",
-      expected: property.required
-        ? getExpectedRequiredValue(property)
-        : "a non-empty string",
+      expected: "a non-empty string",
       actual,
       message: `Parameter "${parameter}" must not be empty.`,
     });
   }
 
-  if (property.pattern !== undefined) {
+  if (rule.kind === "date") {
     return new InvalidContentsSearchRequest({
       code: "invalid_parameter",
       parameter,

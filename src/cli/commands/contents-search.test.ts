@@ -5,20 +5,12 @@ import {
   resolveContentsSearchRequest,
 } from "../../capabilities/contents-search/contract.ts";
 import { executeContentsSearch } from "../../capabilities/contents-search/execute.ts";
-import { contentsSearchManifest } from "../../capabilities/contents-search/spec.ts";
-import {
-  capabilityInputPropertyToCliValueHint,
-  type CapabilityInputProperty,
-} from "../../capabilities/types.ts";
 import {
   createContentsSearchCommandWithRunner,
   contentsSearchUsage,
   executeContentsSearchCommand,
   parseContentsSearchCommandArgs,
 } from "./contents-search.ts";
-
-const formatFlags = (parameter: CapabilityInputProperty) =>
-  `${parameter.cliFlags.join(", ")} ${capabilityInputPropertyToCliValueHint(parameter)}`;
 
 describe("parseContentsSearchCommandArgs", () => {
   test("parses semantic flags into public capability keys", () => {
@@ -77,18 +69,30 @@ describe("parseContentsSearchCommandArgs", () => {
     );
   });
 
-  test("keeps help flags in sync with the shared capability spec", () => {
-    for (const parameter of contentsSearchManifest.inputProperties) {
-      expect(contentsSearchUsage).toContain(formatFlags(parameter));
-    }
+  test("documents the explicit CLI surface locally", () => {
+    expect(contentsSearchUsage).toContain("--page <number>");
+    expect(contentsSearchUsage).toContain("--sort-by <date|reportName>");
+    expect(contentsSearchUsage).toContain("--sort-direction <asc|desc>");
+    expect(contentsSearchUsage).toContain("--keyword <text>");
+    expect(contentsSearchUsage).toContain("--start-date <YYYYMMDD>");
+    expect(contentsSearchUsage).toContain("--end-date <YYYYMMDD>");
+    expect(contentsSearchUsage).toContain("--company-code <text>");
+    expect(contentsSearchUsage).toContain("--presenter-name <text>");
+    expect(contentsSearchUsage).toContain("--report-name <text>");
   });
 
-  test("renders capability-owned parameter descriptions in CLI usage", () => {
-    expect(contentsSearchUsage).toContain("--company-code <text>");
+  test("renders CLI-owned descriptions, notes, and examples in usage", () => {
+    expect(contentsSearchUsage).toContain(
+      "Semantic, read-only access to DART filing contents search backed by an internal",
+    );
+    expect(contentsSearchUsage).toContain("dsab007 replay adapter.");
     expect(contentsSearchUsage).toContain(
       "DART currently controls page size and pager width for this mode",
     );
     expect(contentsSearchUsage).toContain("[observed]");
+    expect(contentsSearchUsage).toContain(
+      "bun run src/cli.ts contents-search --keyword 배당 --start-date 20250331 --end-date 20260331",
+    );
     expect(contentsSearchUsage).not.toContain("--limit");
     expect(contentsSearchUsage).not.toContain("--company-name");
     expect(contentsSearchUsage).not.toContain("text-crp-nm");
@@ -160,18 +164,21 @@ describe("parseContentsSearchCommandArgs", () => {
 
   test("rejects invalid capability input before execution", async () => {
     try {
-      await executeContentsSearchCommand({
-        startDate: "20250331",
-        endDate: "20260331",
-      }, {
-        runOperation: (input) =>
-          executeContentsSearch(input, {
-            search: async () => {
-              throw new Error("Provider should not be called for invalid input.");
-            },
-          }),
-        writeStdout: () => undefined,
-      });
+      await executeContentsSearchCommand(
+        {
+          startDate: "20250331",
+          endDate: "20260331",
+        },
+        {
+          runOperation: (input) =>
+            executeContentsSearch(input, {
+              search: async () => {
+                throw new Error("Provider should not be called for invalid input.");
+              },
+            }),
+          writeStdout: () => undefined,
+        },
+      );
       throw new Error("Expected execution to fail.");
     } catch (error) {
       expect(error).toBeInstanceOf(ContentsSearchFailure);

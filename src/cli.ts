@@ -1,15 +1,14 @@
 import { Command } from "commander";
 
+import { defaultContentsSearchOperation } from "./app/contents-search.ts";
 import {
   createContentsSearchCommandWithRunner,
   executeContentsSearchCommand,
 } from "./cli/commands/contents-search.ts";
-import { executeContentsSearch } from "./capabilities/contents-search/execute.ts";
-import { dsab007ContentsProvider } from "./sources/dart/dsab007/contents/search.ts";
 
 const defaultContentsSearchExecutor = {
   runOperation: (input: Record<string, unknown>) =>
-    executeContentsSearch(input, dsab007ContentsProvider),
+    defaultContentsSearchOperation.execute(input),
   writeStdout: (text: string) => {
     console.log(text);
   },

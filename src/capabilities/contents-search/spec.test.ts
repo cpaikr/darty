@@ -1,13 +1,19 @@
 import { describe, expect, test } from "bun:test";
+import { Effect, Schema } from "effect";
 import type { JsonSchema7Root } from "effect/JSONSchema";
 
 import {
+  ContentsSearchResultSchema,
+  resolveContentsSearchRequest,
+} from "./contract.ts";
+import {
   contentsSearchInputJsonSchema,
-  contentsSearchManifest,
+  contentsSearchOperationName,
+  contentsSearchResultJsonSchema,
 } from "./spec.ts";
 
-describe("contentsSearchManifest", () => {
-  test("exports one transport-neutral input schema for future adapters", () => {
+describe("contents-search capability schemas", () => {
+  test("exports the shared operation identifier and input schema", () => {
     const jsonSchema = contentsSearchInputJsonSchema as JsonSchema7Root & {
       type: "object";
       properties: Record<string, Record<string, unknown>>;
@@ -19,19 +25,7 @@ describe("contentsSearchManifest", () => {
     const keyword = jsonSchema.properties.keyword!;
     const companyCode = jsonSchema.properties.companyCode!;
 
-    expect(contentsSearchManifest.inputProperties).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          key: "page",
-          type: "integer",
-          defaultValue: 1,
-        }),
-        expect.objectContaining({
-          key: "sortBy",
-          enumValues: ["date", "reportName"],
-        }),
-      ]),
-    );
+    expect(contentsSearchOperationName).toBe("contents-search");
     expect(jsonSchema).toMatchObject({
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
@@ -59,28 +53,101 @@ describe("contentsSearchManifest", () => {
     expect(jsonSchema.properties.textCrpNm).toBeUndefined();
   });
 
-  test("stores examples as semantic inputs instead of CLI-only argv", () => {
-    expect(contentsSearchManifest.examples).toEqual([
-      {
-        description: "Search recent contents matches for a keyword.",
-        input: {
-          keyword: "배당",
-          startDate: "20250331",
-          endDate: "20260331",
+  test("exports a success-only result schema for structured outputs", () => {
+    const jsonSchema = contentsSearchResultJsonSchema as JsonSchema7Root & {
+      type: "object";
+      properties: Record<string, Record<string, unknown>>;
+    };
+
+    expect(jsonSchema).toMatchObject({
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object",
+      additionalProperties: false,
+      required: ["result", "metadata", "references", "warnings"],
+    });
+    expect(jsonSchema.properties.result).toBeDefined();
+    expect(jsonSchema.properties.metadata).toBeDefined();
+    expect(jsonSchema.properties.references).toBeDefined();
+    expect(jsonSchema.properties.warnings).toBeDefined();
+    expect(jsonSchema.properties.error).toBeUndefined();
+  });
+
+  test("accepts the existing successful result envelope", async () => {
+    const request = resolveContentsSearchRequest({
+      keyword: "배당",
+      startDate: "20250331",
+      endDate: "20260331",
+    });
+
+    const decoded = await Effect.runPromise(
+      Schema.decodeUnknown(ContentsSearchResultSchema)({
+        result: {
+          request,
+          pagination: {
+            currentPage: 1,
+            totalPages: 2,
+            totalCount: 11,
+            returnedCount: 1,
+          },
+          items: [
+            {
+              company: {
+                name: "유일에너테크",
+                marketLabel: "코스닥시장",
+                companyCode: "01368637",
+              },
+              filing: {
+                receiptNumber: "20260331904807",
+                documentNumber: "11216440",
+                reportTitle: "정기주주총회결과",
+                reportModifier: undefined,
+                reportPeriod: undefined,
+                reportNameSuffix: undefined,
+                receiptDate: "2026-03-31",
+              },
+              match: {
+                snippetText: "배당",
+                disclosureTypeLabel: "거래소공시",
+                contentTypeLabel: "본문",
+                presenterName: "유일에너테크",
+              },
+              references: {
+                viewerUrl:
+                  "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331904807",
+              },
+              evidence: {
+                reportNameRaw: "정기주주총회결과",
+                rawInfoText: "[거래소공시] [본문] 제출인 : 유일에너테크",
+                snippetHtml: "<strong>배당</strong>",
+              },
+            },
+          ],
         },
-      },
-      {
-        description:
-          "Narrow results with observed company-code and presenter filters.",
-        input: {
-          keyword: "배당",
-          startDate: "20250331",
-          endDate: "20260331",
-          companyCode: "01368637",
-          presenterName: "유일에너테크",
-          sortBy: "reportName",
+        metadata: {
+          fetchedAt: "2026-03-31T00:00:00.000Z",
+          source: {
+            system: "dart",
+            surface: "dsab007",
+            endpoint: "https://dart.fss.or.kr/dsab007/search.ax",
+          },
+          sourceBehavior: {
+            effectivePageSize: 10,
+            effectivePagerWidth: 10,
+            callerControlsPageSize: false,
+            callerControlsPagerWidth: false,
+            observationStatus: "observed",
+          },
+          completeness: "complete",
+          droppedItemCount: 0,
         },
-      },
-    ]);
+        references: {
+          searchUrl: "https://dart.fss.or.kr/dsab007/search.ax",
+        },
+        warnings: [],
+      }),
+    );
+
+    expect(decoded.result.request).toEqual(request);
+    expect(decoded.result.items).toHaveLength(1);
   });
 });

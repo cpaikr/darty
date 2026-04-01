@@ -8,9 +8,8 @@ This repo now has two layers:
 ## Big Picture
 
 The CLI is not the real app. The capability layer is: a semantic request
-contract, a provider interface, and an execution path that normalizes errors and
-shapes results. The CLI is one transport host over that core, and a future MCP
-tool should sit at the same layer.
+contract, a provider interface, and an execution path that normalizes errors
+and shapes results. The CLI and MCP transports both sit over that same core.
 
 For layer diagrams, the schema derivation chain, the runtime pipeline, the
 two-schema boundary, and the MCP extension seam, see
@@ -64,13 +63,19 @@ two-schema boundary, and the MCP extension seam, see
 
 ## Runtime Flow
 
-The dominant current flow is:
+The dominant current flows are:
 
 ```
 argv -> src/cli.ts -> cli/commands/contents-search.ts
      -> executeContentsSearchCommand()
-     -> capabilities/contents-search/execute.ts -> sources/dart/dsab007/contents/search.ts
+     -> app/contents-search.ts -> capabilities/contents-search/execute.ts
+     -> sources/dart/dsab007/contents/search.ts
      -> /dsab007/search.ax
+
+MCP tools/call -> src/mcp.ts -> mcp/server.ts
+               -> app/contents-search.ts -> capabilities/contents-search/execute.ts
+               -> sources/dart/dsab007/contents/search.ts
+               -> /dsab007/search.ax
 ```
 
 See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the full runtime pipeline,

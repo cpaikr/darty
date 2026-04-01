@@ -7,46 +7,50 @@ shape and document ownership.
 ## Purpose
 
 `src/` contains the first executable slice of `darty`: one public
-`contents-search` capability, one local CLI transport, and one internal DART
-`dsab007` source adapter.
+`contents-search` capability, local CLI and MCP transports, and one internal
+DART `dsab007` source adapter.
 
-The design goal is to keep the core reusable across transports. The CLI is one
-host and also the current composition root. MCP should be able to reuse the
-same capability contract and execution path while choosing its own adapter
-wiring.
+The design goal is to keep the core reusable across transports. CLI and MCP now
+share the same capability contract and execution path while choosing their own
+adapter behavior.
 
 ## Layer Overview
 
 The CLI is not the real app. The capability layer is: a semantic request
-contract, a provider interface, and an execution path that normalizes errors and
-shapes results. The CLI is one transport host over that core, and a future MCP
-tool should sit at the same layer.
+contract, a provider interface, and an execution path that normalizes errors
+and shapes results. CLI and MCP are transport hosts over that same core.
 
 ```mermaid
 graph TD
     subgraph Transport["Transport Adapters"]
         CLI["CLI · src/cli/"]
-        MCP["MCP · future"]
+        MCP["MCP · src/mcp/"]
+    end
+
+    subgraph App["Shared Composition · src/app/"]
+        APP["Operation name · schemas · provider wiring"]
     end
 
     subgraph Cap["Capability Contracts · src/capabilities/"]
-        CAP["Schema · validation · execution · metadata"]
+        CAP["Request/result schemas · validation · execution"]
     end
 
     subgraph Src["Source Adapters · src/sources/dart/"]
         SRC["Replay contract · form builder · HTML parser"]
     end
 
-    CLI --> CAP
-    MCP -.-> CAP
+    CLI --> APP
+    MCP --> APP
+    APP --> CAP
     CAP --> SRC
     SRC -->|POST| DART[("dart.fss.or.kr")]
 ```
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Transport** | `src/cli.ts`, `src/cli/` | Parse argv, build flags and help from manifest, choose the concrete adapter, print JSON |
-| **Capability** | `src/capabilities/` | Public contract, semantic validation, execution, metadata |
+| **Transport** | `src/cli.ts`, `src/cli/`, `src/mcp.ts`, `src/mcp/` | Parse transport input, own transport UX/protocol metadata, call the shared operation, and serialize results |
+| **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
+| **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
 | **Source** | `src/sources/dart/` | DART replay fields, form POST, HTML parsing, error mapping |
 
 ## Component Map
@@ -54,8 +58,12 @@ graph TD
 ```mermaid
 graph TD
     CLI_TS["src/cli.ts"] --> CMD["src/cli/commands/contents-search.ts"]
+    MCP_TS["src/mcp.ts"] --> MCP_SRV["src/mcp/server.ts"]
     CMD --> RUN["executeContentsSearchCommand()"]
-    CLI_TS --> EXEC["execute.ts\nvia injected runner"]
+    CLI_TS --> APP["src/app/contents-search.ts"]
+    MCP_SRV --> APP
+    APP --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
+    APP --> EXEC["execute.ts\nvia shared operation"]
     RUN --> EXEC
     EXEC --> PROV["provider.ts"]
     PROV --> SEARCH["search.ts"]
@@ -64,9 +72,7 @@ graph TD
     FETCH --> PARSE["parse-html.ts"]
 
     CONTRACT["contract.ts"] --> EXEC
-    SPEC["spec.ts"] --> CMD
-    TYPES["types.ts"] --> SPEC
-    CONTRACT --> TYPES
+    CONTRACT --> SPEC
 
     REPLAY["replay-schema.ts"] --> SEARCH
     MODEL["source-model.ts"] --> PARSE
@@ -77,9 +83,15 @@ graph TD
         CLI_TS
         CMD
     end
+    subgraph mcp [" "]
+        MCP_TS
+        MCP_SRV
+    end
+    subgraph app ["src/app/"]
+        APP
+    end
     subgraph cap ["src/capabilities/contents-search/"]
         CONTRACT
-        TYPES
         SPEC
         EXEC
         PROV
@@ -96,62 +108,67 @@ graph TD
 ```
 
 - **`src/cli.ts`** — Root Commander program. Registers commands and turns
-  failures into a process exit code. It is also the current composition root
-  that wires the CLI command to the concrete `dsab007` adapter.
-- **`src/cli/commands/`** — Transport adapters. Build CLI flags and help text
-  from capability-owned metadata, parse argv, and delegate execution through an
-  injected command runner.
+  failures into a process exit code.
+- **`src/cli/commands/`** — CLI transport adapters. Own Commander flags, help
+  text, examples, and stdout formatting while delegating semantic validation and
+  execution through an injected command runner.
+- **`src/mcp.ts` / `src/mcp/`** — MCP stdio transport. Lists tools, advertises
+  the shared request/result JSON Schemas, and reports tool errors inside
+  `CallToolResult`.
+- **`src/app/`** — Shared operation wiring. Exposes the operation name, JSON
+  Schemas, and capability executor with the default `dsab007` provider already
+  attached.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
-  flow. Defines semantic inputs, public result shapes, typed failures, and
-  manifest metadata.
+  flow. Defines semantic inputs, success result shapes, typed failures, and
+  execution logic.
 - **`src/sources/dart/`** — Internal DART adapters. Owns replay schemas,
   request forms, HTML parsing, source models, and error mapping.
 
-## Schema-First Design
+## Behavior-First Core
 
-The biggest design choice is **schema-first, transport-second**. One schema
-definition drives runtime validation, TypeScript types, CLI flags, help text,
-and JSON Schema for future adapters.
+The biggest design choice is **behavior-first core, transport-local UX**. The
+shared layer owns semantic schemas and execution behavior. CLI and MCP each own
+their own presentation and protocol details.
 
 ```mermaid
 graph LR
-    CONTRACT["contract.ts\nEffect Schema\n+ annotateCapabilityInput()"] --> VALIDATE["Runtime\nvalidation"]
+    CONTRACT["contract.ts\nEffect Schema"] --> VALIDATE["Runtime\nvalidation"]
     CONTRACT --> TS["TypeScript\ntypes"]
-    CONTRACT --> TYPES["types.ts\ndescribeCapabilityInput()"]
+    CONTRACT --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
 
-    TYPES --> SPEC["spec.ts\nManifest"]
-    TYPES --> JSON["JSON Schema\nfor adapters"]
+    SPEC --> CLI_META["CLI name reuse"]
+    SPEC --> MCP_DEF["MCP tool schemas"]
+    CONTRACT --> RESULT["Success result\nenvelope"]
 
-    SPEC --> CLI_FLAGS["CLI flags\n+ help text"]
-    SPEC --> CLI_EX["CLI examples"]
-    SPEC --> MCP_DEF["MCP tool def\n· future ·"]
+    CLI_META -. transport local .-> CLI_FLAGS["CLI flags · help · examples"]
+    MCP_DEF -. transport local .-> MCP_META["MCP title · annotations · text"]
 ```
 
 How it works:
 
-1. **`contract.ts`** defines the public request schema using Effect Schema.
-   `annotateCapabilityInput()` attaches human-facing metadata (description,
-   aliases, defaults, status) as schema annotations.
-2. **`types.ts`** walks the schema AST via `describeCapabilityInput()` and
-   extracts a normalized `inputProperties` array plus JSON Schema for transport
-   metadata.
-3. **`spec.ts`** packages the schema with summary, notes, and examples into a
-   transport-neutral manifest.
-4. **`cli/commands/contents-search.ts`** imports the manifest and derives
-   Commander flags, help text, and shell examples from it, then delegates to
-   `executeContentsSearchCommand()` with host-supplied execution wiring.
+1. **`contract.ts`** defines the public request schema, success result schema,
+   typed failures, and semantic validation rules.
+2. **`spec.ts`** exports the operation name plus request/result JSON Schemas for
+   transports and tooling.
+3. **`app/contents-search.ts`** wires those schemas and the shared executor to
+   the default provider implementation.
+4. **`cli/commands/contents-search.ts`** defines the CLI UX explicitly, then
+   delegates to the shared operation.
+5. **`mcp/server.ts`** defines MCP tool metadata explicitly, advertises the
+   shared request/result schemas, then delegates tool calls to the same shared
+   operation.
 
 One source of truth gives you:
 
 - runtime validation shape
 - TypeScript types
-- CLI option definitions and help text
-- enum/default/range metadata
-- JSON Schema for future adapters
+- success result schema for MCP structured output
+- JSON Schema for transport adapters
 
-Without `annotateCapabilityInput()`, you'd have validation but not enough
-information to generate good CLI or MCP metadata. The annotations are the
-glue between schema-as-validation and schema-as-documentation.
+What is intentionally *not* centralized:
+
+- CLI flags, help text, and examples
+- MCP titles, annotations, and text rendering
 
 ## Runtime Flow
 
@@ -193,15 +210,15 @@ graph TD
 
 Step by step:
 
-1. Transport (CLI or future MCP) converts transport syntax into a partial
+1. Transport (CLI or MCP) converts transport syntax into a partial
    object keyed by public semantic names (`keyword`, `startDate`, etc.).
 2. `executeContentsSearchCommand()` passes the semantic raw input into the
    injected capability executor and prints exactly one JSON payload on success.
 3. `resolveContentsSearchRequest()` rejects unknown parameters, then uses the
    public request schema to apply defaults and validate required fields, enums,
    integer bounds, and date formats.
-4. The transport host (`src/cli.ts` today) wires the shared capability
-   executor to the default `dsab007ContentsProvider`.
+4. `src/app/contents-search.ts` wires the shared capability executor to the
+   default `dsab007ContentsProvider`, and both transports reuse that operation.
 5. `toDsab007ContentsReplayInput()` translates the public request into the
    internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
 6. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
@@ -261,7 +278,8 @@ knobs.
 
 ## Transport Extension Seam
 
-MCP should be straightforward because the layers are already separated.
+MCP now reuses the same layer split instead of reimplementing the tool
+contract.
 
 ```mermaid
 graph TD
@@ -269,29 +287,34 @@ graph TD
         CLI_CMD["Commander\nargv parsing"]
     end
 
-    subgraph MCP["MCP Transport · future"]
+    subgraph MCP["MCP Transport"]
         MCP_TOOL["MCP tool handler\nJSON input"]
     end
 
-    MANIFEST["contentsSearchManifest"]
-    JSON_SCHEMA["contentsSearchInputJsonSchema"]
-    COMPOSE["Host-specific wiring\nchoose adapter"]
+    OP_ID["contentsSearchOperationName"]
+    INPUT_SCHEMA["contentsSearchInputJsonSchema"]
+    RESULT_SCHEMA["contentsSearchResultJsonSchema"]
+    COMPOSE["src/app/contents-search.ts\nshared provider wiring"]
     EXEC["executeContentsSearch()"]
 
-    MANIFEST --> CLI_CMD
-    MANIFEST -.-> MCP_TOOL
-    JSON_SCHEMA -.-> MCP_TOOL
+    OP_ID --> CLI_CMD
+    OP_ID -.-> MCP_TOOL
+    INPUT_SCHEMA -.-> MCP_TOOL
+    RESULT_SCHEMA -.-> MCP_TOOL
     CLI_CMD --> COMPOSE
     MCP_TOOL -.-> COMPOSE
     COMPOSE --> EXEC
 ```
 
-An MCP transport should reuse:
+The MCP transport reuses:
 
-- `contentsSearchManifest` — tool name, description, and examples
+- `contentsSearchOperationName` — stable operation identifier
 - `contentsSearchInputJsonSchema` — tool input schema
-- `executeContentsSearch()` — shared validation, execution, and error
-  normalization once the host chooses an adapter
+- `contentsSearchResultJsonSchema` — successful structured output schema
+- `src/app/contents-search.ts` — shared provider wiring plus raw semantic
+  execution
+- `executeContentsSearch()` — shared validation and error normalization inside
+  that operation
 
 CLI and MCP stay aligned on the same public contract and executor while each
 host keeps explicit control over adapter wiring.
@@ -299,12 +322,15 @@ host keeps explicit control over adapter wiring.
 ## Start Here
 
 - `src/cli.ts` — top-level transport entry point
-- `src/cli/commands/contents-search.ts` — how manifest metadata becomes flags,
-  examples, and stdout JSON
+- `src/mcp.ts` — MCP stdio entry point
+- `src/mcp/server.ts` — tool registration and `tools/call` handling
+- `src/app/contents-search.ts` — shared transport composition seam
+- `src/cli/commands/contents-search.ts` — explicit CLI surface over the shared
+  operation
 - `src/capabilities/contents-search/contract.ts` — public input and output
   contract
-- `src/capabilities/contents-search/spec.ts` — transport-neutral metadata
-  that MCP should reuse
+- `src/capabilities/contents-search/spec.ts` — operation identifier and
+  machine-readable request/result schemas
 - `src/capabilities/contents-search/execute.ts` — shared validation,
   execution, and error normalization
 - `src/sources/dart/dsab007/contents/search.ts` — public-to-source mapping
@@ -314,8 +340,10 @@ host keeps explicit control over adapter wiring.
 
 Tests make the design relationships explicit:
 
-- `spec.test.ts` — JSON Schema comes from the same input schema
-- `contents-search.test.ts` — CLI help flags stay in sync with the manifest
+- `spec.test.ts` — request/result JSON Schemas come from the same core schemas
+- `contents-search.test.ts` — CLI surface is explicit while still delegating to
+  the shared executor
+- `mcp/server.test.ts` — MCP tool listing and tool calls reuse the same core
 - `contract.test.ts` — semantic resolution is shared and transport-independent
 - `execute.test.ts` — provider errors get normalized into capability-owned failures
 - `test/cli/` — subprocess CLI reflects the shared core
@@ -331,6 +359,7 @@ Tests make the design relationships explicit:
 - The replay contract is intentionally richer than the public contract. Fields
   that exist only to satisfy DART form behavior stay internal until the project
   decides they are stable public knobs.
-- The capability schema is the single source of truth for transport metadata.
-  CLI flags, help text, examples, and JSON Schema are derived from
-  capability-owned metadata rather than duplicated by each transport.
+- The capability layer is the single source of truth for semantic behavior and
+  machine-readable request/result schemas.
+- CLI and MCP are allowed to duplicate small amounts of transport UX metadata
+  rather than forcing one shared manifest abstraction.
