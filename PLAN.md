@@ -1,14 +1,16 @@
 # Active Plan
 
-Current job: replace the public `dsab007-contents` DART-shaped tool contract with a semantic, shared input layer while keeping the internal replay adapter intact.
+Current job: rename the public contents-search surface so `dsab007` stays at the adapter boundary instead of leaking through semantic command, operation, and symbol names.
 
 ## Goal
 
-Centralize defaults, validation, and structured input errors for `dsab007-contents` so CLI, future MCP, and future SDK layers can share one semantic operation contract.
+Keep defaults, validation, and structured input errors centralized for the semantic contents-search capability while preserving `src/dart/dsab007` as the internal replay adapter.
 
 ## In Scope
 
-- Add a semantic raw/resolved input layer for `dsab007-contents`
+- Rename the public CLI command from `dsab007-contents` to `contents-search`
+- Rename semantic operation modules and symbols to drop `dsab007`
+- Keep `src/dart/dsab007` as the upstream-specific module boundary
 - Add structured domain validation errors for operation input resolution
 - Map resolved semantic input into the existing internal DART replay contract
 - Update the CLI to expose only semantic flags and reject invalid domain input before execution
@@ -20,7 +22,7 @@ Centralize defaults, validation, and structured input errors for `dsab007-conten
 - MCP implementation
 - SDK implementation
 - Broad redesign of unrelated `dsab007` client or parser modules
-- Multi-operation planning beyond `dsab007-contents`
+- Multi-operation planning beyond contents search
 
 ## Work Plan
 
@@ -33,7 +35,11 @@ Centralize defaults, validation, and structured input errors for `dsab007-conten
 
 ## Progress
 
-- Added a semantic `dsab007-contents` input module with:
+- Renamed the public semantic capability to `contents-search` while leaving the upstream adapter under `src/dart/dsab007/`
+- Renamed the semantic input, operation, and CLI modules to `contents-search*`
+- Removed `Dsab007`/`dsab007` prefixes from module-local exports inside `src/dart/dsab007/`
+- Kept low-level replay behavior and upstream URLs explicit at the adapter boundary
+- Preserved the semantic input module with:
   raw input, resolved input, structured validation errors, internal DART mapper, and semantic result echoing
 - Added a shared semantic operation executor so CLI and future transports can reuse the same resolve -> replay -> result-shaping flow
 - Rewired the CLI so Commander handles only flag syntax while the shared operation layer handles required fields, defaults, choices, date format, and result shaping
@@ -45,11 +51,12 @@ Centralize defaults, validation, and structured input errors for `dsab007-conten
 ## Verification
 
 - `bun run typecheck`
-- `bun test src/tools/operations/dsab007-contents-input.test.ts src/tools/operations/dsab007-contents-operation.test.ts src/cli/commands/search-dsab007.test.ts test/cli/dsab007-contents-cli.test.ts src/dart/dsab007/replay-contract.test.ts`
+- `bun test src/tools/operations/contents-search-input.test.ts src/tools/operations/contents-search-operation.test.ts src/cli/commands/contents-search.test.ts test/cli/contents-search-cli.test.ts src/dart/dsab007/replay-contract.test.ts`
 
 ## Exit Criteria
 
-- The public `dsab007-contents` CLI no longer exposes raw DART-shaped aliases
+- The public `contents-search` CLI no longer exposes raw DART-shaped aliases
+- `dsab007` remains the explicit upstream adapter boundary instead of the default public prefix
 - Defaults and validation come from one shared semantic resolver
 - Invalid semantic input is rejected before any network execution
 - Internal DART replay details remain isolated behind a mapper

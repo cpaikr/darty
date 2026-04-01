@@ -1,15 +1,15 @@
 import { Command, InvalidArgumentError, Option } from "commander";
 import { Effect } from "effect";
 
-import { dsab007ContentsOperationSpec } from "../../tools/operations/dsab007-contents.ts";
+import { contentsSearchOperationSpec } from "../../tools/operations/contents-search.ts";
 import {
-  type Dsab007ContentsOperationResult,
-  type Dsab007ContentsRawInput,
-} from "../../tools/operations/dsab007-contents-input.ts";
-import { executeDsab007ContentsOperation } from "../../tools/operations/dsab007-contents-operation.ts";
+  type ContentsSearchOperationResult,
+  type ContentsSearchRawInput,
+} from "../../tools/operations/contents-search-input.ts";
+import { executeContentsSearch } from "../../tools/operations/contents-search-operation.ts";
 import type { OperationParameter } from "../../tools/operations/types.ts";
 
-type CliOptionKey = keyof Dsab007ContentsRawInput;
+type CliOptionKey = keyof ContentsSearchRawInput;
 type CliOptionValue = number | string;
 
 /**
@@ -26,10 +26,10 @@ type RegisteredOption = {
   readonly option: Option;
 };
 
-type Dsab007ContentsCommandExecutor = {
+type ContentsSearchCommandExecutor = {
   readonly runOperation: (
-    input: Partial<Dsab007ContentsRawInput> & Record<string, unknown>,
-  ) => Promise<Dsab007ContentsOperationResult>;
+    input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
+  ) => Promise<ContentsSearchOperationResult>;
   readonly writeStdout: (text: string) => void;
 };
 
@@ -100,29 +100,29 @@ const extractCliOptions = (
 };
 
 const renderSupplementalHelp = (): string => {
-  const examples = dsab007ContentsOperationSpec.examples
+  const examples = contentsSearchOperationSpec.examples
     .map(
       (example) =>
-        `  # ${example.description}\n  bun run src/cli.ts ${dsab007ContentsOperationSpec.name} ${example.argv.join(" ")}`,
+        `  # ${example.description}\n  bun run src/cli.ts ${contentsSearchOperationSpec.name} ${example.argv.join(" ")}`,
     )
     .join("\n\n");
 
-  const notes = dsab007ContentsOperationSpec.notes
+  const notes = contentsSearchOperationSpec.notes
     .map((note) => `  - ${note}`)
     .join("\n");
 
   return `\nExamples:\n${examples}\n\nNotes:\n${notes}\n`;
 };
 
-const buildDsab007ContentsCommand = (
+const buildContentsSearchCommand = (
   onRun?: (options: CliOptions) => Promise<void>,
 ): Command => {
-  const registeredOptions = dsab007ContentsOperationSpec.parameters.map(
+  const registeredOptions = contentsSearchOperationSpec.parameters.map(
     buildRegisteredOption,
   );
-  const command = new Command(dsab007ContentsOperationSpec.name)
-    .summary(dsab007ContentsOperationSpec.summary)
-    .description(dsab007ContentsOperationSpec.description)
+  const command = new Command(contentsSearchOperationSpec.name)
+    .summary(contentsSearchOperationSpec.summary)
+    .description(contentsSearchOperationSpec.description)
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {
@@ -143,30 +143,30 @@ const buildDsab007ContentsCommand = (
   return command;
 };
 
-const renderDsab007ContentsSearchResult = (
-  result: Dsab007ContentsOperationResult,
+const renderContentsSearchResult = (
+  result: ContentsSearchOperationResult,
 ): string => JSON.stringify(result, null, 2);
 
-const defaultCommandExecutor: Dsab007ContentsCommandExecutor = {
-  runOperation: (input) => executeDsab007ContentsOperation(input),
+const defaultCommandExecutor: ContentsSearchCommandExecutor = {
+  runOperation: (input) => executeContentsSearch(input),
   writeStdout: (text) => {
     console.log(text);
   },
 };
 
 /**
- * Runs the contents search only after the shared semantic resolver has accepted
+ * Runs the contents-search operation only after the shared semantic resolver has accepted
  * the request, then writes exactly one JSON payload to stdout.
  */
-export const executeDsab007ContentsCommand = (
+export const executeContentsSearchCommand = (
   options: CliOptions,
-  executor: Dsab007ContentsCommandExecutor = defaultCommandExecutor,
+  executor: ContentsSearchCommandExecutor = defaultCommandExecutor,
 ): Promise<void> =>
   executor
-    .runOperation(options as Partial<Dsab007ContentsRawInput> & Record<string, unknown>)
-    .then((result) => executor.writeStdout(renderDsab007ContentsSearchResult(result)));
+    .runOperation(options as Partial<ContentsSearchRawInput> & Record<string, unknown>)
+    .then((result) => executor.writeStdout(renderContentsSearchResult(result)));
 
-export const dsab007Usage = `${buildDsab007ContentsCommand().helpInformation()}${renderSupplementalHelp()}`;
+export const contentsSearchUsage = `${buildContentsSearchCommand().helpInformation()}${renderSupplementalHelp()}`;
 
 /**
  * Parses user-supplied flags without printing help or exiting the process.
@@ -175,15 +175,15 @@ export const dsab007Usage = `${buildDsab007ContentsCommand().helpInformation()}$
  * choices, and date formats are validated later by the shared semantic
  * resolver.
  */
-export const parseDsab007CommandArgs = (argv: string[]): CliOptions => {
-  const command = buildDsab007ContentsCommand().exitOverride();
+export const parseContentsSearchCommandArgs = (argv: string[]): CliOptions => {
+  const command = buildContentsSearchCommand().exitOverride();
   command.configureOutput({
     writeOut: () => undefined,
     writeErr: () => undefined,
   });
   command.parse(argv, { from: "user" });
 
-  const registeredOptions = dsab007ContentsOperationSpec.parameters.map(
+  const registeredOptions = contentsSearchOperationSpec.parameters.map(
     buildRegisteredOption,
   );
 
@@ -197,23 +197,23 @@ export const parseDsab007CommandArgs = (argv: string[]): CliOptions => {
  * Exposes the command builder with injectable execution for tests and other
  * hosts that need the same CLI surface with custom side effects.
  */
-export const createDsab007ContentsCommandWithRunner = (
+export const createContentsSearchCommandWithRunner = (
   onRun: (options: CliOptions) => Promise<void>,
-): Command => buildDsab007ContentsCommand(onRun);
+): Command => buildContentsSearchCommand(onRun);
 
-export const createDsab007ContentsCommand = (): Command =>
-  buildDsab007ContentsCommand(executeDsab007ContentsCommand);
+export const createContentsSearchCommand = (): Command =>
+  buildContentsSearchCommand(executeContentsSearchCommand);
 
 /**
  * Adapts the Commander promise API into an `Effect` so higher-level runners can
  * keep CLI execution inside the project's shared error-handling model.
  */
-export const runDsab007ContentsCommand = (
+export const runContentsSearchCommand = (
   argv: string[],
 ): Effect.Effect<void, unknown> =>
   Effect.tryPromise({
     try: () =>
-      createDsab007ContentsCommand()
+      createContentsSearchCommand()
         .parseAsync(argv, { from: "user" })
         .then(() => undefined),
     catch: (error) => error,

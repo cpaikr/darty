@@ -15,7 +15,7 @@ const runCli = (argv: readonly string[]) =>
 const decode = (value: Uint8Array<ArrayBufferLike>) =>
   new TextDecoder().decode(value);
 
-describe("dsab007-contents CLI subprocess", () => {
+describe("contents-search CLI subprocess", () => {
   test("prints root help to stdout", () => {
     const result = runCli(["--help"]);
     const stdout = decode(result.stdout);
@@ -24,19 +24,19 @@ describe("dsab007-contents CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty [options] [command]");
     expect(stdout).toContain("Tool-oriented access to DART search and retrieval surfaces.");
-    expect(stdout).toContain("dsab007-contents [options]");
+    expect(stdout).toContain("contents-search [options]");
     expect(stderr).toBe("");
   });
 
   test("prints shared help text", () => {
-    const result = runCli(["dsab007-contents", "--help"]);
+    const result = runCli(["contents-search", "--help"]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
     expect(result.exitCode).toBe(0);
-    expect(stdout).toContain("Usage: darty dsab007-contents [options]");
+    expect(stdout).toContain("Usage: darty contents-search [options]");
     expect(stdout).toContain(
-      "Semantic, read-only access to DART's dsab007 contents search.",
+      "Semantic, read-only access to DART filing contents search backed by dsab007.",
     );
     expect(stdout).toContain(
       "The command always prints JSON to stdout and reserves stderr for errors.",
@@ -46,7 +46,7 @@ describe("dsab007-contents CLI subprocess", () => {
   });
 
   test("fails missing required arguments with stderr only", () => {
-    const result = runCli(["dsab007-contents"]);
+    const result = runCli(["contents-search"]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
@@ -59,7 +59,7 @@ describe("dsab007-contents CLI subprocess", () => {
 
   test("fails invalid integer arguments with a non-zero exit code", () => {
     const result = runCli([
-      "dsab007-contents",
+      "contents-search",
       "--keyword",
       "배당",
       "--start-date",
@@ -82,7 +82,7 @@ describe("dsab007-contents CLI subprocess", () => {
 
   test("fails invalid enum arguments with a non-zero exit code", () => {
     const result = runCli([
-      "dsab007-contents",
+      "contents-search",
       "--keyword",
       "배당",
         "--start-date",

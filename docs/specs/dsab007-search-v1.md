@@ -37,9 +37,9 @@ The first tool should not yet:
 
 ### Primary entities
 
-- `dsab007_contents_search_input`
+- `contents_search_input`
   DART-shaped request for the implemented `contents` mode.
-- `dsab007_contents_row`
+- `contents_row`
   One parsed search result row returned by the `contents` mode.
 - `filing_reference`
   Stable filing-level reference built around `rcpNo` and usually `dcmNo`.
@@ -65,10 +65,10 @@ These appear in the viewer contract, not the first search-result contract.
 
 ## 5. Proposed Operations
 
-### `search_dsab007_contents`
+### `search_contents`
 
 - `purpose`
-  Replay `dsab007` contents search with explicit DART-shaped request fields.
+  Replay `dsab007` contents search through a semantic contents-search operation backed by explicit DART-shaped request fields.
 - `inputs`
   `option`, `currentPage`, `maxResults`, `maxLinks`, `sort`, `sortType`, `keyword`, `startDate`, `endDate`, and optional known `dsab007` contents fields
 - `output`

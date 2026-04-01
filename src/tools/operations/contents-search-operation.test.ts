@@ -1,21 +1,21 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  resolveDsab007ContentsInput,
-  toDsab007ContentsSearchInput,
-} from "./dsab007-contents-input.ts";
+  resolveContentsSearchInput,
+  toContentsSearchReplayInput,
+} from "./contents-search-input.ts";
 import {
-  executeDsab007ContentsOperation,
-  executeResolvedDsab007ContentsOperation,
-} from "./dsab007-contents-operation.ts";
+  executeContentsSearch,
+  executeResolvedContentsSearch,
+} from "./contents-search-operation.ts";
 
-describe("executeDsab007ContentsOperation", () => {
+describe("executeContentsSearch", () => {
   test("resolves semantic raw input, executes the DART replay, and returns a semantic result", async () => {
     let receivedInput:
-      | ReturnType<typeof toDsab007ContentsSearchInput>
+      | ReturnType<typeof toContentsSearchReplayInput>
       | undefined;
 
-    const result = await executeDsab007ContentsOperation(
+    const result = await executeContentsSearch(
       {
         keyword: "배당",
         startDate: "20250331",
@@ -87,13 +87,13 @@ describe("executeDsab007ContentsOperation", () => {
   });
 
   test("can execute directly from a resolved semantic request", async () => {
-    const request = resolveDsab007ContentsInput({
+    const request = resolveContentsSearchInput({
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
     });
 
-    const result = await executeResolvedDsab007ContentsOperation(request, {
+    const result = await executeResolvedContentsSearch(request, {
       runSearch: async (input) => ({
         request: input,
         pagination: {

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { Effect } from "effect";
 
-import { parseDsab007ContentsSearchResponse } from "./contents.ts";
+import { parseContentsSearchResponse } from "./contents.ts";
 
 const populatedHtml = readFileSync(
   new URL("./fixtures/contents-populated-2026-03-31.html", import.meta.url),
@@ -48,10 +48,10 @@ const attachmentHtml = `
 </div>
 `;
 
-describe("parseDsab007ContentsSearchResponse", () => {
+describe("parseContentsSearchResponse", () => {
   test("parses a selected live populated fixture captured on 2026-03-31", async () => {
     const result = await Effect.runPromise(
-      parseDsab007ContentsSearchResponse(
+      parseContentsSearchResponse(
         populatedHtml,
         {
           option: "contents",
@@ -104,7 +104,7 @@ describe("parseDsab007ContentsSearchResponse", () => {
 
   test("parses the live no-result row shape with no pagination block", async () => {
     const result = await Effect.runPromise(
-      parseDsab007ContentsSearchResponse(
+      parseContentsSearchResponse(
         noResultsHtml,
         {
           option: "contents",
@@ -129,7 +129,7 @@ describe("parseDsab007ContentsSearchResponse", () => {
 
   test("preserves attachment-style report suffixes", async () => {
     const result = await Effect.runPromise(
-      parseDsab007ContentsSearchResponse(
+      parseContentsSearchResponse(
         attachmentHtml,
         {
           option: "contents",

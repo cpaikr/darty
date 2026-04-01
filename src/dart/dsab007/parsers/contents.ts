@@ -3,11 +3,11 @@ import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
 import {
-  Dsab007ContentsSearchResult,
-  type Dsab007ContentsRow,
-  type Dsab007Pagination,
+  ContentsSearchResult,
+  type ContentsSearchRow,
+  type ContentsSearchPagination,
 } from "../models.ts";
-import type { Dsab007ContentsSearchInput } from "../contracts.ts";
+import type { ContentsSearchInput } from "../contracts.ts";
 
 const absoluteUrl = (href: string): string =>
   new URL(href, "https://dart.fss.or.kr").toString();
@@ -46,7 +46,7 @@ const parseCorpId = (href: string | undefined): string | undefined => {
 const parseInfoCell = (
   rawInfo: string,
 ): Pick<
-  Dsab007ContentsRow,
+  ContentsSearchRow,
   "disclosureTypeLabel" | "contentTypeLabel" | "presenterName" | "rawInfoText"
 > => {
   const labels = [...rawInfo.matchAll(/\[([^\]]+)\]/g)].map((match) =>
@@ -74,7 +74,7 @@ const parseInfoCell = (
 const parseReportParts = (
   reportText: string,
 ): Pick<
-  Dsab007ContentsRow,
+  ContentsSearchRow,
   "reportNameRaw" | "reportModifier" | "reportTitle" | "reportPeriod" | "reportNameSuffix"
 > => {
   const modifierMatch = reportText.match(/^\[([^\]]+)\]\s*/);
@@ -120,7 +120,7 @@ const parseDate = (value: string): string => {
 const parsePagination = (
   $: cheerio.CheerioAPI,
   sourceUrl: string,
-): Effect.Effect<Dsab007Pagination, SourceChanged> =>
+): Effect.Effect<ContentsSearchPagination, SourceChanged> =>
   Effect.gen(function* () {
     const totalCountValue =
       $("#totalCnt").attr("value") ?? $("#searchCnt").text() ?? "";
@@ -178,7 +178,7 @@ const hasNoResultsPlaceholder = ($: cheerio.CheerioAPI): boolean => {
 const parseRows = (
   $: cheerio.CheerioAPI,
   sourceUrl: string,
-): Effect.Effect<ReadonlyArray<Dsab007ContentsRow>, ParseFailure> =>
+): Effect.Effect<ReadonlyArray<ContentsSearchRow>, ParseFailure> =>
   Effect.try({
     try: () => {
       if (hasNoResultsPlaceholder($)) {
@@ -230,7 +230,7 @@ const parseRows = (
             viewerPath: href,
             viewerUrl: absoluteUrl(href),
             receiptDate: parseDate(dateCell.text()),
-          } satisfies Dsab007ContentsRow;
+          } satisfies ContentsSearchRow;
         });
     },
     catch: (error) =>
@@ -247,12 +247,12 @@ const parseRows = (
  * segments from it. Attachment-style rows already show that aggressive
  * normalization would lose information needed by later callers.
  */
-export const parseDsab007ContentsSearchResponse = (
+export const parseContentsSearchResponse = (
   html: string,
-  request: Dsab007ContentsSearchInput,
+  request: ContentsSearchInput,
   sourceUrl: string,
 ): Effect.Effect<
-  Schema.Schema.Type<typeof Dsab007ContentsSearchResult>,
+  Schema.Schema.Type<typeof ContentsSearchResult>,
   SourceChanged | ParseFailure
 > =>
   Effect.gen(function* () {
@@ -260,7 +260,7 @@ export const parseDsab007ContentsSearchResponse = (
     const results = yield* parseRows($, sourceUrl);
     const pagination = yield* parsePagination($, sourceUrl);
 
-    return yield* Schema.decodeUnknown(Dsab007ContentsSearchResult)({
+    return yield* Schema.decodeUnknown(ContentsSearchResult)({
       request,
       pagination: {
         ...pagination,

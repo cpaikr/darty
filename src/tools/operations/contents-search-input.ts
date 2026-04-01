@@ -1,18 +1,18 @@
 import { Schema } from "effect";
 
-import type { Dsab007ContentsSearchInput } from "../../dart/dsab007/contracts.ts";
-import type { Dsab007ContentsSearchResult } from "../../dart/dsab007/models.ts";
+import type { ContentsSearchInput } from "../../dart/dsab007/contracts.ts";
+import type { ContentsSearchResult } from "../../dart/dsab007/models.ts";
 import type { OperationParameter } from "./types.ts";
 
 const datePattern = /^\d{8}$/;
 
-export const dsab007ContentsSortByValues = ["date", "reportName"] as const;
-export type Dsab007ContentsSortBy =
-  (typeof dsab007ContentsSortByValues)[number];
+export const contentsSearchSortByValues = ["date", "reportName"] as const;
+export type ContentsSearchSortBy =
+  (typeof contentsSearchSortByValues)[number];
 
-export const dsab007ContentsSortDirectionValues = ["asc", "desc"] as const;
-export type Dsab007ContentsSortDirection =
-  (typeof dsab007ContentsSortDirectionValues)[number];
+export const contentsSearchSortDirectionValues = ["asc", "desc"] as const;
+export type ContentsSearchSortDirection =
+  (typeof contentsSearchSortDirectionValues)[number];
 
 /**
  * Raw semantic operation input accepted from transport layers such as CLI, MCP,
@@ -21,12 +21,12 @@ export type Dsab007ContentsSortDirection =
  * Defaults are not applied here so transports can preserve which fields callers
  * omitted before passing the payload through the shared resolver.
  */
-export type Dsab007ContentsRawInput = {
+export type ContentsSearchRawInput = {
   readonly page?: number | undefined;
   readonly limit?: number | undefined;
   readonly maxLinks?: number | undefined;
-  readonly sortBy?: Dsab007ContentsSortBy | undefined;
-  readonly sortDirection?: Dsab007ContentsSortDirection | undefined;
+  readonly sortBy?: ContentsSearchSortBy | undefined;
+  readonly sortDirection?: ContentsSearchSortDirection | undefined;
   readonly keyword?: string | undefined;
   readonly startDate?: string | undefined;
   readonly endDate?: string | undefined;
@@ -48,12 +48,12 @@ export type Dsab007ContentsRawInput = {
  * Callers should execute the operation only after they have this resolved
  * contract.
  */
-export type Dsab007ContentsResolvedInput = {
+export type ContentsSearchResolvedInput = {
   readonly page: number;
   readonly limit: number;
   readonly maxLinks: number;
-  readonly sortBy: Dsab007ContentsSortBy;
-  readonly sortDirection: Dsab007ContentsSortDirection;
+  readonly sortBy: ContentsSearchSortBy;
+  readonly sortDirection: ContentsSearchSortDirection;
   readonly keyword: string;
   readonly startDate: string;
   readonly endDate: string;
@@ -69,15 +69,15 @@ export type Dsab007ContentsResolvedInput = {
   readonly decadeType?: string | undefined;
 };
 
-export type Dsab007ContentsOperationResult = Omit<
-  Dsab007ContentsSearchResult,
+export type ContentsSearchOperationResult = Omit<
+  ContentsSearchResult,
   "request"
 > & {
-  readonly request: Dsab007ContentsResolvedInput;
+  readonly request: ContentsSearchResolvedInput;
 };
 
-export class InvalidDsab007ContentsOperationInput extends Schema.TaggedError<InvalidDsab007ContentsOperationInput>()(
-  "InvalidDsab007ContentsOperationInput",
+export class InvalidContentsSearchInput extends Schema.TaggedError<InvalidContentsSearchInput>()(
+  "InvalidContentsSearchInput",
   {
     code: Schema.Literal(
       "missing_parameter",
@@ -99,19 +99,19 @@ const defaultResolvedInput = {
   sortBy: "date",
   sortDirection: "desc",
 } as const satisfies Pick<
-  Dsab007ContentsResolvedInput,
+  ContentsSearchResolvedInput,
   "page" | "limit" | "maxLinks" | "sortBy" | "sortDirection"
 >;
 
 const formatDefaultValue = (value: string | number): string => String(value);
 
 /**
- * Shared semantic parameter definitions for `dsab007-contents`.
+ * Shared semantic parameter definitions for `contents-search`.
  *
  * This is the human-readable surface exposed to agents. Any DART-shaped field
  * names stay behind the internal mapper.
  */
-export const dsab007ContentsInputParameters = [
+export const contentsSearchInputParameters = [
   {
     key: "page",
     aliases: ["page"],
@@ -146,7 +146,7 @@ export const dsab007ContentsInputParameters = [
     key: "sortBy",
     aliases: ["sort-by"],
     cliFlags: ["--sort-by"],
-    valueHint: `<${dsab007ContentsSortByValues.join("|")}>`,
+    valueHint: `<${contentsSearchSortByValues.join("|")}>`,
     description: "Sort field for results.",
     status: "observed",
     required: false,
@@ -156,7 +156,7 @@ export const dsab007ContentsInputParameters = [
     key: "sortDirection",
     aliases: ["sort-direction"],
     cliFlags: ["--sort-direction"],
-    valueHint: `<${dsab007ContentsSortDirectionValues.join("|")}>`,
+    valueHint: `<${contentsSearchSortDirectionValues.join("|")}>`,
     description: "Sort direction for the selected sort field.",
     status: "observed",
     required: false,
@@ -281,8 +281,8 @@ export const dsab007ContentsInputParameters = [
   },
 ] as const satisfies readonly OperationParameter[];
 
-const dsab007ContentsAllowedKeys = new Set<string>(
-  dsab007ContentsInputParameters.map((parameter) => parameter.key),
+const contentsSearchAllowedKeys = new Set<string>(
+  contentsSearchInputParameters.map((parameter) => parameter.key),
 );
 
 const failInvalidParameter = (
@@ -294,7 +294,7 @@ const failInvalidParameter = (
     readonly expected?: string;
   },
 ): never => {
-  throw new InvalidDsab007ContentsOperationInput({
+  throw new InvalidContentsSearchInput({
     code: "invalid_parameter",
     parameter,
     reason,
@@ -308,7 +308,7 @@ const failMissingParameter = (
   parameter: string,
   expected: string,
 ): never => {
-  throw new InvalidDsab007ContentsOperationInput({
+  throw new InvalidContentsSearchInput({
     code: "missing_parameter",
     parameter,
     reason: "required",
@@ -318,8 +318,8 @@ const failMissingParameter = (
 };
 
 const readOptionalText = (
-  input: Partial<Dsab007ContentsRawInput>,
-  key: keyof Dsab007ContentsRawInput,
+  input: Partial<ContentsSearchRawInput>,
+  key: keyof ContentsSearchRawInput,
 ): string | undefined => {
   const value = input[key];
 
@@ -349,7 +349,7 @@ const readOptionalText = (
 };
 
 const readRequiredText = (
-  input: Partial<Dsab007ContentsRawInput>,
+  input: Partial<ContentsSearchRawInput>,
   key: "keyword" | "startDate" | "endDate",
   expected: string,
 ): string => {
@@ -381,7 +381,7 @@ const readRequiredText = (
 };
 
 const readIntegerWithDefault = (
-  input: Partial<Dsab007ContentsRawInput>,
+  input: Partial<ContentsSearchRawInput>,
   key: "page" | "limit" | "maxLinks",
   fallback: number,
   min: number,
@@ -415,7 +415,7 @@ const readIntegerWithDefault = (
 };
 
 const readChoiceWithDefault = <Choice extends string>(
-  input: Partial<Dsab007ContentsRawInput>,
+  input: Partial<ContentsSearchRawInput>,
   key: "sortBy" | "sortDirection",
   choices: readonly Choice[],
   fallback: Choice,
@@ -448,7 +448,7 @@ const readChoiceWithDefault = <Choice extends string>(
 };
 
 const readDateString = (
-  input: Partial<Dsab007ContentsRawInput>,
+  input: Partial<ContentsSearchRawInput>,
   key: "startDate" | "endDate",
 ): string => {
   const value = readRequiredText(input, key, "a YYYYMMDD date string");
@@ -469,12 +469,12 @@ const readDateString = (
  * Applies defaults, rejects unknown keys, and validates the shared semantic
  * request contract before any DART-specific mapping or network execution.
  */
-export const resolveDsab007ContentsInput = (
-  input: Partial<Dsab007ContentsRawInput> & Record<string, unknown>,
-): Dsab007ContentsResolvedInput => {
+export const resolveContentsSearchInput = (
+  input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
+): ContentsSearchResolvedInput => {
   for (const key of Object.keys(input)) {
-    if (!dsab007ContentsAllowedKeys.has(key)) {
-      throw new InvalidDsab007ContentsOperationInput({
+    if (!contentsSearchAllowedKeys.has(key)) {
+      throw new InvalidContentsSearchInput({
         code: "unknown_parameter",
         parameter: key,
         reason: "unknown_parameter",
@@ -503,13 +503,13 @@ export const resolveDsab007ContentsInput = (
     sortBy: readChoiceWithDefault(
       input,
       "sortBy",
-      dsab007ContentsSortByValues,
+      contentsSearchSortByValues,
       defaultResolvedInput.sortBy,
     ),
     sortDirection: readChoiceWithDefault(
       input,
       "sortDirection",
-      dsab007ContentsSortDirectionValues,
+      contentsSearchSortDirectionValues,
       defaultResolvedInput.sortDirection,
     ),
     keyword: readRequiredText(input, "keyword", "a non-empty string"),
@@ -534,9 +534,9 @@ export const resolveDsab007ContentsInput = (
  * This is the only operation-level seam that should know the DART-shaped field
  * names.
  */
-export const toDsab007ContentsSearchInput = (
-  input: Dsab007ContentsResolvedInput,
-): Dsab007ContentsSearchInput => ({
+export const toContentsSearchReplayInput = (
+  input: ContentsSearchResolvedInput,
+): ContentsSearchInput => ({
   option: "contents",
   currentPage: input.page,
   maxResults: input.limit,
@@ -562,10 +562,10 @@ export const toDsab007ContentsSearchInput = (
  * Re-exposes the shared search result with the public semantic request echoed
  * back to callers instead of the internal DART replay request.
  */
-export const toDsab007ContentsOperationResult = (
-  request: Dsab007ContentsResolvedInput,
-  result: Dsab007ContentsSearchResult,
-): Dsab007ContentsOperationResult => ({
+export const toContentsSearchResult = (
+  request: ContentsSearchResolvedInput,
+  result: ContentsSearchResult,
+): ContentsSearchOperationResult => ({
   ...result,
   request,
 });

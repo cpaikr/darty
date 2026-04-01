@@ -1,11 +1,11 @@
 import { Command } from "commander";
 
-import { createDsab007ContentsCommand } from "./cli/commands/search-dsab007.ts";
+import { createContentsSearchCommand } from "./cli/commands/contents-search.ts";
 
 const program = new Command()
   .name("darty")
   .description("Tool-oriented access to DART search and retrieval surfaces.")
-  .addCommand(createDsab007ContentsCommand());
+  .addCommand(createContentsSearchCommand());
 
 program.parseAsync(process.argv).catch((error) => {
   if (error instanceof Error) {

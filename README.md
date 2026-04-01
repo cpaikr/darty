@@ -74,6 +74,6 @@ bun install
 bun run typecheck
 bun test
 bun run test:live
-bun run src/cli.ts dsab007-contents --help
-bun run src/cli.ts dsab007-contents --keyword 배당 --start-date 20250331 --end-date 20260331
+bun run src/cli.ts contents-search --help
+bun run src/cli.ts contents-search --keyword 배당 --start-date 20250331 --end-date 20260331
 ```

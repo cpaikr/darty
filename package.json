@@ -7,7 +7,7 @@
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:live": "LIVE_DART_TESTS=1 bun test",
-    "search": "bun run src/cli.ts dsab007-contents"
+    "search": "bun run src/cli.ts contents-search"
   },
   "dependencies": {
     "@effect/platform": "^0.91.0",

@@ -1,5 +1,5 @@
-import type { Dsab007ContentsSearchInput } from "./contracts.ts";
-import type { Dsab007ContentsSearchResult } from "./models.ts";
+import type { ContentsSearchInput } from "./contracts.ts";
+import type { ContentsSearchResult } from "./models.ts";
 
 /**
  * Internal replay probes for the low-level DART-shaped contents contract.
@@ -8,7 +8,7 @@ import type { Dsab007ContentsSearchResult } from "./models.ts";
  * accepts and honors today. They are not the public semantic operation
  * contract exposed to tools.
  */
-export const baselineDsab007ContentsReplayInput = {
+export const baselineContentsReplayInput = {
   option: "contents",
   currentPage: 1,
   maxResults: 10,
@@ -18,9 +18,9 @@ export const baselineDsab007ContentsReplayInput = {
   keyword: "배당",
   startDate: "20250331",
   endDate: "20260331",
-} as const satisfies Dsab007ContentsSearchInput;
+} as const satisfies ContentsSearchInput;
 
-export type Dsab007ContentsReplayField =
+export type ContentsReplayField =
   | "option"
   | "currentPage"
   | "maxResults"
@@ -35,32 +35,32 @@ export type Dsab007ContentsReplayField =
   | "textPresenterNm"
   | "reportName";
 
-export type Dsab007ContentsLiveClassification =
+export type ContentsLiveClassification =
   | "accepted_and_honored"
   | "accepted_but_ignored"
   | "accepted_parse_only";
 
-export type Dsab007ContentsLocalCase = {
+export type ContentsLocalCase = {
   readonly name: string;
   readonly input: unknown;
 };
 
-export type Dsab007ContentsSerializationCase = {
+export type ContentsSerializationCase = {
   readonly name: string;
-  readonly input: Dsab007ContentsSearchInput;
+  readonly input: ContentsSearchInput;
   readonly expectedEntries: Readonly<Record<string, string>>;
 };
 
 type LiveProbeBaselineContext = {
-  readonly request: Dsab007ContentsSearchInput;
-  readonly result: Dsab007ContentsSearchResult;
+  readonly request: ContentsSearchInput;
+  readonly result: ContentsSearchResult;
 };
 
 type LiveProbeContext = {
   readonly baseline: LiveProbeBaselineContext;
 };
 
-export type Dsab007ContentsLiveExpectation =
+export type ContentsLiveExpectation =
   | { readonly kind: "covered_by_baseline" }
   | { readonly kind: "page_changes" }
   | { readonly kind: "result_count_ignored" }
@@ -85,43 +85,43 @@ export type Dsab007ContentsLiveExpectation =
       readonly expectedValue: string;
     };
 
-export type Dsab007ContentsLiveProbe = {
+export type ContentsLiveProbe = {
   readonly name: string;
-  readonly classification: Dsab007ContentsLiveClassification;
-  readonly expectation: Dsab007ContentsLiveExpectation;
+  readonly classification: ContentsLiveClassification;
+  readonly expectation: ContentsLiveExpectation;
   readonly buildRequest: (
     context: LiveProbeContext,
-  ) => Dsab007ContentsSearchInput;
+  ) => ContentsSearchInput;
 };
 
-export type Dsab007ContentsReplayFieldContract = {
-  readonly key: Dsab007ContentsReplayField;
+export type ContentsReplayFieldContract = {
+  readonly key: ContentsReplayField;
   readonly observedStatus: "observed";
-  readonly accepts: readonly Dsab007ContentsLocalCase[];
-  readonly rejects: readonly Dsab007ContentsLocalCase[];
-  readonly serialization: readonly Dsab007ContentsSerializationCase[];
-  readonly live: readonly Dsab007ContentsLiveProbe[];
+  readonly accepts: readonly ContentsLocalCase[];
+  readonly rejects: readonly ContentsLocalCase[];
+  readonly serialization: readonly ContentsSerializationCase[];
+  readonly live: readonly ContentsLiveProbe[];
 };
 
 const withInput = (
-  overrides: Partial<Dsab007ContentsSearchInput>,
-): Dsab007ContentsSearchInput => ({
-  ...baselineDsab007ContentsReplayInput,
+  overrides: Partial<ContentsSearchInput>,
+): ContentsSearchInput => ({
+  ...baselineContentsReplayInput,
   ...overrides,
 });
 
 const withUnknownInput = (
   overrides: Record<string, unknown>,
 ): Record<string, unknown> => ({
-  ...baselineDsab007ContentsReplayInput,
+  ...baselineContentsReplayInput,
   ...overrides,
 });
 
 const buildSerializationCase = (
   name: string,
-  overrides: Partial<Dsab007ContentsSearchInput>,
+  overrides: Partial<ContentsSearchInput>,
   expectedEntries: Readonly<Record<string, string>>,
-): Dsab007ContentsSerializationCase => ({
+): ContentsSerializationCase => ({
   name,
   input: withInput(overrides),
   expectedEntries,
@@ -129,10 +129,10 @@ const buildSerializationCase = (
 
 const buildLiveRequestProbe = (
   name: string,
-  classification: Dsab007ContentsLiveClassification,
-  expectation: Dsab007ContentsLiveExpectation,
-  overrides: Partial<Dsab007ContentsSearchInput>,
-): Dsab007ContentsLiveProbe => ({
+  classification: ContentsLiveClassification,
+  expectation: ContentsLiveExpectation,
+  overrides: Partial<ContentsSearchInput>,
+): ContentsLiveProbe => ({
   name,
   classification,
   expectation,
@@ -141,7 +141,7 @@ const buildLiveRequestProbe = (
 
 const getRequiredBaselineRow = (
   context: LiveProbeContext,
-): Dsab007ContentsSearchResult["rows"][number] => {
+): ContentsSearchResult["rows"][number] => {
   const row = context.baseline.result.rows[0];
   if (row === undefined) {
     throw new Error("Baseline live probe returned no rows.");
@@ -150,7 +150,7 @@ const getRequiredBaselineRow = (
   return row;
 };
 
-export const dsab007ContentsReplayFields = [
+export const contentsReplayFields = [
   "option",
   "currentPage",
   "maxResults",
@@ -164,9 +164,9 @@ export const dsab007ContentsReplayFields = [
   "textCrpNm",
   "textPresenterNm",
   "reportName",
-] as const satisfies readonly Dsab007ContentsReplayField[];
+] as const satisfies readonly ContentsReplayField[];
 
-export const dsab007ContentsReplayFieldContracts = [
+export const contentsReplayFieldContracts = [
   {
     key: "option",
     observedStatus: "observed",
@@ -767,4 +767,4 @@ export const dsab007ContentsReplayFieldContracts = [
       },
     ],
   },
-] as const satisfies readonly Dsab007ContentsReplayFieldContract[];
+] as const satisfies readonly ContentsReplayFieldContract[];

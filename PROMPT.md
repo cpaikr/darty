@@ -6,7 +6,7 @@ Do not broaden product scope. Do not add new user-facing features unless a missi
 
 ## Goal
 
-Strengthen test coverage for the current `dsab007-contents` CLI so it behaves like a reliable tool for agents and LLMs.
+Strengthen test coverage for the current `contents-search` CLI so it behaves like a reliable tool for agents and LLMs.
 
 The priority is not human UX polish. The priority is deterministic tool behavior:
 
@@ -23,15 +23,15 @@ The priority is not human UX polish. The priority is deterministic tool behavior
 2. `README.md`
 3. `ARCHITECTURE.md`
 4. `src/cli.ts`
-5. `src/cli/commands/search-dsab007.ts`
-6. `src/tools/operations/dsab007-contents.ts`
+5. `src/cli/commands/contents-search.ts`
+6. `src/tools/operations/contents-search.ts`
 7. `src/dart/dsab007/contracts.ts`
-8. `src/cli/commands/search-dsab007.test.ts`
-9. `test/cli/dsab007-contents-cli.test.ts`
+8. `src/cli/commands/contents-search.test.ts`
+9. `test/cli/contents-search-cli.test.ts`
 
 ## Current Scope
 
-- The only implemented CLI command is `dsab007-contents`.
+- The only implemented CLI command is `contents-search`.
 - The CLI is Commander-backed.
 - Operation metadata is transport-agnostic and lives under `src/tools/operations/`.
 - The underlying DART replay core already has deterministic contract and parser tests.

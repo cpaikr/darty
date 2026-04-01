@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { Dsab007ContentsSearchInput } from "./contracts.ts";
+import { ContentsSearchInput } from "./contracts.ts";
 
 /**
  * Parsed row model for the current `dsab007` contents mode.
@@ -7,7 +7,7 @@ import { Dsab007ContentsSearchInput } from "./contracts.ts";
  * This keeps DART-facing details such as `corpCik`, `viewerPath`, and the raw
  * report-name text instead of flattening everything into an early semantic shape.
  */
-export const Dsab007ContentsRow = Schema.Struct({
+export const ContentsSearchRow = Schema.Struct({
   companyName: Schema.String,
   companyMarketLabel: Schema.optional(Schema.String),
   corpCik: Schema.optional(Schema.String),
@@ -28,7 +28,7 @@ export const Dsab007ContentsRow = Schema.Struct({
   viewerUrl: Schema.String,
   receiptDate: Schema.String,
 });
-export type Dsab007ContentsRow = typeof Dsab007ContentsRow.Type;
+export type ContentsSearchRow = typeof ContentsSearchRow.Type;
 
 /**
  * Pagination state as exposed by the rendered `dsab007` fragment.
@@ -37,13 +37,13 @@ export type Dsab007ContentsRow = typeof Dsab007ContentsRow.Type;
  * markup so callers can compare what the page claimed with what was actually
  * recoverable.
  */
-export const Dsab007Pagination = Schema.Struct({
+export const ContentsSearchPagination = Schema.Struct({
   currentPage: Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)),
   totalPages: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
   totalCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
   returnedCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
 });
-export type Dsab007Pagination = typeof Dsab007Pagination.Type;
+export type ContentsSearchPagination = typeof ContentsSearchPagination.Type;
 
 /**
  * Result envelope for a single `dsab007` contents replay.
@@ -51,11 +51,11 @@ export type Dsab007Pagination = typeof Dsab007Pagination.Type;
  * The original request is included so callers can compare requested paging and
  * sorting with what DART actually returned.
  */
-export const Dsab007ContentsSearchResult = Schema.Struct({
-  request: Dsab007ContentsSearchInput,
-  pagination: Dsab007Pagination,
-  rows: Schema.Array(Dsab007ContentsRow),
+export const ContentsSearchResult = Schema.Struct({
+  request: ContentsSearchInput,
+  pagination: ContentsSearchPagination,
+  rows: Schema.Array(ContentsSearchRow),
   fetchedAt: Schema.String,
   sourceUrl: Schema.String,
 });
-export type Dsab007ContentsSearchResult = typeof Dsab007ContentsSearchResult.Type;
+export type ContentsSearchResult = typeof ContentsSearchResult.Type;

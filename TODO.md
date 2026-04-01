@@ -1,3 +1,3 @@
 # TODO
 
-- Consider cretting a dsab007 dir. It's prefixed/suffixed so much
+- Keep `dsab007` at the adapter/module boundary and avoid reintroducing it as the default prefix on semantic/public names.

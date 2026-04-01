@@ -1,16 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
-import { dsab007ContentsOperationSpec } from "../../tools/operations/dsab007-contents.ts";
+import { contentsSearchOperationSpec } from "../../tools/operations/contents-search.ts";
 import {
-  InvalidDsab007ContentsOperationInput,
-  resolveDsab007ContentsInput,
-} from "../../tools/operations/dsab007-contents-input.ts";
+  InvalidContentsSearchInput,
+  resolveContentsSearchInput,
+} from "../../tools/operations/contents-search-input.ts";
 import {
-  createDsab007ContentsCommandWithRunner,
-  dsab007Usage,
-  executeDsab007ContentsCommand,
-  parseDsab007CommandArgs,
-} from "./search-dsab007.ts";
+  createContentsSearchCommandWithRunner,
+  contentsSearchUsage,
+  executeContentsSearchCommand,
+  parseContentsSearchCommandArgs,
+} from "./contents-search.ts";
 import type { OperationParameter } from "../../tools/operations/types.ts";
 
 const formatFlags = ({
@@ -19,9 +19,9 @@ const formatFlags = ({
 }: OperationParameter) =>
   valueHint === undefined ? cliFlags.join(", ") : `${cliFlags.join(", ")} ${valueHint}`;
 
-describe("parseDsab007CommandArgs", () => {
+describe("parseContentsSearchCommandArgs", () => {
   test("parses semantic flags into semantic keys", () => {
-    const options = parseDsab007CommandArgs([
+    const options = parseContentsSearchCommandArgs([
       "--keyword",
       "배당",
       "--start-date",
@@ -56,12 +56,12 @@ describe("parseDsab007CommandArgs", () => {
   });
 
   test("parses transport syntax without enforcing required fields", () => {
-    expect(parseDsab007CommandArgs([])).toEqual({});
+    expect(parseContentsSearchCommandArgs([])).toEqual({});
   });
 
   test("rejects invalid integer options early", () => {
     expect(() =>
-      parseDsab007CommandArgs([
+      parseContentsSearchCommandArgs([
         "--keyword",
         "배당",
         "--start-date",
@@ -77,25 +77,25 @@ describe("parseDsab007CommandArgs", () => {
   });
 
   test("keeps help flags in sync with the shared operation spec", () => {
-    for (const parameter of dsab007ContentsOperationSpec.parameters) {
-      expect(dsab007Usage).toContain(formatFlags(parameter));
+    for (const parameter of contentsSearchOperationSpec.parameters) {
+      expect(contentsSearchUsage).toContain(formatFlags(parameter));
     }
   });
 
   test("renders semantic parameter descriptions in CLI usage", () => {
-    expect(dsab007Usage).toContain("--company-name <text>");
-    expect(dsab007Usage).toContain("Filter by company name as shown in DART search.");
-    expect(dsab007Usage).toContain("[observed]");
-    expect(dsab007Usage).toContain(
+    expect(contentsSearchUsage).toContain("--company-name <text>");
+    expect(contentsSearchUsage).toContain("Filter by company name as shown in DART search.");
+    expect(contentsSearchUsage).toContain("[observed]");
+    expect(contentsSearchUsage).toContain(
       "The command accepts semantic parameter names only; DART replay field names stay internal.",
     );
-    expect(dsab007Usage).not.toContain("text-crp-nm");
-    expect(dsab007Usage).not.toContain("--query");
+    expect(contentsSearchUsage).not.toContain("text-crp-nm");
+    expect(contentsSearchUsage).not.toContain("--query");
   });
 
   test("resolves parsed options through the shared semantic resolver", () => {
-    const request = resolveDsab007ContentsInput(
-      parseDsab007CommandArgs([
+    const request = resolveContentsSearchInput(
+      parseContentsSearchCommandArgs([
         "--keyword",
         "배당",
         "--start-date",
@@ -129,17 +129,17 @@ describe("parseDsab007CommandArgs", () => {
 
   test("passes parsed semantic options to the command runner", async () => {
     let received:
-      | ReturnType<typeof parseDsab007CommandArgs>
+      | ReturnType<typeof parseContentsSearchCommandArgs>
       | undefined;
 
-    const command = createDsab007ContentsCommandWithRunner(async (options) => {
+    const command = createContentsSearchCommandWithRunner(async (options) => {
       received = options;
     });
 
     await command.parseAsync(
       [
         "node",
-        "dsab007-contents",
+        "contents-search",
         "--keyword",
         "배당",
         "--start-date",
@@ -168,15 +168,15 @@ describe("parseDsab007CommandArgs", () => {
 
   test("rejects invalid semantic input before execution", async () => {
     try {
-      await executeDsab007ContentsCommand({
+      await executeContentsSearchCommand({
         startDate: "20250331",
         endDate: "20260331",
       });
       throw new Error("Expected execution to fail.");
     } catch (error) {
-      expect(error).toBeInstanceOf(InvalidDsab007ContentsOperationInput);
+      expect(error).toBeInstanceOf(InvalidContentsSearchInput);
 
-      if (!(error instanceof InvalidDsab007ContentsOperationInput)) {
+      if (!(error instanceof InvalidContentsSearchInput)) {
         throw error;
       }
 
@@ -226,8 +226,8 @@ describe("parseDsab007CommandArgs", () => {
       sourceUrl: "https://dart.fss.or.kr/dsab007/search.ax",
     } as const;
 
-    const command = createDsab007ContentsCommandWithRunner((options) =>
-      executeDsab007ContentsCommand(options, {
+    const command = createContentsSearchCommandWithRunner((options) =>
+      executeContentsSearchCommand(options, {
         runOperation: async (input) => {
           receivedInput = input;
           return result;
@@ -241,7 +241,7 @@ describe("parseDsab007CommandArgs", () => {
     await command.parseAsync(
       [
         "node",
-        "dsab007-contents",
+        "contents-search",
         "--keyword",
         "배당",
         "--start-date",

@@ -1,16 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  InvalidDsab007ContentsOperationInput,
-  resolveDsab007ContentsInput,
-  toDsab007ContentsOperationResult,
-  toDsab007ContentsSearchInput,
-} from "./dsab007-contents-input.ts";
+  InvalidContentsSearchInput,
+  resolveContentsSearchInput,
+  toContentsSearchResult,
+  toContentsSearchReplayInput,
+} from "./contents-search-input.ts";
 
-describe("resolveDsab007ContentsInput", () => {
+describe("resolveContentsSearchInput", () => {
   test("applies defaults to the semantic request", () => {
     expect(
-      resolveDsab007ContentsInput({
+      resolveContentsSearchInput({
         keyword: "배당",
         startDate: "20250331",
         endDate: "20260331",
@@ -39,15 +39,15 @@ describe("resolveDsab007ContentsInput", () => {
 
   test("rejects missing required parameters with structured data", () => {
     try {
-      resolveDsab007ContentsInput({
+      resolveContentsSearchInput({
         startDate: "20250331",
         endDate: "20260331",
       });
       throw new Error("Expected resolution to fail.");
     } catch (error) {
-      expect(error).toBeInstanceOf(InvalidDsab007ContentsOperationInput);
+      expect(error).toBeInstanceOf(InvalidContentsSearchInput);
 
-      if (!(error instanceof InvalidDsab007ContentsOperationInput)) {
+      if (!(error instanceof InvalidContentsSearchInput)) {
         throw error;
       }
 
@@ -60,16 +60,16 @@ describe("resolveDsab007ContentsInput", () => {
 
   test("rejects invalid date formats with structured data", () => {
     try {
-      resolveDsab007ContentsInput({
+      resolveContentsSearchInput({
         keyword: "배당",
         startDate: "2025-03-31",
         endDate: "20260331",
       });
       throw new Error("Expected resolution to fail.");
     } catch (error) {
-      expect(error).toBeInstanceOf(InvalidDsab007ContentsOperationInput);
+      expect(error).toBeInstanceOf(InvalidContentsSearchInput);
 
-      if (!(error instanceof InvalidDsab007ContentsOperationInput)) {
+      if (!(error instanceof InvalidContentsSearchInput)) {
         throw error;
       }
 
@@ -83,7 +83,7 @@ describe("resolveDsab007ContentsInput", () => {
 
   test("rejects unknown semantic parameters", () => {
     try {
-      resolveDsab007ContentsInput({
+      resolveContentsSearchInput({
         keyword: "배당",
         startDate: "20250331",
         endDate: "20260331",
@@ -91,9 +91,9 @@ describe("resolveDsab007ContentsInput", () => {
       } as Record<string, unknown>);
       throw new Error("Expected resolution to fail.");
     } catch (error) {
-      expect(error).toBeInstanceOf(InvalidDsab007ContentsOperationInput);
+      expect(error).toBeInstanceOf(InvalidContentsSearchInput);
 
-      if (!(error instanceof InvalidDsab007ContentsOperationInput)) {
+      if (!(error instanceof InvalidContentsSearchInput)) {
         throw error;
       }
 
@@ -103,9 +103,9 @@ describe("resolveDsab007ContentsInput", () => {
   });
 });
 
-describe("toDsab007ContentsSearchInput", () => {
+describe("toContentsSearchReplayInput", () => {
   test("maps semantic names to the internal DART replay contract", () => {
-    const request = resolveDsab007ContentsInput({
+    const request = resolveContentsSearchInput({
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
@@ -117,7 +117,7 @@ describe("toDsab007ContentsSearchInput", () => {
       sortDirection: "asc",
     });
 
-    expect(toDsab007ContentsSearchInput(request)).toEqual({
+    expect(toContentsSearchReplayInput(request)).toEqual({
       option: "contents",
       currentPage: 2,
       maxResults: 25,
@@ -141,14 +141,14 @@ describe("toDsab007ContentsSearchInput", () => {
   });
 
   test("replaces the echoed request with the resolved semantic contract", () => {
-    const request = resolveDsab007ContentsInput({
+    const request = resolveContentsSearchInput({
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
     });
 
-    const result = toDsab007ContentsOperationResult(request, {
-      request: toDsab007ContentsSearchInput(request),
+    const result = toContentsSearchResult(request, {
+      request: toContentsSearchReplayInput(request),
       pagination: {
         currentPage: 1,
         totalPages: 1,

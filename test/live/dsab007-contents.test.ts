@@ -4,22 +4,22 @@ import * as cheerio from "cheerio";
 import { Effect } from "effect";
 
 import {
-  searchDsab007Contents,
-  fetchDsab007SearchHtml,
+  searchContents,
+  fetchSearchHtml,
 } from "../../src/dart/dsab007/client.ts";
 import {
-  baselineDsab007ContentsReplayInput,
-  dsab007ContentsReplayFieldContracts,
-  type Dsab007ContentsLiveExpectation,
-  type Dsab007ContentsLiveProbe,
+  baselineContentsReplayInput,
+  contentsReplayFieldContracts,
+  type ContentsLiveExpectation,
+  type ContentsLiveProbe,
 } from "../../src/dart/dsab007/replay-contract.ts";
-import type { Dsab007ContentsSearchInput } from "../../src/dart/dsab007/contracts.ts";
-import { buildDsab007ContentsSearchForm } from "../../src/dart/dsab007/request.ts";
+import type { ContentsSearchInput } from "../../src/dart/dsab007/contracts.ts";
+import { buildContentsSearchForm } from "../../src/dart/dsab007/request.ts";
 
 const liveTest = process.env.LIVE_DART_TESTS === "1" ? test : test.skip;
 
 type BaselineSnapshot = {
-  readonly request: Dsab007ContentsSearchInput;
+  readonly request: ContentsSearchInput;
   readonly result: Awaited<ReturnType<typeof runSearch>>;
   readonly pagerAnchorTexts: readonly string[];
 };
@@ -27,15 +27,15 @@ type BaselineSnapshot = {
 let baselineSnapshotPromise: Promise<BaselineSnapshot> | undefined;
 
 const runSearch = async (
-  input: Dsab007ContentsSearchInput,
-) => Effect.runPromise(searchDsab007Contents(input));
+  input: ContentsSearchInput,
+) => Effect.runPromise(searchContents(input));
 
 const fetchPagerAnchorTexts = async (
-  input: Dsab007ContentsSearchInput,
+  input: ContentsSearchInput,
 ): Promise<readonly string[]> => {
   const html = await Effect.runPromise(
-    fetchDsab007SearchHtml(
-      buildDsab007ContentsSearchForm(input),
+    fetchSearchHtml(
+      buildContentsSearchForm(input),
     ).pipe(Effect.provide(FetchHttpClient.layer)),
   );
   const $ = cheerio.load(html);
@@ -48,13 +48,13 @@ const fetchPagerAnchorTexts = async (
 const getBaselineSnapshot = async (): Promise<BaselineSnapshot> => {
   if (baselineSnapshotPromise === undefined) {
     baselineSnapshotPromise = (async () => {
-      const result = await runSearch(baselineDsab007ContentsReplayInput);
+      const result = await runSearch(baselineContentsReplayInput);
       const pagerAnchorTexts = await fetchPagerAnchorTexts(
-        baselineDsab007ContentsReplayInput,
+        baselineContentsReplayInput,
       );
 
       return {
-        request: baselineDsab007ContentsReplayInput,
+        request: baselineContentsReplayInput,
         result,
         pagerAnchorTexts,
       };
@@ -65,16 +65,16 @@ const getBaselineSnapshot = async (): Promise<BaselineSnapshot> => {
 };
 
 const expectProbeClassification = (
-  probe: Dsab007ContentsLiveProbe,
-  expected: Dsab007ContentsLiveProbe["classification"],
+  probe: ContentsLiveProbe,
+  expected: ContentsLiveProbe["classification"],
 ) => {
   expect(probe.classification).toBe(expected);
 };
 
 const assertExpectation = async (
-  probe: Dsab007ContentsLiveProbe,
-  expectation: Dsab007ContentsLiveExpectation,
-  request: Dsab007ContentsSearchInput,
+  probe: ContentsLiveProbe,
+  expectation: ContentsLiveExpectation,
+  request: ContentsSearchInput,
   result: Awaited<ReturnType<typeof runSearch>>,
   baseline: BaselineSnapshot,
 ): Promise<void> => {
@@ -182,8 +182,8 @@ const assertExpectation = async (
   }
 };
 
-describe("searchDsab007Contents live DART replay probes", () => {
-  for (const fieldContract of dsab007ContentsReplayFieldContracts) {
+describe("searchContents live DART replay probes", () => {
+  for (const fieldContract of contentsReplayFieldContracts) {
     describe(fieldContract.key, () => {
       for (const probe of fieldContract.live) {
         liveTest(probe.name, async () => {

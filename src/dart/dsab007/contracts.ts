@@ -8,54 +8,54 @@ const DateString = Schema.String.pipe(
   }),
 );
 
-export const Dsab007Option = Schema.Literal("contents");
-export type Dsab007Option = typeof Dsab007Option.Type;
+export const ContentsOption = Schema.Literal("contents");
+export type ContentsOption = typeof ContentsOption.Type;
 
 /**
  * Observed in live `/dsab007/search.ax` contents fragments on 2026-03-31:
  * `clickSort(this, 'DATE')` and `clickSort(this, 'rpt_nm')`.
  */
-export const dsab007ContentsSortFields = ["DATE", "rpt_nm"] as const;
-export const Dsab007ContentsSortField = Schema.Literal(
-  ...dsab007ContentsSortFields,
+export const contentsSortFields = ["DATE", "rpt_nm"] as const;
+export const ContentsSortField = Schema.Literal(
+  ...contentsSortFields,
 );
-export type Dsab007ContentsSortField = typeof Dsab007ContentsSortField.Type;
+export type ContentsSortField = typeof ContentsSortField.Type;
 
 /**
  * Observed in live `/dsab007/search.ax` contents fragments on 2026-03-31:
  * active sort anchors render `오름차순`/`내림차순`, matching `asc`/`desc`.
  */
-export const dsab007ContentsSortDirections = ["asc", "desc"] as const;
-export const Dsab007ContentsSortDirection = Schema.Literal(
-  ...dsab007ContentsSortDirections,
+export const contentsSortDirections = ["asc", "desc"] as const;
+export const ContentsSortDirection = Schema.Literal(
+  ...contentsSortDirections,
 );
-export type Dsab007ContentsSortDirection =
-  typeof Dsab007ContentsSortDirection.Type;
+export type ContentsSortDirection =
+  typeof ContentsSortDirection.Type;
 
 type CliFlag = `--${string}`;
 type ParameterAlias = string;
 
-export type Dsab007ContentsSearchParameterStatus =
+export type SearchParameterStatus =
   | "observed"
   | "inferred"
   | "unverified";
 
-export type Dsab007ContentsSearchParameterMetadata = {
+export type SearchParameterMetadata = {
   readonly description: string;
   readonly aliases?: readonly ParameterAlias[];
   readonly valueHint?: string;
-  readonly status?: Dsab007ContentsSearchParameterStatus;
+  readonly status?: SearchParameterStatus;
 };
 
-export type Dsab007ContentsSearchParameterDoc =
-  Dsab007ContentsSearchParameterMetadata & {
+export type SearchParameterDoc =
+  SearchParameterMetadata & {
     readonly key: string;
     readonly aliases: readonly ParameterAlias[];
     readonly cliFlags: readonly CliFlag[];
-    readonly status: Dsab007ContentsSearchParameterStatus;
+    readonly status: SearchParameterStatus;
   };
 
-const dsab007ContentsSearchParameterMetadataAnnotationId = Symbol.for(
+const searchParameterMetadataAnnotationId = Symbol.for(
   "darty/dsab007/contents/parameterMetadata",
 );
 
@@ -67,15 +67,15 @@ type AnnotatableParameter<S> = S & {
 
 const annotateParameter = <S>(
   schema: S,
-  metadata: Dsab007ContentsSearchParameterMetadata,
+  metadata: SearchParameterMetadata,
 ): S =>
   (schema as AnnotatableParameter<S>).annotations({
     description: metadata.description,
-    [dsab007ContentsSearchParameterMetadataAnnotationId]: metadata,
+    [searchParameterMetadataAnnotationId]: metadata,
   }) as S;
 
-const dsab007ContentsSearchFields = {
-  option: annotateParameter(Dsab007Option, {
+const contentsSearchFields = {
+  option: annotateParameter(ContentsOption, {
     description: "DART search mode. Fixed to `contents` for this command.",
     status: "observed",
   }),
@@ -112,15 +112,15 @@ const dsab007ContentsSearchFields = {
       status: "observed",
     },
   ),
-  sort: annotateParameter(Dsab007ContentsSortField, {
+  sort: annotateParameter(ContentsSortField, {
     aliases: ["sort"],
-    valueHint: `<${dsab007ContentsSortFields.join("|")}>`,
+    valueHint: `<${contentsSortFields.join("|")}>`,
     description: "Sort field for results.",
     status: "observed",
   }),
-  sortType: annotateParameter(Dsab007ContentsSortDirection, {
+  sortType: annotateParameter(ContentsSortDirection, {
     aliases: ["sort-direction", "sort-type"],
-    valueHint: `<${dsab007ContentsSortDirections.join("|")}>`,
+    valueHint: `<${contentsSortDirections.join("|")}>`,
     description: "Sort direction for the selected sort field.",
     status: "observed",
   }),
@@ -211,22 +211,22 @@ const dsab007ContentsSearchFields = {
  * share the same execution core. Callers should treat this as a replay contract,
  * not as a guarantee that DART will honor every supplied field exactly.
  */
-export const Dsab007ContentsSearchInput = Schema.Struct(
-  dsab007ContentsSearchFields,
+export const ContentsSearchInput = Schema.Struct(
+  contentsSearchFields,
 ).annotations({
-  identifier: "Dsab007ContentsSearchInput",
+  identifier: "ContentsSearchInput",
   description:
     "Low-level replay contract for the implemented `dsab007` contents mode.",
 });
-export type Dsab007ContentsSearchInput = typeof Dsab007ContentsSearchInput.Type;
+export type ContentsSearchInput = typeof ContentsSearchInput.Type;
 
 const getParameterMetadata = (
   annotated: SchemaAST.Annotated,
-): Dsab007ContentsSearchParameterMetadata | undefined =>
+): SearchParameterMetadata | undefined =>
   Option.getOrUndefined(
-    SchemaAST.getAnnotation<Dsab007ContentsSearchParameterMetadata>(
+    SchemaAST.getAnnotation<SearchParameterMetadata>(
       annotated,
-      dsab007ContentsSearchParameterMetadataAnnotationId,
+      searchParameterMetadataAnnotationId,
     ),
   );
 
@@ -240,9 +240,9 @@ const getParameterDescription = (property: SchemaAST.PropertySignature): string 
       ),
   );
 
-export const describeDsab007ContentsSearchInput =
-  (): readonly Dsab007ContentsSearchParameterDoc[] =>
-    SchemaAST.getPropertySignatures(Dsab007ContentsSearchInput.ast).map(
+export const describeContentsSearchInput =
+  (): readonly SearchParameterDoc[] =>
+    SchemaAST.getPropertySignatures(ContentsSearchInput.ast).map(
       (property) => {
         const metadata =
           getParameterMetadata(property) ?? getParameterMetadata(property.type);
