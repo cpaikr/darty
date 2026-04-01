@@ -10,15 +10,16 @@ shape and document ownership.
 `contents-search` capability, one local CLI transport, and one internal DART
 `dsab007` source adapter.
 
-The design goal is to keep the core reusable across transports. The CLI is only
-one host. MCP should be able to reuse the same capability contract, execution
-path, and provider wiring.
+The design goal is to keep the core reusable across transports. The CLI is one
+host and also the current composition root. MCP should be able to reuse the
+same capability contract and execution path while choosing its own adapter
+wiring.
 
 ## Layer Overview
 
 The CLI is not the real app. The capability layer is: a semantic request
 contract, a provider interface, and an execution path that normalizes errors and
-shapes results. The CLI is one transport adapter over that core, and a future MCP
+shapes results. The CLI is one transport host over that core, and a future MCP
 tool should sit at the same layer.
 
 ```mermaid
@@ -26,10 +27,6 @@ graph TD
     subgraph Transport["Transport Adapters"]
         CLI["CLI · src/cli/"]
         MCP["MCP · future"]
-    end
-
-    subgraph Comp["Composition · src/app/"]
-        APP["Wire capability to concrete provider"]
     end
 
     subgraph Cap["Capability Contracts · src/capabilities/"]
@@ -40,17 +37,15 @@ graph TD
         SRC["Replay contract · form builder · HTML parser"]
     end
 
-    CLI --> APP
-    MCP -.-> APP
-    APP --> CAP
+    CLI --> CAP
+    MCP -.-> CAP
     CAP --> SRC
     SRC -->|POST| DART[("dart.fss.or.kr")]
 ```
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Transport** | `src/cli/` | Parse argv, build flags and help from manifest, print JSON |
-| **Composition** | `src/app/` | Choose which provider backs a capability |
+| **Transport** | `src/cli.ts`, `src/cli/` | Parse argv, build flags and help from manifest, choose the concrete adapter, print JSON |
 | **Capability** | `src/capabilities/` | Public contract, semantic validation, execution, metadata |
 | **Source** | `src/sources/dart/` | DART replay fields, form POST, HTML parsing, error mapping |
 
@@ -59,8 +54,9 @@ graph TD
 ```mermaid
 graph TD
     CLI_TS["src/cli.ts"] --> CMD["src/cli/commands/contents-search.ts"]
-    CMD --> APP["src/app/contents-search.ts"]
-    APP --> EXEC["execute.ts"]
+    CMD --> RUN["executeContentsSearchCommand()"]
+    CLI_TS --> EXEC["execute.ts\nvia injected runner"]
+    RUN --> EXEC
     EXEC --> PROV["provider.ts"]
     PROV --> SEARCH["search.ts"]
     SEARCH --> FETCH["fetch.ts"]
@@ -81,15 +77,13 @@ graph TD
         CLI_TS
         CMD
     end
-    subgraph app [" "]
-        APP
-    end
     subgraph cap ["src/capabilities/contents-search/"]
         CONTRACT
         TYPES
         SPEC
         EXEC
         PROV
+        RUN
     end
     subgraph src ["src/sources/dart/dsab007/contents/"]
         SEARCH
@@ -102,11 +96,11 @@ graph TD
 ```
 
 - **`src/cli.ts`** — Root Commander program. Registers commands and turns
-  failures into a process exit code.
+  failures into a process exit code. It is also the current composition root
+  that wires the CLI command to the concrete `dsab007` adapter.
 - **`src/cli/commands/`** — Transport adapters. Build CLI flags and help text
-  from capability-owned metadata, parse argv, print JSON on success.
-- **`src/app/`** — Composition roots. Choose concrete providers for a
-  capability without pushing source-specific imports into capability modules.
+  from capability-owned metadata, parse argv, and delegate execution through an
+  injected command runner.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
   flow. Defines semantic inputs, public result shapes, typed failures, and
   manifest metadata.
@@ -139,12 +133,13 @@ How it works:
    `annotateCapabilityInput()` attaches human-facing metadata (description,
    aliases, defaults, status) as schema annotations.
 2. **`types.ts`** walks the schema AST via `describeCapabilityInput()` and
-   extracts a normalized `inputProperties` array plus JSON Schema.
+   extracts a normalized `inputProperties` array plus JSON Schema for transport
+   metadata.
 3. **`spec.ts`** packages the schema with summary, notes, and examples into a
    transport-neutral manifest.
 4. **`cli/commands/contents-search.ts`** imports the manifest and derives
-   Commander flags, help text, and shell examples from it — no hand-written
-   option strings.
+   Commander flags, help text, and shell examples from it, then delegates to
+   `executeContentsSearchCommand()` with host-supplied execution wiring.
 
 One source of truth gives you:
 
@@ -164,11 +159,13 @@ glue between schema-as-validation and schema-as-documentation.
 graph TD
     INPUT["CLI flags / MCP input"]
     PARTIAL["Partial raw input\n· semantic names ·"]
+    CMD["executeContentsSearchCommand()"]
     RESOLVE["resolveContentsSearchRequest()"]
     REQUEST["Validated\nContentsSearchRequest"]
     PROVIDER["provider.search()"]
     TO_REPLAY["toDsab007ContentsReplayInput()"]
     BUILD["buildContentsSearchForm()"]
+    FETCH["fetchContentsSearchHtml()"]
     POST["POST /dsab007/search.ax"]
     HTML["HTML response"]
     PARSE_HTML["parseContentsSearchHtml()"]
@@ -178,12 +175,14 @@ graph TD
     OUTPUT["JSON to stdout"]
 
     INPUT --> PARTIAL
-    PARTIAL --> RESOLVE
+    PARTIAL --> CMD
+    CMD --> RESOLVE
     RESOLVE --> REQUEST
     REQUEST --> PROVIDER
     PROVIDER --> TO_REPLAY
     TO_REPLAY --> BUILD
-    BUILD --> POST
+    BUILD --> FETCH
+    FETCH --> POST
     POST --> HTML
     HTML --> PARSE_HTML
     PARSE_HTML --> SOURCE_PAGE
@@ -196,18 +195,21 @@ Step by step:
 
 1. Transport (CLI or future MCP) converts transport syntax into a partial
    object keyed by public semantic names (`keyword`, `startDate`, etc.).
-2. `resolveContentsSearchRequest()` applies defaults, validates required
-   fields, checks enums and date formats, and rejects unknown parameters.
-3. The composition root (`src/app/`) wires the validated request to the
-   default `dsab007ContentsProvider`.
-4. `toDsab007ContentsReplayInput()` translates the public request into the
+2. `executeContentsSearchCommand()` passes the semantic raw input into the
+   injected capability executor and prints exactly one JSON payload on success.
+3. `resolveContentsSearchRequest()` rejects unknown parameters, then uses the
+   public request schema to apply defaults and validate required fields, enums,
+   integer bounds, and date formats.
+4. The transport host (`src/cli.ts` today) wires the shared capability
+   executor to the default `dsab007ContentsProvider`.
+5. `toDsab007ContentsReplayInput()` translates the public request into the
    internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
-5. `buildContentsSearchForm()` encodes the replay input as URLSearchParams
-   and POSTs to `/dsab007/search.ax`.
-6. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from
+6. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
+7. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax`.
+8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from
    the HTML fragment.
-7. `toDsab007ContentsProviderResult()` maps source rows into public items.
-8. `buildContentsSearchResult()` wraps the provider result in a
+9. `toDsab007ContentsProviderResult()` maps source rows into public items.
+10. `buildContentsSearchResult()` wraps the provider result in a
    capability-owned envelope with metadata, references, and warnings.
 
 Semantic validation happens inside the capability executor, not in the CLI.
@@ -273,24 +275,26 @@ graph TD
 
     MANIFEST["contentsSearchManifest"]
     JSON_SCHEMA["contentsSearchInputJsonSchema"]
-    EXEC["executeDefaultContentsSearch()"]
+    COMPOSE["Host-specific wiring\nchoose adapter"]
+    EXEC["executeContentsSearch()"]
 
     MANIFEST --> CLI_CMD
     MANIFEST -.-> MCP_TOOL
     JSON_SCHEMA -.-> MCP_TOOL
-    CLI_CMD --> EXEC
-    MCP_TOOL -.-> EXEC
+    CLI_CMD --> COMPOSE
+    MCP_TOOL -.-> COMPOSE
+    COMPOSE --> EXEC
 ```
 
 An MCP transport should reuse:
 
 - `contentsSearchManifest` — tool name, description, and examples
 - `contentsSearchInputJsonSchema` — tool input schema
-- `executeDefaultContentsSearch()` — shared validation, execution, and error
-  normalization
+- `executeContentsSearch()` — shared validation, execution, and error
+  normalization once the host chooses an adapter
 
-CLI and MCP stay aligned automatically: one schema, one executor, two thin
-transport shells.
+CLI and MCP stay aligned on the same public contract and executor while each
+host keeps explicit control over adapter wiring.
 
 ## Start Here
 

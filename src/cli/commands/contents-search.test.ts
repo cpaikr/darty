@@ -4,6 +4,7 @@ import {
   ContentsSearchFailure,
   resolveContentsSearchRequest,
 } from "../../capabilities/contents-search/contract.ts";
+import { executeContentsSearch } from "../../capabilities/contents-search/execute.ts";
 import { contentsSearchManifest } from "../../capabilities/contents-search/spec.ts";
 import {
   capabilityInputPropertyToCliValueHint,
@@ -162,6 +163,14 @@ describe("parseContentsSearchCommandArgs", () => {
       await executeContentsSearchCommand({
         startDate: "20250331",
         endDate: "20260331",
+      }, {
+        runOperation: (input) =>
+          executeContentsSearch(input, {
+            search: async () => {
+              throw new Error("Provider should not be called for invalid input.");
+            },
+          }),
+        writeStdout: () => undefined,
       });
       throw new Error("Expected execution to fail.");
     } catch (error) {

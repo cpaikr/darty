@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { ParseResult, Schema } from "effect";
 
 import {
   annotateCapabilityInput,
@@ -130,6 +130,10 @@ const contentsSearchInputPropertyByKey = new Map(
   contentsSearchInputProperties.map((property) => [property.key, property]),
 );
 
+const decodeContentsSearchRequest = Schema.decodeUnknownEither(
+  ContentsSearchRequestSchema,
+);
+
 export type ContentsSearchItem = {
   readonly company: {
     readonly name: string;
@@ -258,49 +262,6 @@ const getContentsSearchInputProperty = (
   return property;
 };
 
-const getDefaultValue = <Value extends string | number>(
-  property: CapabilityInputProperty,
-): Value => {
-  const defaultValue = property.defaultValue;
-
-  if (typeof defaultValue === "string" || typeof defaultValue === "number") {
-    return defaultValue as Value;
-  }
-
-  throw new Error(`Missing default value metadata for "${property.key}".`);
-};
-
-const getEnumValues = (
-  property: CapabilityInputProperty,
-): readonly string[] => {
-  if (property.enumValues === undefined) {
-    throw new Error(`Missing enum values for "${property.key}".`);
-  }
-
-  return property.enumValues.filter(
-    (value): value is string => typeof value === "string",
-  );
-};
-
-const getNumberBounds = (
-  property: CapabilityInputProperty,
-): {
-  readonly minimum: number;
-  readonly maximum: number;
-} => {
-  if (
-    typeof property.minimum === "number" &&
-    typeof property.maximum === "number"
-  ) {
-    return {
-      minimum: property.minimum,
-      maximum: property.maximum,
-    };
-  }
-
-  throw new Error(`Missing numeric bounds for "${property.key}".`);
-};
-
 const getExpectedRequiredValue = (
   property: CapabilityInputProperty,
 ): string => {
@@ -311,210 +272,234 @@ const getExpectedRequiredValue = (
   return "a non-empty string";
 };
 
-const failInvalidParameter = (
-  parameter: string,
-  reason: string,
-  message: string,
-  options?: {
-    readonly actual?: unknown;
-    readonly expected?: string;
-  },
-): never => {
-  throw new InvalidContentsSearchRequest({
-    code: "invalid_parameter",
-    parameter,
-    reason,
-    expected: options?.expected,
-    actual: options?.actual,
-    message,
-  });
+type CollectedParseIssue = {
+  readonly path: readonly PropertyKey[];
+  readonly issue: ParseResult.ParseIssue;
 };
 
-const failMissingParameter = (
-  parameter: string,
-  expected: string,
-): never => {
-  throw new InvalidContentsSearchRequest({
-    code: "missing_parameter",
-    parameter,
-    reason: "required",
-    expected,
-    message: `Missing required parameter "${parameter}". Expected ${expected}.`,
-  });
+const toPathArray = (
+  path: ParseResult.Path,
+): readonly PropertyKey[] =>
+  Array.isArray(path) ? path : [path as PropertyKey];
+
+const collectParseIssues = (
+  issue: ParseResult.ParseIssue,
+  path: readonly PropertyKey[] = [],
+): readonly CollectedParseIssue[] => {
+  switch (issue._tag) {
+    case "Pointer":
+      return collectParseIssues(issue.issue, [...path, ...toPathArray(issue.path)]);
+    case "Composite":
+      return (Array.isArray(issue.issues) ? issue.issues : [issue.issues]).flatMap(
+        (nestedIssue) => collectParseIssues(nestedIssue, path),
+      );
+    case "Refinement":
+    case "Transformation":
+      return collectParseIssues(issue.issue, path);
+    default:
+      return [{ path, issue }];
+  }
 };
 
-const readOptionalText = <
-  Key extends "companyCode" | "presenterName" | "reportName",
->(
-  input: Partial<ContentsSearchRawInput>,
-  key: Key,
+const getParameterIssues = (
+  error: ParseResult.ParseError,
+): {
+  readonly parameter: ContentsSearchInputKey | undefined;
+  readonly issues: readonly ParseResult.ParseIssue[];
+} => {
+  const collectedIssues = collectParseIssues(error.issue);
+
+  for (const property of contentsSearchInputProperties) {
+    const matchingIssues = collectedIssues
+      .filter((issue) => issue.path[0] === property.key)
+      .map((issue) => issue.issue);
+
+    if (matchingIssues.length > 0) {
+      return {
+        parameter: property.key as ContentsSearchInputKey,
+        issues: matchingIssues,
+      };
+    }
+  }
+
+  return {
+    parameter: undefined,
+    issues: collectedIssues.map((issue) => issue.issue),
+  };
+};
+
+const getParseIssueMessage = (
+  issue: ParseResult.ParseIssue | undefined,
 ): string | undefined => {
-  const property = getContentsSearchInputProperty(key);
-  const value = input[key];
-
-  if (value === undefined) {
+  if (issue === undefined) {
     return undefined;
   }
 
-  if (typeof value !== "string") {
-    return failInvalidParameter(
-      key,
-      "invalid_type",
-      `Parameter "${key}" must be a string.`,
-      { actual: value, expected: "a string" },
-    );
+  switch (issue._tag) {
+    case "Type":
+    case "Missing":
+    case "Unexpected":
+    case "Forbidden":
+      return issue.message;
+    default:
+      return undefined;
   }
-
-  const minLength = property.minLength;
-
-  if (typeof minLength === "number" && minLength > 0 && value.length < minLength) {
-    return failInvalidParameter(
-      key,
-      "empty_string",
-      `Parameter "${key}" must not be empty.`,
-      { actual: value, expected: "a non-empty string" },
-    );
-  }
-
-  return value;
 };
 
-const readRequiredText = <
-  Key extends "keyword" | "startDate" | "endDate",
->(
-  input: Partial<ContentsSearchRawInput>,
-  key: Key,
-): string => {
-  const property = getContentsSearchInputProperty(key);
-  const value = input[key];
-  const expected = getExpectedRequiredValue(property);
+const toInvalidContentsSearchRequest = (
+  input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
+  error: ParseResult.ParseError,
+): InvalidContentsSearchRequest => {
+  const { parameter, issues } = getParameterIssues(error);
 
-  if (value === undefined) {
-    return failMissingParameter(key, expected);
+  if (parameter === undefined) {
+    return new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter: "input",
+      reason: "invalid_type",
+      expected: "an object with contents-search parameters",
+      actual: input,
+      message: "Contents-search input must be an object with semantic parameters.",
+    });
   }
 
-  if (typeof value !== "string") {
-    return failInvalidParameter(
-      key,
-      "invalid_type",
-      `Parameter "${key}" must be a string.`,
-      { actual: value, expected: "a string" },
+  const property = getContentsSearchInputProperty(parameter);
+  const actual = input[parameter];
+
+  if (issues.some((issue) => issue._tag === "Missing")) {
+    return new InvalidContentsSearchRequest({
+      code: "missing_parameter",
+      parameter,
+      reason: "required",
+      expected: getExpectedRequiredValue(property),
+      message: `Missing required parameter "${parameter}". Expected ${getExpectedRequiredValue(
+        property,
+      )}.`,
+    });
+  }
+
+  if (property.enumValues !== undefined) {
+    const choices = property.enumValues.filter(
+      (value): value is string => typeof value === "string",
     );
+
+    if (typeof actual !== "string") {
+      return new InvalidContentsSearchRequest({
+        code: "invalid_parameter",
+        parameter,
+        reason: "invalid_type",
+        expected: `one of ${choices.join(", ")}`,
+        actual,
+        message: `Parameter "${parameter}" must be a string.`,
+      });
+    }
+
+    return new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter,
+      reason: "invalid_choice",
+      expected: `one of ${choices.join(", ")}`,
+      actual,
+      message: `Parameter "${parameter}" must be one of: ${choices.join(", ")}.`,
+    });
   }
 
-  const minLength = property.minLength;
+  if (property.type === "integer") {
+    if (!Number.isInteger(actual)) {
+      return new InvalidContentsSearchRequest({
+        code: "invalid_parameter",
+        parameter,
+        reason: "invalid_type",
+        expected: "an integer",
+        actual,
+        message: `Parameter "${parameter}" must be an integer.`,
+      });
+    }
 
-  if (typeof minLength === "number" && minLength > 0 && value.length < minLength) {
-    return failInvalidParameter(
-      key,
-      "empty_string",
-      `Parameter "${key}" must not be empty.`,
-      { actual: value, expected },
-    );
+    if (
+      typeof property.minimum === "number" &&
+      typeof property.maximum === "number" &&
+      typeof actual === "number" &&
+      (actual < property.minimum || actual > property.maximum)
+    ) {
+      return new InvalidContentsSearchRequest({
+        code: "invalid_parameter",
+        parameter,
+        reason: "out_of_range",
+        expected: `an integer between ${property.minimum} and ${property.maximum}`,
+        actual,
+        message: `Parameter "${parameter}" must be between ${property.minimum} and ${property.maximum}.`,
+      });
+    }
   }
 
-  return value;
-};
-
-const readIntegerWithDefault = (
-  input: Partial<ContentsSearchRawInput>,
-  key: "page",
-): number => {
-  const property = getContentsSearchInputProperty(key);
-  const value = input[key];
-  const fallback = getDefaultValue<number>(property);
-  const { minimum, maximum } = getNumberBounds(property);
-
-  if (value === undefined) {
-    return fallback;
+  if (typeof actual !== "string") {
+    return new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter,
+      reason: "invalid_type",
+      expected: "a string",
+      actual,
+      message: `Parameter "${parameter}" must be a string.`,
+    });
   }
 
-  if (!Number.isInteger(value)) {
-    return failInvalidParameter(
-      key,
-      "invalid_type",
-      `Parameter "${key}" must be an integer.`,
-      { actual: value, expected: "an integer" },
-    );
+  if (
+    typeof property.minLength === "number" &&
+    property.minLength > 0 &&
+    actual.length < property.minLength
+  ) {
+    return new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter,
+      reason: "empty_string",
+      expected: property.required
+        ? getExpectedRequiredValue(property)
+        : "a non-empty string",
+      actual,
+      message: `Parameter "${parameter}" must not be empty.`,
+    });
   }
 
-  if (value < minimum || value > maximum) {
-    return failInvalidParameter(
-      key,
-      "out_of_range",
-      `Parameter "${key}" must be between ${minimum} and ${maximum}.`,
-      {
-        actual: value,
-        expected: `an integer between ${minimum} and ${maximum}`,
-      },
-    );
+  if (property.pattern !== undefined) {
+    return new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter,
+      reason: "invalid_format",
+      expected: "YYYYMMDD",
+      actual,
+      message: `Parameter "${parameter}" must use YYYYMMDD format.`,
+    });
   }
 
-  return value;
-};
+  const [issue] = issues;
 
-const readChoiceWithDefault = <
-  Key extends "sortBy" | "sortDirection",
->(
-  input: Partial<ContentsSearchRawInput>,
-  key: Key,
-): ContentsSearchRequest[Key] => {
-  const property = getContentsSearchInputProperty(key);
-  const value = input[key];
-  const fallback = getDefaultValue<ContentsSearchRequest[Key]>(property);
-  const choices = getEnumValues(property);
-
-  if (value === undefined) {
-    return fallback;
-  }
-
-  if (typeof value !== "string") {
-    return failInvalidParameter(
-      key,
-      "invalid_type",
-      `Parameter "${key}" must be a string.`,
-      { actual: value, expected: `one of ${choices.join(", ")}` },
-    );
-  }
-
-  if (choices.includes(value)) {
-    return value as ContentsSearchRequest[Key];
-  }
-
-  return failInvalidParameter(
-    key,
-    "invalid_choice",
-    `Parameter "${key}" must be one of: ${choices.join(", ")}.`,
-    { actual: value, expected: `one of ${choices.join(", ")}` },
-  );
-};
-
-const readDateString = (
-  input: Partial<ContentsSearchRawInput>,
-  key: "startDate" | "endDate",
-): string => {
-  const property = getContentsSearchInputProperty(key);
-  const value = readRequiredText(input, key);
-
-  if (property.pattern === undefined) {
-    throw new Error(`Missing date pattern metadata for "${key}".`);
-  }
-
-  if (!new RegExp(property.pattern).test(value)) {
-    return failInvalidParameter(
-      key,
-      "invalid_format",
-      `Parameter "${key}" must use YYYYMMDD format.`,
-      { actual: value, expected: "YYYYMMDD" },
-    );
-  }
-
-  return value;
+  return new InvalidContentsSearchRequest({
+    code: "invalid_parameter",
+    parameter,
+    reason: "invalid_parameter",
+    actual,
+    message:
+      getParseIssueMessage(issue) === undefined
+        ? `Parameter "${parameter}" is invalid.`
+        : `Parameter "${parameter}" is invalid. ${getParseIssueMessage(issue)}`,
+  });
 };
 
 export const resolveContentsSearchRequest = (
   input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
 ): ContentsSearchRequest => {
+  if (input === null || typeof input !== "object" || Array.isArray(input)) {
+    throw new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter: "input",
+      reason: "invalid_type",
+      expected: "an object with contents-search parameters",
+      actual: input,
+      message: "Contents-search input must be an object with semantic parameters.",
+    });
+  }
+
   for (const key of Object.keys(input)) {
     if (!allowedKeys.has(key)) {
       throw new InvalidContentsSearchRequest({
@@ -527,15 +512,11 @@ export const resolveContentsSearchRequest = (
     }
   }
 
-  return {
-    page: readIntegerWithDefault(input, "page"),
-    sortBy: readChoiceWithDefault(input, "sortBy"),
-    sortDirection: readChoiceWithDefault(input, "sortDirection"),
-    keyword: readRequiredText(input, "keyword"),
-    startDate: readDateString(input, "startDate"),
-    endDate: readDateString(input, "endDate"),
-    companyCode: readOptionalText(input, "companyCode"),
-    presenterName: readOptionalText(input, "presenterName"),
-    reportName: readOptionalText(input, "reportName"),
-  };
+  const result = decodeContentsSearchRequest(input);
+
+  if (result._tag === "Right") {
+    return result.right;
+  }
+
+  throw toInvalidContentsSearchRequest(input, result.left);
 };

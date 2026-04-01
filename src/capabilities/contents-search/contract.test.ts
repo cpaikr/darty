@@ -90,4 +90,47 @@ describe("resolveContentsSearchRequest", () => {
       expect(error.parameter).toBe("limit");
     }
   });
+
+  test("chooses a deterministic first parameter when multiple fields are invalid", () => {
+    try {
+      resolveContentsSearchRequest({
+        page: 0,
+        keyword: "",
+        startDate: "2025-03-31",
+        endDate: "20260331",
+      });
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidContentsSearchRequest);
+
+      if (!(error instanceof InvalidContentsSearchRequest)) {
+        throw error;
+      }
+
+      expect(error.code).toBe("invalid_parameter");
+      expect(error.parameter).toBe("page");
+      expect(error.reason).toBe("out_of_range");
+      expect(error.expected).toBe("an integer between 1 and 100");
+      expect(error.actual).toBe(0);
+    }
+  });
+
+  test("rejects non-object raw input with a structured root-level error", () => {
+    try {
+      resolveContentsSearchRequest("배당" as unknown as Record<string, unknown>);
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidContentsSearchRequest);
+
+      if (!(error instanceof InvalidContentsSearchRequest)) {
+        throw error;
+      }
+
+      expect(error.code).toBe("invalid_parameter");
+      expect(error.parameter).toBe("input");
+      expect(error.reason).toBe("invalid_type");
+      expect(error.expected).toBe("an object with contents-search parameters");
+      expect(error.actual).toBe("배당");
+    }
+  });
 });

@@ -1,7 +1,4 @@
 import { Command, InvalidArgumentError, Option } from "commander";
-import { Effect } from "effect";
-
-import { executeDefaultContentsSearch } from "../../app/contents-search.ts";
 import {
   type ContentsSearchRawInput,
   type ContentsSearchResult,
@@ -30,7 +27,7 @@ type RegisteredOption = {
   readonly option: Option;
 };
 
-type ContentsSearchCommandExecutor = {
+export type ContentsSearchCommandExecutor = {
   readonly runOperation: (
     input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
   ) => Promise<ContentsSearchResult>;
@@ -150,20 +147,13 @@ const renderContentsSearchResult = (
   result: ContentsSearchResult,
 ): string => JSON.stringify(result, null, 2);
 
-const defaultCommandExecutor: ContentsSearchCommandExecutor = {
-  runOperation: (input) => executeDefaultContentsSearch(input),
-  writeStdout: (text) => {
-    console.log(text);
-  },
-};
-
 /**
  * Runs the contents-search operation only after the shared semantic resolver has accepted
  * the request, then writes exactly one JSON payload to stdout.
  */
 export const executeContentsSearchCommand = (
   options: CliOptions,
-  executor: ContentsSearchCommandExecutor = defaultCommandExecutor,
+  executor: ContentsSearchCommandExecutor,
 ): Promise<void> =>
   executor
     .runOperation(options as Partial<ContentsSearchRawInput> & Record<string, unknown>)
@@ -203,21 +193,3 @@ export const parseContentsSearchCommandArgs = (argv: string[]): CliOptions => {
 export const createContentsSearchCommandWithRunner = (
   onRun: (options: CliOptions) => Promise<void>,
 ): Command => buildContentsSearchCommand(onRun);
-
-export const createContentsSearchCommand = (): Command =>
-  buildContentsSearchCommand(executeContentsSearchCommand);
-
-/**
- * Adapts the Commander promise API into an `Effect` so higher-level runners can
- * keep CLI execution inside the project's shared error-handling model.
- */
-export const runContentsSearchCommand = (
-  argv: string[],
-): Effect.Effect<void, unknown> =>
-  Effect.tryPromise({
-    try: () =>
-      createContentsSearchCommand()
-        .parseAsync(argv, { from: "user" })
-        .then(() => undefined),
-    catch: (error) => error,
-  });
