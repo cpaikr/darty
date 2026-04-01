@@ -7,6 +7,10 @@ import {
   contentsSearchInputProperties,
 } from "./contract.ts";
 
+/**
+ * Transport-neutral capability metadata shared by the CLI today and intended to
+ * stay reusable for future adapters such as MCP.
+ */
 export const contentsSearchManifest = {
   name: "contents-search",
   summary: "Search DART filing contents and return structured JSON.",
@@ -43,6 +47,10 @@ export const contentsSearchManifest = {
   ],
 } as const satisfies CapabilityManifest<typeof ContentsSearchRequestSchema>;
 
+/**
+ * Machine-readable export of the public input contract. This keeps alternate
+ * transports from having to inspect the `effect` schema directly.
+ */
 export const contentsSearchInputJsonSchema = capabilityInputSchemaToJsonSchema(
   contentsSearchManifest.inputSchema,
 );

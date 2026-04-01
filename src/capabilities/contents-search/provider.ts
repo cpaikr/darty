@@ -40,6 +40,10 @@ export type ContentsSearchProvider = {
   ) => Promise<ContentsSearchProviderResult>;
 };
 
+/**
+ * Reattaches the normalized public request to the provider-owned payload so
+ * transports receive one capability-owned result envelope.
+ */
 export const buildContentsSearchResult = (
   request: ContentsSearchRequest,
   providerResult: ContentsSearchProviderResult,

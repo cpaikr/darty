@@ -98,6 +98,11 @@ export const toDsab007ContentsProviderResult = (
   };
 };
 
+/**
+ * Translates the public semantic request into the narrower replay contract that
+ * matches DART's `option=contents` surface. Replay-only knobs stay internal
+ * here even when DART still requires them on the POST body.
+ */
 export const toDsab007ContentsReplayInput = (
   request: ContentsSearchRequest,
 ): SourceContentsReplayInput => ({

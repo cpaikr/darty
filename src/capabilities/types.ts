@@ -318,6 +318,11 @@ const buildCapabilityJsonSchema = (
   }),
 });
 
+/**
+ * Stores transport-facing metadata directly on the schema so the capability
+ * contract can remain the single source of truth for validation, CLI help, and
+ * future adapter metadata such as JSON Schema.
+ */
 export const annotateCapabilityInput = <S>(
   schema: S,
   metadata: CapabilityInputMetadata,
@@ -330,6 +335,11 @@ export const annotateCapabilityInput = <S>(
     [capabilityInputMetadataAnnotationId]: metadata,
   }) as S;
 
+/**
+ * Reads the public capability schema back into a transport-neutral description
+ * that CLI, MCP, or SDK layers can consume without knowing `effect` schema AST
+ * details.
+ */
 export const describeCapabilityInput = <A, I, R>(
   schema: Schema.Schema<A, I, R>,
 ): readonly CapabilityInputProperty[] => {
@@ -404,6 +414,11 @@ export const capabilityInputPropertyToCliValueHint = (
   }
 };
 
+/**
+ * Converts semantic example objects into CLI argv fragments. The manifest keeps
+ * examples in semantic form so other transports can reuse them without parsing
+ * shell syntax.
+ */
 export const capabilityExampleToArgv = (
   properties: readonly CapabilityInputProperty[],
   input: Record<string, unknown>,
@@ -429,6 +444,10 @@ export const capabilityExampleToArgv = (
   return argv;
 };
 
+/**
+ * Exposes the public capability input schema as JSON Schema for transports or
+ * tooling that need a machine-readable contract instead of `effect` types.
+ */
 export const capabilityInputSchemaToJsonSchema = <A, I, R>(
   schema: Schema.Schema<A, I, R>,
 ): JSONSchema.JsonSchema7Root =>
