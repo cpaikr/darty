@@ -21,6 +21,7 @@ This repo now has two layers:
   Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
 - `test/`
   Opt-in live or broader integration checks that should stay separate from module-local fixture tests.
+  Use `test/live/` for live DART coverage and `test/cli/` for subprocess CLI smoke tests.
 
 ## Contributor Flow
 

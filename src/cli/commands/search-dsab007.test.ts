@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  buildDsab007ContentsSearchInput,
+  createDsab007ContentsCommandWithRunner,
   dsab007Usage,
   parseDsab007CommandArgs,
 } from "./search-dsab007.ts";
@@ -94,5 +96,79 @@ describe("parseDsab007CommandArgs", () => {
     expect(dsab007Usage).toContain(
       "The command always prints JSON to stdout and reserves stderr for errors.",
     );
+  });
+
+  test("builds a validated DART-shaped search input with defaults", () => {
+    const input = buildDsab007ContentsSearchInput(
+      parseDsab007CommandArgs([
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20250331",
+        "--end-date",
+        "20260331",
+      ]),
+    );
+
+    expect(input).toEqual({
+      option: "contents",
+      currentPage: 1,
+      maxResults: 10,
+      maxLinks: 10,
+      sort: "DATE",
+      sortType: "desc",
+      keyword: "배당",
+      startDate: "20250331",
+      endDate: "20260331",
+      textCrpCik: undefined,
+      textCrpNm: undefined,
+      textPresenterNm: undefined,
+      lateKeyword: undefined,
+      flrCik: undefined,
+      dspTypeTab: undefined,
+      tocSrch: undefined,
+      docType: undefined,
+      reportName: undefined,
+      decadeType: undefined,
+    });
+  });
+
+  test("passes parsed options to the command runner", async () => {
+    let received:
+      | ReturnType<typeof parseDsab007CommandArgs>
+      | undefined;
+
+    const command = createDsab007ContentsCommandWithRunner(async (options) => {
+      received = options;
+    });
+
+    await command.parseAsync(
+      [
+        "node",
+        "dsab007-contents",
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20250331",
+        "--end-date",
+        "20260331",
+        "--company-name",
+        "삼성전자",
+        "--page",
+        "2",
+        "--sort-type",
+        "asc",
+      ],
+      { from: "node" },
+    );
+
+    expect(received).toEqual({
+      keyword: "배당",
+      startDate: "20250331",
+      endDate: "20260331",
+      textCrpNm: "삼성전자",
+      currentPage: 2,
+      sortType: "asc",
+    });
   });
 });

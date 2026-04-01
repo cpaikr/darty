@@ -18,7 +18,7 @@ type CliOptionValue =
   | Dsab007ContentsSortField
   | number
   | string;
-type CliOptions = Partial<Record<CliOptionKey, CliOptionValue>>;
+export type CliOptions = Partial<Record<CliOptionKey, CliOptionValue>>;
 
 type RegisteredOption = {
   readonly key: CliOptionKey;
@@ -102,7 +102,9 @@ const extractCliOptions = (
   return options;
 };
 
-const buildSearchInput = (options: CliOptions): Dsab007ContentsSearchInput => ({
+export const buildDsab007ContentsSearchInput = (
+  options: CliOptions,
+): Dsab007ContentsSearchInput => ({
   option: "contents",
   currentPage:
     typeof options.currentPage === "number" ? options.currentPage : 1,
@@ -183,7 +185,9 @@ const executeDsab007ContentsCommand = (
 ): Promise<void> =>
   Effect.runPromise(
     Effect.gen(function* () {
-      const result = yield* searchDsab007Contents(buildSearchInput(options));
+      const result = yield* searchDsab007Contents(
+        buildDsab007ContentsSearchInput(options),
+      );
       yield* Effect.sync(() => {
         console.log(JSON.stringify(result, null, 2));
       });
@@ -209,6 +213,10 @@ export const parseDsab007CommandArgs = (argv: string[]): CliOptions => {
     registeredOptions,
   );
 };
+
+export const createDsab007ContentsCommandWithRunner = (
+  onRun: (options: CliOptions) => Promise<void>,
+): Command => buildDsab007ContentsCommand(onRun);
 
 export const createDsab007ContentsCommand = (): Command =>
   buildDsab007ContentsCommand(executeDsab007ContentsCommand);
