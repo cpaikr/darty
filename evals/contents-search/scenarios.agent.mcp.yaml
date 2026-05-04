@@ -1,0 +1,80 @@
+config:
+  - vars:
+      scenarioName: populated live search returns a cited filing
+      expectedFound: true
+      expectedReferencePrefix: https://dart.fss.or.kr/dsaf001/main.do?
+      task: |
+        You are answering a user question with the available DART MCP tool.
+
+        Find one filing whose contents match the keyword "배당" between 20250331 and 20260331.
+
+        Rules:
+        - You must use the tool instead of guessing.
+        - After using the tool, write a normal user-facing answer in your own words.
+        - Do not paste raw tool transcripts or wrappers such as "MCP Tool Result" or "MCP Tool Error".
+        - If a filing is found, cite at least one concrete filing reference you relied on.
+        - If no filing is found, say so clearly.
+        - Do not invent values the tool did not expose.
+  - vars:
+      scenarioName: explicit no-result search stays empty
+      expectedFound: false
+      expectedReferencePrefix: https://dart.fss.or.kr/dsaf001/main.do?
+      task: |
+        You are answering a user question with the available DART MCP tool.
+
+        Search for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331.
+
+        Rules:
+        - You must use the tool instead of guessing.
+        - After using the tool, write a normal user-facing answer in your own words.
+        - Do not paste raw tool transcripts or wrappers such as "MCP Tool Result" or "MCP Tool Error".
+        - If a filing is found, cite at least one concrete filing reference you relied on.
+        - If no filing is found, say so clearly.
+        - Do not invent values the tool did not expose.
+
+tests:
+  - description: '{{scenarioName}}'
+    assert:
+      - type: javascript
+        value: |
+          const text = typeof output === 'string' ? output.trim() : JSON.stringify(output);
+
+          return {
+            pass: text.length > 0,
+            reason: `Output length=${text.length}`,
+          };
+      - type: javascript
+        value: |
+          const text = typeof output === 'string' ? output : JSON.stringify(output);
+          const expectedFound = '{{expectedFound}}' === 'true';
+          const hasViewerUrl = /https:\/\/dart\.fss\.or\.kr\/dsaf001\/main\.do\?/.test(text);
+          const hasReceiptNumber = /\b20\d{12}\b/.test(text);
+          const hasReference = hasViewerUrl || hasReceiptNumber;
+          const pass = expectedFound ? hasReference : !hasReference;
+
+          return {
+            pass,
+            reason: expectedFound
+              ? `Expected a filing reference. hasViewerUrl=${hasViewerUrl}, hasReceiptNumber=${hasReceiptNumber}`
+              : `Expected no filing reference. hasViewerUrl=${hasViewerUrl}, hasReceiptNumber=${hasReceiptNumber}`,
+          };
+      - type: llm-rubric
+        provider:
+          id: openai:responses:gpt-5.4-mini
+          config:
+            temperature: 0
+        value: |
+          Grade this final answer from an agent that was supposed to use a DART MCP tool.
+
+          Expected outcome:
+          - filing found: {{expectedFound}}
+          - viewer URL prefix when a filing is cited: {{expectedReferencePrefix}}
+
+          Pass only if:
+          1. the answer is faithful to likely tool output rather than guessed,
+          2. the answer matches the expected outcome above,
+          3. when a filing is found, it cites at least one concrete filing reference and any viewer URL uses the expected prefix,
+          4. when no filing is found, it clearly says so and does not invent filing references.
+
+          Score 1.0 only when all four hold. Otherwise score 0.0.
+        threshold: 1

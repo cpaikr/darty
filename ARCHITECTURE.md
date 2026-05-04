@@ -27,6 +27,8 @@ two-schema boundary, and the MCP extension seam, see
   Canonical home for single-tool design.
 - [docs/specs/](docs/specs/)
   Stable, evidence-backed capability specs once the contract is ready.
+- `evals/`
+  Agent task evals where a model uses local tools to complete user-like tasks.
 - `src/`
   Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
 - `test/`
@@ -95,4 +97,4 @@ If the current single-package shape holds up, expand carefully:
 - `src/` for the core capability while the surface is still small
 - `packages/cli` only if the CLI outgrows a single-package layout
 - `packages/mcp` only after the core contract is stable
-- `evals/` for scenario-driven tests and transcripts
+- `evals/` for agent task evals and transcripts

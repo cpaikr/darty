@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "env:check": "varlock load",
+    "eval:contents:agent:mcp": "PROMPTFOO_CONFIG_DIR=.promptfoo PROMPTFOO_DISABLE_WAL_MODE=true varlock run -- promptfoo eval -c evals/contents-search/promptfooconfig.agent.mcp.yaml",
     "mcp": "bun run src/mcp.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
@@ -20,6 +22,8 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.1",
-    "typescript": "^5.9.0"
+    "promptfoo": "^0.121.3",
+    "typescript": "^5.9.0",
+    "varlock": "^0.9.0"
   }
 }
