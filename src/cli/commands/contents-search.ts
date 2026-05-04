@@ -195,14 +195,19 @@ const buildContentsSearchCommand = (
   }
 
   if (onRun !== undefined) {
-    command.action(() =>
-      onRun(
-        extractCliOptions(
-          command.opts<Record<string, unknown>>(),
-          registeredOptions,
-        ),
-      ),
-    );
+    command.action(() => {
+      const options = extractCliOptions(
+        command.opts<Record<string, unknown>>(),
+        registeredOptions,
+      );
+
+      if (Object.keys(options).length === 0) {
+        command.outputHelp();
+        return undefined;
+      }
+
+      return onRun(options);
+    });
   }
 
   return command;

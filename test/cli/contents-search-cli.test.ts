@@ -16,6 +16,18 @@ const decode = (value: Uint8Array<ArrayBufferLike>) =>
   new TextDecoder().decode(value);
 
 describe("contents-search CLI subprocess", () => {
+  test("prints root help to stdout when no command is passed", () => {
+    const result = runCli([]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stdout).toContain("Usage: darty [options] [command]");
+    expect(stdout).toContain("Tool-oriented access to DART search and retrieval surfaces.");
+    expect(stdout).toContain("contents-search [options]");
+    expect(stderr).toBe("");
+  });
+
   test("prints root help to stdout", () => {
     const result = runCli(["--help"]);
     const stdout = decode(result.stdout);
@@ -48,15 +60,28 @@ describe("contents-search CLI subprocess", () => {
     expect(stderr).toBe("");
   });
 
-  test("fails missing required arguments with stderr only", () => {
+  test("prints command help to stdout when no command options are passed", () => {
     const result = runCli(["contents-search"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stdout).toContain("Usage: darty contents-search [options]");
+    expect(stdout).toContain("--keyword <text>");
+    expect(stdout).toContain("--start-date <YYYYMMDD>");
+    expect(stdout).toContain("--end-date <YYYYMMDD>");
+    expect(stderr).toBe("");
+  });
+
+  test("fails partial missing required arguments with stderr only", () => {
+    const result = runCli(["contents-search", "--keyword", "배당"]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      'Missing required parameter "keyword". Expected a non-empty string.',
+      'Missing required parameter "startDate". Expected a YYYYMMDD date string.',
     );
   });
 

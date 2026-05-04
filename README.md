@@ -36,7 +36,7 @@ This repo starts from first principles: define the product, investigate the live
 - [VISION.md](VISION.md): product vision for the DART access tool
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md): captured source evidence and initial complexity map
 - [docs/specs/dsab007-search-v1.md](docs/specs/dsab007-search-v1.md): first `dsab007` search spec
-- `evals/`: agent task evals where a model uses the current capability through MCP
+- `evals/`: scenario evals where fixed commands or a model use the current capability through CLI/MCP
 - [docs/specs/](docs/specs/README.md): stable capability specs once the evidence exists
 - [docs/tools/foundations.md](docs/tools/foundations.md): what makes a good agent tool
 - [docs/tools/contracts.md](docs/tools/contracts.md): input, output, references, and errors
@@ -85,6 +85,8 @@ bun run src/cli.ts contents-search --help
 bun run src/cli.ts contents-search --keyword 배당 --start-date 20250331 --end-date 20260331
 bun run mcp
 bun run env:check
+bun run eval:contents:cli
+bun run eval:contents:agent:cli
 bun run eval:contents:agent:mcp
 ```
 
@@ -104,10 +106,12 @@ OPENAI_API_KEY=
 bun run env:check
 ```
 
-3. Run the eval:
+3. Run evals:
 
 ```bash
+bun run eval:contents:cli
+bun run eval:contents:agent:cli
 bun run eval:contents:agent:mcp
 ```
 
-This script keeps Promptfoo state in the repo-local `.promptfoo/` directory instead of `~/.promptfoo`, which avoids home-directory sandbox write issues.
+The MCP eval script keeps Promptfoo state in the repo-local `.promptfoo/` directory instead of `~/.promptfoo`, which avoids home-directory sandbox write issues.

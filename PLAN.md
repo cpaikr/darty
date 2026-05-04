@@ -4,16 +4,20 @@
 
 Completed.
 
-- Rewrote the contents-search Promptfoo scenarios as agent tool-use evals.
-- Removed final-answer and LLM-rubric expectations from the current eval track.
+- Rewrote the contents-search Promptfoo scenarios as MCP agent tool-use evals.
+- Removed final-answer and LLM-rubric expectations from the MCP tool-use track.
 - Added deterministic JavaScript assertions for MCP tool invocation and structured result shape.
 - Fixed Promptfoo JavaScript assertion return values to include `score`.
-- Updated eval documentation to separate direct tool/API tests, MCP contract tests, agent tool-use evals, and future final-answer evals.
+- Added fixed-command live CLI scenario evals for stdout JSON envelopes.
+- Added an agentic CLI invocation eval runner where a model receives a structured local darty CLI runner and calls it with arguments that match the user request.
+- Updated eval documentation to separate direct tool/API tests, CLI scenario evals, MCP contract tests, agent tool-use evals, and future final-answer evals.
 
 Verification run:
 
 - `bun run typecheck`
 - `bun test`
+- `bun run eval:contents:cli`
+- `bun run eval:contents:agent:cli`
 - `bun run eval:contents:agent:mcp -- --no-progress-bar`
 
 ## Goal
@@ -23,6 +27,7 @@ Rewrite the current contents-search verification setup so each test answers one 
 1. Does the DART contents-search tool work against the real upstream API?
 2. Is the MCP tool exposed and callable with the expected schema?
 3. Can an LLM-backed agent invoke the MCP tool and receive the expected structured result?
+4. Can an LLM-backed agent use a structured local CLI runner with appropriate arguments for the user request?
 
 The immediate issue is not that DART search is broken. The current Promptfoo eval mixes tool transport, agent tool-use, and final-answer quality. That makes failures hard to interpret and caused a valid tool result to fail because Promptfoo returned a raw `MCP Tool Result (...)` wrapper instead of a final prose answer.
 

@@ -24,12 +24,17 @@ The repo has three verification layers:
    - Prove the local MCP server exposes the expected tool schema and returns the shared structured envelope.
    - These belong near the MCP server code.
 
-3. **Agent tool-use evals**
+3. **CLI scenario evals**
+   - No LLM.
+   - Prove fixed CLI commands return the expected live structured envelope through stdout.
+   - These live under `evals/` when they are scenario-style checks rather than narrow subprocess behavior tests.
+
+4. **Agent tool-use evals**
    - LLM involved.
-   - Prove the configured model can invoke the MCP tool and receive valid structured output.
+   - Prove the configured model can invoke the MCP tool or use the structured local CLI runner with appropriate arguments.
    - These live under `evals/`.
 
-Final user-facing answer quality is a separate optional eval track. Do not mix it into the current tool-use eval unless the runner performs the full loop:
+Final user-facing answer quality is a separate optional eval track. Do not mix it into a raw tool-use or invocation eval unless the runner performs the full loop and explicitly treats answer quality as the thing under test:
 
 ```text
 user task -> model requests tool -> MCP tool result -> model writes final answer
@@ -37,10 +42,14 @@ user task -> model requests tool -> MCP tool result -> model writes final answer
 
 ## Current tracks
 
+- `contents-search/run-cli-eval.ts`
+  Fixed-command live CLI scenarios that parse stdout JSON and assert the shared contents-search envelope.
+- `contents-search/run-agent-cli-eval.ts`
+  Agentic CLI invocation runner where a model receives a structured local darty CLI runner and must call it with arguments that match the user request.
 - `contents-search/promptfooconfig.agent.mcp.yaml`
   Agentic MCP runner config where an LLM uses the local MCP server. The actor currently uses Promptfoo's OpenAI chat provider because that is where local MCP attachment works.
 - `contents-search/scenarios.agent.mcp.yaml`
-  Scenario-first task definitions and deterministic assertions for validating tool invocation and structured tool output.
+  Scenario-first task definitions and deterministic assertions for validating MCP tool invocation and structured tool output.
 
 ## Why Promptfoo here
 
@@ -50,12 +59,14 @@ user task -> model requests tool -> MCP tool result -> model writes final answer
 
 ## Environment
 
-`OPENAI_API_KEY` must be available in `.env.local` for the MCP agentic eval.
+`OPENAI_API_KEY` must be available in `.env.local` for agentic evals.
 
 Useful commands:
 
 ```bash
 bun run env:check
+bun run eval:contents:cli
+bun run eval:contents:agent:cli
 bun run eval:contents:agent:mcp
 ```
 

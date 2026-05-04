@@ -23,11 +23,15 @@ const program = new Command()
     ),
   );
 
-program.parseAsync(process.argv).catch((error) => {
-  if (error instanceof Error) {
-    console.error(error.message);
-  } else {
-    console.error(String(error));
-  }
-  process.exitCode = 1;
-});
+if (process.argv.length <= 2) {
+  program.outputHelp();
+} else {
+  program.parseAsync(process.argv).catch((error) => {
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error(String(error));
+    }
+    process.exitCode = 1;
+  });
+}
