@@ -8,11 +8,9 @@ config:
       expectedCompanyCode: ''
       expectedReferencePrefix: https://dart.fss.or.kr/dsaf001/main.do?
       task: |
-        Use the available DART MCP contents-search tool.
+        Use the darty MCP contents-search tool to search DART filing contents for one filing that matches the keyword "배당" between 20250331 and 20260331.
 
-        Search for one filing whose contents match the keyword "배당" between 20250331 and 20260331.
-
-        Return the tool result. Do not guess or invent values.
+        Use live DART data. Do not guess or invent values. Return the structured result you obtain.
   - vars:
       scenarioName: explicit no-result search returns an empty structured result
       expectedFound: false
@@ -22,11 +20,9 @@ config:
       expectedCompanyCode: ''
       expectedReferencePrefix: https://dart.fss.or.kr/dsaf001/main.do?
       task: |
-        Use the available DART MCP contents-search tool.
+        Use the darty MCP contents-search tool to search DART filing contents for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331.
 
-        Search for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331.
-
-        Return the tool result. Do not guess or invent values.
+        Use live DART data. Do not guess or invent values. Return the structured result you obtain.
   - vars:
       scenarioName: filtered live search honors a company code
       expectedFound: true
@@ -36,154 +32,14 @@ config:
       expectedCompanyCode: '00126380'
       expectedReferencePrefix: https://dart.fss.or.kr/dsaf001/main.do?
       task: |
-        Use the available DART MCP contents-search tool.
+        Use the darty MCP contents-search tool to search DART filing contents for one Samsung Electronics filing that matches the keyword "배당" between 20250331 and 20260331. Use DART company code 00126380 as the company code filter.
 
-        Search for one Samsung Electronics filing whose contents match the keyword "배당" between 20250331 and 20260331. Use the DART company code 00126380 as a companyCode filter.
-
-        Return the tool result. Do not guess or invent values.
+        Use live DART data. Do not guess or invent values. Return the structured result you obtain.
 
 tests:
   - description: '{{scenarioName}}'
     assert:
       - type: javascript
-        value: |
-          const text = typeof output === 'string' ? output.trim() : JSON.stringify(output);
-
-          const parseJson = (value) => {
-            try {
-              return JSON.parse(value);
-            } catch {
-              return undefined;
-            }
-          };
-
-          const extractEnvelope = () => {
-            const candidates = [
-              text,
-              text.replace(/^MCP Tool Result \([^)]+\):\s*/, ''),
-            ];
-
-            for (const candidate of candidates) {
-              const parsed = parseJson(candidate);
-
-              if (Array.isArray(parsed)) {
-                for (const block of parsed) {
-                  if (block?.type === 'text' && typeof block.text === 'string') {
-                    const inner = parseJson(block.text);
-                    if (inner?.result && inner?.metadata && inner?.references) {
-                      return inner;
-                    }
-                  }
-                }
-              }
-
-              if (parsed?.result && parsed?.metadata && parsed?.references) {
-                return parsed;
-              }
-            }
-
-            return undefined;
-          };
-
-          const hasToolWrapper = /MCP Tool Result \(contents-search\)/.test(text);
-          const envelope = extractEnvelope();
-          const pass = hasToolWrapper && envelope !== undefined;
-
-          return {
-            pass,
-            score: pass ? 1 : 0,
-            reason: `hasToolWrapper=${hasToolWrapper}, hasStructuredEnvelope=${envelope !== undefined}, outputLength=${text.length}`,
-          };
+        value: file://./mcp-assertions.js:assertStructuredEnvelope
       - type: javascript
-        value: |
-          const text = typeof output === 'string' ? output.trim() : JSON.stringify(output);
-
-          const parseJson = (value) => {
-            try {
-              return JSON.parse(value);
-            } catch {
-              return undefined;
-            }
-          };
-
-          const extractEnvelope = () => {
-            const candidates = [
-              text,
-              text.replace(/^MCP Tool Result \([^)]+\):\s*/, ''),
-            ];
-
-            for (const candidate of candidates) {
-              const parsed = parseJson(candidate);
-
-              if (Array.isArray(parsed)) {
-                for (const block of parsed) {
-                  if (block?.type === 'text' && typeof block.text === 'string') {
-                    const inner = parseJson(block.text);
-                    if (inner?.result && inner?.metadata && inner?.references) {
-                      return inner;
-                    }
-                  }
-                }
-              }
-
-              if (parsed?.result && parsed?.metadata && parsed?.references) {
-                return parsed;
-              }
-            }
-
-            return undefined;
-          };
-
-          const expectedFound = '{{expectedFound}}' === 'true';
-          const expectedKeyword = '{{expectedKeyword}}';
-          const expectedStartDate = '{{expectedStartDate}}';
-          const expectedEndDate = '{{expectedEndDate}}';
-          const expectedCompanyCode = '{{expectedCompanyCode}}';
-          const expectedReferencePrefix = '{{expectedReferencePrefix}}';
-          const envelope = extractEnvelope();
-
-          if (envelope === undefined) {
-            return {
-              pass: false,
-              score: 0,
-              reason: 'Expected a structured contents-search envelope but could not parse one.',
-            };
-          }
-
-          const request = envelope.result?.request;
-          const hasExpectedRequest = request?.keyword === expectedKeyword && request?.startDate === expectedStartDate && request?.endDate === expectedEndDate;
-          const hasExpectedCompanyFilter = expectedCompanyCode === '' || request?.companyCode === expectedCompanyCode;
-          const pagination = envelope.result?.pagination;
-          const items = envelope.result?.items;
-          const firstItem = Array.isArray(items) ? items[0] : undefined;
-          const viewerUrl = firstItem?.references?.viewerUrl;
-          const receiptNumber = firstItem?.filing?.receiptNumber;
-          const snippetText = firstItem?.match?.snippetText;
-
-          if (expectedFound) {
-            const hasItems = Array.isArray(items) && items.length > 0;
-            const hasPositiveCount = pagination?.totalCount > 0 && pagination?.returnedCount > 0;
-            const hasViewerUrl = typeof viewerUrl === 'string' && viewerUrl.startsWith(expectedReferencePrefix);
-            const hasReceiptNumber = typeof receiptNumber === 'string' && /^20\d{12}$/.test(receiptNumber);
-            const hasSnippet = typeof snippetText === 'string' && snippetText.length > 0;
-            const allItemsMatchCompanyFilter = expectedCompanyCode === '' || (Array.isArray(items) && items.every((item) => item?.company?.companyCode === expectedCompanyCode));
-            const pass = hasExpectedRequest && hasExpectedCompanyFilter && allItemsMatchCompanyFilter && hasItems && hasPositiveCount && hasViewerUrl && hasReceiptNumber && hasSnippet;
-
-            return {
-              pass,
-              score: pass ? 1 : 0,
-              reason: `Expected populated result. hasExpectedRequest=${hasExpectedRequest}, hasExpectedCompanyFilter=${hasExpectedCompanyFilter}, allItemsMatchCompanyFilter=${allItemsMatchCompanyFilter}, hasItems=${hasItems}, hasPositiveCount=${hasPositiveCount}, hasViewerUrl=${hasViewerUrl}, hasReceiptNumber=${hasReceiptNumber}, hasSnippet=${hasSnippet}`,
-            };
-          }
-
-          const hasEmptyItems = Array.isArray(items) && items.length === 0;
-          const hasZeroCount = pagination?.totalCount === 0 && pagination?.returnedCount === 0;
-          const hasViewerReference = text.includes(expectedReferencePrefix);
-          const hasReceiptReference = /\b20\d{12}\b/.test(text);
-          const pass = hasExpectedRequest && hasExpectedCompanyFilter && hasEmptyItems && hasZeroCount && !hasViewerReference && !hasReceiptReference;
-
-          return {
-            pass,
-            score: pass ? 1 : 0,
-            reason: `Expected empty result. hasExpectedRequest=${hasExpectedRequest}, hasExpectedCompanyFilter=${hasExpectedCompanyFilter}, hasEmptyItems=${hasEmptyItems}, hasZeroCount=${hasZeroCount}, hasViewerReference=${hasViewerReference}, hasReceiptReference=${hasReceiptReference}`,
-          };
+        value: file://./mcp-assertions.js:assertContentsSearchFacts

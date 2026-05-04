@@ -8,9 +8,9 @@ The current tracks answer three separate questions:
 
 - Can fixed CLI commands return the expected live structured stdout envelope?
 - Can a configured model use a structured local darty CLI runner with arguments that match the user request?
-- Can a configured model invoke the local `contents-search` MCP tool and receive the expected structured output?
+- Can a configured model with the local MCP server attached satisfy DART search tasks through the `contents-search` result envelope?
 
-The MCP Promptfoo track is not currently a final-answer quality eval. Raw output such as `MCP Tool Result (contents-search): ...` is acceptable there because it proves the MCP tool path was used and exposes the structured result for deterministic assertions.
+The MCP Promptfoo track is not currently a final-answer quality eval. Raw output such as `MCP Tool Result (contents-search): ...` is acceptable there because Promptfoo exposes the structured tool result directly for deterministic assertions. The scenario prompts name the darty MCP tool so this track focuses on intended use and result behavior, not arbitrary host-agent tool-discovery probability.
 
 ## Eval Track
 
@@ -48,8 +48,9 @@ Set `OPENAI_MODEL` to override the model.
 
 This track validates:
 
-- the agent/model can call the `contents-search` MCP tool;
+- DART search tasks that explicitly name the darty MCP tool can be satisfied through the attached `contents-search` capability;
 - the returned output contains the shared structured success envelope;
+- the echoed request matches the task, including required company-code filters and absence of unrequested narrowing filters;
 - populated live searches include non-empty filing data and a concrete DART filing reference;
 - explicit no-result searches stay empty and do not invent filing references.
 
@@ -62,7 +63,9 @@ The Promptfoo MCP runner and scenario data are split:
 - `promptfooconfig.agent.mcp.yaml`
   Runner config: model, MCP attachment, and shared execution settings.
 - `scenarios.agent.mcp.yaml`
-  Scenario-first task definitions plus deterministic JavaScript assertions.
+  Task definitions plus deterministic JavaScript assertions.
+- `mcp-assertions.js`
+  Shared Promptfoo JavaScript assertions for extracting the MCP result envelope and checking request/result facts.
 
 Current scenarios stay narrow on purpose:
 
@@ -110,6 +113,7 @@ bun run eval:contents:agent:mcp
 - Raw source correctness belongs in direct tests, especially `test/live/`.
 - MCP schema and transport correctness belongs near the MCP server tests.
 - CLI subprocess UX checks belong in `test/cli/`; these evals focus on live scenario usefulness and agent structured-tool invocation behavior.
+- MCP tool-selection probability is not an app contract. Scenario prompts intentionally name the darty MCP tool; keep this Promptfoo track small and treat deterministic MCP schema/transport behavior as `src/mcp/server.test.ts` territory.
 - The MCP package script disables Promptfoo provider caching so each run exercises the current model, MCP server, and tool path.
 - Deterministic assertions are preferred here when output shape, echoed request parameters, item counts, receipt numbers, URL prefixes, or command arguments are objective.
 - Do not add an `llm-rubric` judge to tracks where checks can be expressed in JavaScript.

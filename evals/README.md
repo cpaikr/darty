@@ -31,7 +31,7 @@ The repo has three verification layers:
 
 4. **Agent tool-use evals**
    - LLM involved.
-   - Prove the configured model can invoke the MCP tool or use the structured local CLI runner with appropriate arguments.
+   - Prove the configured model can use the structured local CLI runner with appropriate arguments, or can satisfy DART search tasks when the MCP server is attached and named in the task.
    - These live under `evals/`.
 
 Final user-facing answer quality is a separate optional eval track. Do not mix it into a raw tool-use or invocation eval unless the runner performs the full loop and explicitly treats answer quality as the thing under test:
@@ -47,15 +47,15 @@ user task -> model requests tool -> MCP tool result -> model writes final answer
 - `contents-search/run-agent-cli-eval.ts`
   Agentic CLI invocation runner where a model receives a structured local darty CLI runner and must call it with arguments that match the user request.
 - `contents-search/promptfooconfig.agent.mcp.yaml`
-  Agentic MCP runner config where an LLM uses the local MCP server. The actor currently uses Promptfoo's OpenAI chat provider because that is where local MCP attachment works.
+  Agentic MCP runner config where an LLM has the local MCP server attached. The actor currently uses Promptfoo's OpenAI chat provider because that is where local MCP attachment works.
 - `contents-search/scenarios.agent.mcp.yaml`
-  Scenario-first task definitions and deterministic assertions for validating MCP tool invocation and structured tool output.
+  DART search tasks and deterministic assertions for validating the structured MCP result envelope, request echo, and result facts.
 
 ## Why Promptfoo here
 
 - TypeScript-friendly and easy to keep inside the repo.
 - Supports attaching the local MCP server to a model provider.
-- Gives a repeatable model-in-the-loop check that the configured provider can call `contents-search`.
+- Gives a repeatable model-in-the-loop check that the configured provider can satisfy DART search tasks through the attached `contents-search` capability when the task names the darty MCP tool.
 
 ## Environment
 
