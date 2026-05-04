@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "env:check": "varlock load",
-    "eval:contents:agent:mcp": "PROMPTFOO_CONFIG_DIR=.promptfoo PROMPTFOO_DISABLE_WAL_MODE=true varlock run -- promptfoo eval -c evals/contents-search/promptfooconfig.agent.mcp.yaml",
+    "eval:contents:agent:mcp": "PROMPTFOO_CACHE_ENABLED=false PROMPTFOO_CONFIG_DIR=.promptfoo PROMPTFOO_DISABLE_WAL_MODE=true varlock run -- promptfoo eval -c evals/contents-search/promptfooconfig.agent.mcp.yaml",
     "mcp": "bun run src/mcp.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",

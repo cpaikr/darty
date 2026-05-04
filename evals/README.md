@@ -1,41 +1,62 @@
 # Evals
 
-This directory holds agent task evals for real `darty` tool use.
+This directory holds model-in-the-loop evals for `darty` tool use.
 
-Current stance:
+## Current stance
 
-- keep evals capability-scoped
-- start with the implemented `contents-search` surface
-- use evals for model-in-the-loop task completion, not raw transport checks
-- keep deterministic transport and contract verification in `test/`
+- Keep evals capability-scoped.
+- Start with the implemented `contents-search` surface.
+- Use evals for agent/tool wiring behavior, not raw source correctness.
+- Keep deterministic source, schema, transport, CLI, and MCP contract checks in `test/` and colocated `*.test.ts` files.
+- Use deterministic assertions first. Add LLM judges only for subjective final-answer quality.
 
-Current tracks:
+## Test boundary
+
+The repo has three verification layers:
+
+1. **Direct tool/API tests**
+   - No LLM.
+   - Prove the DART adapter and contents-search capability work against source data.
+   - Live upstream checks belong under `test/live/`.
+
+2. **MCP contract tests**
+   - No LLM.
+   - Prove the local MCP server exposes the expected tool schema and returns the shared structured envelope.
+   - These belong near the MCP server code.
+
+3. **Agent tool-use evals**
+   - LLM involved.
+   - Prove the configured model can invoke the MCP tool and receive valid structured output.
+   - These live under `evals/`.
+
+Final user-facing answer quality is a separate optional eval track. Do not mix it into the current tool-use eval unless the runner performs the full loop:
+
+```text
+user task -> model requests tool -> MCP tool result -> model writes final answer
+```
+
+## Current tracks
 
 - `contents-search/promptfooconfig.agent.mcp.yaml`
-  Agentic MCP runner config where an LLM uses the local MCP server to answer user-like tasks. The actor currently uses Promptfoo's OpenAI chat provider because that is where local MCP attachment works.
+  Agentic MCP runner config where an LLM uses the local MCP server. The actor currently uses Promptfoo's OpenAI chat provider because that is where local MCP attachment works.
 - `contents-search/scenarios.agent.mcp.yaml`
-  Scenario-first task definitions and expected outcomes for grading.
+  Scenario-first task definitions and deterministic assertions for validating tool invocation and structured tool output.
 
-Why Promptfoo here:
+## Why Promptfoo here
 
-- TypeScript-friendly and easy to keep inside the repo
-- supports MCP integration for model providers
-- supports `llm-rubric` grading so outputs can be judged against expected outcomes without custom scorer code
+- TypeScript-friendly and easy to keep inside the repo.
+- Supports attaching the local MCP server to a model provider.
+- Gives a repeatable model-in-the-loop check that the configured provider can call `contents-search`.
 
-General rules:
+## Environment
 
-- keep deterministic assertions first; use model grading second
-- give judge prompts the output they are grading, not just the user task
-- keep live DART evals small and explicit because upstream data changes
-- run agentic evals repeatedly when variance matters
+`OPENAI_API_KEY` must be available in `.env.local` for the MCP agentic eval.
 
-Current env requirements:
+Useful commands:
 
-- `OPENAI_API_KEY` in `.env.local` for `llm-rubric` grading and the MCP agentic eval
-
-Current commands:
-
-- `bun run env:check`
-- `bun run eval:contents:agent:mcp`
+```bash
+bun run env:check
+bun run eval:contents:agent:mcp
+```
 
 The eval script stores Promptfoo state in repo-local `.promptfoo/` and disables SQLite WAL mode to avoid sandbox and filesystem issues from the default `~/.promptfoo` location.
