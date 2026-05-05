@@ -36,138 +36,144 @@ const ContentsSearchSortDirectionSchema = Schema.Literal(
   ...contentsSearchSortDirectionValues,
 );
 
-const defaultRequest = {
-  page: 1,
-  sortBy: "date",
-  sortDirection: "desc",
+type FieldSpecShape = {
+  readonly kind: "integer" | "enum" | "string" | "date";
+  readonly description: string;
+  readonly schema: unknown;
+  readonly [key: string]: unknown;
+};
+
+type DefaultedFieldSpecShape = FieldSpecShape & {
+  readonly defaultValue: unknown;
+};
+
+type RequiredFieldSpecShape = FieldSpecShape & {
+  readonly expectedRequiredValue: string;
+};
+
+const defaultedField = <A, I, R>(spec: {
+  readonly schema: Schema.Schema<A, I, R>;
+  readonly description: string;
+  readonly defaultValue: A;
+}) =>
+  annotateSchema(
+    Schema.optionalWith(
+      annotateSchema(spec.schema, {
+        description: spec.description,
+      }),
+      { default: () => spec.defaultValue },
+    ),
+    { default: spec.defaultValue },
+  );
+
+const requiredField = <A, I, R>(spec: {
+  readonly schema: Schema.Schema<A, I, R>;
+  readonly description: string;
+  readonly expectedRequiredValue: string;
+}) =>
+  annotateSchema(spec.schema, {
+    description: spec.description,
+  });
+
+const optionalField = <A, I, R>(spec: {
+  readonly schema: Schema.Schema<A, I, R>;
+  readonly description: string;
+}) =>
+  Schema.optional(
+    annotateSchema(spec.schema, {
+      description: spec.description,
+    }),
+  );
+
+const inputSpecs = {
+  defaulted: {
+    page: {
+      kind: "integer",
+      minimum: 1,
+      maximum: 100,
+      defaultValue: 1,
+      schema: Schema.Int.pipe(
+        Schema.greaterThanOrEqualTo(1),
+        Schema.lessThanOrEqualTo(100),
+      ),
+      description: "1-based search results page to request.",
+    },
+    sortBy: {
+      kind: "enum",
+      enumValues: contentsSearchSortByValues,
+      defaultValue: "date",
+      schema: ContentsSearchSortBySchema,
+      description: "Sort field for results.",
+    },
+    sortDirection: {
+      kind: "enum",
+      enumValues: contentsSearchSortDirectionValues,
+      defaultValue: "desc",
+      schema: ContentsSearchSortDirectionSchema,
+      description: "Sort direction for the selected sort field.",
+    },
+  } as const satisfies Record<string, DefaultedFieldSpecShape>,
+  required: {
+    keyword: {
+      kind: "string",
+      nonEmpty: true,
+      schema: Schema.NonEmptyString,
+      description: "Main body-content search text.",
+      expectedRequiredValue: "a non-empty string",
+    },
+    startDate: {
+      kind: "date",
+      schema: ContentsSearchDateString,
+      description: "Inclusive receipt start date in YYYYMMDD format.",
+      expectedRequiredValue: "a YYYYMMDD date string",
+    },
+    endDate: {
+      kind: "date",
+      schema: ContentsSearchDateString,
+      description: "Inclusive receipt end date in YYYYMMDD format.",
+      expectedRequiredValue: "a YYYYMMDD date string",
+    },
+  } as const satisfies Record<string, RequiredFieldSpecShape>,
+  optional: {
+    companyCode: {
+      kind: "string",
+      nonEmpty: true,
+      schema: Schema.NonEmptyString,
+      description: "Filter by DART company code.",
+    },
+    presenterName: {
+      kind: "string",
+      nonEmpty: true,
+      schema: Schema.NonEmptyString,
+      description: "Filter by presenter name when DART exposes that field.",
+    },
+    reportName: {
+      kind: "string",
+      nonEmpty: true,
+      schema: Schema.NonEmptyString,
+      description: "Filter by report title as currently honored by DART.",
+    },
+  } as const satisfies Record<string, FieldSpecShape>,
 } as const;
 
-const contentsSearchInputRules = {
-  page: {
-    kind: "integer",
-    required: false,
-    minimum: 1,
-    maximum: 100,
-    expectedRequiredValue: "an integer between 1 and 100",
-  },
-  sortBy: {
-    kind: "enum",
-    required: false,
-    enumValues: contentsSearchSortByValues,
-    expectedRequiredValue: `one of ${contentsSearchSortByValues.join(", ")}`,
-  },
-  sortDirection: {
-    kind: "enum",
-    required: false,
-    enumValues: contentsSearchSortDirectionValues,
-    expectedRequiredValue: `one of ${contentsSearchSortDirectionValues.join(", ")}`,
-  },
-  keyword: {
-    kind: "string",
-    required: true,
-    nonEmpty: true,
-    expectedRequiredValue: "a non-empty string",
-  },
-  startDate: {
-    kind: "date",
-    required: true,
-    expectedRequiredValue: "a YYYYMMDD date string",
-  },
-  endDate: {
-    kind: "date",
-    required: true,
-    expectedRequiredValue: "a YYYYMMDD date string",
-  },
-  companyCode: {
-    kind: "string",
-    required: false,
-    nonEmpty: true,
-    expectedRequiredValue: "a non-empty string",
-  },
-  presenterName: {
-    kind: "string",
-    required: false,
-    nonEmpty: true,
-    expectedRequiredValue: "a non-empty string",
-  },
-  reportName: {
-    kind: "string",
-    required: false,
-    nonEmpty: true,
-    expectedRequiredValue: "a non-empty string",
-  },
+const contentsSearchFieldSpecs = {
+  ...inputSpecs.defaulted,
+  ...inputSpecs.required,
+  ...inputSpecs.optional,
 } as const;
 
-type ContentsSearchInputKey = keyof typeof contentsSearchInputRules;
+type ContentsSearchInputKey = keyof typeof contentsSearchFieldSpecs;
 
 const contentsSearchRequestFields = {
-  page: annotateSchema(
-    Schema.optionalWith(
-      annotateSchema(
-        Schema.Int.pipe(
-          Schema.greaterThanOrEqualTo(1),
-          Schema.lessThanOrEqualTo(100),
-        ),
-        {
-          description: "1-based search results page to request.",
-        },
-      ),
-      { default: () => defaultRequest.page },
-    ),
-    {
-      default: defaultRequest.page,
-    },
-  ),
-  sortBy: annotateSchema(
-    Schema.optionalWith(
-      annotateSchema(ContentsSearchSortBySchema, {
-        description: "Sort field for results.",
-      }),
-      {
-        default: () => defaultRequest.sortBy,
-      },
-    ),
-    {
-      default: defaultRequest.sortBy,
-    },
-  ),
-  sortDirection: annotateSchema(
-    Schema.optionalWith(
-      annotateSchema(ContentsSearchSortDirectionSchema, {
-        description: "Sort direction for the selected sort field.",
-      }),
-      {
-        default: () => defaultRequest.sortDirection,
-      },
-    ),
-    {
-      default: defaultRequest.sortDirection,
-    },
-  ),
-  keyword: annotateSchema(Schema.NonEmptyString, {
-    description: "Main body-content search text.",
-  }),
-  startDate: annotateSchema(ContentsSearchDateString, {
-    description: "Inclusive receipt start date in YYYYMMDD format.",
-  }),
-  endDate: annotateSchema(ContentsSearchDateString, {
-    description: "Inclusive receipt end date in YYYYMMDD format.",
-  }),
-  companyCode: Schema.optional(
-    annotateSchema(Schema.NonEmptyString, {
-      description: "Filter by DART company code.",
-    }),
-  ),
-  presenterName: Schema.optional(
-    annotateSchema(Schema.NonEmptyString, {
-      description: "Filter by presenter name when DART exposes that field.",
-    }),
-  ),
-  reportName: Schema.optional(
-    annotateSchema(Schema.NonEmptyString, {
-      description: "Filter by report title as currently honored by DART.",
-    }),
-  ),
+  page: defaultedField(contentsSearchFieldSpecs.page),
+  sortBy: defaultedField(contentsSearchFieldSpecs.sortBy),
+  sortDirection: defaultedField(contentsSearchFieldSpecs.sortDirection),
+  keyword: requiredField(contentsSearchFieldSpecs.keyword),
+  startDate: requiredField(contentsSearchFieldSpecs.startDate),
+  endDate: requiredField(contentsSearchFieldSpecs.endDate),
+  companyCode: optionalField(contentsSearchFieldSpecs.companyCode),
+  presenterName: optionalField(contentsSearchFieldSpecs.presenterName),
+  reportName: optionalField(contentsSearchFieldSpecs.reportName),
 } as const;
 
 export const ContentsSearchRequestSchema = Schema.Struct(
@@ -321,9 +327,9 @@ export class ContentsSearchFailure extends Schema.TaggedError<ContentsSearchFail
   },
 ) {}
 
-const allowedKeys = new Set<string>(Object.keys(contentsSearchInputRules));
+const allowedKeys = new Set<string>(Object.keys(contentsSearchFieldSpecs));
 const orderedInputKeys = Object.keys(
-  contentsSearchInputRules,
+  contentsSearchFieldSpecs,
 ) as readonly ContentsSearchInputKey[];
 
 type CollectedParseIssue = {
@@ -417,16 +423,19 @@ const toInvalidContentsSearchRequest = (
     });
   }
 
-  const rule = contentsSearchInputRules[parameter];
+  const rule = contentsSearchFieldSpecs[parameter];
   const actual = input[parameter];
 
   if (issues.some((issue) => issue._tag === "Missing")) {
+    const expected =
+      "expectedRequiredValue" in rule ? rule.expectedRequiredValue : "a value";
+
     return new InvalidContentsSearchRequest({
       code: "missing_parameter",
       parameter,
       reason: "required",
-      expected: rule.expectedRequiredValue,
-      message: `Missing required parameter "${parameter}". Expected ${rule.expectedRequiredValue}.`,
+      expected,
+      message: `Missing required parameter "${parameter}". Expected ${expected}.`,
     });
   }
 

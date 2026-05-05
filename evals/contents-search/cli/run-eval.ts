@@ -3,10 +3,10 @@ import { fileURLToPath } from "node:url";
 import {
   assertContentsSearchEnvelope,
   parseJsonObject,
-} from "./cli-envelope-assertions.ts";
-import { contentsSearchCliScenarios } from "./cli-scenarios.ts";
+} from "../shared/cli-envelope-assertions.ts";
+import { contentsSearchCliScenarios } from "../shared/cli-scenarios.ts";
 
-const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const decoder = new TextDecoder();
 
 const runCli = (argv: readonly string[]) =>

@@ -1,4 +1,4 @@
-import type { ContentsSearchCliScenario } from "../cli-scenarios.ts";
+import type { ContentsSearchCliScenario } from "../shared/cli-scenarios.ts";
 
 export type AgentCliToolName = "run_darty_cli";
 

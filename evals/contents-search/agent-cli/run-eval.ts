@@ -1,9 +1,9 @@
 import { fileURLToPath } from "node:url";
 
-import { runAgentCliScenario } from "./agent-cli/scenario-runner.ts";
-import { contentsSearchCliScenarios } from "./cli-scenarios.ts";
+import { runAgentCliScenario } from "./scenario-runner.ts";
+import { contentsSearchCliScenarios } from "../shared/cli-scenarios.ts";
 
-const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const model = process.env.OPENAI_MODEL ?? "gpt-5.4-mini";
 const openAiApiKey = process.env.OPENAI_API_KEY;
 

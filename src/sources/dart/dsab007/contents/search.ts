@@ -118,13 +118,7 @@ export const toDsab007ContentsReplayInput = (
   textCrpCik: request.companyCode,
   textCrpNm: undefined,
   textPresenterNm: request.presenterName,
-  lateKeyword: undefined,
-  flrCik: undefined,
-  dspTypeTab: undefined,
-  tocSrch: undefined,
-  docType: undefined,
   reportName: request.reportName,
-  decadeType: undefined,
 });
 
 export const searchDsab007Contents = (

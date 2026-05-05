@@ -40,6 +40,6 @@ tests:
   - description: '{{scenarioName}}'
     assert:
       - type: javascript
-        value: file://./mcp-assertions.js:assertStructuredEnvelope
+        value: file://./assertions.js:assertStructuredEnvelope
       - type: javascript
-        value: file://./mcp-assertions.js:assertContentsSearchFacts
+        value: file://./assertions.js:assertContentsSearchFacts

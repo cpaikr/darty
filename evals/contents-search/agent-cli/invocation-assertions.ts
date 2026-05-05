@@ -1,4 +1,4 @@
-import type { ContentsSearchCliScenario } from "../cli-scenarios.ts";
+import type { ContentsSearchCliScenario } from "../shared/cli-scenarios.ts";
 import type { ToolExecution } from "./types.ts";
 import { validateDartyCliArgv } from "./tools.ts";
 

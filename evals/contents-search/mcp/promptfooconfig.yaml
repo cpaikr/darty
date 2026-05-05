@@ -17,4 +17,4 @@ providers:
           name: darty
 
 scenarios:
-  - file://./scenarios.agent.mcp.yaml
+  - file://./scenarios.yaml

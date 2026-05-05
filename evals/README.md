@@ -42,13 +42,13 @@ user task -> model requests tool -> MCP tool result -> model writes final answer
 
 ## Current tracks
 
-- `contents-search/run-cli-eval.ts`
+- `contents-search/cli/run-eval.ts`
   Fixed-command live CLI scenarios that parse stdout JSON and assert the shared contents-search envelope.
-- `contents-search/run-agent-cli-eval.ts`
+- `contents-search/agent-cli/run-eval.ts`
   Agentic CLI invocation runner where a model receives a structured local darty CLI runner and must call it with arguments that match the user request.
-- `contents-search/promptfooconfig.agent.mcp.yaml`
+- `contents-search/mcp/promptfooconfig.yaml`
   Agentic MCP runner config where an LLM has the local MCP server attached. The actor currently uses Promptfoo's OpenAI chat provider because that is where local MCP attachment works.
-- `contents-search/scenarios.agent.mcp.yaml`
+- `contents-search/mcp/scenarios.yaml`
   DART search tasks and deterministic assertions for validating the structured MCP result envelope, request echo, and result facts.
 
 ## Why Promptfoo here

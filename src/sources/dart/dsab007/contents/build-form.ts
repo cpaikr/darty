@@ -13,16 +13,16 @@ export const buildContentsSearchForm = (
   params.set("sort", input.sort);
   params.set("sortType", input.sortType);
   params.set("textCrpCik", orEmpty(input.textCrpCik));
-  params.set("lateKeyword", orEmpty(input.lateKeyword));
-  params.set("flrCik", orEmpty(input.flrCik));
-  params.set("dspTypeTab", orEmpty(input.dspTypeTab));
+  params.set("lateKeyword", "");
+  params.set("flrCik", "");
+  params.set("dspTypeTab", "");
   params.set("isSort", "false");
   params.set("isTab", "false");
-  params.set("tocSrch", orEmpty(input.tocSrch));
+  params.set("tocSrch", "");
   params.set("b_textCrpCik", orEmpty(input.textCrpCik));
-  params.set("b_flrCik", orEmpty(input.flrCik));
+  params.set("b_flrCik", "");
   params.set("b_keyword", input.keyword);
-  params.set("b_docType", orEmpty(input.docType));
+  params.set("b_docType", "");
   params.set("b_textPresenterNm", orEmpty(input.textPresenterNm));
   params.set("b_reportName", orEmpty(input.reportName));
   params.set("b_startDate", input.startDate);
@@ -38,8 +38,8 @@ export const buildContentsSearchForm = (
   params.set("textPresenterNm", orEmpty(input.textPresenterNm));
   params.set("startDate", input.startDate);
   params.set("endDate", input.endDate);
-  params.set("decadeType", orEmpty(input.decadeType));
-  params.set("docType", orEmpty(input.docType));
+  params.set("decadeType", "");
+  params.set("docType", "");
   params.set("reportName", orEmpty(input.reportName));
 
   return params;

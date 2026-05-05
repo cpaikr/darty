@@ -35,13 +35,7 @@ describe("toDsab007ContentsReplayInput", () => {
       textCrpCik: "01368637",
       textCrpNm: undefined,
       textPresenterNm: "IR",
-      lateKeyword: undefined,
-      flrCik: undefined,
-      dspTypeTab: undefined,
-      tocSrch: undefined,
-      docType: undefined,
       reportName: "정기주주총회결과",
-      decadeType: undefined,
     });
   });
 });
@@ -63,13 +57,7 @@ describe("toDsab007ContentsProviderResult", () => {
           textCrpCik: "01368637",
           textCrpNm: undefined,
           textPresenterNm: "IR",
-          lateKeyword: undefined,
-          flrCik: undefined,
-          dspTypeTab: undefined,
-          tocSrch: undefined,
-          docType: undefined,
           reportName: "정기주주총회결과",
-          decadeType: undefined,
         },
         pagination: {
           currentPage: 2,

@@ -1,4 +1,4 @@
-import type { ContentsSearchCliScenario } from "../cli-scenarios.ts";
+import type { ContentsSearchCliScenario } from "../shared/cli-scenarios.ts";
 import { evaluateAgentCliInvocation } from "./invocation-assertions.ts";
 import { callOpenAi } from "./openai-chat.ts";
 import { agentCliTools, executeAgentCliToolCall } from "./tools.ts";

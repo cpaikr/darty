@@ -16,7 +16,7 @@ The MCP Promptfoo track is not currently a final-answer quality eval. Raw output
 
 ### CLI
 
-`run-cli-eval.ts` executes fixed local CLI commands and validates stdout JSON.
+`cli/run-eval.ts` executes fixed local CLI commands and validates stdout JSON.
 
 This track validates:
 
@@ -27,7 +27,7 @@ This track validates:
 
 ### Agentic CLI
 
-`run-agent-cli-eval.ts` evaluates `gpt-5.4-mini` by default through a small OpenAI tool-calling loop with one structured local tool for darty CLI execution.
+`agent-cli/run-eval.ts` evaluates `gpt-5.4-mini` by default through a small OpenAI tool-calling loop with one structured local tool for darty CLI execution.
 
 This track validates the invocation boundary:
 
@@ -44,7 +44,7 @@ Set `OPENAI_MODEL` to override the model.
 
 ### Agentic MCP
 
-`promptfooconfig.agent.mcp.yaml` evaluates `gpt-5.4-mini` through Promptfoo's OpenAI chat provider with the local MCP server attached.
+`mcp/promptfooconfig.yaml` evaluates `gpt-5.4-mini` through Promptfoo's OpenAI chat provider with the local MCP server attached.
 
 This track validates:
 
@@ -56,15 +56,15 @@ This track validates:
 
 ## Scenario Shape
 
-Shared CLI scenarios live in `cli-scenarios.ts` and are reused by the fixed-command and agentic CLI runners. The fixed-command runner uses each scenario's `argv` and expected result facts; the agentic CLI runner uses each scenario's user-facing `task` and expected command arguments.
+Shared CLI scenarios live in `shared/cli-scenarios.ts` and are reused by the fixed-command and agentic CLI runners. The fixed-command runner uses each scenario's `argv` and expected result facts; the agentic CLI runner uses each scenario's user-facing `task` and expected command arguments.
 
-The Promptfoo MCP runner and scenario data are split:
+The Promptfoo MCP runner and scenario data are grouped under `mcp/`:
 
-- `promptfooconfig.agent.mcp.yaml`
+- `mcp/promptfooconfig.yaml`
   Runner config: model, MCP attachment, and shared execution settings.
-- `scenarios.agent.mcp.yaml`
+- `mcp/scenarios.yaml`
   Task definitions plus deterministic JavaScript assertions.
-- `mcp-assertions.js`
+- `mcp/assertions.js`
   Shared Promptfoo JavaScript assertions for extracting the MCP result envelope and checking request/result facts.
 
 Current scenarios stay narrow on purpose:
