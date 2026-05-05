@@ -18,8 +18,6 @@
     "env:check": "varlock load",
     "eval:contents:cli": "bun run evals/contents-search/cli/run-eval.ts",
     "eval:contents:agent:cli": "varlock run -- bun run evals/contents-search/agent-cli/run-eval.ts",
-    "eval:contents:agent:mcp": "PROMPTFOO_CACHE_ENABLED=false PROMPTFOO_CONFIG_DIR=.promptfoo PROMPTFOO_DISABLE_WAL_MODE=true varlock run -- promptfoo eval -c evals/contents-search/mcp/promptfooconfig.yaml",
-    "mcp": "bun run src/mcp.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:live": "LIVE_DART_TESTS=1 bun test",
@@ -27,7 +25,6 @@
   },
   "dependencies": {
     "@effect/platform": "^0.91.0",
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "cheerio": "^1.1.0",
     "commander": "^14.0.3",
     "effect": "^3.17.0",
@@ -35,7 +32,6 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.1",
-    "promptfoo": "^0.121.9",
     "typescript": "^5.9.0",
     "varlock": "^0.9.0"
   }

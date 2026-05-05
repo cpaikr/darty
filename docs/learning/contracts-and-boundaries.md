@@ -22,7 +22,7 @@ This contract lives under `src/capabilities/contents-search/contract/`. It is us
 
 - runtime validation with Effect Schema
 - TypeScript types
-- JSON Schema export for MCP and tooling
+- JSON Schema export for transport adapters and tooling
 - defaulting optional behavior such as `page = 1`
 - clear invalid-request errors
 
@@ -97,16 +97,16 @@ The capability layer does not call DART directly. It calls a provider:
 search(request: ContentsSearchRequest): Promise<ContentsSearchProviderResult>
 ```
 
-That provider result is already capability-shaped. This prevents raw DART source models from leaking upward into CLI, MCP, or public result contracts.
+That provider result is already capability-shaped. This prevents raw DART source models from leaking upward into CLI, future adapters, or public result contracts.
 
 The current provider is `dsab007ContentsProvider`, but the seam leaves room for another source implementation if the public capability remains the same.
 
 ## Transport Boundary
 
-CLI and MCP own user/protocol experience:
+Transports own user/protocol experience:
 
 - CLI owns flags, help text, examples, stdout formatting, and process behavior.
-- MCP owns tool listing, schema advertisement, `tools/call`, structured output, and tool-result errors.
+- Future adapters should own their own protocol metadata, request handling, output serialization, and protocol-specific error behavior.
 
 They do not own:
 
@@ -128,12 +128,12 @@ Error classes narrow as they move up:
 | Source adapter | `SourceUnavailable`, `SourceChanged`, `ParseFailure`, `InvalidInput` |
 | Provider seam | `ContentsSearchProviderError` |
 | Public capability | `ContentsSearchFailure` |
-| Transport | CLI process error or MCP `CallToolResult` error |
+| Transport | CLI process error or future adapter-specific error result |
 
 External callers should reason about public capability failure codes, not source-internal classes.
 
 ## Design Tradeoffs
 
-The current design chooses a little duplication in transport metadata to keep boundaries clear. CLI help text and MCP titles are not forced through one manifest abstraction. The gain is explicit, transport-local UX; the cost is that small wording updates may touch more than one adapter.
+The current design allows a little duplication in transport metadata to keep boundaries clear. CLI help text and future adapter titles or annotations should not be forced through one manifest abstraction too early. The gain is explicit, transport-local UX; the cost is that small wording updates may touch more than one adapter when those adapters exist.
 
 The other major tradeoff is keeping replay-only DART fields internal. This makes the public contract smaller and more stable, but it means low-level knobs such as page size are unavailable until live evidence shows they are worth exposing.

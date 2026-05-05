@@ -3,19 +3,28 @@
 This repo now has two layers:
 
 - root docs that hold product and source-contract decisions
-- a small implementation slice under `src/` plus opt-in live checks under `test/` for the first `dsab007` search capability
+- a small implementation slice under `src/` plus opt-in live checks under `test/` for DART source behavior
 
 ## Big Picture
 
 The CLI is not the real app. The capability layer is: a semantic request
 contract, a provider interface, and an execution path that normalizes errors
-and shapes results. The CLI and MCP transports both sit over that same core.
+and shapes results. The current active transport is CLI, but the core stays
+transport-neutral so future MCP, Pi-native, SDK, or other adapters can bind to
+the same capabilities without duplicating DART logic.
+
 The current core has two public capabilities: `contents-search` for DART body
 search and `report-view` for receipt-based report TOC/section retrieval.
 
-For layer diagrams, the schema derivation chain, the runtime pipeline, the
-two-schema boundary, and the MCP extension seam, see
-[src/ARCHITECTURE.md](src/ARCHITECTURE.md).
+For layer diagrams, the schema derivation chain, the runtime pipeline, and the
+adapter extension seam, see [src/ARCHITECTURE.md](src/ARCHITECTURE.md).
+
+## Archived Transports
+
+The early MCP adapter was removed from the active codebase while the project is
+greenfield. The exact code is preserved at git tag
+`archive/mcp-before-removal`. Treat MCP as a future adapter option, not a
+current supported surface.
 
 ## Document Ownership
 
@@ -46,7 +55,7 @@ two-schema boundary, and the MCP extension seam, see
 3. Use [docs/research/dart-source-map.md](docs/research/dart-source-map.md) to understand what the live source actually exposes today.
 4. Use [docs/tools/foundations.md](docs/tools/foundations.md) and the linked tool docs to shape the contract.
 5. Promote only evidence-backed, implementation-ready capability specs into [docs/specs/](docs/specs/README.md).
-6. Keep the first implementation slice small: `dsab007` contracts, shared request/client seams, one mode parser, and thin CLI/MCP adapters before section retrieval.
+6. Keep the first implementation slice small: `dsab007` contracts, shared request/client seams, one mode parser, and a thin CLI adapter before adding more transports.
 7. Keep tool rules in the tool docs; link to canonical guidance instead of duplicating it.
 
 ## Invariants
@@ -83,11 +92,6 @@ argv -> src/cli.ts -> cli/commands/report-view.ts
      -> app/report-view.ts -> capabilities/report-view/execute.ts
      -> sources/dart/dsaf001/report/
      -> /dsaf001/main.do -> /report/viewer.do
-
-MCP tools/call -> src/mcp.ts -> mcp/server.ts
-               -> app/{contents-search,report-view}.ts
-               -> capabilities/{contents-search,report-view}/execute.ts
-               -> sources/dart/{dsab007/contents,dsaf001/report}
 ```
 
 See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the full runtime pipeline,
@@ -106,5 +110,5 @@ If the current single-package shape holds up, expand carefully:
 - `docs/specs/` for stable capability specs
 - `src/` for the core capability while the surface is still small
 - `packages/cli` only if the CLI outgrows a single-package layout
-- `packages/mcp` only if the local MCP adapter outgrows the single-package layout after the core contract is stable
+- `packages/mcp`, `packages/pi-tools`, or other adapter packages only after the core contract is stable and the transport is justified
 - `evals/` for agent task evals and transcripts

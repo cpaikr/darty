@@ -34,8 +34,6 @@ src/
 ├── capabilities/              public contracts and transport-neutral execution
 ├── cli.ts                     CLI entry point
 ├── cli/commands/              Commander command adapter
-├── mcp.ts                     MCP entry point
-├── mcp/                       MCP server adapter
 └── sources/dart/              DART-specific source adapters and errors
 ```
 
@@ -75,7 +73,7 @@ The source layer owns DART-specific details:
 - source-model validation
 - mapping source failures into provider errors
 
-This is intentionally below the public contract. DART field names like `textCrpCik`, `sortType`, and duplicated `b_*` form fields should not leak into CLI or MCP unless the product contract changes.
+This is intentionally below the public contract. DART field names like `textCrpCik`, `sortType`, and duplicated `b_*` form fields should not leak into CLI or future adapters unless the product contract changes.
 
 ### `src/cli*`
 
@@ -88,17 +86,9 @@ The CLI adapter owns user-facing command behavior:
 
 It does not own required-field validation, enum validation, date-format validation, defaults, or result shaping. Those belong to the capability layer.
 
-### `src/mcp*`
+### Future adapters
 
-The MCP adapter owns protocol hosting:
-
-- stdio server startup
-- `tools/list` metadata
-- `tools/call` handling
-- structured content and text content serialization
-- MCP error behavior for unknown tools
-
-It reuses the same operation schemas and executor as the CLI.
+The early MCP adapter was removed from the active tree and preserved at git tag `archive/mcp-before-removal`. Future MCP, Pi-native, SDK, or other adapters should reuse `src/app/` and `src/capabilities/` rather than importing DART source internals directly.
 
 ## Test And Eval Areas
 

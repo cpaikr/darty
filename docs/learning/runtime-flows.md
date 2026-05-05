@@ -1,52 +1,39 @@
 # Runtime Flows
 
-The main runtime flow is a `contents-search` request. It can enter through CLI flags or MCP tool arguments, but both paths converge before semantic validation and source access.
+The main runtime flow is a capability request that enters through CLI flags, converges in the shared app/capability layers, and then calls a DART source adapter.
 
-## One Core, Two Transports
+## One Core, Current CLI Transport
 
 ```text
-CLI argv                         MCP tools/call
-   |                                  |
-   v                                  v
-src/cli/commands/...           src/mcp/server.ts
-   |                                  |
-   +---------------+------------------+
-                   |
-                   v
-        src/app/contents-search.ts
-                   |
-                   v
-  src/capabilities/contents-search/execute.ts
-                   |
-                   v
-  src/sources/dart/dsab007/contents/search.ts
-                   |
-                   v
-        POST /dsab007/search.ax
+CLI argv
+   |
+   v
+src/cli/commands/...
+   |
+   v
+src/app/<capability>.ts
+   |
+   v
+src/capabilities/<capability>/execute.ts
+   |
+   v
+src/sources/dart/...
+   |
+   v
+DART web endpoint
 ```
 
-The important point: CLI and MCP parse transport input, then delegate. They do not each implement DART search behavior.
+The important point: the CLI parses transport input, then delegates. It does not implement DART search or report-view behavior itself. Future MCP, Pi-native, SDK, or other adapters should join at the `src/app/` seam.
 
 ## CLI Flow
 
 1. `src/cli.ts` creates the root Commander program.
-2. `createContentsSearchCommandWithRunner()` registers the `contents-search` command and flags.
+2. `src/cli/commands/*` registers commands and flags.
 3. The command extracts only provided flags into a partial input object.
-4. `executeContentsSearchCommand()` calls the injected operation runner.
+4. The CLI command runner calls the injected operation runner.
 5. On success, the CLI writes one pretty-printed JSON result to stdout.
 
 The CLI performs only shallow parsing where Commander needs it, such as converting `--page` to a number. Semantic validation still happens in the shared capability executor.
-
-## MCP Flow
-
-1. `src/mcp.ts` starts the stdio server.
-2. `createDartyMcpServer()` registers one tool definition for `contents-search`.
-3. The tool definition advertises JSON Schemas from the shared operation.
-4. `tools/call` forwards the JSON arguments to the shared operation.
-5. On success, MCP returns both `structuredContent` and matching text JSON.
-6. Known `ContentsSearchFailure` errors become `CallToolResult` errors instead of thrown transport crashes.
-
-The MCP adapter owns protocol details, not the domain contract.
 
 ## Shared Capability Flow
 
@@ -54,19 +41,16 @@ The MCP adapter owns protocol details, not the domain contract.
 raw input object
       |
       v
-resolveContentsSearchRequest()
+resolve request
       |
       v
-normalized ContentsSearchRequest
+normalized capability request
       |
       v
-provider.search(request)
+provider method
       |
       v
-ContentsSearchProviderResult
-      |
-      v
-buildContentsSearchResult()
+provider result
       |
       v
 public result envelope
@@ -75,12 +59,12 @@ public result envelope
 The capability layer does three key jobs:
 
 - rejects unknown or invalid public inputs
-- applies defaults for `page`, `sortBy`, and `sortDirection`
+- applies defaults where the contract defines them
 - converts provider-specific failures into capability-owned failures
 
-This is why both CLI and MCP get aligned behavior without duplicating validation.
+This is why future adapters can get aligned behavior without duplicating validation.
 
-## DART Adapter Flow
+## DART Contents Search Adapter Flow
 
 ```text
 ContentsSearchRequest
@@ -137,9 +121,9 @@ Errors intentionally change ownership as they move upward:
 
 ```text
 source error
-   -> ContentsSearchProviderError
-      -> ContentsSearchFailure
-         -> CLI thrown error or MCP tool error result
+   -> provider error
+      -> capability failure
+         -> CLI process error
 ```
 
 This keeps external callers from depending on DART-specific error classes while preserving useful categories such as `source_unavailable`, `source_changed`, and `source_parse_failure`.

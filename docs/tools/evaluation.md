@@ -43,7 +43,7 @@ Current `contents-search` examples:
 
 - run a fixed CLI contents search and assert the stdout envelope has filing references
 - ask a model to invoke the structured local CLI runner with keyword, date range, and optional company filter
-- ask a model with the local MCP server attached to use `contents-search` and assert the returned structured envelope
+- when a future adapter is active, ask a model to invoke that adapter and assert the returned structured envelope
 
 Future retrieval examples:
 

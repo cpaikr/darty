@@ -33,8 +33,6 @@ Examples:
   checks provider error normalization and result construction.
 - `src/cli/commands/contents-search.test.ts`
   checks CLI parsing and delegation without turning the CLI into the validation owner.
-- `src/mcp/server.test.ts`
-  checks MCP tool listing and tool-call behavior against the shared operation.
 - `src/sources/dart/dsab007/contents/parse-html.test.ts`
   checks parser behavior against fixture HTML.
 - `src/sources/dart/dsab007/contents/search.test.ts`
@@ -62,15 +60,13 @@ The main tracks are:
 
 - fixed-command CLI scenario evals
 - agentic CLI invocation evals
-- agentic MCP evals through Promptfoo
 
 These do not replace deterministic tests. They answer model/tool-use questions such as:
 
 - can a fixed live scenario return the expected structured envelope?
 - can a model use the provided local CLI runner with valid arguments?
-- can a model use the attached MCP tool when the task names it?
 
-The current MCP eval track checks structured tool-result behavior, not final prose answer quality.
+The archived MCP eval track is preserved at git tag `archive/mcp-before-removal` and should only return if MCP becomes an active adapter again.
 
 ## What To Run While Working
 
@@ -93,7 +89,6 @@ For eval tracks:
 bun run eval:contents:cli
 bun run env:check
 bun run eval:contents:agent:cli
-bun run eval:contents:agent:mcp
 ```
 
 Agentic evals require `OPENAI_API_KEY` in `.env.local`.
@@ -101,7 +96,7 @@ Agentic evals require `OPENAI_API_KEY` in `.env.local`.
 ## Boundary Rules
 
 - Parser correctness belongs in parser tests and live source checks, not LLM evals.
-- MCP schema and tool-call correctness belongs near `src/mcp/server.test.ts`.
+- Future adapter schema and call correctness should live near that adapter's implementation.
 - CLI subprocess behavior belongs in `test/cli/`.
 - Fixed live scenario usefulness can live in `evals/`.
 - Final user-facing answer quality should be a separate future eval track if needed.

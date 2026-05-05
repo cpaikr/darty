@@ -66,11 +66,6 @@ export const reportViewCliCopy = {
   ],
 } as const;
 
-export const reportViewMcpCopy = {
-  instructions:
-    "DART report-view는 먼저 접수번호로 문서와 목차를 확인한 뒤 필요한 sectionId만 다시 요청하는 점진적 조회를 기본으로 합니다.",
-} as const;
-
 export const reportViewFailureCopy = {
   unexpectedReportView: "보고서 조회 중 예상하지 못한 오류가 발생했습니다.",
 } as const;

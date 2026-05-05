@@ -33,9 +33,9 @@ The priority is not human UX polish. The priority is deterministic tool behavior
 
 ## Current Scope
 
-- The only implemented CLI command is `contents-search`.
+- The implemented CLI commands include `contents-search` and `report-view`; this prompt focuses on `contents-search` tests.
 - The CLI is Commander-backed.
-- Operation metadata and machine-readable schemas live under `src/capabilities/contents-search/` and are reused by CLI and MCP adapters.
+- Operation metadata and machine-readable schemas live under `src/capabilities/contents-search/` and are reused by the CLI adapter; future adapters should use the same seam.
 - The underlying DART replay core has deterministic schema, serialization, parser, and replay-contract tests under `src/sources/dart/dsab007/contents/`.
 - Live DART tests exist separately under `test/live/` and are opt-in.
 

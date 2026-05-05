@@ -7,24 +7,32 @@ shape and document ownership.
 ## Purpose
 
 `src/` contains the executable slice of `darty`: public `contents-search` and
-`report-view` capabilities, local CLI and MCP transports, and internal DART
-source adapters for `dsab007` search and `dsaf001` report viewing.
+`report-view` capabilities, a local CLI transport, and internal DART source
+adapters for `dsab007` search and `dsaf001` report viewing.
 
-The design goal is to keep the core reusable across transports. CLI and MCP now
-share the same capability contract and execution path while choosing their own
-adapter behavior.
+The design goal is to keep the core reusable across transports. The active
+transport is CLI, but future MCP, Pi-native, SDK, or other adapters should bind
+to the same capability contracts and app composition layer instead of copying
+DART-specific logic.
+
+## Archived MCP Adapter
+
+The early MCP adapter was removed from the active `src/` tree while the project
+is greenfield. The exact implementation is preserved at git tag
+`archive/mcp-before-removal`. Treat MCP as a future adapter option, not a
+current supported transport.
 
 ## Layer Overview
 
 The CLI is not the real app. The capability layer is: a semantic request
 contract, a provider interface, and an execution path that normalizes errors
-and shapes results. CLI and MCP are transport hosts over that same core.
+and shapes results. CLI is the current transport host over that core.
 
 ```mermaid
 graph TD
     subgraph Transport["Transport Adapters"]
         CLI["CLI · src/cli/"]
-        MCP["MCP · src/mcp/"]
+        FUTURE["Future adapters\nMCP · Pi-native · SDK"]
     end
 
     subgraph App["Shared Composition · src/app/"]
@@ -40,15 +48,15 @@ graph TD
     end
 
     CLI --> APP
-    MCP --> APP
+    FUTURE -.-> APP
     APP --> CAP
     CAP --> SRC
-    SRC -->|POST| DART[("dart.fss.or.kr")]
+    SRC --> DART[("dart.fss.or.kr")]
 ```
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Transport** | `src/cli.ts`, `src/cli/`, `src/mcp.ts`, `src/mcp/` | Parse transport input, own transport UX/protocol metadata, call the shared operation, and serialize results |
+| **Transport** | `src/cli.ts`, `src/cli/` | Parse transport input, own transport UX, call the shared operation, and serialize results |
 | **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
 | **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
 | **Source** | `src/sources/dart/` | DART replay/viewer fields, form POST or viewer GETs, HTML parsing, source models, and error mapping |
@@ -63,10 +71,8 @@ same transport/app/capability shape through `app/report-view.ts`,
 ```mermaid
 graph TD
     CLI_TS["src/cli.ts"] --> CMD["src/cli/commands/contents-search.ts"]
-    MCP_TS["src/mcp.ts"] --> MCP_SRV["src/mcp/server.ts"]
     CMD --> RUN["executeContentsSearchCommand()"]
     CLI_TS --> APP["src/app/contents-search.ts"]
-    MCP_SRV --> APP
     APP --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
     APP --> EXEC["execute.ts\nvia shared operation"]
     RUN --> EXEC
@@ -84,13 +90,9 @@ graph TD
 
     FETCH -->|POST| DART[("/dsab007/search.ax")]
 
-    subgraph cli [" "]
+    subgraph cli ["src/cli/"]
         CLI_TS
         CMD
-    end
-    subgraph mcp [" "]
-        MCP_TS
-        MCP_SRV
     end
     subgraph app ["src/app/"]
         APP
@@ -102,7 +104,7 @@ graph TD
         PROV
         RUN
     end
-    subgraph src ["src/sources/dart/dsab007/contents/"]
+    subgraph source ["src/sources/dart/dsab007/contents/"]
         SEARCH
         FETCH
         FORM
@@ -117,9 +119,6 @@ graph TD
 - **`src/cli/commands/`** — CLI transport adapters. Own Commander flags, help
   text, examples, and stdout formatting while delegating semantic validation and
   execution through an injected command runner.
-- **`src/mcp.ts` / `src/mcp/`** — MCP stdio transport. Lists tools, advertises
-  the shared request/result JSON Schemas, and reports tool errors inside
-  `CallToolResult`.
 - **`src/app/`** — Shared operation wiring. Exposes operation names, JSON
   Schemas, and capability executors with the default DART providers already
   attached.
@@ -134,8 +133,8 @@ graph TD
 ## Behavior-First Core
 
 The biggest design choice is **behavior-first core, transport-local UX**. The
-shared layer owns semantic schemas and execution behavior. CLI and MCP each own
-their own presentation and protocol details.
+shared layer owns semantic schemas and execution behavior. Each transport owns
+its own presentation and protocol details.
 
 ```mermaid
 graph LR
@@ -144,11 +143,11 @@ graph LR
     CONTRACT --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
 
     SPEC --> CLI_META["CLI name reuse"]
-    SPEC --> MCP_DEF["MCP tool schemas"]
+    SPEC -.-> FUTURE_META["Future adapter schemas"]
     CONTRACT --> RESULT["Success result\nenvelope"]
 
     CLI_META -. transport local .-> CLI_FLAGS["CLI flags · help · examples"]
-    MCP_DEF -. transport local .-> MCP_META["MCP title · annotations · text"]
+    FUTURE_META -. adapter local .-> FUTURE_UX["MCP · Pi-native · SDK metadata"]
 ```
 
 How it works:
@@ -162,21 +161,20 @@ How it works:
    implementations.
 4. **`cli/commands/`** defines each CLI UX explicitly, then delegates to the
    shared operation.
-5. **`mcp/server.ts`** defines MCP tool metadata explicitly, advertises the
-   shared request/result schemas, then delegates tool calls to the matching
-   shared operation.
+5. Future adapters should use the same operation name, schemas, and app wiring
+   while keeping protocol-specific metadata local to that adapter.
 
 One source of truth gives you:
 
 - runtime validation shape
 - TypeScript types
-- success result schema for MCP structured output
+- success result schema
 - JSON Schema for transport adapters
 
 What is intentionally *not* centralized:
 
 - CLI flags, help text, and examples
-- MCP titles, annotations, and text rendering
+- protocol-specific titles, annotations, prompts, or rendering
 
 ## Runtime Flow
 
@@ -191,7 +189,7 @@ truncation, and TOC navigation respectively.
 ```mermaid
 graph TD
     CLI_INPUT["CLI flags"]
-    MCP_INPUT["MCP tool arguments"]
+    FUTURE_INPUT["Future adapter input"]
     CLI_CMD["executeContentsSearchCommand()\nCLI-only stdout handling"]
     APP["src/app/contents-search.ts\nshared operation"]
     RESOLVE["resolveContentsSearchRequest()"]
@@ -207,11 +205,11 @@ graph TD
     TO_RESULT["toDsab007ContentsProviderResult()"]
     ENVELOPE["ContentsSearchResult\nenvelope"]
     CLI_OUTPUT["JSON to stdout"]
-    MCP_OUTPUT["CallToolResult\nstructuredContent + text"]
+    FUTURE_OUTPUT["Future adapter output"]
 
     CLI_INPUT --> CLI_CMD
     CLI_CMD --> APP
-    MCP_INPUT --> APP
+    FUTURE_INPUT -.-> APP
     APP --> RESOLVE
     RESOLVE --> REQUEST
     REQUEST --> PROVIDER
@@ -225,24 +223,24 @@ graph TD
     SOURCE_PAGE --> TO_RESULT
     TO_RESULT --> ENVELOPE
     ENVELOPE --> CLI_OUTPUT
-    ENVELOPE --> MCP_OUTPUT
+    ENVELOPE -.-> FUTURE_OUTPUT
 ```
 
 Step by step:
 
 1. CLI converts flags into a partial object keyed by public semantic names (`keyword`, `startDate`, etc.) and calls `executeContentsSearchCommand()`.
-2. MCP receives JSON tool arguments and calls the shared operation from `src/app/contents-search.ts` directly.
+2. Future adapters should convert their protocol input into the same public semantic object and call the shared operation from `src/app/contents-search.ts`.
 3. `resolveContentsSearchRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
-4. `src/app/contents-search.ts` wires the shared capability executor to the default `dsab007ContentsProvider`, and both transports reuse that operation.
+4. `src/app/contents-search.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
 5. `toDsab007ContentsReplayInput()` translates the public request into the internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
 6. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
 7. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax`.
 8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from the HTML fragment.
 9. `toDsab007ContentsProviderResult()` maps source rows into public items.
 10. `buildContentsSearchResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
-11. The CLI serializes the envelope as exactly one JSON stdout payload; MCP returns it as `structuredContent` plus matching text content.
+11. The CLI serializes the envelope as exactly one JSON stdout payload.
 
-Semantic validation happens inside the capability executor, not in the CLI or MCP transport. This keeps both adapters aligned without reimplementing validation.
+Semantic validation happens inside the capability executor, not in the CLI transport. This keeps future adapters aligned without reimplementing validation.
 
 ## Two Schemas
 
@@ -277,7 +275,7 @@ graph LR
 ```
 
 - **Public semantic schema** (`ContentsSearchRequestSchema`, re-exported from
-  `contract.ts`): what users and future MCP clients see. Semantic names, clean
+  `contract.ts`): what users and future adapters see. Semantic names, clean
   enums, documented metadata.
 - **Internal replay schema** (`SourceContentsReplayInput` in
   `replay-schema.ts`): what DART's form actually expects. Raw field names,
@@ -289,8 +287,8 @@ knobs.
 
 ## Transport Extension Seam
 
-MCP now reuses the same layer split instead of reimplementing the tool
-contract.
+Future transports should reuse the same layer split instead of reimplementing
+tool contracts.
 
 ```mermaid
 graph TD
@@ -298,8 +296,8 @@ graph TD
         CLI_CMD["Commander\nargv parsing"]
     end
 
-    subgraph MCP["MCP Transport"]
-        MCP_TOOL["MCP tool handler\nJSON input"]
+    subgraph Future["Future Transport"]
+        ADAPTER["Protocol handler\nsemantic JSON input"]
     end
 
     OP_ID["contentsSearchOperationName"]
@@ -309,32 +307,28 @@ graph TD
     EXEC["executeContentsSearch()"]
 
     OP_ID --> CLI_CMD
-    OP_ID -.-> MCP_TOOL
-    INPUT_SCHEMA -.-> MCP_TOOL
-    RESULT_SCHEMA -.-> MCP_TOOL
+    OP_ID -.-> ADAPTER
+    INPUT_SCHEMA -.-> ADAPTER
+    RESULT_SCHEMA -.-> ADAPTER
     CLI_CMD --> COMPOSE
-    MCP_TOOL -.-> COMPOSE
+    ADAPTER -.-> COMPOSE
     COMPOSE --> EXEC
 ```
 
-The MCP transport reuses:
+A future adapter should reuse:
 
-- `contentsSearchOperationName` — stable operation identifier
-- `contentsSearchInputJsonSchema` — tool input schema
-- `contentsSearchResultJsonSchema` — successful structured output schema
-- `src/app/contents-search.ts` — shared provider wiring plus raw semantic
-  execution
-- `executeContentsSearch()` — shared validation and error normalization inside
-  that operation
+- operation identifiers such as `contentsSearchOperationName`
+- input JSON Schemas such as `contentsSearchInputJsonSchema`
+- result JSON Schemas such as `contentsSearchResultJsonSchema`
+- `src/app/*` shared provider wiring plus raw semantic execution
+- capability executors such as `executeContentsSearch()` for validation and error normalization
 
-CLI and MCP stay aligned on the same public contract and executor while each
+This keeps adapters aligned on the same public contract and executor while each
 host keeps explicit control over adapter wiring.
 
 ## Start Here
 
 - `src/cli.ts` — top-level transport entry point
-- `src/mcp.ts` — MCP stdio entry point
-- `src/mcp/server.ts` — tool registration and `tools/call` handling
 - `src/app/contents-search.ts` — shared transport composition seam
 - `src/cli/commands/contents-search.ts` — explicit CLI surface over the shared
   operation
@@ -354,7 +348,6 @@ Tests make the design relationships explicit:
 - `spec.test.ts` — request/result JSON Schemas come from the same core schemas
 - `contents-search.test.ts` — CLI surface is explicit while still delegating to
   the shared executor
-- `mcp/server.test.ts` — MCP tool listing and tool calls reuse the same core
 - `contract.test.ts` — semantic resolution is shared and transport-independent
 - `execute.test.ts` — provider errors get normalized into capability-owned failures
 - `test/cli/` — subprocess CLI reflects the shared core
@@ -372,5 +365,5 @@ Tests make the design relationships explicit:
   decides they are stable public knobs.
 - The capability layer is the single source of truth for semantic behavior and
   machine-readable request/result schemas.
-- CLI and MCP are allowed to duplicate small amounts of transport UX metadata
-  rather than forcing one shared manifest abstraction.
+- Adapters may duplicate small amounts of transport UX metadata rather than
+  forcing one shared manifest abstraction.

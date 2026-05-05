@@ -229,7 +229,7 @@ Observed `option=contents` restriction:
 - `structured`
   capability-owned result envelope with public items, metadata, references, and warnings
 
-`raw` HTML from `/dsab007/search.ax` stays internal for fixtures, debugging, and parser tests. It is not exposed by the current public CLI or MCP contract.
+`raw` HTML from `/dsab007/search.ax` stays internal for fixtures, debugging, and parser tests. It is not exposed by the current public CLI contract or future adapter contracts unless explicitly added.
 
 ## 9. Observed Upstream Contract
 
