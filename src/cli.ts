@@ -18,7 +18,7 @@ const defaultContentsSearchExecutor = {
 
 const program = new Command()
   .name("darty")
-  .description("Tool-oriented access to DART search and retrieval surfaces.")
+  .description("DART 검색 및 조회 기능을 도구 친화적으로 제공합니다.")
   .addCommand(
     createContentsSearchCommandWithRunner((options) =>
       executeContentsSearchCommand(options, defaultContentsSearchExecutor),

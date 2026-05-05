@@ -65,7 +65,7 @@ describe("parseContentsSearchCommandArgs", () => {
         "nope",
       ]),
     ).toThrow(
-      "option '--page <number>' argument 'nope' is invalid. Expected an integer but received \"nope\".",
+      "option '--page <number>' argument 'nope' is invalid. 정수를 입력해야 하지만 \"nope\"을(를) 받았습니다.",
     );
   });
 
@@ -83,13 +83,13 @@ describe("parseContentsSearchCommandArgs", () => {
 
   test("renders CLI-owned descriptions, notes, and examples in usage", () => {
     expect(contentsSearchUsage).toContain(
-      "Semantic, read-only access to DART filing contents search backed by an internal",
+      "내부 dsab007 재현 어댑터를 통해 DART 공시 본문 검색을 읽기 전용 의미 기반 입력으로 제공합니다.",
     );
-    expect(contentsSearchUsage).toContain("dsab007 replay adapter.");
+    expect(contentsSearchUsage).toContain("dsab007 재현 어댑터");
     expect(contentsSearchUsage).toContain(
-      "DART currently controls page size and pager width for this mode",
+      "이 모드의 페이지 크기와 페이지 이동 폭은 현재 DART가 제어",
     );
-    expect(contentsSearchUsage).toContain("[observed]");
+    expect(contentsSearchUsage).toContain("[확인됨]");
     expect(contentsSearchUsage).toContain(
       "darty contents-search --keyword 배당 --start-date 20250331 --end-date 20260331",
     );
@@ -190,7 +190,7 @@ describe("parseContentsSearchCommandArgs", () => {
       expect(error.code).toBe("invalid_request");
       expect(error.parameter).toBe("keyword");
       expect(error.message).toBe(
-        'Missing required parameter "keyword". Expected a non-empty string.',
+        '필수 매개변수 "keyword"이(가) 없습니다. 필요한 값: 비어 있지 않은 문자열.',
       );
     }
   });

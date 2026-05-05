@@ -13,6 +13,8 @@ import {
   defaultContentsSearchOperation,
   type ContentsSearchOperation,
 } from "../app/contents-search.ts";
+import { contentsSearchMcpCopy } from "../capabilities/contents-search/copy/mcp.ts";
+import { contentsSearchToolCopy } from "../capabilities/contents-search/copy/tool.ts";
 import { ContentsSearchFailure } from "../capabilities/contents-search/contract.ts";
 
 const serverInfo = {
@@ -20,9 +22,8 @@ const serverInfo = {
   version: "0.1.0",
 } as const;
 
-const contentsSearchToolTitle = "DART Contents Search";
-const contentsSearchToolDescription =
-  "Semantic, read-only access to DART filing contents search backed by an internal dsab007 replay adapter.";
+const contentsSearchToolTitle = contentsSearchToolCopy.title;
+const contentsSearchToolDescription = contentsSearchToolCopy.description;
 
 type DartyMcpOperations = {
   readonly contentsSearch: ContentsSearchOperation;
@@ -108,8 +109,7 @@ export const createDartyMcpServer = (
     capabilities: {
       tools: {},
     },
-    instructions:
-      "Darty exposes read-only DART search tools with semantic inputs and structured JSON results.",
+    instructions: contentsSearchMcpCopy.instructions,
   });
   const contentsSearchTool = createContentsSearchToolDefinition(
     operations.contentsSearch,
@@ -129,7 +129,7 @@ export const createDartyMcpServer = (
           (args ?? {}) as Record<string, unknown>,
         );
       default:
-        throw new McpError(ErrorCode.InvalidParams, `Unknown tool "${name}".`);
+        throw new McpError(ErrorCode.InvalidParams, contentsSearchMcpCopy.unknownTool(name));
     }
   });
 

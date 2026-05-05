@@ -6,6 +6,7 @@ import {
 import { Effect, ParseResult, Schema } from "effect";
 
 import { buildContentsSearchForm } from "./build-form.ts";
+import { dsab007ContentsMessages } from "./messages.ts";
 import { parseContentsSearchHtml } from "./parse-html.ts";
 import {
   SourceContentsReplayInput,
@@ -60,8 +61,7 @@ export const fetchContentsSearchHtml = (
       Effect.mapError(
         (error) =>
           new SourceUnavailable({
-            message:
-              error instanceof Error ? error.message : "Failed to reach DART search.",
+            message: dsab007ContentsMessages.sourceUnavailable,
             sourceUrl: searchUrl,
           }),
       ),
@@ -71,10 +71,7 @@ export const fetchContentsSearchHtml = (
       Effect.mapError(
         (error) =>
           new ParseFailure({
-            message:
-              error instanceof Error
-                ? error.message
-                : "Failed to decode DART search HTML.",
+            message: dsab007ContentsMessages.htmlDecodeFailure,
             sourceUrl: searchUrl,
           }),
       ),

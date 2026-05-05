@@ -35,7 +35,7 @@ describe("contents-search capability schemas", () => {
 
     expect(page).toMatchObject({
       type: "integer",
-      description: "1-based search results page to request.",
+      description: "요청할 검색 결과 페이지입니다(1부터 시작).",
       default: 1,
       minimum: 1,
       maximum: 100,

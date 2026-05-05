@@ -1,16 +1,16 @@
 # darty
 
-A Bun CLI for searching Korean DART filings.
+한국 DART 공시를 검색하는 Bun CLI입니다.
 
-`darty` provides read-only, structured access to DART search surfaces. The current release supports DART filing body-content search through the `contents-search` command.
+`darty`는 DART 검색 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `contents-search` 명령으로 DART 공시 본문내용 검색을 지원합니다.
 
-## Requirements
+## 필요 사항
 
 - [Bun](https://bun.sh/)
 
-## Quick Start
+## 빠른 시작
 
-Run without installing:
+설치 없이 실행:
 
 ```bash
 bunx @sjunepark/darty contents-search \
@@ -19,7 +19,7 @@ bunx @sjunepark/darty contents-search \
   --end-date 20260331
 ```
 
-Or install globally:
+전역 설치 후 실행:
 
 ```bash
 bun add -g @sjunepark/darty
@@ -30,52 +30,39 @@ darty contents-search \
   --end-date 20260331
 ```
 
-## Commands
+## 명령
 
 ### `contents-search`
 
-Search DART filing body contents and print structured JSON to stdout.
+DART 공시 본문내용을 검색하고 구조화된 JSON을 표준 출력으로 반환합니다.
 
 ```bash
-darty contents-search --keyword <text> --start-date <YYYYMMDD> --end-date <YYYYMMDD>
+darty contents-search --keyword <검색어> --start-date <YYYYMMDD> --end-date <YYYYMMDD>
 ```
 
-Required options:
+필수 옵션:
 
-- `--keyword <text>`: body-content search keyword
-- `--start-date <YYYYMMDD>`: inclusive receipt start date
-- `--end-date <YYYYMMDD>`: inclusive receipt end date
+- `--keyword <검색어>`: 본문내용 입력값
+- `--start-date <YYYYMMDD>`: 검색시작일
+- `--end-date <YYYYMMDD>`: 검색종료일
 
-Optional filters:
+선택 필터:
 
-- `--page <number>`: 1-based results page, default `1`
-- `--sort-by <date|reportName>`: sort field, default `date`
-- `--sort-direction <asc|desc>`: sort direction, default `desc`
-- `--company-code <text>`: DART company code
-- `--presenter-name <text>`: presenter name
-- `--report-name <text>`: report title filter
+- `--page <숫자>`: 검색 결과 페이지, 기본값 `1`
+- `--sort-by <date|reportName>`: 정렬 기준, 기본값 `date`
+- `--sort-direction <asc|desc>`: 정렬 방향, 기본값 `desc`
+- `--company-code <텍스트>`: 회사명/종목코드
+- `--presenter-name <텍스트>`: 제출인명
+- `--report-name <텍스트>`: 보고서명
 
-Show command help:
+명령 도움말 보기:
 
 ```bash
 darty contents-search --help
 ```
 
-## Example
+## 참고
 
-```bash
-darty contents-search \
-  --keyword 배당 \
-  --start-date 20250331 \
-  --end-date 20260331 \
-  --company-code 01368637 \
-  --sort-by reportName
-```
-
-The command writes one JSON payload containing normalized result fields, DART references, source evidence, and warnings when DART response rows are partially recoverable.
-
-## Notes
-
-- This tool is read-only.
-- It uses public DART web search behavior and may be affected by upstream DART changes.
-- The current public CLI exposes semantic options only; internal DART replay fields are intentionally not part of the CLI contract.
+- 이 도구는 읽기 전용입니다.
+- 공개 DART 웹 검색 동작을 사용하므로 DART 변경의 영향을 받을 수 있습니다.
+- 현재 공개 CLI는 의미 기반 옵션만 노출하며, 내부 DART 재현 필드는 CLI 계약에 포함하지 않습니다.

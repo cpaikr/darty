@@ -1,3 +1,4 @@
+import { contentsSearchFailureCopy } from "./copy/failure.ts";
 import {
   ContentsSearchFailure,
   InvalidContentsSearchRequest,
@@ -52,17 +53,14 @@ const toContentsSearchFailure = (error: unknown): ContentsSearchFailure => {
 
     return new ContentsSearchFailure({
       code: "internal_error",
-      message: error.message,
+      message: contentsSearchFailureCopy.unexpectedContentsSearch,
       retryable: error.retryable,
     });
   }
 
   return new ContentsSearchFailure({
     code: "internal_error",
-    message:
-      error instanceof Error
-        ? error.message
-        : "Contents search failed due to an unexpected internal error.",
+    message: contentsSearchFailureCopy.unexpectedContentsSearch,
     retryable: false,
   });
 };

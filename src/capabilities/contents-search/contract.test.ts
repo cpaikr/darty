@@ -43,7 +43,7 @@ describe("resolveContentsSearchRequest", () => {
       expect(error.code).toBe("missing_parameter");
       expect(error.parameter).toBe("keyword");
       expect(error.reason).toBe("required");
-      expect(error.expected).toBe("a non-empty string");
+      expect(error.expected).toBe("non_empty_string");
     }
   });
 
@@ -65,7 +65,7 @@ describe("resolveContentsSearchRequest", () => {
       expect(error.code).toBe("invalid_parameter");
       expect(error.parameter).toBe("startDate");
       expect(error.reason).toBe("invalid_format");
-      expect(error.expected).toBe("YYYYMMDD");
+      expect(error.expected).toBe("date_YYYYMMDD");
       expect(error.actual).toBe("2025-03-31");
     }
   });
@@ -110,7 +110,7 @@ describe("resolveContentsSearchRequest", () => {
       expect(error.code).toBe("invalid_parameter");
       expect(error.parameter).toBe("page");
       expect(error.reason).toBe("out_of_range");
-      expect(error.expected).toBe("an integer between 1 and 100");
+      expect(error.expected).toBe("integer_between_1_and_100");
       expect(error.actual).toBe(0);
     }
   });
@@ -129,7 +129,7 @@ describe("resolveContentsSearchRequest", () => {
       expect(error.code).toBe("invalid_parameter");
       expect(error.parameter).toBe("input");
       expect(error.reason).toBe("invalid_type");
-      expect(error.expected).toBe("an object with contents-search parameters");
+      expect(error.expected).toBe("contents_search_parameters_object");
       expect(error.actual).toBe("배당");
     }
   });

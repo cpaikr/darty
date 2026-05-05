@@ -23,7 +23,7 @@ describe("contents-search CLI subprocess", () => {
 
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty [options] [command]");
-    expect(stdout).toContain("Tool-oriented access to DART search and retrieval surfaces.");
+    expect(stdout).toContain("DART 검색 및 조회 기능을 도구 친화적으로 제공합니다.");
     expect(stdout).toContain("contents-search [options]");
     expect(stderr).toBe("");
   });
@@ -35,7 +35,7 @@ describe("contents-search CLI subprocess", () => {
 
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty [options] [command]");
-    expect(stdout).toContain("Tool-oriented access to DART search and retrieval surfaces.");
+    expect(stdout).toContain("DART 검색 및 조회 기능을 도구 친화적으로 제공합니다.");
     expect(stdout).toContain("contents-search [options]");
     expect(stderr).toBe("");
   });
@@ -48,11 +48,11 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty contents-search [options]");
     expect(stdout).toContain(
-      "Semantic, read-only access to DART filing contents search backed by an internal",
+      "내부 dsab007 재현 어댑터를 통해 DART 공시 본문 검색을 읽기 전용 의미 기반 입력으로 제공합니다.",
     );
-    expect(stdout).toContain("dsab007 replay adapter.");
+    expect(stdout).toContain("dsab007 재현 어댑터");
     expect(stdout).toContain(
-      "DART currently controls page size and pager width for this mode",
+      "이 모드의 페이지 크기와 페이지 이동 폭은 현재 DART가 제어",
     );
     expect(stdout).not.toContain("text-crp-nm");
     expect(stdout).not.toContain("--limit");
@@ -81,7 +81,7 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      'Missing required parameter "startDate". Expected a YYYYMMDD date string.',
+      '필수 매개변수 "startDate"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
     );
   });
 
@@ -105,7 +105,7 @@ describe("contents-search CLI subprocess", () => {
     expect(stderr).toContain(
       "option '--page <number>' argument 'nope' is invalid",
     );
-    expect(stderr).toContain('Expected an integer but received "nope".');
+    expect(stderr).toContain('정수를 입력해야 하지만 "nope"을(를) 받았습니다.');
   });
 
   test("fails invalid enum arguments with a non-zero exit code", () => {
@@ -126,7 +126,7 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      'Parameter "sortBy" must be one of: date, reportName.',
+      '매개변수 "sortBy"은(는) 다음 중 하나여야 합니다: date, reportName.',
     );
   });
 });

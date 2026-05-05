@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import { contentsSearchResultCopy } from "../../../../capabilities/contents-search/copy/result.ts";
 import type {
   ContentsSearchItem,
   ContentsSearchRequest,
@@ -15,6 +16,7 @@ import {
   SourceUnavailable,
 } from "../../errors.ts";
 import { searchContentsSourcePage, searchUrl } from "./fetch.ts";
+import { dsab007ContentsMessages } from "./messages.ts";
 import type { SourceContentsRow, SourceContentsSearchPage } from "./source-model.ts";
 import type { SourceContentsReplayInput } from "./replay-schema.ts";
 
@@ -91,7 +93,7 @@ export const toDsab007ContentsProviderResult = (
         : [
             {
               code: "partial_rows_dropped",
-              message: `${droppedItemCount} search result row(s) could not be parsed and were omitted.`,
+              message: contentsSearchResultCopy.partialRowsDropped(droppedItemCount),
               droppedItemCount,
             },
           ],
@@ -168,10 +170,7 @@ export const toDsab007ContentsProviderError = (
 
   return new ContentsSearchProviderError({
     code: "internal_provider_error",
-    message:
-      error instanceof Error
-        ? error.message
-        : "Provider failed due to an unexpected internal error.",
+    message: dsab007ContentsMessages.internalProvider,
     retryable: false,
     providerId,
   });

@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
+import { dsab007ContentsMessages } from "./messages.ts";
 import {
   SourceContentsSearchPage,
   type SourceContentsPagination,
@@ -115,7 +116,7 @@ const parsePagination = (
     if (totalCount === undefined) {
       return yield* Effect.fail(
         new SourceChanged({
-          message: "DART search response no longer exposes totalCnt.",
+          message: dsab007ContentsMessages.missingTotalCount,
           sourceUrl,
         }),
       );
@@ -169,14 +170,14 @@ const parseRow = (
   const href = reportLink.attr("href");
 
   if (href === undefined) {
-    throw new Error("Missing filing viewer link in search result row.");
+    throw new Error(dsab007ContentsMessages.missingViewerLink);
   }
 
   const params = parseHrefParams(href);
   const rcpNo = params.get("rcpNo");
 
   if (rcpNo === null) {
-    throw new Error("Missing rcpNo in filing viewer link.");
+    throw new Error(dsab007ContentsMessages.missingReceiptNumber);
   }
 
   const rawReportText = collapseWhitespace(reportLink.text());
@@ -223,14 +224,11 @@ const parseRows = (
     .forEach((row, rowIndex) => {
       try {
         rows.push(parseRow($, row));
-      } catch (error) {
+      } catch {
         warnings.push({
           code: "row_parse_failed",
           rowIndex,
-          message:
-            error instanceof Error
-              ? error.message
-              : "Failed to parse search result row.",
+          message: dsab007ContentsMessages.rowParseFailed,
         });
       }
     });
@@ -268,7 +266,7 @@ export const parseContentsSearchHtml = (
       error instanceof ParseFailure || error instanceof SourceChanged
         ? error
         : new ParseFailure({
-            message: "Parsed DART response did not match the expected source schema.",
+            message: dsab007ContentsMessages.sourceSchemaMismatch,
             sourceUrl,
           }),
     ),

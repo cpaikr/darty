@@ -223,7 +223,7 @@ describe("executeContentsSearch", () => {
           {
             code: "partial_rows_dropped",
             message:
-              "1 search result row(s) could not be parsed and were omitted.",
+              "검색 결과 행 1개를 파싱하지 못해 생략했습니다.",
             droppedItemCount: 1,
           },
         ],
@@ -235,7 +235,7 @@ describe("executeContentsSearch", () => {
     expect(result.warnings).toEqual([
       {
         code: "partial_rows_dropped",
-        message: "1 search result row(s) could not be parsed and were omitted.",
+        message: "검색 결과 행 1개를 파싱하지 못해 생략했습니다.",
         droppedItemCount: 1,
       },
     ]);
@@ -285,7 +285,7 @@ describe("executeContentsSearch", () => {
     ).rejects.toEqual(
       new ContentsSearchFailure({
         code: "internal_error",
-        message: "Unexpected mapping bug.",
+        message: "본문 검색 중 예상하지 못한 내부 오류가 발생했습니다.",
         retryable: false,
       }),
     );

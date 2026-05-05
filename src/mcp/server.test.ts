@@ -114,11 +114,11 @@ describe("createDartyMcpServer", () => {
       expect(result.tools).toHaveLength(1);
       expect(tool).toMatchObject({
         name: "contents-search",
-        title: "DART Contents Search",
+        title: "DART 본문 검색",
         description:
-          "Semantic, read-only access to DART filing contents search backed by an internal dsab007 replay adapter.",
+          "내부 dsab007 재현 어댑터를 통해 DART 공시 본문 검색을 읽기 전용 의미 기반 입력으로 제공합니다.",
         annotations: {
-          title: "DART Contents Search",
+          title: "DART 본문 검색",
           readOnlyHint: true,
           destructiveHint: false,
           openWorldHint: true,
@@ -225,7 +225,7 @@ describe("createDartyMcpServer", () => {
       expect(result.structuredContent).toBeUndefined();
       expect(content[0]?.type).toBe("text");
       expect(content[0]?.text).toBe(
-        'Missing required parameter "keyword". Expected a non-empty string.',
+        '필수 매개변수 "keyword"이(가) 없습니다. 필요한 값: 비어 있지 않은 문자열.',
       );
     } finally {
       await close();

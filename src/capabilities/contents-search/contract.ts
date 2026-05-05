@@ -1,5 +1,9 @@
 import { ParseResult, Schema } from "effect";
 
+import { contentsSearchFieldCopy } from "./copy/fields.ts";
+import { contentsSearchSchemaCopy } from "./copy/schema.ts";
+import { contentsSearchValidationCopy } from "./copy/validation.ts";
+
 const datePattern = /^\d{8}$/;
 
 type AnnotatableSchema<S> = S & {
@@ -18,7 +22,7 @@ const ContentsSearchDateString = annotateSchema(
   Schema.String.pipe(Schema.pattern(datePattern)),
   {
     identifier: "ContentsSearchDateString",
-    description: "Date string in YYYYMMDD format.",
+    description: contentsSearchSchemaCopy.dateStringDescription,
   },
 );
 
@@ -36,20 +40,42 @@ const ContentsSearchSortDirectionSchema = Schema.Literal(
   ...contentsSearchSortDirectionValues,
 );
 
-type FieldSpecShape = {
-  readonly kind: "integer" | "enum" | "string" | "date";
+type BaseFieldSpecShape = {
   readonly description: string;
   readonly schema: unknown;
-  readonly [key: string]: unknown;
 };
+
+type IntegerFieldSpecShape = BaseFieldSpecShape & {
+  readonly kind: "integer";
+  readonly minimum: number;
+  readonly maximum: number;
+};
+
+type EnumFieldSpecShape = BaseFieldSpecShape & {
+  readonly kind: "enum";
+  readonly enumValues: readonly string[];
+};
+
+type StringFieldSpecShape = BaseFieldSpecShape & {
+  readonly kind: "string";
+  readonly nonEmpty: true;
+};
+
+type DateFieldSpecShape = BaseFieldSpecShape & {
+  readonly kind: "date";
+};
+
+type FieldSpecShape =
+  | IntegerFieldSpecShape
+  | EnumFieldSpecShape
+  | StringFieldSpecShape
+  | DateFieldSpecShape;
 
 type DefaultedFieldSpecShape = FieldSpecShape & {
   readonly defaultValue: unknown;
 };
 
-type RequiredFieldSpecShape = FieldSpecShape & {
-  readonly expectedRequiredValue: string;
-};
+type RequiredFieldSpecShape = FieldSpecShape;
 
 const defaultedField = <A, I, R>(spec: {
   readonly schema: Schema.Schema<A, I, R>;
@@ -69,7 +95,6 @@ const defaultedField = <A, I, R>(spec: {
 const requiredField = <A, I, R>(spec: {
   readonly schema: Schema.Schema<A, I, R>;
   readonly description: string;
-  readonly expectedRequiredValue: string;
 }) =>
   annotateSchema(spec.schema, {
     description: spec.description,
@@ -96,21 +121,21 @@ const inputSpecs = {
         Schema.greaterThanOrEqualTo(1),
         Schema.lessThanOrEqualTo(100),
       ),
-      description: "1-based search results page to request.",
+      description: contentsSearchFieldCopy.page.description,
     },
     sortBy: {
       kind: "enum",
       enumValues: contentsSearchSortByValues,
       defaultValue: "date",
       schema: ContentsSearchSortBySchema,
-      description: "Sort field for results.",
+      description: contentsSearchFieldCopy.sortBy.description,
     },
     sortDirection: {
       kind: "enum",
       enumValues: contentsSearchSortDirectionValues,
       defaultValue: "desc",
       schema: ContentsSearchSortDirectionSchema,
-      description: "Sort direction for the selected sort field.",
+      description: contentsSearchFieldCopy.sortDirection.description,
     },
   } as const satisfies Record<string, DefaultedFieldSpecShape>,
   required: {
@@ -118,20 +143,17 @@ const inputSpecs = {
       kind: "string",
       nonEmpty: true,
       schema: Schema.NonEmptyString,
-      description: "Main body-content search text.",
-      expectedRequiredValue: "a non-empty string",
+      description: contentsSearchFieldCopy.keyword.description,
     },
     startDate: {
       kind: "date",
       schema: ContentsSearchDateString,
-      description: "Inclusive receipt start date in YYYYMMDD format.",
-      expectedRequiredValue: "a YYYYMMDD date string",
+      description: contentsSearchFieldCopy.startDate.description,
     },
     endDate: {
       kind: "date",
       schema: ContentsSearchDateString,
-      description: "Inclusive receipt end date in YYYYMMDD format.",
-      expectedRequiredValue: "a YYYYMMDD date string",
+      description: contentsSearchFieldCopy.endDate.description,
     },
   } as const satisfies Record<string, RequiredFieldSpecShape>,
   optional: {
@@ -139,19 +161,19 @@ const inputSpecs = {
       kind: "string",
       nonEmpty: true,
       schema: Schema.NonEmptyString,
-      description: "Filter by DART company code.",
+      description: contentsSearchFieldCopy.companyCode.description,
     },
     presenterName: {
       kind: "string",
       nonEmpty: true,
       schema: Schema.NonEmptyString,
-      description: "Filter by presenter name when DART exposes that field.",
+      description: contentsSearchFieldCopy.presenterName.description,
     },
     reportName: {
       kind: "string",
       nonEmpty: true,
       schema: Schema.NonEmptyString,
-      description: "Filter by report title as currently honored by DART.",
+      description: contentsSearchFieldCopy.reportName.description,
     },
   } as const satisfies Record<string, FieldSpecShape>,
 } as const;
@@ -163,6 +185,38 @@ const contentsSearchFieldSpecs = {
 } as const;
 
 type ContentsSearchInputKey = keyof typeof contentsSearchFieldSpecs;
+
+type ContentsSearchFieldSpec =
+  (typeof contentsSearchFieldSpecs)[ContentsSearchInputKey];
+
+const getExpectedToken = (rule: ContentsSearchFieldSpec): string => {
+  switch (rule.kind) {
+    case "integer":
+      return `integer_between_${rule.minimum}_and_${rule.maximum}`;
+    case "enum":
+      return `one_of:${rule.enumValues.join(",")}`;
+    case "string":
+      return "non_empty_string";
+    case "date":
+      return "date_YYYYMMDD";
+  }
+};
+
+const getExpectedDescription = (rule: ContentsSearchFieldSpec): string => {
+  switch (rule.kind) {
+    case "integer":
+      return contentsSearchValidationCopy.expectedIntegerBetween(
+        rule.minimum,
+        rule.maximum,
+      );
+    case "enum":
+      return contentsSearchValidationCopy.expectedOneOf(rule.enumValues);
+    case "string":
+      return contentsSearchValidationCopy.expectedNonEmptyString;
+    case "date":
+      return contentsSearchValidationCopy.expectedDateYYYYMMDD;
+  }
+};
 
 const contentsSearchRequestFields = {
   page: defaultedField(contentsSearchFieldSpecs.page),
@@ -180,7 +234,7 @@ export const ContentsSearchRequestSchema = Schema.Struct(
   contentsSearchRequestFields,
 ).annotations({
   identifier: "ContentsSearchRequest",
-  description: "Public semantic input contract for `contents-search`.",
+  description: contentsSearchSchemaCopy.requestDescription,
 });
 
 export type ContentsSearchRawInput = typeof ContentsSearchRequestSchema.Encoded;
@@ -290,7 +344,7 @@ export const ContentsSearchResultSchema = Schema.Struct({
   warnings: Schema.Array(ContentsSearchWarningSchema),
 }).annotations({
   identifier: "ContentsSearchResult",
-  description: "Successful contents-search result envelope.",
+  description: contentsSearchSchemaCopy.resultDescription,
 });
 export type ContentsSearchResult = typeof ContentsSearchResultSchema.Type;
 
@@ -388,24 +442,6 @@ const getParameterIssues = (
   };
 };
 
-const getParseIssueMessage = (
-  issue: ParseResult.ParseIssue | undefined,
-): string | undefined => {
-  if (issue === undefined) {
-    return undefined;
-  }
-
-  switch (issue._tag) {
-    case "Type":
-    case "Missing":
-    case "Unexpected":
-    case "Forbidden":
-      return issue.message;
-    default:
-      return undefined;
-  }
-};
-
 const toInvalidContentsSearchRequest = (
   input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
   error: ParseResult.ParseError,
@@ -417,9 +453,9 @@ const toInvalidContentsSearchRequest = (
       code: "invalid_parameter",
       parameter: "input",
       reason: "invalid_type",
-      expected: "an object with contents-search parameters",
+      expected: contentsSearchValidationCopy.inputExpected,
       actual: input,
-      message: "Contents-search input must be an object with semantic parameters.",
+      message: contentsSearchValidationCopy.inputMustBeObject,
     });
   }
 
@@ -427,15 +463,15 @@ const toInvalidContentsSearchRequest = (
   const actual = input[parameter];
 
   if (issues.some((issue) => issue._tag === "Missing")) {
-    const expected =
-      "expectedRequiredValue" in rule ? rule.expectedRequiredValue : "a value";
-
     return new InvalidContentsSearchRequest({
       code: "missing_parameter",
       parameter,
       reason: "required",
-      expected,
-      message: `Missing required parameter "${parameter}". Expected ${expected}.`,
+      expected: getExpectedToken(rule),
+      message: contentsSearchValidationCopy.missingRequired(
+        parameter,
+        getExpectedDescription(rule),
+      ),
     });
   }
 
@@ -447,9 +483,9 @@ const toInvalidContentsSearchRequest = (
         code: "invalid_parameter",
         parameter,
         reason: "invalid_type",
-        expected: `one of ${choices.join(", ")}`,
+        expected: "string",
         actual,
-        message: `Parameter "${parameter}" must be a string.`,
+        message: contentsSearchValidationCopy.mustBeString(parameter),
       });
     }
 
@@ -457,9 +493,9 @@ const toInvalidContentsSearchRequest = (
       code: "invalid_parameter",
       parameter,
       reason: "invalid_choice",
-      expected: `one of ${choices.join(", ")}`,
+      expected: getExpectedToken(rule),
       actual,
-      message: `Parameter "${parameter}" must be one of: ${choices.join(", ")}.`,
+      message: contentsSearchValidationCopy.mustBeOneOf(parameter, choices),
     });
   }
 
@@ -469,9 +505,9 @@ const toInvalidContentsSearchRequest = (
         code: "invalid_parameter",
         parameter,
         reason: "invalid_type",
-        expected: "an integer",
+        expected: "integer",
         actual,
-        message: `Parameter "${parameter}" must be an integer.`,
+        message: contentsSearchValidationCopy.mustBeInteger(parameter),
       });
     }
 
@@ -482,9 +518,13 @@ const toInvalidContentsSearchRequest = (
         code: "invalid_parameter",
         parameter,
         reason: "out_of_range",
-        expected: `an integer between ${rule.minimum} and ${rule.maximum}`,
+        expected: getExpectedToken(rule),
         actual: numericActual,
-        message: `Parameter "${parameter}" must be between ${rule.minimum} and ${rule.maximum}.`,
+        message: contentsSearchValidationCopy.mustBeInRange(
+          parameter,
+          rule.minimum,
+          rule.maximum,
+        ),
       });
     }
   }
@@ -494,9 +534,9 @@ const toInvalidContentsSearchRequest = (
       code: "invalid_parameter",
       parameter,
       reason: "invalid_type",
-      expected: "a string",
+      expected: "string",
       actual,
-      message: `Parameter "${parameter}" must be a string.`,
+      message: contentsSearchValidationCopy.mustBeString(parameter),
     });
   }
 
@@ -505,9 +545,9 @@ const toInvalidContentsSearchRequest = (
       code: "invalid_parameter",
       parameter,
       reason: "empty_string",
-      expected: "a non-empty string",
+      expected: getExpectedToken(rule),
       actual,
-      message: `Parameter "${parameter}" must not be empty.`,
+      message: contentsSearchValidationCopy.mustNotBeEmpty(parameter),
     });
   }
 
@@ -516,23 +556,18 @@ const toInvalidContentsSearchRequest = (
       code: "invalid_parameter",
       parameter,
       reason: "invalid_format",
-      expected: "YYYYMMDD",
+      expected: getExpectedToken(rule),
       actual,
-      message: `Parameter "${parameter}" must use YYYYMMDD format.`,
+      message: contentsSearchValidationCopy.mustUseDateFormat(parameter),
     });
   }
-
-  const [issue] = issues;
 
   return new InvalidContentsSearchRequest({
     code: "invalid_parameter",
     parameter,
     reason: "invalid_parameter",
     actual,
-    message:
-      getParseIssueMessage(issue) === undefined
-        ? `Parameter "${parameter}" is invalid.`
-        : `Parameter "${parameter}" is invalid. ${getParseIssueMessage(issue)}`,
+    message: contentsSearchValidationCopy.invalidParameter(parameter),
   });
 };
 
@@ -544,9 +579,9 @@ export const resolveContentsSearchRequest = (
       code: "invalid_parameter",
       parameter: "input",
       reason: "invalid_type",
-      expected: "an object with contents-search parameters",
+      expected: contentsSearchValidationCopy.inputExpected,
       actual: input,
-      message: "Contents-search input must be an object with semantic parameters.",
+      message: contentsSearchValidationCopy.inputMustBeObject,
     });
   }
 
@@ -557,7 +592,7 @@ export const resolveContentsSearchRequest = (
         parameter: key,
         reason: "unknown_parameter",
         actual: input[key],
-        message: `Unknown parameter "${key}".`,
+        message: contentsSearchValidationCopy.unknownParameter(key),
       });
     }
   }
