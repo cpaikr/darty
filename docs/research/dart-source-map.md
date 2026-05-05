@@ -1,6 +1,6 @@
 # DART Source Map
 
-Initially captured on 2026-03-31. Updated with replay-contract probes on 2026-04-01.
+Initially captured on 2026-03-31. Updated with replay-contract probes on 2026-04-01 and receipt-viewer probes on 2026-05-05.
 
 Method:
 
@@ -71,13 +71,41 @@ Important finding:
 
 Observed in the viewer HTML source:
 
-- the page embeds a full `treeData` structure for the filing TOC
+- the page embeds a full `treeData` structure for the filing TOC when the selected document has section-level TOC data
 - selecting a TOC node calls `viewDoc(...)` or `linkDoc(...)`
 - `viewDoc(...)` builds a request to `/report/viewer.do`
-- the request is parameterized by `rcpNo`, `dcmNo`, `eleId`, `offset`, and `length`
+- the request is parameterized by `rcpNo`, `dcmNo`, `eleId`, `offset`, `length`, and `dtd`
 - the viewer can also open PDF download and XBRL flows from the same filing context
 
-This suggests that section retrieval may be possible without full browser automation once the request model is confirmed.
+Observed receipt-viewing flow on 2026-05-05:
+
+- Entry URL: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcpNo}`.
+- A public search result `viewerUrl` and a bare receipt number are equivalent at this entry layer if the caller constructs that URL from `receiptNumber`.
+- The entry page is a UTF-8 viewer shell, not the report body. A generic readable-content fetch only returned the shell text and loading state for the seeded `20260331904807` receipt.
+- The shell resolves the selected document number (`dcmNo`) and embeds the initial `viewDoc(...)` call.
+- The actual rendered report content is loaded into iframe `#ifrm` from `/report/viewer.do`.
+- Browser interaction confirmed the same request model: loading `20260331004166` fetched `/report/viewer.do?rcpNo=20260331004166&dcmNo=11213016&eleId=1&offset=972&length=4495&dtd=dart4.xsd`; clicking TOC item `6. 배당에 관한 사항` fetched `/report/viewer.do?rcpNo=20260331004166&dcmNo=11213016&eleId=23&offset=360088&length=13389&dtd=dart4.xsd`.
+
+Observed direct viewer requests:
+
+- For KRX-style HTML receipt `20260331904807`, the shell had no TOC rows (`treeData = []`) and initialized `viewDoc("20260331904807", "11216440", "0", "0", "0", "HTML", "")`.
+- `GET /report/viewer.do?rcpNo=20260331904807&dcmNo=11216440&eleId=0&offset=0&length=0&dtd=HTML` returned the full report HTML body with `Content-Type: text/html; charset=MS949`.
+- For DART XML-style receipt `20260331004166`, the shell embedded TOC nodes with `text`, `rcpNo`, `dcmNo`, `eleId`, `offset`, `length`, `dtd`, `tocNo`, and `atocId`.
+- Its initial section call was `viewDoc("20260331004166", "11213016", "1", "972", "4495", "dart4.xsd", "")`.
+- `GET /report/viewer.do?rcpNo=20260331004166&dcmNo=11213016&eleId=1&offset=972&length=4495&dtd=dart4.xsd` returned section HTML with `Content-Type: text/html; charset=utf-8`.
+- For that `dart4.xsd` document, omitting section parameters or using `eleId=0&offset=0&length=0` returned an empty body in tested requests.
+
+Observed document selection behavior:
+
+- The `본문` selector values can be just `rcpNo={rcpNo}`; the shell then selects the main body document and resolves its `dcmNo` internally.
+- The `첨부` selector values include both `rcpNo={rcpNo}` and `dcmNo={dcmNo}`. Reopening the shell with those parameters selects that attachment and embeds a new TOC/request set for the attachment document.
+- The download button calls `/pdf/download/main.do?rcp_no={rcpNo}&dcm_no={dcmNo}` for the currently selected document.
+
+Current implication:
+
+- Receipt rendering can start from public `receiptNumber` by first fetching `/dsaf001/main.do?rcpNo={receiptNumber}` and parsing the selected document context.
+- Direct report-body retrieval should use `/report/viewer.do` only after the shell provides `dcmNo`, `dtd`, and, for sectioned documents, the TOC section parameters.
+- A future capability should decide whether it exposes a browser-like rendered receipt shell, a selected document, a TOC, individual sections, or a stitched full document. The source model supports section retrieval, but full-document stitching is not yet specified.
 
 ## Search Surface Notes
 
