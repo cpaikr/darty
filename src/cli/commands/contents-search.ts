@@ -168,7 +168,7 @@ const renderSupplementalHelp = (): string => {
   const examples = commandExamples
     .map(
       (example) =>
-        `  # ${example.description}\n  bun run src/cli.ts ${contentsSearchOperationName} ${example.argv.join(
+        `  # ${example.description}\n  darty ${contentsSearchOperationName} ${example.argv.join(
           " ",
         )}`,
     )

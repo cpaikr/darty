@@ -74,6 +74,20 @@ Current implementation stance:
 - HTML parsing: `cheerio`
 - browser automation: deferred unless the live contract stops being replayable
 
+## CLI Usage
+
+```bash
+bunx @sjunepark/darty contents-search --help
+bunx @sjunepark/darty contents-search --keyword 배당 --start-date 20250331 --end-date 20260331
+```
+
+Or install it globally:
+
+```bash
+bun add -g @sjunepark/darty
+darty contents-search --keyword 배당 --start-date 20250331 --end-date 20260331
+```
+
 ## Current Entry Point
 
 ```bash

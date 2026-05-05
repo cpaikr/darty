@@ -1,9 +1,20 @@
 {
-  "name": "darty",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@sjunepark/darty",
+  "version": "0.0.1",
   "type": "module",
+  "bin": {
+    "darty": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "build": "bun build src/cli.ts --target=bun --outfile=dist/cli.js",
+    "prepublishOnly": "bun run typecheck && bun test && bun run build",
     "env:check": "varlock load",
     "eval:contents:cli": "bun run evals/contents-search/cli/run-eval.ts",
     "eval:contents:agent:cli": "varlock run -- bun run evals/contents-search/agent-cli/run-eval.ts",

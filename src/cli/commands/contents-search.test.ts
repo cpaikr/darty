@@ -91,7 +91,7 @@ describe("parseContentsSearchCommandArgs", () => {
     );
     expect(contentsSearchUsage).toContain("[observed]");
     expect(contentsSearchUsage).toContain(
-      "bun run src/cli.ts contents-search --keyword 배당 --start-date 20250331 --end-date 20260331",
+      "darty contents-search --keyword 배당 --start-date 20250331 --end-date 20260331",
     );
     expect(contentsSearchUsage).not.toContain("--limit");
     expect(contentsSearchUsage).not.toContain("--company-name");
