@@ -84,7 +84,13 @@ describe("parseReportViewCommandArgs", () => {
     expect(reportViewUsage).toContain("--document-id <id>");
     expect(reportViewUsage).toContain("--section-id <id>");
     expect(reportViewUsage).toContain("--output-format <html>");
+    expect(reportViewUsage).toContain(
+      "[기본값: html] JSON 결과의 content.html 본문 형식",
+    );
     expect(reportViewUsage).toContain("--max-bytes <number>");
+    expect(reportViewUsage).toContain(
+      "[기본값: 200000] 반환할 HTML 최대 바이트 수",
+    );
   });
 
   test("passes parsed options to the command runner", async () => {

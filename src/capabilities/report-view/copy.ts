@@ -21,12 +21,13 @@ export const reportViewFieldCopy = {
     cliDescription: "조회할 목차 섹션 ID(toc[].id)",
   },
   outputFormat: {
-    description: "본문 출력 형식. 현재는 html만 지원합니다.",
-    cliDescription: "본문 출력 형식(html)",
+    description: "JSON 결과의 content.html 본문 형식. 현재는 html만 지원합니다.",
+    cliDescription: "[기본값: html] JSON 결과의 content.html 본문 형식",
   },
   maxBytes: {
-    description: "반환할 HTML 최대 바이트 수. 초과하면 잘라내고 warnings에 표시합니다.",
-    cliDescription: "반환할 HTML 최대 바이트 수",
+    description:
+      "반환할 HTML 최대 바이트 수. 기본값은 200000이며, 초과하면 잘라내고 warnings에 표시합니다.",
+    cliDescription: "[기본값: 200000] 반환할 HTML 최대 바이트 수",
   },
 } as const;
 
