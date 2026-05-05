@@ -86,7 +86,7 @@ describe("parseContentsSearchCommandArgs", () => {
 
   test("renders CLI-owned descriptions, notes, and examples in usage", () => {
     expect(contentsSearchUsage).toContain(
-      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서의 내용 검색 결과를 반환합니다.",
+      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서의 내용 검색 결과를 구조화된 JSON으로 반환합니다.",
     );
     expect(contentsSearchUsage).toContain("DART 공통 검색 문법");
     expect(contentsSearchUsage).toContain("`사과|포도`=OR");

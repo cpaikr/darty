@@ -6,42 +6,42 @@ const dartSearchSyntaxDetails =
 
 export const contentsSearchFieldCopy = {
   page: {
-    description: "DART 검색 결과 페이지입니다(1부터 시작).",
+    description: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작).",
     cliDescription: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작)."
   },
   sortBy: {
     description:
-      "DART 본문내용 검색 결과 정렬 기준입니다. date는 접수일자, reportName은 보고서명.",
+      "[기본값: date] DART 본문내용 검색 결과 정렬 기준입니다(date=접수일자, reportName=보고서명).",
     cliDescription:
       "[기본값: date] DART 본문내용 검색 결과 정렬 기준입니다(date=접수일자, reportName=보고서명)."
   },
   sortDirection: {
-    description: "선택한 정렬 기준의 정렬 방향입니다.",
+    description: "[기본값: desc] 선택한 정렬 기준의 정렬 방향입니다.",
     cliDescription: "[기본값: desc] 선택한 정렬 기준의 정렬 방향입니다."
   },
   keyword: {
     description:
-      `DART 공시통합검색의 본문내용 검색어입니다. ${dartSearchSyntaxDetails}`,
+      `[필수] DART 공시통합검색의 본문내용 검색어입니다. ${dartSearchSyntaxDetails}`,
     cliDescription:
       `[필수] DART 공시통합검색의 본문내용 검색어입니다. ${dartSearchSyntaxSummary}`,
   },
   startDate: {
-    description: "DART 검색기간 시작일입니다(YYYYMMDD).",
+    description: "[필수] DART 검색기간 시작일입니다(YYYYMMDD).",
     cliDescription: "[필수] DART 검색기간 시작일입니다(YYYYMMDD).",
   },
   endDate: {
-    description: "DART 검색기간 종료일입니다(YYYYMMDD).",
+    description: "[필수] DART 검색기간 종료일입니다(YYYYMMDD).",
     cliDescription: "[필수] DART 검색기간 종료일입니다(YYYYMMDD).",
   },
   companyCode: {
     description:
-      "DART 회사 코드(8자리 숫자). 자유 입력 회사명은 지원하지 않습니다.",
+      "DART 회사 코드(8자리 숫자). 회사명이나 종목코드 자유 입력은 지원하지 않습니다.",
     cliDescription:
       "DART 회사 코드(8자리 숫자). 자유 입력 회사명은 지원하지 않습니다.",
   },
   presenterName: {
     description:
-      "제출인명. 지분공시나 감사보고서처럼 제출인이 공시대상회사와 다를 수 있는 경우에 사용합니다.",
+      "제출인명. 제출인이 공시대상회사와 다를 수 있는 지분공시/감사보고서 검색에 유용합니다.",
     cliDescription:
       "제출인명. 제출인이 공시대상회사와 다를 수 있는 지분공시/감사보고서 검색에 유용합니다.",
   },
@@ -98,7 +98,7 @@ export const contentsSearchFailureCopy = {
 
 export const contentsSearchMcpCopy = {
   instructions:
-    `Darty는 읽기 전용 DART 공시통합검색 도구를 제공합니다. 현재 공개 도구는 \`본문내용\` 모드만 지원하며, 제출된 공시문서 내용에서 키워드 일치 항목을 찾아 구조화된 JSON으로 반환합니다. ${dartSearchSyntaxDetails} 날짜는 YYYYMMDD로 명시하세요.`,
+    `Darty는 읽기 전용 DART 공시통합검색 도구입니다. 현재 공개 MCP 도구는 \`contents-search\` 하나이며, DART \`본문내용\` 모드에서 제출 공시문서의 내용 일치 항목을 찾아 구조화된 JSON으로 반환합니다. 필수 입력은 keyword, startDate, endDate이고 날짜는 YYYYMMDD 형식입니다. ${dartSearchSyntaxDetails} 회사 필터가 필요하면 회사명/종목코드가 아니라 확인된 8자리 DART 회사 코드(companyCode)를 사용하세요.`,
   unknownTool: (name: string): string => `알 수 없는 도구입니다: "${name}".`,
 } as const;
 
@@ -110,14 +110,14 @@ export const contentsSearchResultCopy = {
 export const contentsSearchSchemaCopy = {
   dateStringDescription: "YYYYMMDD 형식의 날짜 문자열입니다.",
   requestDescription:
-    "DART 공시통합검색 `본문내용` 모드의 공개 의미 기반 입력 계약입니다.",
-  resultDescription: "성공한 contents-search 결과 객체입니다.",
+    "DART 공시통합검색 `본문내용` 모드의 의미 기반 검색 입력입니다. 필수: keyword, startDate, endDate.",
+  resultDescription: "성공한 contents-search 결과 객체입니다. 검색 결과, 메타데이터, 참조 URL, 경고를 포함합니다.",
 } as const;
 
 export const contentsSearchToolCopy = {
   title: "DART 본문내용 검색",
   description:
-    `DART 공시통합검색의 \`본문내용\` 모드로 제출 공시문서의 내용 검색 결과를 반환합니다. ${dartSearchSyntaxSummary}`,
+    `DART 공시통합검색의 \`본문내용\` 모드로 제출 공시문서의 내용 검색 결과를 구조화된 JSON으로 반환합니다. ${dartSearchSyntaxSummary}`,
 } as const;
 
 export const contentsSearchValidationCopy = {

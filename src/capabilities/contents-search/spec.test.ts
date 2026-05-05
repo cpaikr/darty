@@ -35,7 +35,7 @@ describe("contents-search capability schemas", () => {
 
     expect(page).toMatchObject({
       type: "integer",
-      description: "DART 검색 결과 페이지입니다(1부터 시작).",
+      description: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작).",
       default: 1,
       minimum: 1,
       maximum: 100,
@@ -54,7 +54,7 @@ describe("contents-search capability schemas", () => {
     expect(companyCode.type).toBe("string");
     expect(companyCode.pattern).toBe("^\\d{8}$");
     expect(String(companyCode.description)).toContain(
-      "자유 입력 회사명은 지원하지 않습니다",
+      "회사명이나 종목코드 자유 입력은 지원하지 않습니다",
     );
     expect(jsonSchema.properties.maxResults).toBeUndefined();
     expect(jsonSchema.properties.textCrpNm).toBeUndefined();
