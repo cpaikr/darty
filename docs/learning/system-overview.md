@@ -1,0 +1,67 @@
+# System Overview
+
+`darty` turns selected DART web search behavior into structured, read-only tool calls. It exists because DART research is repetitive, citation-sensitive, and awkward for agents to perform through browser navigation alone.
+
+## What Exists Today
+
+The executable slice is intentionally narrow:
+
+- public CLI command: `contents-search`
+- MCP stdio server exposing the same `contents-search` operation
+- one DART source adapter for `dsab007` `option=contents`
+- structured result envelope with request echo, pagination, items, metadata, references, and warnings
+- deterministic tests plus opt-in live and agentic eval tracks
+
+The broader product direction is in [VISION](../../VISION.md). Do not infer the full product scope from the current single capability; the repo explicitly treats current code as the first slice of a larger DART querying/searching tool.
+
+## Why The CLI Is Not The Center
+
+A common first impression is that this is a CLI wrapper around DART. The architecture is the opposite: the core capability is the product boundary, and CLI/MCP are adapters.
+
+```text
+                 +-------------------+
+                 | contents-search   |
+                 | capability core   |
+                 +---------+---------+
+                           |
+        +------------------+------------------+
+        |                                     |
++-------v-------+                     +-------v-------+
+| CLI adapter   |                     | MCP adapter   |
+| user flags    |                     | tool schema   |
++---------------+                     +---------------+
+```
+
+This keeps the semantic contract reusable. If a new transport is added later, it should call the same operation instead of re-encoding DART behavior.
+
+## Current Product Shape
+
+The current public operation searches filing body content through DART's integrated filing search surface. It returns structured filing-level results, not generated explanations.
+
+A successful result is shaped for downstream verification:
+
+- `result.request`: normalized request with defaults applied
+- `result.pagination`: current page, total pages, total count, returned count
+- `result.items`: company, filing, match, reference, and evidence fields
+- `metadata`: source endpoint, fetch timing, completeness, observed source behavior
+- `references`: source search URL
+- `warnings`: partial parsing warnings such as dropped rows
+
+This reflects the repo's `reference first` principle: each item should be easy to cite, revisit, or use as input to later retrieval work.
+
+## Important Constraints
+
+- The tool is read-only.
+- DART is an external HTML source, so parser and source-contract drift are real risks.
+- Public inputs stay semantic. Low-level DART form fields remain inside the adapter unless proven stable enough to expose.
+- Section retrieval, viewer traversal, PDF handling, and XBRL are product directions, not current public capability behavior.
+
+## Canonical Sources
+
+Use this page for orientation only. For current behavior, read:
+
+- [README](../../README.md) for public command usage
+- [VISION](../../VISION.md) for product direction and non-goals
+- [ARCHITECTURE](../../ARCHITECTURE.md) and [src/ARCHITECTURE](../../src/ARCHITECTURE.md) for ownership and implementation invariants
+- [dsab007 search spec](../specs/dsab007-search-v1.md) for the current draft contract stance
+- [source map](../research/dart-source-map.md) for observed DART evidence

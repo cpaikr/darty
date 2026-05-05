@@ -23,6 +23,8 @@ two-schema boundary, and the MCP extension seam, see
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
   Durable source investigation notes for `dsab007` search and the report viewer.
+- [docs/learning/](docs/learning/INDEX.md)
+  Onboarding-oriented explanations for new readers. These pages are secondary learning material, not the source of truth for implementation behavior, product decisions, or project policy.
 - [docs/tools/](docs/tools/)
   Canonical home for single-tool design.
 - [docs/specs/](docs/specs/)
