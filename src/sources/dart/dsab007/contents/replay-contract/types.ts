@@ -1,5 +1,5 @@
-import type { SourceContentsReplayInput } from "./replay-schema.ts";
-import type { SourceContentsSearchPage } from "./source-model.ts";
+import type { SourceContentsReplayInput } from "../replay-schema.ts";
+import type { SourceContentsSearchPage } from "../source-model.ts";
 
 /**
  * Internal replay probes for the low-level DART-shaped contents contract.

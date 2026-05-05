@@ -1,4 +1,4 @@
-import { contentsSearchFailureCopy } from "./copy/failure.ts";
+import { contentsSearchFailureCopy } from "./copy.ts";
 import {
   ContentsSearchFailure,
   InvalidContentsSearchRequest,

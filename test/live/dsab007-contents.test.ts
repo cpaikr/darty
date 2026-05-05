@@ -12,7 +12,7 @@ import {
   contentsReplayFieldContracts,
   type ContentsLiveExpectation,
   type ContentsLiveProbe,
-} from "../../src/sources/dart/dsab007/contents/replay-contract.ts";
+} from "../../src/sources/dart/dsab007/contents/replay-contract/index.ts";
 import type { SourceContentsReplayInput } from "../../src/sources/dart/dsab007/contents/replay-schema.ts";
 import { buildContentsSearchForm } from "../../src/sources/dart/dsab007/contents/build-form.ts";
 

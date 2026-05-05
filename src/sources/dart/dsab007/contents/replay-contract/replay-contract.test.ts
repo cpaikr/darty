@@ -4,12 +4,12 @@ import { Effect, Schema } from "effect";
 import {
   SourceContentsReplayInput,
   type SourceContentsReplayInput as SourceContentsReplayInputType,
-} from "./replay-schema.ts";
+} from "../replay-schema.ts";
 import {
   contentsReplayFieldContracts,
   contentsReplayFields,
-} from "./replay-contract.ts";
-import { buildContentsSearchForm } from "./build-form.ts";
+} from "./index.ts";
+import { buildContentsSearchForm } from "../build-form.ts";
 
 const decodeInput = (input: unknown) =>
   Effect.runPromise(Schema.decodeUnknown(SourceContentsReplayInput)(input));

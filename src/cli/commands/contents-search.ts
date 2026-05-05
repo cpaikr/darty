@@ -1,8 +1,10 @@
 import { Command, InvalidArgumentError, Option } from "commander";
 
-import { contentsSearchCliCopy } from "../../capabilities/contents-search/copy/cli.ts";
-import { contentsSearchFieldCopy } from "../../capabilities/contents-search/copy/fields.ts";
-import { contentsSearchToolCopy } from "../../capabilities/contents-search/copy/tool.ts";
+import {
+  contentsSearchCliCopy,
+  contentsSearchFieldCopy,
+  contentsSearchToolCopy,
+} from "../../capabilities/contents-search/copy.ts";
 import type {
   ContentsSearchRawInput,
   ContentsSearchResult,

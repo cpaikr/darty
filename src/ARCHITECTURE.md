@@ -71,7 +71,7 @@ graph TD
     FETCH --> FORM["build-form.ts"]
     FETCH --> PARSE["parse-html.ts"]
 
-    CONTRACT["contract.ts"] --> EXEC
+    CONTRACT["contract.ts + contract/\npublic schema + resolver"] --> EXEC
     CONTRACT --> SPEC
 
     REPLAY["replay-schema.ts"] --> SEARCH
@@ -132,7 +132,7 @@ their own presentation and protocol details.
 
 ```mermaid
 graph LR
-    CONTRACT["contract.ts\nEffect Schema"] --> VALIDATE["Runtime\nvalidation"]
+    CONTRACT["contract.ts + contract/\nEffect Schema"] --> VALIDATE["Runtime\nvalidation"]
     CONTRACT --> TS["TypeScript\ntypes"]
     CONTRACT --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
 
@@ -146,8 +146,9 @@ graph LR
 
 How it works:
 
-1. **`contract.ts`** defines the public request schema, success result schema,
-   typed failures, and semantic validation rules.
+1. **`contract.ts`** re-exports the public contract modules. The backing
+   `contract/` files define the request schema, success result schema, typed
+   failures, and semantic validation rules.
 2. **`spec.ts`** exports the operation name plus request/result JSON Schemas for
    transports and tooling.
 3. **`app/contents-search.ts`** wires those schemas and the shared executor to
@@ -265,9 +266,9 @@ graph LR
     P_PAGE ---|renamed| I_PAGE
 ```
 
-- **Public semantic schema** (`ContentsSearchRequestSchema` in `contract.ts`):
-  what users and future MCP clients see. Semantic names, clean enums,
-  documented metadata.
+- **Public semantic schema** (`ContentsSearchRequestSchema`, re-exported from
+  `contract.ts`): what users and future MCP clients see. Semantic names, clean
+  enums, documented metadata.
 - **Internal replay schema** (`SourceContentsReplayInput` in
   `replay-schema.ts`): what DART's form actually expects. Raw field names,
   fixed page-size values, duplicated `b_*` parameters.
@@ -327,8 +328,8 @@ host keeps explicit control over adapter wiring.
 - `src/app/contents-search.ts` — shared transport composition seam
 - `src/cli/commands/contents-search.ts` — explicit CLI surface over the shared
   operation
-- `src/capabilities/contents-search/contract.ts` — public input and output
-  contract
+- `src/capabilities/contents-search/contract.ts` and `contract/` — public
+  input/output contract, typed failures, and request resolution
 - `src/capabilities/contents-search/spec.ts` — operation identifier and
   machine-readable request/result schemas
 - `src/capabilities/contents-search/execute.ts` — shared validation,

@@ -13,8 +13,10 @@ import {
   defaultContentsSearchOperation,
   type ContentsSearchOperation,
 } from "../app/contents-search.ts";
-import { contentsSearchMcpCopy } from "../capabilities/contents-search/copy/mcp.ts";
-import { contentsSearchToolCopy } from "../capabilities/contents-search/copy/tool.ts";
+import {
+  contentsSearchMcpCopy,
+  contentsSearchToolCopy,
+} from "../capabilities/contents-search/copy.ts";
 import { ContentsSearchFailure } from "../capabilities/contents-search/contract.ts";
 
 const serverInfo = {

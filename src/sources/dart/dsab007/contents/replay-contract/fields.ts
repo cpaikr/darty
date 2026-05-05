@@ -1,5 +1,5 @@
-import type { SourceContentsReplayInput } from "./replay-schema.ts";
-import type { SourceContentsSearchPage } from "./source-model.ts";
+import type { SourceContentsReplayInput } from "../replay-schema.ts";
+import type { SourceContentsSearchPage } from "../source-model.ts";
 import {
   baselineContentsReplayInput,
   type ContentsLiveClassification,
@@ -9,7 +9,7 @@ import {
   type ContentsReplayField,
   type ContentsReplayFieldContract,
   type ContentsSerializationCase,
-} from "./replay-contract-types.ts";
+} from "./types.ts";
 
 const withInput = (
   overrides: Partial<SourceContentsReplayInput>,

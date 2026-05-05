@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { contentsSearchResultCopy } from "../../../../capabilities/contents-search/copy/result.ts";
+import { contentsSearchResultCopy } from "../../../../capabilities/contents-search/copy.ts";
 import type {
   ContentsSearchItem,
   ContentsSearchRequest,
