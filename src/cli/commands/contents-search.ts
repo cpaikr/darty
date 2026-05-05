@@ -5,9 +5,10 @@ import {
   contentsSearchFieldCopy,
   contentsSearchToolCopy,
 } from "../../capabilities/contents-search/copy.ts";
-import type {
-  ContentsSearchRawInput,
-  ContentsSearchResult,
+import {
+  ContentsSearchFailure,
+  type ContentsSearchRawInput,
+  type ContentsSearchResult,
 } from "../../capabilities/contents-search/contract.ts";
 import { contentsSearchOperationName } from "../../capabilities/contents-search/spec.ts";
 
@@ -25,6 +26,7 @@ export type CliOptions = Partial<Record<CliOptionKey, CliOptionValue>> &
 type RegisteredOption = {
   readonly key: CliOptionKey;
   readonly attributeName: string;
+  readonly cliName: string;
   readonly option: Option;
 };
 
@@ -50,12 +52,20 @@ const createRegisteredOption = (
   configure?: (option: Option) => void,
 ): RegisteredOption => {
   const option = new Option(flags, description);
+  const cliName = flags
+    .split(/[ ,]+/)
+    .find((token) => token.startsWith("--"));
+
+  if (cliName === undefined) {
+    throw new Error(`Missing long flag for CLI option ${key}.`);
+  }
 
   configure?.(option);
 
   return {
     key,
     attributeName: option.attributeName(),
+    cliName,
     option,
   };
 };
@@ -127,6 +137,33 @@ const extractCliOptions = (
   return options;
 };
 
+const cliNameByOptionKey = Object.fromEntries(
+  buildRegisteredOptions().map((option) => [option.key, option.cliName]),
+) as Partial<Record<CliOptionKey, string>>;
+
+export const renderContentsSearchCliErrorMessage = (
+  error: unknown,
+): string | undefined => {
+  if (!(error instanceof ContentsSearchFailure)) {
+    return undefined;
+  }
+
+  if (error.code !== "invalid_request") {
+    return undefined;
+  }
+
+  const cliName = cliNameByOptionKey[error.parameter as CliOptionKey];
+
+  if (cliName === undefined) {
+    return undefined;
+  }
+
+  return error.message
+    .replaceAll(`"${error.parameter}"`, `"${cliName}"`)
+    .replaceAll("필수 매개변수", "필수 옵션")
+    .replaceAll("매개변수", "옵션");
+};
+
 const renderSupplementalHelp = (): string => {
   const examples = contentsSearchCliCopy.examples
     .map(
@@ -140,8 +177,12 @@ const renderSupplementalHelp = (): string => {
   const notes = contentsSearchCliCopy.notes
     .map((note) => `  - ${note}`)
     .join("\n");
+  const notesSection =
+    notes.length > 0
+      ? `\n\n${contentsSearchCliCopy.notesHeading}:\n${notes}`
+      : "";
 
-  return `\n${contentsSearchCliCopy.examplesHeading}:\n${examples}\n\n${contentsSearchCliCopy.notesHeading}:\n${notes}\n`;
+  return `\n${contentsSearchCliCopy.examplesHeading}:\n${examples}${notesSection}\n`;
 };
 
 const buildContentsSearchCommand = (
@@ -151,6 +192,7 @@ const buildContentsSearchCommand = (
   const command = new Command(contentsSearchOperationName)
     .summary(contentsSearchCliCopy.summary)
     .description(contentsSearchToolCopy.description)
+    .helpOption("-h, --help", "명령 도움말을 표시합니다.")
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {

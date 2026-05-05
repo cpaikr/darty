@@ -25,6 +25,8 @@ describe("contents-search CLI subprocess", () => {
     expect(stdout).toContain("Usage: darty [options] [command]");
     expect(stdout).toContain("DART 검색 및 조회 기능을 도구 친화적으로 제공합니다.");
     expect(stdout).toContain("contents-search [options]");
+    expect(stdout).toContain("도움말을 표시합니다.");
+    expect(stdout).not.toContain("display help for command");
     expect(stderr).toBe("");
   });
 
@@ -37,6 +39,8 @@ describe("contents-search CLI subprocess", () => {
     expect(stdout).toContain("Usage: darty [options] [command]");
     expect(stdout).toContain("DART 검색 및 조회 기능을 도구 친화적으로 제공합니다.");
     expect(stdout).toContain("contents-search [options]");
+    expect(stdout).toContain("도움말을 표시합니다.");
+    expect(stdout).not.toContain("display help for command");
     expect(stderr).toBe("");
   });
 
@@ -48,11 +52,18 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty contents-search [options]");
     expect(stdout).toContain(
-      "내부 dsab007 재현 어댑터를 통해 DART 공시 본문 검색을 읽기 전용 의미 기반 입력으로 제공합니다.",
+      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서의 내용 검색 결과를 반환합니다.",
     );
-    expect(stdout).toContain("dsab007 재현 어댑터");
-    expect(stdout).toContain(
-      "이 모드의 페이지 크기와 페이지 이동 폭은 현재 DART가 제어",
+    expect(stdout).toContain("--keyword <text>");
+    expect(stdout).toContain("명령 도움말을 표시합니다.");
+    expect(stdout).not.toContain("display help for command");
+    expect(stdout).toContain("DART 공통 검색 문법");
+    expect(stdout).toContain("`사과|포도`=OR");
+    expect(stdout).not.toContain("사과포도");
+    expect(stdout).not.toContain("[확인됨]");
+    expect(stdout).not.toContain("참고:");
+    expect(stdout).not.toContain(
+      "`전체`, `회사명`, `보고서명`, `보고서 목차명`, `고급검색` 모드는 아직 공개 도구가 아닙니다.",
     );
     expect(stdout).not.toContain("text-crp-nm");
     expect(stdout).not.toContain("--limit");
@@ -68,6 +79,8 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty contents-search [options]");
     expect(stdout).toContain("--keyword <text>");
+    expect(stdout).toContain("명령 도움말을 표시합니다.");
+    expect(stdout).not.toContain("display help for command");
     expect(stdout).toContain("--start-date <YYYYMMDD>");
     expect(stdout).toContain("--end-date <YYYYMMDD>");
     expect(stderr).toBe("");
@@ -81,7 +94,25 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      '필수 매개변수 "startDate"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+      '필수 옵션 "--start-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+    );
+  });
+
+  test("fails later missing required arguments with CLI flag names", () => {
+    const result = runCli([
+      "contents-search",
+      "--keyword",
+      "배당",
+      "--start-date",
+      "20250331",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain(
+      '필수 옵션 "--end-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
     );
   });
 
@@ -126,7 +157,7 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain(
-      '매개변수 "sortBy"은(는) 다음 중 하나여야 합니다: date, reportName.',
+      '옵션 "--sort-by"은(는) 다음 중 하나여야 합니다: date, reportName.',
     );
   });
 });

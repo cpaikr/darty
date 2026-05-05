@@ -114,16 +114,18 @@ describe("createDartyMcpServer", () => {
       expect(result.tools).toHaveLength(1);
       expect(tool).toMatchObject({
         name: "contents-search",
-        title: "DART 본문 검색",
-        description:
-          "내부 dsab007 재현 어댑터를 통해 DART 공시 본문 검색을 읽기 전용 의미 기반 입력으로 제공합니다.",
+        title: "DART 본문내용 검색",
         annotations: {
-          title: "DART 본문 검색",
+          title: "DART 본문내용 검색",
           readOnlyHint: true,
           destructiveHint: false,
           openWorldHint: true,
         },
       });
+      const toolDescription = String(tool?.description);
+      expect(toolDescription).toContain("`사과 포도`=AND");
+      expect(toolDescription).toContain("`사과|포도`=OR");
+      expect(toolDescription).toContain("`사과!포도`=NOT");
       expect(tool?.inputSchema.required).toEqual([
         "keyword",
         "startDate",

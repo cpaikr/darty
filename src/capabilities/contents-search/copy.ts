@@ -1,50 +1,65 @@
+const dartSearchSyntaxSummary =
+  'DART 공통 검색 문법: `사과 포도`=AND, `사과|포도`=OR, `사과!포도`=NOT, `"사과 포도"`=정확한 구문.';
+
+const dartSearchSyntaxDetails =
+  'DART 공통 검색 문법: `사과 포도`는 사과와 포도가 모두 존재하는 문서, `사과|포도`는 둘 중 하나가 존재하는 문서, `사과!포도`는 사과 검색 결과 중 포도가 있는 문서를 제외, `"사과 포도"`는 사과/포도 순서가 정확한 `사과포도` 또는 `사과 포도` 단어를 검색하며 중간에 다른 단어나 구절이 포함될 수 없습니다.';
+
 export const contentsSearchFieldCopy = {
   page: {
-    description: "요청할 검색 결과 페이지입니다(1부터 시작).",
-    cliDescription: "요청할 검색 결과 페이지입니다(1부터 시작). [확인됨] 기본값: 1.",
+    description: "DART 검색 결과 페이지입니다(1부터 시작).",
+    cliDescription: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작)."
   },
   sortBy: {
-    description: "결과 정렬 기준입니다.",
+    description:
+      "DART 본문내용 검색 결과 정렬 기준입니다. date는 접수일자, reportName은 보고서명.",
     cliDescription:
-      "결과 정렬 기준입니다(date=접수일자, reportName=보고서명). [확인됨] 기본값: date.",
+      "[기본값: date] DART 본문내용 검색 결과 정렬 기준입니다(date=접수일자, reportName=보고서명)."
   },
   sortDirection: {
     description: "선택한 정렬 기준의 정렬 방향입니다.",
-    cliDescription: "선택한 정렬 기준의 정렬 방향입니다. [확인됨] 기본값: desc.",
+    cliDescription: "[기본값: desc] 선택한 정렬 기준의 정렬 방향입니다."
   },
   keyword: {
-    description: "본문내용 입력값입니다.",
-    cliDescription: "본문내용 입력값입니다. [확인됨] 필수.",
+    description:
+      `DART 공시통합검색의 본문내용 검색어입니다. ${dartSearchSyntaxDetails}`,
+    cliDescription:
+      `[필수] DART 공시통합검색의 본문내용 검색어입니다. ${dartSearchSyntaxSummary}`,
   },
   startDate: {
-    description: "검색시작일입니다(YYYYMMDD).",
-    cliDescription: "검색시작일입니다(YYYYMMDD). [확인됨] 필수.",
+    description: "DART 검색기간 시작일입니다(YYYYMMDD).",
+    cliDescription: "[필수] DART 검색기간 시작일입니다(YYYYMMDD).",
   },
   endDate: {
-    description: "검색종료일입니다(YYYYMMDD).",
-    cliDescription: "검색종료일입니다(YYYYMMDD). [확인됨] 필수.",
+    description: "DART 검색기간 종료일입니다(YYYYMMDD).",
+    cliDescription: "[필수] DART 검색기간 종료일입니다(YYYYMMDD).",
   },
   companyCode: {
-    description: "회사명/종목코드로 필터링합니다.",
-    cliDescription: "회사명/종목코드로 필터링합니다. [확인됨]",
+    description:
+      "DART 회사 코드(8자리 숫자). 자유 입력 회사명은 지원하지 않습니다.",
+    cliDescription:
+      "DART 회사 코드(8자리 숫자). 자유 입력 회사명은 지원하지 않습니다.",
   },
   presenterName: {
-    description: "제출인명으로 필터링합니다.",
-    cliDescription: "제출인명으로 필터링합니다. [확인됨]",
+    description:
+      "제출인명. 지분공시나 감사보고서처럼 제출인이 공시대상회사와 다를 수 있는 경우에 사용합니다.",
+    cliDescription:
+      "제출인명. 제출인이 공시대상회사와 다를 수 있는 지분공시/감사보고서 검색에 유용합니다.",
   },
   reportName: {
-    description: "보고서명으로 필터링합니다.",
-    cliDescription: "보고서명으로 필터링합니다. [확인됨]",
+    description:
+      "보고서명. DART 보고서명 목록의 값이어야 하며 자유 입력 문구가 아닙니다(예: 주주총회소집공고).",
+    cliDescription:
+      "보고서명. DART 보고서명 목록의 값이어야 하며 자유 입력 문구가 아닙니다(예: 주주총회소집공고).",
   },
 } as const;
 
 export const contentsSearchCliCopy = {
-  summary: "DART 공시 본문을 검색하고 구조화된 JSON을 반환합니다.",
+  summary: "DART 공시통합검색의 본문내용 검색 결과를 구조화된 JSON으로 반환합니다.",
   examplesHeading: "예시",
   notesHeading: "참고",
   examples: [
     {
-      description: "키워드로 최근 본문 일치 항목을 검색합니다.",
+      description: "키워드로 DART 본문내용 일치 항목을 검색합니다.",
       argv: [
         "--keyword",
         "배당",
@@ -55,7 +70,7 @@ export const contentsSearchCliCopy = {
       ],
     },
     {
-      description: "확인된 회사 코드와 제출인 필터로 결과를 좁힙니다.",
+      description: "확인된 회사 코드와 제출인명으로 검색합니다.",
       argv: [
         "--keyword",
         "배당",
@@ -72,12 +87,7 @@ export const contentsSearchCliCopy = {
       ],
     },
   ],
-  notes: [
-    "이 명령은 의미 기반 매개변수 이름만 받으며, DART 재현 필드 이름은 내부에만 둡니다.",
-    "이 모드의 페이지 크기와 페이지 이동 폭은 현재 DART가 제어하므로 공개 기능 계약에 포함하지 않습니다.",
-    "결과는 파서 소유 원본 행을 그대로 노출하지 않고 안정적인 공개 필드, 참조, 출처 근거로 묶습니다.",
-    "경고는 일부 행 누락처럼 부분적으로 복구 가능한 출처 변경을 결과 보존과 함께 보고합니다.",
-  ],
+  notes: [],
   invalidInteger: (value: string): string =>
     `정수를 입력해야 하지만 "${value}"을(를) 받았습니다.`,
 } as const;
@@ -88,7 +98,7 @@ export const contentsSearchFailureCopy = {
 
 export const contentsSearchMcpCopy = {
   instructions:
-    "Darty는 의미 기반 입력과 구조화된 JSON 결과를 사용하는 읽기 전용 DART 검색 도구를 제공합니다.",
+    `Darty는 읽기 전용 DART 공시통합검색 도구를 제공합니다. 현재 공개 도구는 \`본문내용\` 모드만 지원하며, 제출된 공시문서 내용에서 키워드 일치 항목을 찾아 구조화된 JSON으로 반환합니다. ${dartSearchSyntaxDetails} 날짜는 YYYYMMDD로 명시하세요.`,
   unknownTool: (name: string): string => `알 수 없는 도구입니다: "${name}".`,
 } as const;
 
@@ -99,14 +109,15 @@ export const contentsSearchResultCopy = {
 
 export const contentsSearchSchemaCopy = {
   dateStringDescription: "YYYYMMDD 형식의 날짜 문자열입니다.",
-  requestDescription: "`contents-search` 공개 의미 기반 입력 계약입니다.",
+  requestDescription:
+    "DART 공시통합검색 `본문내용` 모드의 공개 의미 기반 입력 계약입니다.",
   resultDescription: "성공한 contents-search 결과 객체입니다.",
 } as const;
 
 export const contentsSearchToolCopy = {
-  title: "DART 본문 검색",
+  title: "DART 본문내용 검색",
   description:
-    "내부 dsab007 재현 어댑터를 통해 DART 공시 본문 검색을 읽기 전용 의미 기반 입력으로 제공합니다.",
+    `DART 공시통합검색의 \`본문내용\` 모드로 제출 공시문서의 내용 검색 결과를 반환합니다. ${dartSearchSyntaxSummary}`,
 } as const;
 
 export const contentsSearchValidationCopy = {

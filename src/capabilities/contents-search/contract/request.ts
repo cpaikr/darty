@@ -6,6 +6,7 @@ import {
 } from "../copy.ts";
 
 const datePattern = /^\d{8}$/;
+const companyCodePattern = /^\d{8}$/;
 
 type AnnotatableSchema<S> = S & {
   annotations: (
@@ -62,6 +63,11 @@ type StringFieldSpecShape = BaseFieldSpecShape & {
   readonly nonEmpty: true;
 };
 
+type PatternStringFieldSpecShape = BaseFieldSpecShape & {
+  readonly kind: "patternString";
+  readonly expectedToken: string;
+};
+
 type DateFieldSpecShape = BaseFieldSpecShape & {
   readonly kind: "date";
 };
@@ -70,6 +76,7 @@ export type FieldSpecShape =
   | IntegerFieldSpecShape
   | EnumFieldSpecShape
   | StringFieldSpecShape
+  | PatternStringFieldSpecShape
   | DateFieldSpecShape;
 
 type DefaultedFieldSpecShape = FieldSpecShape & {
@@ -159,9 +166,9 @@ const inputSpecs = {
   } as const satisfies Record<string, RequiredFieldSpecShape>,
   optional: {
     companyCode: {
-      kind: "string",
-      nonEmpty: true,
-      schema: Schema.NonEmptyString,
+      kind: "patternString",
+      expectedToken: "8_digit_company_code",
+      schema: Schema.String.pipe(Schema.pattern(companyCodePattern)),
       description: contentsSearchFieldCopy.companyCode.description,
     },
     presenterName: {

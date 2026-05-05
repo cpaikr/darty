@@ -26,6 +26,17 @@ Avoid:
 - hidden defaults that affect correctness
 - raw text prompts as the primary interface for deterministic work
 
+## DART Search Keyword Syntax
+
+DART search keyword fields should preserve DART's official common search syntax unless a specific upstream surface proves otherwise. Tool descriptions should mention this syntax when they expose a DART keyword field:
+
+- AND condition (`공백`, space): `사과 포도` searches for documents where both `사과` and `포도` exist.
+- OR condition (`|`): `사과|포도` searches for documents where either `사과` or `포도` exists.
+- NOT condition (`!`): `사과!포도` excludes documents containing `포도` from results for `사과`.
+- EXACT condition (`" "`): `"사과 포도"` searches for a word/phrase made exactly of `사과포도` or `사과 포도` in that order; no other word or phrase may appear between `사과` and `포도`.
+
+Keep this as user-facing search syntax, not a license to collapse structured filters into one broad query string.
+
 ## Output Design
 
 Most tools benefit from a consistent outer envelope:

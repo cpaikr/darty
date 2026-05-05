@@ -70,6 +70,30 @@ describe("resolveContentsSearchRequest", () => {
     }
   });
 
+  test("rejects invalid company code formats with structured data", () => {
+    try {
+      resolveContentsSearchRequest({
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        companyCode: "1234",
+      });
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidContentsSearchRequest);
+
+      if (!(error instanceof InvalidContentsSearchRequest)) {
+        throw error;
+      }
+
+      expect(error.code).toBe("invalid_parameter");
+      expect(error.parameter).toBe("companyCode");
+      expect(error.reason).toBe("invalid_format");
+      expect(error.expected).toBe("8_digit_company_code");
+      expect(error.actual).toBe("1234");
+    }
+  });
+
   test("rejects removed or unknown public parameters", () => {
     try {
       resolveContentsSearchRequest({

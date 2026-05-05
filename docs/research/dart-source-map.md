@@ -126,6 +126,33 @@ When `본문내용` is selected, the UI shows these relevant controls:
 
 Observed browser UI serialization for a `본문내용` search on 2026-05-05 included `currentPage=1`, `maxResults=15`, `maxLinks=10`, `sort=DATE`, `sortType=desc`, `option=contents`, `keyword`, `b_keyword`, `startDate`, `b_startDate`, `endDate`, and `b_endDate`. The response still returned 10 rows for the tested search, matching the earlier finding that `maxResults` is accepted but not caller-controlled for this mode.
 
+### Official DART Search Guide
+
+Observed on 2026-05-05:
+
+- URL: `https://dart.fss.or.kr/guide/main.jsp?menu=122`
+- guide title: `공시 서류 검색 – 공시통합검색`
+
+Use this guide as the human-facing explanation source for DART search concepts and future tool copy. It documents the Korean UI semantics more comprehensively than this implementation currently supports. It is a UI/user guide, not a replay API specification; keep using live request probes and parser tests for POST-field behavior.
+
+Guide-backed concepts relevant to the current `contents-search` slice:
+
+- `공시통합검색` is for searching submitted disclosure documents by company, report, report table of contents, and document body content.
+- `검색구분` set to `전체` groups results by company, report, TOC, and body content; selecting a specific `검색구분` opens that detailed search directly.
+- `본문내용` search means searching within disclosure document contents.
+- DART documents this keyword syntax as common search syntax:
+  - AND condition (`공백`, space): `사과 포도` searches for documents where both `사과` and `포도` exist.
+  - OR condition (`|`): `사과|포도` searches for documents where either `사과` or `포도` exists.
+  - NOT condition (`!`): `사과!포도` excludes documents containing `포도` from results for `사과`.
+  - EXACT condition (`" "`): `"사과 포도"` searches for a word/phrase made exactly of `사과포도` or `사과 포도` in that order; no other word or phrase may appear between `사과` and `포도`.
+- `동의어` expands some Korean/English variants, such as `비즈니스`, `비지니스`, and `business`; this UI control is not implemented in the public contract.
+- The guide describes company lookup, presenter lookup, date entry and quick date buttons, body-vs-attachment document target, report-name lookup, disclosure-type filters, result page-size choices, and sort choices.
+
+Documentation implication:
+
+- Use the official guide for Korean labels, field explanations, examples, and future tool descriptions.
+- Do not treat guide-only fields as implemented. A field becomes part of the public contract only when live replay behavior is observed, mapped, tested, and added to the current spec.
+
 Observed replay payload shape for `option=contents`:
 
 - `currentPage`, `maxResults`, `maxLinks`

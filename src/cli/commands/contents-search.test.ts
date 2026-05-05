@@ -10,6 +10,7 @@ import {
   contentsSearchUsage,
   executeContentsSearchCommand,
   parseContentsSearchCommandArgs,
+  renderContentsSearchCliErrorMessage,
 } from "./contents-search.ts";
 
 describe("parseContentsSearchCommandArgs", () => {
@@ -79,17 +80,28 @@ describe("parseContentsSearchCommandArgs", () => {
     expect(contentsSearchUsage).toContain("--company-code <text>");
     expect(contentsSearchUsage).toContain("--presenter-name <text>");
     expect(contentsSearchUsage).toContain("--report-name <text>");
+    expect(contentsSearchUsage).toContain("명령 도움말을 표시합니다.");
+    expect(contentsSearchUsage).not.toContain("display help for command");
   });
 
   test("renders CLI-owned descriptions, notes, and examples in usage", () => {
     expect(contentsSearchUsage).toContain(
-      "내부 dsab007 재현 어댑터를 통해 DART 공시 본문 검색을 읽기 전용 의미 기반 입력으로 제공합니다.",
+      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서의 내용 검색 결과를 반환합니다.",
     );
-    expect(contentsSearchUsage).toContain("dsab007 재현 어댑터");
+    expect(contentsSearchUsage).toContain("DART 공통 검색 문법");
+    expect(contentsSearchUsage).toContain("`사과|포도`=OR");
     expect(contentsSearchUsage).toContain(
-      "이 모드의 페이지 크기와 페이지 이동 폭은 현재 DART가 제어",
+      "DART 회사 코드(8자리 숫자). 자유 입력 회사명은 지원하지 않습니다.",
     );
-    expect(contentsSearchUsage).toContain("[확인됨]");
+    expect(contentsSearchUsage).not.toContain("사과포도");
+    expect(contentsSearchUsage).not.toContain(
+      "`전체`, `회사명`, `보고서명`, `보고서 목차명`, `고급검색` 모드는 아직 공개 도구가 아닙니다.",
+    );
+    expect(contentsSearchUsage).not.toContain(
+      "동의어, 문서유형(본문/첨부문서), 공시유형, 페이지 크기",
+    );
+    expect(contentsSearchUsage).not.toContain("[확인됨]");
+    expect(contentsSearchUsage).not.toContain("참고:");
     expect(contentsSearchUsage).toContain(
       "darty contents-search --keyword 배당 --start-date 20250331 --end-date 20260331",
     );
@@ -160,6 +172,20 @@ describe("parseContentsSearchCommandArgs", () => {
       page: 2,
       sortDirection: "asc",
     });
+  });
+
+  test("renders CLI-facing validation errors with flag names", () => {
+    const error = new ContentsSearchFailure({
+      code: "invalid_request",
+      message:
+        '필수 매개변수 "startDate"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+      parameter: "startDate",
+      retryable: false,
+    });
+
+    expect(renderContentsSearchCliErrorMessage(error)).toBe(
+      '필수 옵션 "--start-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+    );
   });
 
   test("rejects invalid capability input before execution", async () => {

@@ -84,6 +84,36 @@ Observed but not implemented from the Korean UI:
 - popup automation for `찾기`, autocomplete, recent-search, reset, and help flows
 - filing viewer or section retrieval after clicking a result
 
+### Official Guide Source For Descriptions
+
+Use the official DART guide as the source for Korean UI explanations and future tool-description copy:
+
+- `https://dart.fss.or.kr/guide/main.jsp?menu=122`
+- guide title: `공시 서류 검색 – 공시통합검색`
+
+The guide is broader than this spec. It explains all integrated-search modes and many UI controls that are not implemented here. It should be used to understand user-facing labels, concepts, examples, and wording, but it is not itself the replay API contract.
+
+For the currently implemented `본문내용` slice, guide-backed description details that are safe to mention in tool/help copy:
+
+- `본문내용` searches within submitted disclosure document contents.
+- The keyword field supports DART's documented common search syntax because the tool passes the keyword through to DART:
+  - AND condition (`공백`, space): `사과 포도` searches for documents where both `사과` and `포도` exist.
+  - OR condition (`|`): `사과|포도` searches for documents where either `사과` or `포도` exists.
+  - NOT condition (`!`): `사과!포도` excludes documents containing `포도` from results for `사과`.
+  - EXACT condition (`" "`): `"사과 포도"` searches for a word/phrase made exactly of `사과포도` or `사과 포도` in that order; no other word or phrase may appear between `사과` and `포도`.
+- Date fields correspond to the guide's search-period inputs; the tool requires explicit `YYYYMMDD` dates instead of modeling quick date buttons.
+- `presenterName` maps to the guide's `제출인명` concept, used when the filing presenter can differ from the target company.
+- `reportName` maps to the guide's `보고서명` narrowing field.
+
+Guide-backed details that must stay out of the public contract until implemented and tested:
+
+- synonym expansion (`동의어`)
+- document target (`본문` vs `첨부문서`)
+- disclosure-type filtering
+- page-size control
+- popup selection flows
+- non-contents search modes
+
 ## 5. Domain Model
 
 ### Primary entities

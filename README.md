@@ -42,7 +42,7 @@ darty contents-search --keyword <검색어> --start-date <YYYYMMDD> --end-date <
 
 필수 옵션:
 
-- `--keyword <검색어>`: 본문내용 입력값
+- `--keyword <검색어>`: 본문내용 검색어. DART 공통 검색 문법을 그대로 사용할 수 있습니다: `사과 포도`=AND, `사과|포도`=OR, `사과!포도`=NOT, `"사과 포도"`=정확한 구문.
 - `--start-date <YYYYMMDD>`: 검색시작일
 - `--end-date <YYYYMMDD>`: 검색종료일
 

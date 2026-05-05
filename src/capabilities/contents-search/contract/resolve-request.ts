@@ -29,6 +29,8 @@ const getExpectedToken = (rule: ContentsSearchFieldSpec): string => {
       return `one_of:${rule.enumValues.join(",")}`;
     case "string":
       return "non_empty_string";
+    case "patternString":
+      return rule.expectedToken;
     case "date":
       return "date_YYYYMMDD";
   }
@@ -45,6 +47,8 @@ const getExpectedDescription = (rule: ContentsSearchFieldSpec): string => {
       return contentsSearchValidationCopy.expectedOneOf(rule.enumValues);
     case "string":
       return contentsSearchValidationCopy.expectedNonEmptyString;
+    case "patternString":
+      return rule.description;
     case "date":
       return contentsSearchValidationCopy.expectedDateYYYYMMDD;
   }
@@ -210,14 +214,17 @@ const toInvalidContentsSearchRequest = (
     });
   }
 
-  if (rule.kind === "date") {
+  if (rule.kind === "date" || rule.kind === "patternString") {
     return new InvalidContentsSearchRequest({
       code: "invalid_parameter",
       parameter,
       reason: "invalid_format",
       expected: getExpectedToken(rule),
       actual,
-      message: contentsSearchValidationCopy.mustUseDateFormat(parameter),
+      message:
+        rule.kind === "date"
+          ? contentsSearchValidationCopy.mustUseDateFormat(parameter)
+          : contentsSearchValidationCopy.invalidParameter(parameter),
     });
   }
 
