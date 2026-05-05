@@ -21,6 +21,66 @@ type CollectedParseIssue = {
   readonly issue: ParseResult.ParseIssue;
 };
 
+const isRealYYYYMMDDDate = (value: string): boolean => {
+  const year = Number.parseInt(value.slice(0, 4), 10);
+  const month = Number.parseInt(value.slice(4, 6), 10);
+  const day = Number.parseInt(value.slice(6, 8), 10);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+};
+
+const validateResolvedRequest = (request: ContentsSearchRequest): void => {
+  if (!isRealYYYYMMDDDate(request.startDate)) {
+    throw new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter: "startDate",
+      reason: "invalid_calendar_date",
+      expected: "date_YYYYMMDD",
+      actual: request.startDate,
+      message: contentsSearchValidationCopy.mustBeRealDate(
+        "startDate",
+        request.startDate,
+      ),
+    });
+  }
+
+  if (!isRealYYYYMMDDDate(request.endDate)) {
+    throw new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter: "endDate",
+      reason: "invalid_calendar_date",
+      expected: "date_YYYYMMDD",
+      actual: request.endDate,
+      message: contentsSearchValidationCopy.mustBeRealDate(
+        "endDate",
+        request.endDate,
+      ),
+    });
+  }
+
+  if (request.startDate > request.endDate) {
+    throw new InvalidContentsSearchRequest({
+      code: "invalid_parameter",
+      parameter: "startDate",
+      reason: "start_date_after_end_date",
+      expected: "date_range_start_lte_end",
+      actual: {
+        startDate: request.startDate,
+        endDate: request.endDate,
+      },
+      message: contentsSearchValidationCopy.startDateMustNotBeAfterEndDate(
+        request.startDate,
+        request.endDate,
+      ),
+    });
+  }
+};
+
 const getExpectedToken = (rule: ContentsSearchFieldSpec): string => {
   switch (rule.kind) {
     case "integer":
@@ -224,7 +284,7 @@ const toInvalidContentsSearchRequest = (
       message:
         rule.kind === "date"
           ? contentsSearchValidationCopy.mustUseDateFormat(parameter)
-          : contentsSearchValidationCopy.invalidParameter(parameter),
+          : contentsSearchValidationCopy.mustUseDartCompanyCode(parameter),
     });
   }
 
@@ -266,6 +326,7 @@ export const resolveContentsSearchRequest = (
   const result = decodeContentsSearchRequest(input);
 
   if (result._tag === "Right") {
+    validateResolvedRequest(result.right);
     return result.right;
   }
 

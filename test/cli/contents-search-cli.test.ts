@@ -52,7 +52,7 @@ describe("contents-search CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty contents-search [options]");
     expect(stdout).toContain(
-      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서의 내용 검색 결과를 반환합니다.",
+      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서의 내용 검색 결과를 구조화된 JSON으로 반환합니다.",
     );
     expect(stdout).toContain("--keyword <text>");
     expect(stdout).toContain("명령 도움말을 표시합니다.");
@@ -144,13 +144,13 @@ describe("contents-search CLI subprocess", () => {
       "contents-search",
       "--keyword",
       "배당",
-        "--start-date",
-        "20250331",
-        "--end-date",
-        "20260331",
-        "--sort-by",
-        "corp",
-      ]);
+      "--start-date",
+      "20250331",
+      "--end-date",
+      "20260331",
+      "--sort-by",
+      "corp",
+    ]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
@@ -159,5 +159,68 @@ describe("contents-search CLI subprocess", () => {
     expect(stderr).toContain(
       '옵션 "--sort-by"은(는) 다음 중 하나여야 합니다: date, reportName.',
     );
+  });
+
+  test("explains that company-code expects a DART company code, not a stock code", () => {
+    const result = runCli([
+      "contents-search",
+      "--keyword",
+      "배당",
+      "--start-date",
+      "20250331",
+      "--end-date",
+      "20260331",
+      "--company-code",
+      "005930",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain(
+      '옵션 "--company-code"은(는) 8자리 DART 회사 코드여야 합니다.',
+    );
+    expect(stderr).toContain("회사명이나 6자리 종목코드는 사용할 수 없습니다.");
+  });
+
+  test("rejects impossible calendar dates before searching DART", () => {
+    const result = runCli([
+      "contents-search",
+      "--keyword",
+      "배당",
+      "--start-date",
+      "20250230",
+      "--end-date",
+      "20250331",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain(
+      '옵션 "--start-date"은(는) YYYYMMDD 형식의 실제 날짜여야 합니다.',
+    );
+    expect(stderr).toContain('"20250230"은(는) 유효한 날짜가 아닙니다.');
+  });
+
+  test("rejects date ranges where start-date is after end-date before searching DART", () => {
+    const result = runCli([
+      "contents-search",
+      "--keyword",
+      "배당",
+      "--start-date",
+      "20250331",
+      "--end-date",
+      "20250101",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain("검색 시작일은 종료일보다 늦을 수 없습니다.");
+    expect(stderr).toContain("startDate=20250331, endDate=20250101");
   });
 });

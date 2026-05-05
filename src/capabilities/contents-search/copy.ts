@@ -143,6 +143,12 @@ export const contentsSearchValidationCopy = {
     `매개변수 "${parameter}"은(는) 비워 둘 수 없습니다.`,
   mustUseDateFormat: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) YYYYMMDD 형식이어야 합니다.`,
+  mustBeRealDate: (parameter: string, actual: string): string =>
+    `매개변수 "${parameter}"은(는) YYYYMMDD 형식의 실제 날짜여야 합니다. "${actual}"은(는) 유효한 날짜가 아닙니다.`,
+  startDateMustNotBeAfterEndDate: (startDate: string, endDate: string): string =>
+    `검색 시작일은 종료일보다 늦을 수 없습니다. startDate=${startDate}, endDate=${endDate}.`,
+  mustUseDartCompanyCode: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) 8자리 DART 회사 코드여야 합니다. 회사명이나 6자리 종목코드는 사용할 수 없습니다. 예: 삼성전자 DART 회사 코드 00126380.`,
   invalidParameter: (parameter: string): string =>
     `매개변수 "${parameter}"이(가) 올바르지 않습니다.`,
   unknownParameter: (parameter: string): string =>

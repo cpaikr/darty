@@ -76,7 +76,7 @@ describe("resolveContentsSearchRequest", () => {
         keyword: "배당",
         startDate: "20250331",
         endDate: "20260331",
-        companyCode: "1234",
+        companyCode: "005930",
       });
       throw new Error("Expected resolution to fail.");
     } catch (error) {
@@ -90,7 +90,62 @@ describe("resolveContentsSearchRequest", () => {
       expect(error.parameter).toBe("companyCode");
       expect(error.reason).toBe("invalid_format");
       expect(error.expected).toBe("8_digit_company_code");
-      expect(error.actual).toBe("1234");
+      expect(error.actual).toBe("005930");
+      expect(error.message).toContain("8자리 DART 회사 코드");
+      expect(error.message).toContain("6자리 종목코드");
+    }
+  });
+
+  test("rejects impossible calendar dates with structured data", () => {
+    try {
+      resolveContentsSearchRequest({
+        keyword: "배당",
+        startDate: "20250230",
+        endDate: "20260331",
+      });
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidContentsSearchRequest);
+
+      if (!(error instanceof InvalidContentsSearchRequest)) {
+        throw error;
+      }
+
+      expect(error.code).toBe("invalid_parameter");
+      expect(error.parameter).toBe("startDate");
+      expect(error.reason).toBe("invalid_calendar_date");
+      expect(error.expected).toBe("date_YYYYMMDD");
+      expect(error.actual).toBe("20250230");
+      expect(error.message).toContain("실제 날짜");
+    }
+  });
+
+  test("rejects date ranges where the start date is after the end date", () => {
+    try {
+      resolveContentsSearchRequest({
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20250101",
+      });
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidContentsSearchRequest);
+
+      if (!(error instanceof InvalidContentsSearchRequest)) {
+        throw error;
+      }
+
+      expect(error.code).toBe("invalid_parameter");
+      expect(error.parameter).toBe("startDate");
+      expect(error.reason).toBe("start_date_after_end_date");
+      expect(error.expected).toBe("date_range_start_lte_end");
+      expect(error.actual).toEqual({
+        startDate: "20250331",
+        endDate: "20250101",
+      });
+      expect(error.message).toBe(
+        "검색 시작일은 종료일보다 늦을 수 없습니다. startDate=20250331, endDate=20250101.",
+      );
     }
   });
 
