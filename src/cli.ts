@@ -3,18 +3,32 @@
 import { Command } from "commander";
 
 import { defaultContentsSearchOperation } from "./app/contents-search.ts";
+import { defaultReportViewOperation } from "./app/report-view.ts";
 import {
   createContentsSearchCommandWithRunner,
   executeContentsSearchCommand,
   renderContentsSearchCliErrorMessage,
 } from "./cli/commands/contents-search.ts";
+import {
+  createReportViewCommandWithRunner,
+  executeReportViewCommand,
+  renderReportViewCliErrorMessage,
+} from "./cli/commands/report-view.ts";
+
+const writeStdout = (text: string) => {
+  console.log(text);
+};
 
 const defaultContentsSearchExecutor = {
   runOperation: (input: Record<string, unknown>) =>
     defaultContentsSearchOperation.execute(input),
-  writeStdout: (text: string) => {
-    console.log(text);
-  },
+  writeStdout,
+};
+
+const defaultReportViewExecutor = {
+  runOperation: (input: Record<string, unknown>) =>
+    defaultReportViewOperation.execute(input),
+  writeStdout,
 };
 
 const program = new Command()
@@ -26,13 +40,20 @@ const program = new Command()
     createContentsSearchCommandWithRunner((options) =>
       executeContentsSearchCommand(options, defaultContentsSearchExecutor),
     ),
+  )
+  .addCommand(
+    createReportViewCommandWithRunner((options) =>
+      executeReportViewCommand(options, defaultReportViewExecutor),
+    ),
   );
 
 if (process.argv.length <= 2) {
   program.outputHelp();
 } else {
   program.parseAsync(process.argv).catch((error) => {
-    const cliMessage = renderContentsSearchCliErrorMessage(error);
+    const cliMessage =
+      renderContentsSearchCliErrorMessage(error) ??
+      renderReportViewCliErrorMessage(error);
 
     if (cliMessage !== undefined) {
       console.error(cliMessage);

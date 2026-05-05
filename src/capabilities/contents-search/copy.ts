@@ -98,8 +98,7 @@ export const contentsSearchFailureCopy = {
 
 export const contentsSearchMcpCopy = {
   instructions:
-    `Darty는 읽기 전용 DART 공시통합검색 도구입니다. 현재 공개 MCP 도구는 \`contents-search\` 하나이며, DART \`본문내용\` 모드에서 제출 공시문서의 내용 일치 항목을 찾아 구조화된 JSON으로 반환합니다. 필수 입력은 keyword, startDate, endDate이고 날짜는 YYYYMMDD 형식입니다. ${dartSearchSyntaxDetails} 회사 필터가 필요하면 회사명/종목코드가 아니라 확인된 8자리 DART 회사 코드(companyCode)를 사용하세요.`,
-  unknownTool: (name: string): string => `알 수 없는 도구입니다: "${name}".`,
+    `contents-search는 읽기 전용 DART 공시통합검색 도구입니다. DART \`본문내용\` 모드에서 제출 공시문서의 내용 일치 항목을 찾아 구조화된 JSON으로 반환합니다. 필수 입력은 keyword, startDate, endDate이고 날짜는 YYYYMMDD 형식입니다. ${dartSearchSyntaxDetails} 회사 필터가 필요하면 회사명/종목코드가 아니라 확인된 8자리 DART 회사 코드(companyCode)를 사용하세요.`,
 } as const;
 
 export const contentsSearchResultCopy = {

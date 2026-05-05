@@ -3,8 +3,10 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 import { createContentsSearchOperation } from "../app/contents-search.ts";
+import { createReportViewOperation } from "../app/report-view.ts";
 import { executeContentsSearchCommand } from "../cli/commands/contents-search.ts";
 import type { ContentsSearchProvider } from "../capabilities/contents-search/provider.ts";
+import type { ReportViewProvider } from "../capabilities/report-view/provider.ts";
 import { createDartyMcpServer } from "./server.ts";
 
 type TextContentBlock = {
@@ -75,10 +77,59 @@ const createProviderResult = () => ({
   warnings: [],
 });
 
-const connectMcpPair = async (provider: ContentsSearchProvider) => {
+const createReportViewProviderResult = () => ({
+  receipt: {
+    receiptNumber: "20260331004166",
+  },
+  document: {
+    id: "document:body:1",
+    title: "사업보고서",
+    kind: "body" as const,
+    selected: true,
+  },
+  documents: [
+    {
+      id: "document:body:1",
+      title: "사업보고서",
+      kind: "body" as const,
+      selected: true,
+    },
+  ],
+  toc: [
+    {
+      id: "section:1",
+      title: "사 업 보 고 서",
+      children: [],
+    },
+  ],
+  metadata: {
+    fetchedAt: "2026-05-05T00:00:00.000Z",
+    source: {
+      system: "dart" as const,
+      surface: "dsaf001" as const,
+      endpoints: {
+        shell: "https://dart.fss.or.kr/dsaf001/main.do",
+      },
+    },
+    tocSource: "dart" as const,
+    outputFormat: "html" as const,
+  },
+  references: {
+    viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+  },
+  warnings: [],
+});
+
+const connectMcpPair = async (
+  provider: ContentsSearchProvider,
+  reportViewProvider: ReportViewProvider = {
+    view: async () => createReportViewProviderResult(),
+  },
+) => {
   const server = createDartyMcpServer({
     operations: {
       contentsSearch: createContentsSearchOperation(provider),
+      reportView: createReportViewOperation(reportViewProvider),
     },
   });
   const client = new Client(
@@ -102,16 +153,19 @@ const connectMcpPair = async (provider: ContentsSearchProvider) => {
 };
 
 describe("createDartyMcpServer", () => {
-  test("lists one contents-search tool with shared input and output schemas", async () => {
+  test("lists contents-search and report-view tools with shared input and output schemas", async () => {
     const { client, close } = await connectMcpPair({
       search: async () => createProviderResult(),
     });
 
     try {
       const result = await client.listTools();
-      const [tool] = result.tools;
+      const tool = result.tools.find((candidate) => candidate.name === "contents-search");
+      const reportViewTool = result.tools.find(
+        (candidate) => candidate.name === "report-view",
+      );
 
-      expect(result.tools).toHaveLength(1);
+      expect(result.tools).toHaveLength(2);
       expect(tool).toMatchObject({
         name: "contents-search",
         title: "DART 본문내용 검색",
@@ -141,6 +195,20 @@ describe("createDartyMcpServer", () => {
       expect(tool?.outputSchema?.properties?.references).toBeDefined();
       expect(tool?.outputSchema?.properties?.warnings).toBeDefined();
       expect(tool?.outputSchema?.properties?.error).toBeUndefined();
+      expect(reportViewTool).toMatchObject({
+        name: "report-view",
+        title: "DART 보고서 보기",
+        annotations: {
+          title: "DART 보고서 보기",
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
+      });
+      expect(reportViewTool?.inputSchema.required).toEqual(["receipt"]);
+      expect(reportViewTool?.inputSchema.properties?.receipt).toBeDefined();
+      expect(reportViewTool?.inputSchema.properties?.sectionId).toBeDefined();
+      expect(reportViewTool?.outputSchema?.properties?.result).toBeDefined();
     } finally {
       await close();
     }
@@ -194,6 +262,66 @@ describe("createDartyMcpServer", () => {
         },
         metadata: {
           completeness: "complete",
+        },
+      });
+      expect(content[0]?.type).toBe("text");
+      expect(JSON.parse(content[0]?.text ?? "")).toEqual(result.structuredContent);
+    } finally {
+      await close();
+    }
+  });
+
+  test("executes the shared report-view operation and returns a structured result envelope", async () => {
+    let receivedRequest: Record<string, unknown> | undefined;
+    const { client, close } = await connectMcpPair(
+      {
+        search: async () => createProviderResult(),
+      },
+      {
+        view: async (request) => {
+          receivedRequest = request as unknown as Record<string, unknown>;
+          return createReportViewProviderResult();
+        },
+      },
+    );
+
+    try {
+      const result = await client.callTool({
+        name: "report-view",
+        arguments: {
+          receipt: "20260331004166",
+          sectionId: "section:1",
+        },
+      });
+      const content = result.content as readonly TextContentBlock[];
+
+      expect(receivedRequest).toEqual({
+        receipt: "20260331004166",
+        documentId: undefined,
+        sectionId: "section:1",
+        outputFormat: "html",
+        maxBytes: 200000,
+      });
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toMatchObject({
+        result: {
+          request: {
+            receipt: "20260331004166",
+            sectionId: "section:1",
+            outputFormat: "html",
+          },
+          receipt: {
+            receiptNumber: "20260331004166",
+          },
+          toc: [
+            {
+              id: "section:1",
+              title: "사 업 보 고 서",
+            },
+          ],
+        },
+        metadata: {
+          tocSource: "dart",
         },
       });
       expect(content[0]?.type).toBe("text");

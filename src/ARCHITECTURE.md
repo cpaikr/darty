@@ -6,9 +6,9 @@ shape and document ownership.
 
 ## Purpose
 
-`src/` contains the first executable slice of `darty`: one public
-`contents-search` capability, local CLI and MCP transports, and one internal
-DART `dsab007` source adapter.
+`src/` contains the executable slice of `darty`: public `contents-search` and
+`report-view` capabilities, local CLI and MCP transports, and internal DART
+source adapters for `dsab007` search and `dsaf001` report viewing.
 
 The design goal is to keep the core reusable across transports. CLI and MCP now
 share the same capability contract and execution path while choosing their own
@@ -36,7 +36,7 @@ graph TD
     end
 
     subgraph Src["Source Adapters · src/sources/dart/"]
-        SRC["Replay contract · form builder · HTML parser"]
+        SRC["Replay/viewer contracts · request builders · HTML parsers"]
     end
 
     CLI --> APP
@@ -51,9 +51,14 @@ graph TD
 | **Transport** | `src/cli.ts`, `src/cli/`, `src/mcp.ts`, `src/mcp/` | Parse transport input, own transport UX/protocol metadata, call the shared operation, and serialize results |
 | **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
 | **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
-| **Source** | `src/sources/dart/` | DART replay fields, form POST, HTML parsing, error mapping |
+| **Source** | `src/sources/dart/` | DART replay/viewer fields, form POST or viewer GETs, HTML parsing, source models, and error mapping |
 
 ## Component Map
+
+The diagram shows the established `contents-search` path. `report-view` uses the
+same transport/app/capability shape through `app/report-view.ts`,
+`capabilities/report-view/`, `cli/commands/report-view.ts`, and
+`sources/dart/dsaf001/report/`.
 
 ```mermaid
 graph TD
@@ -115,14 +120,16 @@ graph TD
 - **`src/mcp.ts` / `src/mcp/`** — MCP stdio transport. Lists tools, advertises
   the shared request/result JSON Schemas, and reports tool errors inside
   `CallToolResult`.
-- **`src/app/`** — Shared operation wiring. Exposes the operation name, JSON
-  Schemas, and capability executor with the default `dsab007` provider already
+- **`src/app/`** — Shared operation wiring. Exposes operation names, JSON
+  Schemas, and capability executors with the default DART providers already
   attached.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
   flow. Defines semantic inputs, success result shapes, typed failures, and
   execution logic.
-- **`src/sources/dart/`** — Internal DART adapters. Owns replay schemas,
-  request forms, HTML parsing, source models, and error mapping.
+- **`src/sources/dart/`** — Internal DART adapters. Owns replay/viewer schemas,
+  request construction, HTML parsing/sanitization, source models, and error mapping.
+  `dsab007/contents` powers search; `dsaf001/report` resolves receipt viewer
+  shells, document selectors, TOCs, content planning, navigation, and section HTML.
 
 ## Behavior-First Core
 
@@ -151,13 +158,13 @@ How it works:
    failures, and semantic validation rules.
 2. **`spec.ts`** exports the operation name plus request/result JSON Schemas for
    transports and tooling.
-3. **`app/contents-search.ts`** wires those schemas and the shared executor to
-   the default provider implementation.
-4. **`cli/commands/contents-search.ts`** defines the CLI UX explicitly, then
-   delegates to the shared operation.
+3. **`app/`** wires those schemas and shared executors to the default provider
+   implementations.
+4. **`cli/commands/`** defines each CLI UX explicitly, then delegates to the
+   shared operation.
 5. **`mcp/server.ts`** defines MCP tool metadata explicitly, advertises the
-   shared request/result schemas, then delegates tool calls to the same shared
-   operation.
+   shared request/result schemas, then delegates tool calls to the matching
+   shared operation.
 
 One source of truth gives you:
 
@@ -172,6 +179,14 @@ What is intentionally *not* centralized:
 - MCP titles, annotations, and text rendering
 
 ## Runtime Flow
+
+The detailed diagram below shows the `contents-search` path. `report-view`
+follows the same transport/app/capability/provider layering, but its source
+adapter uses GET requests against `/dsaf001/main.do` and `/report/viewer.do`
+instead of the `dsab007` POST replay flow. Inside `dsaf001/report`, `view.ts`
+keeps the top-level provider orchestration while `source.ts`, `plan.ts`,
+`content.ts`, and `navigation.ts` own fetch seams, content selection, HTML
+truncation, and TOC navigation respectively.
 
 ```mermaid
 graph TD

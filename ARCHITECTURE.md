@@ -10,6 +10,8 @@ This repo now has two layers:
 The CLI is not the real app. The capability layer is: a semantic request
 contract, a provider interface, and an execution path that normalizes errors
 and shapes results. The CLI and MCP transports both sit over that same core.
+The current core has two public capabilities: `contents-search` for DART body
+search and `report-view` for receipt-based report TOC/section retrieval.
 
 For layer diagrams, the schema derivation chain, the runtime pipeline, the
 two-schema boundary, and the MCP extension seam, see
@@ -76,10 +78,16 @@ argv -> src/cli.ts -> cli/commands/contents-search.ts
      -> sources/dart/dsab007/contents/search.ts
      -> /dsab007/search.ax
 
+argv -> src/cli.ts -> cli/commands/report-view.ts
+     -> executeReportViewCommand()
+     -> app/report-view.ts -> capabilities/report-view/execute.ts
+     -> sources/dart/dsaf001/report/
+     -> /dsaf001/main.do -> /report/viewer.do
+
 MCP tools/call -> src/mcp.ts -> mcp/server.ts
-               -> app/contents-search.ts -> capabilities/contents-search/execute.ts
-               -> sources/dart/dsab007/contents/search.ts
-               -> /dsab007/search.ax
+               -> app/{contents-search,report-view}.ts
+               -> capabilities/{contents-search,report-view}/execute.ts
+               -> sources/dart/{dsab007/contents,dsaf001/report}
 ```
 
 See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the full runtime pipeline,

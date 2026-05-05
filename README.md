@@ -1,8 +1,8 @@
 # darty
 
-한국 DART 공시를 검색하는 Bun CLI입니다.
+한국 DART 공시를 검색하고 조회하는 Bun CLI입니다.
 
-`darty`는 DART 검색 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `contents-search` 명령으로 DART 공시 본문내용 검색을 지원합니다.
+`darty`는 DART 검색/조회 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `contents-search`로 DART 공시 본문내용 검색을, `report-view`로 접수번호 기반 보고서 목차/섹션 조회를 지원합니다.
 
 ## 필요 사항
 
@@ -61,9 +61,42 @@ darty contents-search --keyword <검색어> --start-date <YYYYMMDD> --end-date <
 darty contents-search --help
 ```
 
+### `report-view`
+
+DART 접수번호 또는 viewer URL로 보고서 문서 목록/목차를 확인하고, 필요한 목차 섹션만 정제된 HTML로 반환합니다.
+
+```bash
+darty report-view --receipt <접수번호-or-viewer-url>
+```
+
+섹션 조회:
+
+```bash
+darty report-view --receipt 20260331004166 --section-id section:5.6
+```
+
+필수 옵션:
+
+- `--receipt <접수번호-or-viewer-url>`: DART 접수번호 또는 `/dsaf001/main.do?rcpNo=...` viewer URL. URL에 `dcmNo`가 있으면 해당 문서 선택에 내부적으로 사용합니다.
+
+선택 옵션:
+
+- `--document-id <id>`: `report-view` 결과의 `documents[].id`. 생략하면 기본 본문 문서입니다.
+- `--section-id <id>`: `report-view` 결과의 `toc[].id`. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다.
+- `--output-format <html>`: 출력 형식. 현재는 `html`만 지원하며 기본값도 `html`입니다.
+- `--max-bytes <숫자>`: 반환 HTML 최대 바이트 수, 기본값 `200000`
+
+동작:
+
+- TOC가 있는 문서는 기본 호출에서 문서 목록과 목차만 반환합니다.
+- `--section-id`를 지정하면 해당 섹션의 sanitized HTML과 이전/다음/상위 navigation을 반환합니다.
+- TOC가 없는 문서는 `--section-id` 없이 기본 호출에서 선택 문서 HTML을 반환하고 warning을 포함합니다.
+- 내부 DART viewer 파라미터(`dcmNo`, `eleId`, `offset`, `length`, `dtd`)는 공개 옵션으로 노출하지 않습니다.
+
 ## 참고
 
 - 이 도구는 읽기 전용입니다.
 - 현재 `contents-search`는 DART `공시통합검색` 화면의 `본문내용` 검색 모드만 구현합니다. 회사명, 보고서명, 목차명, 고급검색 전체를 구현한 것은 아닙니다.
-- 공개 DART 웹 검색 동작을 사용하므로 DART 변경의 영향을 받을 수 있습니다.
+- `report-view`는 DART `dsaf001` viewer shell과 `/report/viewer.do` 본문 iframe 동작에 기반합니다.
+- 공개 DART 웹 동작을 사용하므로 DART 변경의 영향을 받을 수 있습니다.
 - 현재 공개 CLI는 의미 기반 옵션만 노출하며, 내부 DART 재현 필드는 CLI 계약에 포함하지 않습니다.
