@@ -4,10 +4,7 @@ import {
   ContentsSearchFailure,
   resolveContentsSearchRequest,
 } from "./contract.ts";
-import {
-  executeContentsSearch,
-  executeResolvedContentsSearch,
-} from "./execute.ts";
+import { executeContentsSearch } from "./execute.ts";
 import { ContentsSearchProviderError } from "./provider.ts";
 
 describe("executeContentsSearch", () => {
@@ -190,7 +187,7 @@ describe("executeContentsSearch", () => {
       endDate: "20260331",
     });
 
-    const result = await executeResolvedContentsSearch(request, {
+    const result = await executeContentsSearch(request, {
       search: async () => ({
         pagination: {
           currentPage: 1,
@@ -243,7 +240,7 @@ describe("executeContentsSearch", () => {
 
   test("maps source failures into capability-owned structured errors", async () => {
     await expect(
-      executeResolvedContentsSearch(
+      executeContentsSearch(
         resolveContentsSearchRequest({
           keyword: "배당",
           startDate: "20250331",
@@ -270,7 +267,7 @@ describe("executeContentsSearch", () => {
 
   test("classifies unexpected provider failures as internal errors", async () => {
     await expect(
-      executeResolvedContentsSearch(
+      executeContentsSearch(
         resolveContentsSearchRequest({
           keyword: "배당",
           startDate: "20250331",

@@ -1,12 +1,8 @@
 import type {
   ContentsSearchRawInput,
-  ContentsSearchRequest,
   ContentsSearchResult,
 } from "../capabilities/contents-search/contract.ts";
-import {
-  executeContentsSearch,
-  executeResolvedContentsSearch,
-} from "../capabilities/contents-search/execute.ts";
+import { executeContentsSearch } from "../capabilities/contents-search/execute.ts";
 import type { ContentsSearchProvider } from "../capabilities/contents-search/provider.ts";
 import {
   contentsSearchInputJsonSchema,
@@ -28,9 +24,6 @@ export type ContentsSearchOperation = {
   readonly execute: (
     input: Partial<ContentsSearchRawInput> & Record<string, unknown>,
   ) => Promise<ContentsSearchResult>;
-  readonly executeResolved: (
-    request: ContentsSearchRequest,
-  ) => Promise<ContentsSearchResult>;
 };
 
 export const createContentsSearchOperation = (
@@ -40,7 +33,6 @@ export const createContentsSearchOperation = (
   inputJsonSchema: contentsSearchInputJsonSchema,
   resultJsonSchema: contentsSearchResultJsonSchema,
   execute: (input) => executeContentsSearch(input, provider),
-  executeResolved: (request) => executeResolvedContentsSearch(request, provider),
 });
 
 export const defaultContentsSearchOperation = createContentsSearchOperation(

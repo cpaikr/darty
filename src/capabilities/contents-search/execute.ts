@@ -4,7 +4,6 @@ import {
   InvalidContentsSearchRequest,
   resolveContentsSearchRequest,
   type ContentsSearchRawInput,
-  type ContentsSearchRequest,
   type ContentsSearchResult,
 } from "./contract.ts";
 import {
@@ -79,15 +78,3 @@ export const executeContentsSearch = async (
   }
 };
 
-export const executeResolvedContentsSearch = async (
-  request: ContentsSearchRequest,
-  provider: ContentsSearchProvider,
-): Promise<ContentsSearchResult> => {
-  try {
-    const providerResult = await provider.search(request);
-
-    return buildContentsSearchResult(request, providerResult);
-  } catch (error) {
-    throw toContentsSearchFailure(error);
-  }
-};
