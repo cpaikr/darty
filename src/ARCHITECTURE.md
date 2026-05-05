@@ -175,9 +175,10 @@ What is intentionally *not* centralized:
 
 ```mermaid
 graph TD
-    INPUT["CLI flags / MCP input"]
-    PARTIAL["Partial raw input\n· semantic names ·"]
-    CMD["executeContentsSearchCommand()"]
+    CLI_INPUT["CLI flags"]
+    MCP_INPUT["MCP tool arguments"]
+    CLI_CMD["executeContentsSearchCommand()\nCLI-only stdout handling"]
+    APP["src/app/contents-search.ts\nshared operation"]
     RESOLVE["resolveContentsSearchRequest()"]
     REQUEST["Validated\nContentsSearchRequest"]
     PROVIDER["provider.search()"]
@@ -190,11 +191,13 @@ graph TD
     SOURCE_PAGE["SourceContentsSearchPage"]
     TO_RESULT["toDsab007ContentsProviderResult()"]
     ENVELOPE["ContentsSearchResult\nenvelope"]
-    OUTPUT["JSON to stdout"]
+    CLI_OUTPUT["JSON to stdout"]
+    MCP_OUTPUT["CallToolResult\nstructuredContent + text"]
 
-    INPUT --> PARTIAL
-    PARTIAL --> CMD
-    CMD --> RESOLVE
+    CLI_INPUT --> CLI_CMD
+    CLI_CMD --> APP
+    MCP_INPUT --> APP
+    APP --> RESOLVE
     RESOLVE --> REQUEST
     REQUEST --> PROVIDER
     PROVIDER --> TO_REPLAY
@@ -206,33 +209,25 @@ graph TD
     PARSE_HTML --> SOURCE_PAGE
     SOURCE_PAGE --> TO_RESULT
     TO_RESULT --> ENVELOPE
-    ENVELOPE --> OUTPUT
+    ENVELOPE --> CLI_OUTPUT
+    ENVELOPE --> MCP_OUTPUT
 ```
 
 Step by step:
 
-1. Transport (CLI or MCP) converts transport syntax into a partial
-   object keyed by public semantic names (`keyword`, `startDate`, etc.).
-2. `executeContentsSearchCommand()` passes the semantic raw input into the
-   injected capability executor and prints exactly one JSON payload on success.
-3. `resolveContentsSearchRequest()` rejects unknown parameters, then uses the
-   public request schema to apply defaults and validate required fields, enums,
-   integer bounds, and date formats.
-4. `src/app/contents-search.ts` wires the shared capability executor to the
-   default `dsab007ContentsProvider`, and both transports reuse that operation.
-5. `toDsab007ContentsReplayInput()` translates the public request into the
-   internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
+1. CLI converts flags into a partial object keyed by public semantic names (`keyword`, `startDate`, etc.) and calls `executeContentsSearchCommand()`.
+2. MCP receives JSON tool arguments and calls the shared operation from `src/app/contents-search.ts` directly.
+3. `resolveContentsSearchRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
+4. `src/app/contents-search.ts` wires the shared capability executor to the default `dsab007ContentsProvider`, and both transports reuse that operation.
+5. `toDsab007ContentsReplayInput()` translates the public request into the internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
 6. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
 7. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax`.
-8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from
-   the HTML fragment.
+8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from the HTML fragment.
 9. `toDsab007ContentsProviderResult()` maps source rows into public items.
-10. `buildContentsSearchResult()` wraps the provider result in a
-   capability-owned envelope with metadata, references, and warnings.
+10. `buildContentsSearchResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
+11. The CLI serializes the envelope as exactly one JSON stdout payload; MCP returns it as `structuredContent` plus matching text content.
 
-Semantic validation happens inside the capability executor, not in the CLI.
-This is important for MCP: MCP should call the same executor, not reimplement
-validation.
+Semantic validation happens inside the capability executor, not in the CLI or MCP transport. This keeps both adapters aligned without reimplementing validation.
 
 ## Two Schemas
 

@@ -12,7 +12,7 @@ This directory holds model-in-the-loop evals for `darty` tool use.
 
 ## Test boundary
 
-The repo has three verification layers:
+The repo has four verification layers:
 
 1. **Direct tool/API tests**
    - No LLM.

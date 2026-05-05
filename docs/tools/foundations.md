@@ -79,7 +79,7 @@ Keeping those separate makes design and reuse much easier.
 The repo should standardize principles and evaluation rules, not force one payload shape across all tools.
 
 - `domain access tools`
-  DART, OpenDART, related regulatory sources
+  DART directly today; OpenDART and related regulatory sources only as clearly marked adjacent or future investigations
 - `document retrieval tools`
   filing sections, PDFs, XBRL documents
 - `transformation tools`

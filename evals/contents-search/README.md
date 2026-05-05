@@ -83,16 +83,16 @@ Install deps first:
 bun install
 ```
 
-Create `.env.local` in the repo root with `OPENAI_API_KEY`, then validate the environment:
-
-```bash
-bun run env:check
-```
-
-Run the fixed-command CLI eval:
+Run the fixed-command CLI eval. This track does not require an OpenAI API key:
 
 ```bash
 bun run eval:contents:cli
+```
+
+For the agentic CLI and MCP evals, create `.env.local` in the repo root with `OPENAI_API_KEY`, then validate the environment:
+
+```bash
+bun run env:check
 ```
 
 Run the agentic CLI eval:

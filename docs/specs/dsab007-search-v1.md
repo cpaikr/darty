@@ -82,24 +82,15 @@ These appear in the viewer contract, not the first search-result contract.
 - `error cases`
   `invalid_request`, `source_unavailable`, `source_changed`, `source_parse_failure`, `internal_error`
 - `warning cases`
-  `partial_retrieval`
+  `partial_rows_dropped` when the parser drops incomplete result rows from an otherwise successful response
 - `safety class`
   read-only
 
-### `get_filing_viewer`
+### Deferred: `get_filing_viewer`
 
-- `purpose`
-  Return the filing viewer URL and core filing ids from a parsed search row.
-- `inputs`
-  `rcpNo`, optional `dcmNo`, optional `keyword`
-- `output`
-  `viewerUrl`, `references`
-- `error cases`
-  `invalid_input`, `not_found`
-- `safety class`
-  read-only
+A separate viewer operation is not implemented in the current v1 slice. For now, each `search_contents` result item includes `references.viewerUrl` plus filing identifiers such as `receiptNumber` and optional `documentNumber`.
 
-Section retrieval is intentionally deferred to a later spec once the filing-level contract is stable.
+Section retrieval and standalone viewer lookup are intentionally deferred to a later spec once the filing-level contract is stable.
 
 ## 6. Current Contract Stance
 
@@ -156,8 +147,8 @@ Observed `option=contents` restriction:
 
 - `structured`
   capability-owned result envelope with public items, metadata, references, and warnings
-- `raw`
-  original HTML fragment from `/dsab007/search.ax`
+
+`raw` HTML from `/dsab007/search.ax` stays internal for fixtures, debugging, and parser tests. It is not exposed by the current public CLI or MCP contract.
 
 ## 8. Observed Upstream Contract
 
@@ -167,11 +158,11 @@ Observed request:
 - successful anonymous replay in tested cases
 - `option=contents` is the first implemented mode
 - request fields mirror DART names more closely than the first semantic prototype did
-- result paging through `currentPage` and `maxResults`
+- result paging through `currentPage`; page size is currently upstream-controlled even though `maxResults` is accepted in the replay payload
 
 Current implementation note:
 
-- live validation on 2026-03-31 still suggests DART may ignore caller-controlled `maxResults`
+- live validation on 2026-03-31 and replay-contract probes show `maxResults` is accepted but ignored for tested values
 - the replay adapter should expose the field internally, but the public capability should not present it as a stable caller-controlled input
 - live validation on 2026-04-01 still shows `maxLinks` being accepted but ignored for `option=contents`
 - the public capability should treat page size and pager width as upstream-controlled for now

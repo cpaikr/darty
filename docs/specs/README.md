@@ -9,4 +9,4 @@ A document belongs here when it defines an implementation target, such as:
 - identifier and citation rules
 - explicit errors, warnings, and constraints
 
-Do not put product vision or open-ended investigation plans here. Keep those in the repo root.
+Do not put product vision or open-ended investigation notes here. Keep product direction in the repo root and source investigation under `docs/research/`.

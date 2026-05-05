@@ -8,8 +8,8 @@ When a target site has underlying APIs or stable request patterns, do not make a
 
 Examples:
 
-- `https://dart.fss.or.kr/`
-- `https://opendart.fss.or.kr/`
+- `https://dart.fss.or.kr/` for the current darty source surface
+- `https://opendart.fss.or.kr/` only as an adjacent or future source investigation unless a spec explicitly adopts it
 
 ## Recommended Design Sequence
 
@@ -37,13 +37,13 @@ Examples:
 - exposing only a generic `search(query)` endpoint
 - leaking fragile UI parameters into the public contract without justification
 - returning scraped HTML fragments when a cleaner domain object is possible
-- forcing the agent to manage pagination manually when the tool can abstract it
+- forcing the agent to discover or traverse pagination manually when the tool can provide a semantic page or cursor contract; explicit page controls are fine when the source exposes stable paging but not stable page-size control
 
 ## Hard Cases
 
 - undocumented parameters
 - mixed HTML and API flows
-- identifier mismatches across DART and OpenDART
+- identifier mismatches across DART surfaces, and across OpenDART if a future capability adopts it
 - filing revisions and corrected reports
 - source-side terminology drift
 - rate limits or anti-bot behavior

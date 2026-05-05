@@ -1,6 +1,6 @@
 # DART Source Map
 
-Captured on 2026-03-31.
+Initially captured on 2026-03-31. Updated with replay-contract probes on 2026-04-01.
 
 Method:
 
@@ -115,11 +115,14 @@ Observed replay result shape:
 - `totalCnt` as a hidden input
 - pagination like `[1/4] [총 32건]`
 
-Observed pagination constraint:
+Observed field behavior for the current `option=contents` replay contract:
 
-- live validation on 2026-03-31 suggests `maxResults` is not a stable public control for `option=contents`
-- replayed requests with `maxResults=2` still returned 10 rows and page counts consistent with 10-row paging
-- treat page size as upstream-controlled for now
+- `currentPage` is accepted and honored for result paging
+- `maxResults` is accepted by the endpoint but ignored for tested values; replayed requests with `maxResults=2` still returned 10 rows and page counts consistent with 10-row paging
+- `maxLinks` is accepted by the endpoint but ignored for tested values; pager width remains upstream-controlled
+- `textCrpCik`, `textPresenterNm`, and `reportName` are accepted and honored in tested seeded filters
+- `textCrpNm` is accepted but ignored for the replay shape used here
+- treat page size and pager width as upstream-controlled for now
 
 Observed no-result behavior:
 
@@ -152,9 +155,14 @@ Treat body-content search as the first-class v1 entrypoint:
 - keep search and retrieval separate
 - keep XBRL as an explicit extension point, not an assumed v1 dependency
 
-## Immediate Follow-Ups
+## Follow-Ups
+
+Completed for the first contents-search slice:
+
+- classified the implemented `/dsab007/search.ax` contents replay fields into public semantic inputs versus internal replay-only fields
+- defined and implemented the parsed result row model for the current tool contract
+
+Still open:
 
 - confirm what request shape `/report/viewer.do` accepts directly and what it returns
-- classify which `/dsab007/search.ax` fields are public inputs versus replay-only noise
-- define the parsed result row model for the tool contract
 - choose whether v1 section retrieval starts at full filing documents or specific TOC sections

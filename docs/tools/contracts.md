@@ -11,7 +11,7 @@ This document covers single-tool interface design. For conventions shared across
 Prefer inputs that are:
 
 - `semantic`
-  Use fields like `company_name`, `corp_code`, `filing_date_range`, `report_name`, or `section_query` instead of one overloaded free-form string.
+  Use fields like `companyName`, `companyCode`, `filingDateRange`, `reportName`, or `sectionQuery` instead of one overloaded free-form string. Match the public contract's naming style; keep raw source names in adapter internals.
 - `bounded`
   Include scope, limits, offsets, and modes.
 - `composable`
@@ -68,7 +68,7 @@ Useful error categories:
 - `rate_limited`
 - `source_unavailable`
 - `source_changed`
-- `partial_retrieval`
+- `partial_retrieval` for broad partial-result failures; individual tools may use narrower warning codes such as `partial_rows_dropped`
 - `unsupported_surface`
 - `internal_failure`
 
@@ -85,9 +85,9 @@ Traceability is a core contract feature, not optional metadata.
 
 Examples:
 
-- filing search: `rcp_no`, `corp_code`, `report_nm`, `rcept_dt`
-- viewer section: `rcp_no`, `dcm_no`, `ele_id`, `toc_no`, source URL
-- PDF: `rcp_no`, `dcm_no`, download URL
-- XBRL: `rcp_no`, statement type, source URL
+- filing search: public fields such as `receiptNumber`, `companyCode`, `reportTitle`, `receiptDate`; source fields such as `rcpNo`, `corpCik`, or `rcept_dt` only when preserving source evidence matters
+- viewer section: `receiptNumber`, `documentNumber`, `eleId`, `tocNo`, source URL
+- PDF: `receiptNumber`, `documentNumber`, download URL
+- XBRL: `receiptNumber`, statement type, source URL
 
 Without stable references, agents cannot verify, quote, or recover reliably.

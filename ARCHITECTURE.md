@@ -18,7 +18,7 @@ two-schema boundary, and the MCP extension seam, see
 ## Document Ownership
 
 - [README.md](README.md)
-  Orientation, repo stance, and reading order.
+  Public CLI orientation, install-free quickstart, command usage, and current read-only caveats.
 - [VISION.md](VISION.md)
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
@@ -42,7 +42,7 @@ two-schema boundary, and the MCP extension seam, see
 3. Use [docs/research/dart-source-map.md](docs/research/dart-source-map.md) to understand what the live source actually exposes today.
 4. Use [docs/tools/foundations.md](docs/tools/foundations.md) and the linked tool docs to shape the contract.
 5. Promote only evidence-backed, implementation-ready capability specs into [docs/specs/](docs/specs/README.md).
-6. Keep the first implementation slice small: `dsab007` contracts, shared request/client seams, one mode parser, and CLI before section retrieval.
+6. Keep the first implementation slice small: `dsab007` contracts, shared request/client seams, one mode parser, and thin CLI/MCP adapters before section retrieval.
 7. Keep tool rules in the tool docs; link to canonical guidance instead of duplicating it.
 
 ## Invariants
@@ -96,5 +96,5 @@ If the current single-package shape holds up, expand carefully:
 - `docs/specs/` for stable capability specs
 - `src/` for the core capability while the surface is still small
 - `packages/cli` only if the CLI outgrows a single-package layout
-- `packages/mcp` only after the core contract is stable
+- `packages/mcp` only if the local MCP adapter outgrows the single-package layout after the core contract is stable
 - `evals/` for agent task evals and transcripts

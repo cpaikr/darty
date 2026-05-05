@@ -25,15 +25,27 @@ An agent tool should be evaluated on:
 
 ### Contract tests
 
-Verify input validation, output shape, and error codes.
+Verify input validation, output shape, and error codes. Keep these near the code that owns the contract, usually colocated `*.test.ts` files.
 
-### Golden retrieval tests
+### Source and fixture tests
 
-For DART-like tools, preserve canonical fixtures and expected outputs for search, filing metadata, and section retrieval.
+For DART-like tools, preserve canonical fixtures and expected outputs for the implemented surface. Current `contents-search` coverage focuses on search rows, pagination, warnings, and filing-level references; filing metadata and section retrieval belong to later capabilities.
+
+### Live checks
+
+Use opt-in live checks for source behavior that fixtures cannot prove, such as upstream field handling and source drift. In this repo, those belong under `test/live/`.
 
 ### Scenario evals
 
-Use user-like tasks:
+Use user-like tasks at the capability level. Put scenario-style CLI and model-in-the-loop checks under `evals/` when they exercise live task usefulness or agent/tool wiring rather than narrow unit behavior.
+
+Current `contents-search` examples:
+
+- run a fixed CLI contents search and assert the stdout envelope has filing references
+- ask a model to invoke the structured local CLI runner with keyword, date range, and optional company filter
+- ask a model with the local MCP server attached to use `contents-search` and assert the returned structured envelope
+
+Future retrieval examples:
 
 - "Find Samsung Electronics' latest annual report and return the filing reference."
 - "Retrieve the MD&A section from a filing and cite the section pointer."
@@ -47,7 +59,7 @@ Probe:
 - filing revisions and amended reports
 - source-side HTML changes
 - rate-limited or partially unavailable surfaces
-- auth-required OpenDART paths
+- auth-required adjacent-source paths, such as future OpenDART experiments
 - section pointers that no longer align with viewer offsets
 
 ## Measure Agent Burden
@@ -64,7 +76,7 @@ Watch for:
 
 ## Recommended Artifact Per Tool
 
-Each future tool should have a compact eval document with:
+Each future tool or capability eval track should have a compact eval document with:
 
 - target tasks
 - success criteria

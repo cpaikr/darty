@@ -2,6 +2,8 @@
 
 Use this for each future tool or tool family. Fill it alongside [../contracts.md](../contracts.md), [../transport-decision.md](../transport-decision.md), and [../evaluation.md](../evaluation.md), not instead of them.
 
+Only promote a document into `docs/specs/` when it is an evidence-backed implementation target. Keep exploratory source notes in `docs/research/` and product direction in the repo-root vision docs.
+
 ## 1. Identity
 
 - `name`
@@ -73,3 +75,5 @@ For each operation:
 - source instability risks
 - unresolved contract decisions
 - likely future extensions
+
+Keep this section short. If an open question requires live investigation or source evidence, link to the research note instead of turning the spec into an investigation log.

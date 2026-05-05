@@ -17,7 +17,7 @@ The target experience should be closer to `yfinance` than browser automation:
 - predictable structured results
 - stable identifiers and references
 - easy local scripting for humans
-- easy wrapping for MCP later
+- easy use through the CLI today and MCP-capable agent runtimes as the contract stabilizes
 
 ## Why This Exists
 
@@ -50,7 +50,7 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - `structured over prose`: return typed records, not generated explanations
 - `source-explicit`: state whether a result came from DART search HTML, viewer HTML, RSS, or a fallback
 - `dart-shaped first`: keep low-level DART search details explicit before adding higher-level wrappers
-- `transport-light`: start with a reusable core and a CLI; add MCP later if justified
+- `transport-light`: keep one reusable core; let CLI and MCP stay thin adapters over the same contract
 - `public-read first`: v1 should target read-only access
 
 ## v1 Boundaries
@@ -60,7 +60,7 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - read-only search and retrieval
 - stable references to companies, filings, documents, and sections where possible
 - enough metadata to verify origin, completeness, and source URL
-- a core capability that can later back a CLI, Python package, and MCP adapter
+- a reusable core capability that backs the current CLI and local MCP adapter, and can later support a Python package if justified
 
 ### Out Of Scope
 

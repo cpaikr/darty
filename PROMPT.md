@@ -24,17 +24,19 @@ The priority is not human UX polish. The priority is deterministic tool behavior
 3. `ARCHITECTURE.md`
 4. `src/cli.ts`
 5. `src/cli/commands/contents-search.ts`
-6. `src/tools/operations/contents-search.ts`
-7. `src/dart/dsab007/contracts.ts`
-8. `src/cli/commands/contents-search.test.ts`
-9. `test/cli/contents-search-cli.test.ts`
+6. `src/capabilities/contents-search/spec.ts`
+7. `src/capabilities/contents-search/contract.ts` and `src/capabilities/contents-search/contract/`
+8. `src/sources/dart/dsab007/contents/replay-schema.ts`
+9. `src/sources/dart/dsab007/contents/replay-contract/`
+10. `src/cli/commands/contents-search.test.ts`
+11. `test/cli/contents-search-cli.test.ts`
 
 ## Current Scope
 
 - The only implemented CLI command is `contents-search`.
 - The CLI is Commander-backed.
-- Operation metadata is transport-agnostic and lives under `src/tools/operations/`.
-- The underlying DART replay core already has deterministic contract and parser tests.
+- Operation metadata and machine-readable schemas live under `src/capabilities/contents-search/` and are reused by CLI and MCP adapters.
+- The underlying DART replay core has deterministic schema, serialization, parser, and replay-contract tests under `src/sources/dart/dsab007/contents/`.
 - Live DART tests exist separately under `test/live/` and are opt-in.
 
 ## What Good CLI Testing Looks Like Here
@@ -51,7 +53,7 @@ Add or improve tests in these layers:
 2. Command execution tests without a subprocess
 - invoke the command with an injected runner when possible
 - assert that parsed options are forwarded correctly
-- assert that DART-shaped request inputs are built correctly from CLI options
+- assert that CLI options are forwarded as semantic public inputs; DART-shaped replay requests are tested at the source adapter boundary
 
 3. Subprocess smoke tests
 - run the real CLI entrypoint
