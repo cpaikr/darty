@@ -91,6 +91,41 @@ Observed from the live body-content search page, page source, and direct POST re
 - `/dsab007/search.ax` returns an HTML fragment containing:
   result count, sort links, result rows, `totalCnt`, and pagination markup
 
+### Korean Web UI Alignment
+
+Observed again on 2026-05-05 at `https://dart.fss.or.kr/dsab007/main.do?option=corp` and after switching the main search selector to `본문내용`.
+
+The visible page title is `공시통합검색`. The main selector presents these Korean search modes:
+
+- `전체`
+- `회사명`
+- `보고서명`
+- `보고서 목차명`
+- `본문내용`
+- `고급검색` in the header search selector; the main selector observed for this page exposed the first five modes
+
+The current implementation covers only the `본문내용` mode (`option=contents`). Other modes remain observed UI, not implemented capability.
+
+When `본문내용` is selected, the UI shows these relevant controls:
+
+| Korean UI control | Observed DOM or POST field | Current implementation status |
+|---|---|---|
+| `본문내용 입력` | visible `contentWord`; submitted as `keyword` and `b_keyword` | implemented as required public `keyword` |
+| `동의어` | `synonym` / `b_synonym` style replay field | observed, not implemented |
+| `회사명/종목코드 입력` + `찾기` | visible company text; hidden `textCrpCik`; `textCrpNm` also serializes | implemented only as public `companyCode` -> `textCrpCik`; company-name text search is not exposed because tested replay ignored `textCrpNm` |
+| `제출인명 입력` + `찾기` | `textPresenterNm` and `b_textPresenterNm` | implemented as optional public `presenterName` |
+| `기간` / `검색시작일` / `검색종료일` | `startDate`, `endDate`, plus `b_startDate`, `b_endDate` | implemented as required public `startDate` and `endDate` |
+| quick range buttons `1개월`, `6개월`, `1년`, `3년`, `5년`, `10년`, `기간더보기` | UI date helpers and `decadeType` | not modeled; callers send explicit dates |
+| `문서유형` (`전체`, `본문`, `첨부문서`) | `docType` and `b_docType` | observed, not implemented |
+| `보고서명 입력` + `찾기` | `reportName` and `b_reportName` | implemented as optional public `reportName` |
+| `공시유형` checkboxes (`정기공시`, `주요사항보고`, etc.) | `publicType` checkbox values | observed, not implemented |
+| result count `검색건수` | `#searchCnt` / hidden `totalCnt` | parsed into `pagination.totalCount` |
+| result sort links `접수일자`, `보고서명` | `sort=DATE` or `sort=rpt_nm`; `sortType=asc|desc` | implemented as `sortBy=date|reportName` and `sortDirection=asc|desc` |
+| result rows | company badge/name, report link, snippet, `[공시유형] [본문|첨부문서]`, `제출인`, date | parsed into company, filing, match, references, and evidence fields |
+| pager `[현재/전체] [총 N건]` | `.pageInfo` | parsed into `pagination.currentPage`, `totalPages`, and `totalCount` |
+
+Observed browser UI serialization for a `본문내용` search on 2026-05-05 included `currentPage=1`, `maxResults=15`, `maxLinks=10`, `sort=DATE`, `sortType=desc`, `option=contents`, `keyword`, `b_keyword`, `startDate`, `b_startDate`, `endDate`, and `b_endDate`. The response still returned 10 rows for the tested search, matching the earlier finding that `maxResults` is accepted but not caller-controlled for this mode.
+
 Observed replay payload shape for `option=contents`:
 
 - `currentPage`, `maxResults`, `maxLinks`

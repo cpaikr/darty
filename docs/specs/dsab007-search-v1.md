@@ -33,7 +33,58 @@ The first tool should not yet:
 - expose TOC-aware section retrieval
 - handle authenticated or mutating flows
 
-## 4. Domain Model
+## 4. Implemented Korean UI Slice
+
+This spec is aligned to the live Korean DART UI, but only up to the behavior currently implemented.
+
+Observed UI entrypoint:
+
+- `공시서류검색 > 공시통합검색`
+- URL: `https://dart.fss.or.kr/dsab007/main.do?option=corp`
+- implemented mode after changing the search selector: `본문내용` (`option=contents`)
+
+Implemented input mapping:
+
+| Korean DART UI | Public input | Internal `/dsab007/search.ax` replay field | Status |
+|---|---|---|---|
+| search selector `본문내용` | fixed capability choice | `option=contents` | implemented; not caller-configurable |
+| `본문내용 입력` | `keyword` | `keyword`, `b_keyword` | implemented and required |
+| `검색시작일` | `startDate` | `startDate`, `b_startDate` | implemented and required |
+| `검색종료일` | `endDate` | `endDate`, `b_endDate` | implemented and required |
+| result page | `page` | `currentPage` | implemented; default `1` |
+| result sort `접수일자` | `sortBy=date` | `sort=DATE` | implemented; default |
+| result sort `보고서명` | `sortBy=reportName` | `sort=rpt_nm` | implemented |
+| sort direction `오름차순` / `내림차순` | `sortDirection=asc|desc` | `sortType=asc|desc` | implemented; default `desc` |
+| `회사명/종목코드 입력` after company lookup | `companyCode` | `textCrpCik`, `b_textCrpCik` | implemented only for the hidden company code value, not free-text company name |
+| `제출인명 입력` | `presenterName` | `textPresenterNm`, `b_textPresenterNm` | implemented |
+| `보고서명 입력` | `reportName` | `reportName`, `b_reportName` | implemented |
+
+Implemented output mapping:
+
+| Korean DART result UI | Public result field |
+|---|---|
+| `검색건수` / `[총 N건]` | `result.pagination.totalCount` |
+| pager `[현재/전체]` | `result.pagination.currentPage`, `result.pagination.totalPages` |
+| company badge and company link | `item.company.marketLabel`, `item.company.name`, `item.company.companyCode` |
+| report link | `item.filing.receiptNumber`, `item.filing.documentNumber`, `item.references.viewerUrl` |
+| report title text | `item.filing.reportTitle`, modifier/period/suffix fields when parsed |
+| body hit snippet | `item.match.snippetText`, `item.evidence.snippetHtml` |
+| `[공시유형] [본문|첨부문서] 제출인 : ...` | `item.match.disclosureTypeLabel`, `contentTypeLabel`, `presenterName`, plus `evidence.rawInfoText` |
+| receipt date | `item.filing.receiptDate` |
+
+Observed but not implemented from the Korean UI:
+
+- other search modes: `전체`, `회사명`, `보고서명`, `보고서 목차명`, `고급검색`
+- free-text company-name replay through `textCrpNm`; tested as accepted but ignored for the current replay shape
+- `동의어`
+- `문서유형` (`전체`, `본문`, `첨부문서`)
+- `공시유형` checkbox filtering
+- quick date buttons and `기간더보기`; callers provide explicit dates instead
+- page-size dropdown (`15`, `30`, `50`, `100`); live probes show page size is accepted but not caller-controlled for `option=contents`
+- popup automation for `찾기`, autocomplete, recent-search, reset, and help flows
+- filing viewer or section retrieval after clicking a result
+
+## 5. Domain Model
 
 ### Primary entities
 
@@ -67,7 +118,7 @@ The first tool should not yet:
 
 These appear in the viewer contract, not the first search-result contract.
 
-## 5. Proposed Operations
+## 6. Proposed Operations
 
 ### `search_contents`
 
@@ -92,7 +143,7 @@ A separate viewer operation is not implemented in the current v1 slice. For now,
 
 Section retrieval and standalone viewer lookup are intentionally deferred to a later spec once the filing-level contract is stable.
 
-## 6. Current Contract Stance
+## 7. Current Contract Stance
 
 Public external inputs should stay semantic:
 
@@ -143,14 +194,14 @@ Observed `option=contents` restriction:
 - `sort` is currently limited to `DATE | rpt_nm`
 - `sortType` is currently limited to `asc | desc`
 
-## 7. Output Modes
+## 8. Output Modes
 
 - `structured`
   capability-owned result envelope with public items, metadata, references, and warnings
 
 `raw` HTML from `/dsab007/search.ax` stays internal for fixtures, debugging, and parser tests. It is not exposed by the current public CLI or MCP contract.
 
-## 8. Observed Upstream Contract
+## 9. Observed Upstream Contract
 
 Observed request:
 
@@ -178,7 +229,7 @@ Observed response:
 - attachment rows require preserving more of the raw report-name structure than a simple title/subtitle split
 - no-result responses may omit the pagination block entirely and currently render `조회 결과가 없습니다.` as a bare `td[colspan]` placeholder under `tbody`
 
-## 9. Open Questions
+## 10. Open Questions
 
 - Which `dsab007` mode should be implemented second?
 - Which additional filters, if any, deserve promotion from the replay adapter into the stable public capability contract?
