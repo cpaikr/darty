@@ -1,6 +1,6 @@
 {
   "name": "@sjunepark/darty",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "bin": {
     "darty": "dist/cli.js"
@@ -13,7 +13,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bun build src/cli.ts --target=bun --outfile=dist/cli.js",
+    "build": "bun build src/cli.ts --target=bun --outfile=dist/cli.js --minify --sourcemap=none",
     "prepublishOnly": "bun run typecheck && bun test && bun run build",
     "env:check": "varlock load",
     "eval:contents:cli": "bun run evals/contents-search/cli/run-eval.ts",
