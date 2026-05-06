@@ -1,18 +1,110 @@
 import * as cheerio from "cheerio";
+import sanitizeHtml = require("sanitize-html");
 import { isTag, type AnyNode } from "domhandler";
 
-const emptyAllowedAttributes = new Set<string>();
+const disallowedNonTextTags = [
+  "script",
+  "style",
+  "textarea",
+  "option",
+  "iframe",
+  "object",
+  "embed",
+  "noscript",
+];
 
-const allowedAttributesByTag = new Map<string, ReadonlySet<string>>([
-  ["a", new Set(["href"])],
-  ["img", new Set(["alt", "src"])],
-  ["td", new Set(["colspan", "rowspan"])],
-  ["th", new Set(["colspan", "rowspan", "scope"])],
-  ["ol", new Set(["start"])],
-]);
+// Keep this policy project-owned instead of inheriting sanitize-html defaults at runtime.
+// This is intentionally a broad safe-tag snapshot, not a DART-minimal corpus-derived list:
+// preserving unusual filing markup is preferable to stripping content just because we have
+// not seen a tag yet. When upgrading sanitize-html, compare its default allowedTags for
+// newly added safe tags or changed parser behavior, then consciously update this list if
+// DART reports need it.
+const allowedTags = [
+  "address",
+  "article",
+  "aside",
+  "footer",
+  "header",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "hgroup",
+  "main",
+  "nav",
+  "section",
+  "blockquote",
+  "dd",
+  "div",
+  "dl",
+  "dt",
+  "figcaption",
+  "figure",
+  "hr",
+  "li",
+  "menu",
+  "ol",
+  "p",
+  "pre",
+  "ul",
+  "a",
+  "abbr",
+  "b",
+  "bdi",
+  "bdo",
+  "br",
+  "cite",
+  "code",
+  "data",
+  "dfn",
+  "em",
+  "i",
+  "kbd",
+  "mark",
+  "q",
+  "rb",
+  "rp",
+  "rt",
+  "rtc",
+  "ruby",
+  "s",
+  "samp",
+  "small",
+  "span",
+  "strong",
+  "sub",
+  "sup",
+  "time",
+  "u",
+  "var",
+  "wbr",
+  "caption",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "tr",
+  "img",
+];
 
-const allowedAttributesFor = (tagName: string): ReadonlySet<string> =>
-  allowedAttributesByTag.get(tagName) ?? emptyAllowedAttributes;
+const allowedAttributes = {
+  a: ["href"],
+  img: ["alt", "src"],
+  td: ["colspan", "rowspan"],
+  th: ["colspan", "rowspan", "scope"],
+  ol: ["start"],
+} satisfies sanitizeHtml.IOptions["allowedAttributes"];
+
+const allowedLinkSchemes = ["http", "https", "ftp", "mailto", "tel"];
+const allowedImageSchemes = ["http", "https"];
+
+export type ReportHtmlSanitizationOptions = {
+  readonly baseUrl?: string;
+};
 
 const textData = (node: AnyNode): string =>
   "data" in node && typeof node.data === "string" ? node.data : "";
@@ -34,21 +126,68 @@ const normalizeNonBreakingSpaces = (nodes: readonly AnyNode[]): void => {
   }
 };
 
-const stripPresentationAttributes = ($: cheerio.CheerioAPI): void => {
-  $("*").each((_, element) => {
-    if (!isTag(element)) {
-      return;
-    }
+const toAbsoluteUrl = (url: string, baseUrl: string | undefined): string => {
+  if (baseUrl === undefined || url.startsWith("//")) {
+    return url;
+  }
 
-    const allowedAttributes = allowedAttributesFor(element.name.toLowerCase());
-
-    for (const attributeName of Object.keys(element.attribs)) {
-      if (!allowedAttributes.has(attributeName.toLowerCase())) {
-        $(element).removeAttr(attributeName);
-      }
-    }
-  });
+  try {
+    return new URL(url, baseUrl).toString();
+  } catch {
+    return url;
+  }
 };
+
+const absolutizeAttribute = (
+  attributes: sanitizeHtml.Attributes,
+  attributeName: "href" | "src",
+  baseUrl: string | undefined,
+): sanitizeHtml.Attributes => {
+  const value = attributes[attributeName]?.trim();
+
+  if (value === undefined || value.length === 0) {
+    return attributes;
+  }
+
+  return {
+    ...attributes,
+    [attributeName]: toAbsoluteUrl(value, baseUrl),
+  };
+};
+
+const extractDocumentBodyHtml = (html: string): string => {
+  const $ = cheerio.load(html);
+  const body = $("body").first();
+
+  return body.length > 0 ? body.html() ?? "" : html;
+};
+
+const sanitizeDangerousHtml = (
+  html: string,
+  options: ReportHtmlSanitizationOptions,
+): string =>
+  sanitizeHtml(html, {
+    allowedTags,
+    allowedAttributes,
+    allowedSchemes: allowedLinkSchemes,
+    allowedSchemesByTag: {
+      img: allowedImageSchemes,
+    },
+    allowedSchemesAppliedToAttributes: ["href", "src"],
+    allowProtocolRelative: false,
+    disallowedTagsMode: "discard",
+    nonTextTags: disallowedNonTextTags,
+    transformTags: {
+      a: (tagName, attributes) => ({
+        tagName,
+        attribs: absolutizeAttribute(attributes, "href", options.baseUrl),
+      }),
+      img: (tagName, attributes) => ({
+        tagName,
+        attribs: absolutizeAttribute(attributes, "src", options.baseUrl),
+      }),
+    },
+  });
 
 const unwrapElement = ($: cheerio.CheerioAPI, element: AnyNode): void => {
   $(element).replaceWith($(element).contents().toArray());
@@ -94,14 +233,20 @@ const removeTrailingBreaksInTableCells = ($: cheerio.CheerioAPI): void => {
   });
 };
 
-export const sanitizeReportHtml = (html: string): string => {
-  const $ = cheerio.load(html, null, false);
+export const sanitizeReportHtml = (
+  html: string,
+  options: ReportHtmlSanitizationOptions = {},
+): string => {
+  const $ = cheerio.load(sanitizeDangerousHtml(html, options), null, false);
 
-  $("colgroup, col").remove();
   normalizeNonBreakingSpaces($.root().contents().toArray());
-  stripPresentationAttributes($);
   removeTrailingBreaksInTableCells($);
   unwrapPresentationOnlyInlineElements($);
 
   return $.root().html() ?? "";
 };
+
+export const sanitizeFetchedReportHtml = (
+  html: string,
+  options: ReportHtmlSanitizationOptions = {},
+): string => sanitizeReportHtml(extractDocumentBodyHtml(html), options);

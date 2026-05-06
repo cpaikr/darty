@@ -1,8 +1,7 @@
-import * as cheerio from "cheerio";
-
 import { ParseFailure, SourceUnavailable } from "../../errors.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import { parseReportShell } from "./parse-shell.ts";
+import { sanitizeFetchedReportHtml } from "./sanitize-html.ts";
 import type {
   SourceReportContent,
   SourceReportLocator,
@@ -15,14 +14,6 @@ const chromeDesktopUserAgent =
 
 export const reportShellEndpoint = `${dartBaseUrl}/dsaf001/main.do`;
 export const reportViewerEndpoint = `${dartBaseUrl}/report/viewer.do`;
-
-const toAbsoluteUrl = (url: string): string => {
-  try {
-    return new URL(url, dartBaseUrl).toString();
-  } catch {
-    return url;
-  }
-};
 
 const charsetFromContentType = (contentType: string | null): string => {
   const charset = /charset=([^;]+)/i.exec(contentType ?? "")?.[1]?.trim().toLowerCase();
@@ -101,39 +92,6 @@ export const fetchReportShell = async (
   return parseReportShell(html, sourceUrl);
 };
 
-const sanitizeHtml = (html: string): string => {
-  const $ = cheerio.load(html);
-
-  $("script, style, link, meta, object, embed, iframe").remove();
-  $("*").each((_, element) => {
-    if (!("attribs" in element)) {
-      return;
-    }
-
-    const attributes = { ...element.attribs } as Record<string, string>;
-
-    for (const [name, value] of Object.entries(attributes)) {
-      const lowerName = name.toLowerCase();
-      const lowerValue = value.trim().toLowerCase();
-
-      if (lowerName.startsWith("on")) {
-        $(element).removeAttr(name);
-        continue;
-      }
-
-      if ((lowerName === "href" || lowerName === "src") && lowerValue.length > 0) {
-        if (/^(javascript|data):/.test(lowerValue)) {
-          $(element).removeAttr(name);
-        } else {
-          $(element).attr(name, toAbsoluteUrl(value));
-        }
-      }
-    }
-  });
-
-  return $("body").length > 0 ? $("body").html() ?? "" : $.root().html() ?? "";
-};
-
 export const fetchReportContent = async (
   locator: SourceReportLocator,
 ): Promise<SourceReportContent> => {
@@ -142,6 +100,6 @@ export const fetchReportContent = async (
 
   return {
     sourceUrl,
-    html: sanitizeHtml(html),
+    html: sanitizeFetchedReportHtml(html, { baseUrl: dartBaseUrl }),
   };
 };
