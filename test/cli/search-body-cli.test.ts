@@ -62,6 +62,12 @@ describe("search-body CLI subprocess", () => {
     expect(stdout).not.toContain("사과포도");
     expect(stdout).not.toContain("[확인됨]");
     expect(stdout).not.toContain("참고:");
+    expect(stdout).toContain("검색 팁:");
+    expect(stdout).toContain("본문내용 검색은 문서 단위 키워드 검색입니다.");
+    expect(stdout).toContain("같은 문단/표/항목에 함께 있다는 뜻은 아닙니다.");
+    expect(stdout).toContain(
+      "결과의 viewerUrl 또는 접수번호를 view-report에 넘겨 실제 보고서 본문을 확인하세요.",
+    );
     expect(stdout).not.toContain(
       "`전체`, `회사명`, `보고서명`, `보고서 목차명`, `고급검색` 모드는 아직 공개 도구가 아닙니다.",
     );

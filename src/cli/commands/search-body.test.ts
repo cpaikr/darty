@@ -102,6 +102,16 @@ describe("parseSearchBodyCommandArgs", () => {
     );
     expect(searchBodyUsage).not.toContain("[확인됨]");
     expect(searchBodyUsage).not.toContain("참고:");
+    expect(searchBodyUsage).toContain("검색 팁:");
+    expect(searchBodyUsage).toContain(
+      "본문내용 검색은 문서 단위 키워드 검색입니다.",
+    );
+    expect(searchBodyUsage).toContain(
+      "같은 문단/표/항목에 함께 있다는 뜻은 아닙니다.",
+    );
+    expect(searchBodyUsage).toContain(
+      "결과의 viewerUrl 또는 접수번호를 view-report에 넘겨 실제 보고서 본문을 확인하세요.",
+    );
     expect(searchBodyUsage).toContain(
       "darty search-body --keyword 배당 --start-date 20250331 --end-date 20260331",
     );

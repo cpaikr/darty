@@ -56,7 +56,6 @@ export const searchBodyFieldCopy = {
 export const searchBodyCliCopy = {
   summary: "DART 공시통합검색의 본문내용 검색 결과를 구조화된 JSON으로 반환합니다.",
   examplesHeading: "예시",
-  notesHeading: "참고",
   examples: [
     {
       description: "키워드로 DART 본문내용 일치 항목을 검색합니다.",
@@ -87,7 +86,11 @@ export const searchBodyCliCopy = {
       ],
     },
   ],
-  notes: [],
+  notesHeading: "검색 팁",
+  notes: [
+    "본문내용 검색은 문서 단위 키워드 검색입니다. 공백으로 여러 단어를 넣으면 같은 문서 안에 모두 존재하는지를 찾으며, 같은 문단/표/항목에 함께 있다는 뜻은 아닙니다.",
+    "핵심감사사항(KAM)처럼 문맥 확인이 필요한 검색은 search-body로 후보를 좁힌 뒤 결과의 viewerUrl 또는 접수번호를 view-report에 넘겨 실제 보고서 본문을 확인하세요.",
+  ],
   invalidInteger: (value: string): string =>
     `정수를 입력해야 하지만 "${value}"을(를) 받았습니다.`,
 } as const;
