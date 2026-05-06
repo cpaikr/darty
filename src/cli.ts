@@ -2,32 +2,32 @@
 
 import { Command } from "commander";
 
-import { defaultContentsSearchOperation } from "./app/contents-search.ts";
-import { defaultReportViewOperation } from "./app/report-view.ts";
+import { defaultSearchBodyOperation } from "./app/search-body.ts";
+import { defaultViewReportOperation } from "./app/view-report.ts";
 import {
-  createContentsSearchCommandWithRunner,
-  executeContentsSearchCommand,
-  renderContentsSearchCliErrorMessage,
-} from "./cli/commands/contents-search.ts";
+  createSearchBodyCommandWithRunner,
+  executeSearchBodyCommand,
+  renderSearchBodyCliErrorMessage,
+} from "./cli/commands/search-body.ts";
 import {
-  createReportViewCommandWithRunner,
-  executeReportViewCommand,
-  renderReportViewCliErrorMessage,
-} from "./cli/commands/report-view.ts";
+  createViewReportCommandWithRunner,
+  executeViewReportCommand,
+  renderViewReportCliErrorMessage,
+} from "./cli/commands/view-report.ts";
 
 const writeStdout = (text: string) => {
   console.log(text);
 };
 
-const defaultContentsSearchExecutor = {
+const defaultSearchBodyExecutor = {
   runOperation: (input: Record<string, unknown>) =>
-    defaultContentsSearchOperation.execute(input),
+    defaultSearchBodyOperation.execute(input),
   writeStdout,
 };
 
-const defaultReportViewExecutor = {
+const defaultViewReportExecutor = {
   runOperation: (input: Record<string, unknown>) =>
-    defaultReportViewOperation.execute(input),
+    defaultViewReportOperation.execute(input),
   writeStdout,
 };
 
@@ -37,13 +37,13 @@ const program = new Command()
   .helpOption("-h, --help", "도움말을 표시합니다.")
   .addHelpCommand("help [command]", "명령 도움말을 표시합니다.")
   .addCommand(
-    createContentsSearchCommandWithRunner((options) =>
-      executeContentsSearchCommand(options, defaultContentsSearchExecutor),
+    createSearchBodyCommandWithRunner((options) =>
+      executeSearchBodyCommand(options, defaultSearchBodyExecutor),
     ),
   )
   .addCommand(
-    createReportViewCommandWithRunner((options) =>
-      executeReportViewCommand(options, defaultReportViewExecutor),
+    createViewReportCommandWithRunner((options) =>
+      executeViewReportCommand(options, defaultViewReportExecutor),
     ),
   );
 
@@ -52,8 +52,8 @@ if (process.argv.length <= 2) {
 } else {
   program.parseAsync(process.argv).catch((error) => {
     const cliMessage =
-      renderContentsSearchCliErrorMessage(error) ??
-      renderReportViewCliErrorMessage(error);
+      renderSearchBodyCliErrorMessage(error) ??
+      renderViewReportCliErrorMessage(error);
 
     if (cliMessage !== undefined) {
       console.error(cliMessage);

@@ -163,7 +163,7 @@ Observed on 2026-05-05:
 
 Use this guide as the human-facing explanation source for DART search concepts and future tool copy. It documents the Korean UI semantics more comprehensively than this implementation currently supports. It is a UI/user guide, not a replay API specification; keep using live request probes and parser tests for POST-field behavior.
 
-Guide-backed concepts relevant to the current `contents-search` slice:
+Guide-backed concepts relevant to the current `search-body` slice:
 
 - `공시통합검색` is for searching submitted disclosure documents by company, report, report table of contents, and document body content.
 - `검색구분` set to `전체` groups results by company, report, TOC, and body content; selecting a specific `검색구분` opens that detailed search directly.
@@ -247,7 +247,7 @@ Treat body-content search as the first-class v1 entrypoint:
 
 ## Follow-Ups
 
-Completed for the first contents-search slice:
+Completed for the first search-body slice:
 
 - classified the implemented `/dsab007/search.ax` contents replay fields into public semantic inputs versus internal replay-only fields
 - defined and implemented the parsed result row model for the current tool contract

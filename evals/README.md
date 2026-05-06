@@ -5,7 +5,7 @@ This directory holds model-in-the-loop evals for `darty` tool use.
 ## Current stance
 
 - Keep evals capability-scoped.
-- Start with the implemented `contents-search` surface.
+- Start with the implemented `search-body` surface.
 - Use evals for agent/tool wiring behavior, not raw source correctness.
 - Keep deterministic source, schema, transport, and CLI contract checks in `test/` and colocated `*.test.ts` files.
 - Use deterministic assertions first. Add LLM judges only for subjective final-answer quality.
@@ -16,7 +16,7 @@ The repo has three verification layers:
 
 1. **Direct tool/API tests**
    - No LLM.
-   - Prove the DART adapter and contents-search capability work against source data.
+   - Prove the DART adapter and search-body capability work against source data.
    - Live upstream checks belong under `test/live/`.
 
 2. **CLI scenario evals**
@@ -35,9 +35,9 @@ that adapter is active again. The archived MCP evals are preserved at git tag
 
 ## Current tracks
 
-- `contents-search/cli/run-eval.ts`
-  Fixed-command live CLI scenarios that parse stdout JSON and assert the shared contents-search envelope.
-- `contents-search/agent-cli/run-eval.ts`
+- `search-body/cli/run-eval.ts`
+  Fixed-command live CLI scenarios that parse stdout JSON and assert the shared search-body envelope.
+- `search-body/agent-cli/run-eval.ts`
   Agentic CLI invocation runner where a model receives a structured local darty CLI runner and must call it with arguments that match the user request.
 
 ## Environment
@@ -48,6 +48,6 @@ Useful commands:
 
 ```bash
 bun run env:check
-bun run eval:contents:cli
-bun run eval:contents:agent:cli
+bun run eval:search-body:cli
+bun run eval:search-body:agent:cli
 ```

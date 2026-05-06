@@ -16,12 +16,12 @@
     "build": "bun build src/cli.ts --target=bun --outfile=dist/cli.js --minify --sourcemap=none",
     "prepublishOnly": "bun run typecheck && bun test && bun run build",
     "env:check": "varlock load",
-    "eval:contents:cli": "bun run evals/contents-search/cli/run-eval.ts",
-    "eval:contents:agent:cli": "varlock run -- bun run evals/contents-search/agent-cli/run-eval.ts",
+    "eval:search-body:cli": "bun run evals/search-body/cli/run-eval.ts",
+    "eval:search-body:agent:cli": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:live": "LIVE_DART_TESTS=1 bun test",
-    "search": "bun run src/cli.ts contents-search"
+    "search": "bun run src/cli.ts search-body"
   },
   "dependencies": {
     "@effect/platform": "^0.91.0",

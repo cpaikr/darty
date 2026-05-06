@@ -6,7 +6,7 @@ Do not broaden product scope. Do not add new user-facing features unless a missi
 
 ## Goal
 
-Strengthen test coverage for the current `contents-search` CLI so it behaves like a reliable tool for agents and LLMs.
+Strengthen test coverage for the current `search-body` CLI so it behaves like a reliable tool for agents and LLMs.
 
 The priority is not human UX polish. The priority is deterministic tool behavior:
 
@@ -23,19 +23,19 @@ The priority is not human UX polish. The priority is deterministic tool behavior
 2. `README.md`
 3. `ARCHITECTURE.md`
 4. `src/cli.ts`
-5. `src/cli/commands/contents-search.ts`
-6. `src/capabilities/contents-search/spec.ts`
-7. `src/capabilities/contents-search/contract.ts` and `src/capabilities/contents-search/contract/`
+5. `src/cli/commands/search-body.ts`
+6. `src/capabilities/search-body/spec.ts`
+7. `src/capabilities/search-body/contract.ts` and `src/capabilities/search-body/contract/`
 8. `src/sources/dart/dsab007/contents/replay-schema.ts`
 9. `src/sources/dart/dsab007/contents/replay-contract/`
-10. `src/cli/commands/contents-search.test.ts`
-11. `test/cli/contents-search-cli.test.ts`
+10. `src/cli/commands/search-body.test.ts`
+11. `test/cli/search-body-cli.test.ts`
 
 ## Current Scope
 
-- The implemented CLI commands include `contents-search` and `report-view`; this prompt focuses on `contents-search` tests.
+- The implemented CLI commands include `search-body` and `view-report`; this prompt focuses on `search-body` tests.
 - The CLI is Commander-backed.
-- Operation metadata and machine-readable schemas live under `src/capabilities/contents-search/` and are reused by the CLI adapter; future adapters should use the same seam.
+- Operation metadata and machine-readable schemas live under `src/capabilities/search-body/` and are reused by the CLI adapter; future adapters should use the same seam.
 - The underlying DART replay core has deterministic schema, serialization, parser, and replay-contract tests under `src/sources/dart/dsab007/contents/`.
 - Live DART tests exist separately under `test/live/` and are opt-in.
 

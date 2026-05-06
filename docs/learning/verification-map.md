@@ -25,13 +25,13 @@ Colocated `*.test.ts` files prove deterministic code behavior close to the modul
 
 Examples:
 
-- `src/capabilities/contents-search/contract.test.ts`
+- `src/capabilities/search-body/contract.test.ts`
   validates request resolution, defaults, unknown parameter rejection, and public validation behavior.
-- `src/capabilities/contents-search/spec.test.ts`
+- `src/capabilities/search-body/spec.test.ts`
   ensures JSON Schemas come from the shared core schemas.
-- `src/capabilities/contents-search/execute.test.ts`
+- `src/capabilities/search-body/execute.test.ts`
   checks provider error normalization and result construction.
-- `src/cli/commands/contents-search.test.ts`
+- `src/cli/commands/search-body.test.ts`
   checks CLI parsing and delegation without turning the CLI into the validation owner.
 - `src/sources/dart/dsab007/contents/parse-html.test.ts`
   checks parser behavior against fixture HTML.
@@ -54,7 +54,7 @@ bun run test:live
 
 ## Evals Under `evals/`
 
-Evals are capability-scoped and currently focus on `contents-search`.
+Evals are capability-scoped and currently focus on `search-body`.
 
 The main tracks are:
 
@@ -86,9 +86,9 @@ bun run test:live
 For eval tracks:
 
 ```bash
-bun run eval:contents:cli
+bun run eval:search-body:cli
 bun run env:check
-bun run eval:contents:agent:cli
+bun run eval:search-body:agent:cli
 ```
 
 Agentic evals require `OPENAI_API_KEY` in `.env.local`.
@@ -101,4 +101,4 @@ Agentic evals require `OPENAI_API_KEY` in `.env.local`.
 - Fixed live scenario usefulness can live in `evals/`.
 - Final user-facing answer quality should be a separate future eval track if needed.
 
-For the canonical eval policy, defer to [evals/README.md](../../evals/README.md) and [evals/contents-search/README.md](../../evals/contents-search/README.md).
+For the canonical eval policy, defer to [evals/README.md](../../evals/README.md) and [evals/search-body/README.md](../../evals/search-body/README.md).

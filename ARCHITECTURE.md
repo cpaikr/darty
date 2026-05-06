@@ -13,8 +13,8 @@ and shapes results. The current active transport is CLI, but the core stays
 transport-neutral so future MCP, Pi-native, SDK, or other adapters can bind to
 the same capabilities without duplicating DART logic.
 
-The current core has two public capabilities: `contents-search` for DART body
-search and `report-view` for receipt-based report TOC/section retrieval.
+The current core has two public capabilities: `search-body` for DART body
+search and `view-report` for receipt-based report TOC/section retrieval.
 
 For layer diagrams, the schema derivation chain, the runtime pipeline, and the
 adapter extension seam, see [src/ARCHITECTURE.md](src/ARCHITECTURE.md).
@@ -81,15 +81,15 @@ current supported surface.
 The dominant current flows are:
 
 ```
-argv -> src/cli.ts -> cli/commands/contents-search.ts
-     -> executeContentsSearchCommand()
-     -> app/contents-search.ts -> capabilities/contents-search/execute.ts
+argv -> src/cli.ts -> cli/commands/search-body.ts
+     -> executeSearchBodyCommand()
+     -> app/search-body.ts -> capabilities/search-body/execute.ts
      -> sources/dart/dsab007/contents/search.ts
      -> /dsab007/search.ax
 
-argv -> src/cli.ts -> cli/commands/report-view.ts
-     -> executeReportViewCommand()
-     -> app/report-view.ts -> capabilities/report-view/execute.ts
+argv -> src/cli.ts -> cli/commands/view-report.ts
+     -> executeViewReportCommand()
+     -> app/view-report.ts -> capabilities/view-report/execute.ts
      -> sources/dart/dsaf001/report/
      -> /dsaf001/main.do -> /report/viewer.do
 ```

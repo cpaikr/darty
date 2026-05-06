@@ -1,15 +1,15 @@
 import { Effect } from "effect";
 
-import { contentsSearchResultCopy } from "../../../../capabilities/contents-search/copy.ts";
+import { searchBodyResultCopy } from "../../../../capabilities/search-body/copy.ts";
 import type {
-  ContentsSearchItem,
-  ContentsSearchRequest,
-} from "../../../../capabilities/contents-search/contract.ts";
+  SearchBodyItem,
+  SearchBodyRequest,
+} from "../../../../capabilities/search-body/contract.ts";
 import {
-  ContentsSearchProviderError,
-  type ContentsSearchProvider,
-  type ContentsSearchProviderResult,
-} from "../../../../capabilities/contents-search/provider.ts";
+  SearchBodyProviderError,
+  type SearchBodyProvider,
+  type SearchBodyProviderResult,
+} from "../../../../capabilities/search-body/provider.ts";
 import {
   ParseFailure,
   SourceChanged,
@@ -24,7 +24,7 @@ export { searchUrl } from "./fetch.ts";
 
 const providerId = "dart-dsab007-contents";
 
-export const observedContentsSearchBehavior = {
+export const observedSearchBodyBehavior = {
   effectivePageSize: 10,
   effectivePagerWidth: 10,
   callerControlsPageSize: false,
@@ -32,9 +32,9 @@ export const observedContentsSearchBehavior = {
   observationStatus: "observed",
 } as const;
 
-const toContentsSearchItem = (
+const toSearchBodyItem = (
   row: SourceContentsRow,
-): ContentsSearchItem => ({
+): SearchBodyItem => ({
   company: {
     name: row.companyName,
     marketLabel: row.companyMarketLabel,
@@ -67,12 +67,12 @@ const toContentsSearchItem = (
 
 export const toDsab007ContentsProviderResult = (
   page: SourceContentsSearchPage,
-): ContentsSearchProviderResult => {
+): SearchBodyProviderResult => {
   const droppedItemCount = page.droppedRowCount;
 
   return {
     pagination: page.pagination,
-    items: page.rows.map(toContentsSearchItem),
+    items: page.rows.map(toSearchBodyItem),
     metadata: {
       fetchedAt: page.fetchedAt,
       source: {
@@ -80,7 +80,7 @@ export const toDsab007ContentsProviderResult = (
         surface: "dsab007",
         endpoint: page.sourceUrl,
       },
-      sourceBehavior: observedContentsSearchBehavior,
+      sourceBehavior: observedSearchBodyBehavior,
       completeness: droppedItemCount > 0 ? "partial" : "complete",
       droppedItemCount,
     },
@@ -93,7 +93,7 @@ export const toDsab007ContentsProviderResult = (
         : [
             {
               code: "partial_rows_dropped",
-              message: contentsSearchResultCopy.partialRowsDropped(droppedItemCount),
+              message: searchBodyResultCopy.partialRowsDropped(droppedItemCount),
               droppedItemCount,
             },
           ],
@@ -106,12 +106,12 @@ export const toDsab007ContentsProviderResult = (
  * here even when DART still requires them on the POST body.
  */
 export const toDsab007ContentsReplayInput = (
-  request: ContentsSearchRequest,
+  request: SearchBodyRequest,
 ): SourceContentsReplayInput => ({
   option: "contents",
   currentPage: request.page,
-  maxResults: observedContentsSearchBehavior.effectivePageSize,
-  maxLinks: observedContentsSearchBehavior.effectivePagerWidth,
+  maxResults: observedSearchBodyBehavior.effectivePageSize,
+  maxLinks: observedSearchBodyBehavior.effectivePagerWidth,
   sort: request.sortBy === "reportName" ? "rpt_nm" : "DATE",
   sortType: request.sortDirection,
   keyword: request.keyword,
@@ -124,22 +124,22 @@ export const toDsab007ContentsReplayInput = (
 });
 
 export const searchDsab007Contents = (
-  request: ContentsSearchRequest,
+  request: SearchBodyRequest,
 ) =>
   searchContentsSourcePage(toDsab007ContentsReplayInput(request)).pipe(
     Effect.map(toDsab007ContentsProviderResult),
     Effect.mapError(toDsab007ContentsProviderError),
   );
 
-export const dsab007ContentsProvider: ContentsSearchProvider = {
+export const dsab007ContentsProvider: SearchBodyProvider = {
   search: (request) => Effect.runPromise(searchDsab007Contents(request)),
 };
 
 export const toDsab007ContentsProviderError = (
   error: unknown,
-): ContentsSearchProviderError => {
+): SearchBodyProviderError => {
   if (error instanceof SourceUnavailable) {
-    return new ContentsSearchProviderError({
+    return new SearchBodyProviderError({
       code: "source_unavailable",
       message: error.message,
       retryable: true,
@@ -149,7 +149,7 @@ export const toDsab007ContentsProviderError = (
   }
 
   if (error instanceof SourceChanged) {
-    return new ContentsSearchProviderError({
+    return new SearchBodyProviderError({
       code: "source_changed",
       message: error.message,
       retryable: false,
@@ -159,7 +159,7 @@ export const toDsab007ContentsProviderError = (
   }
 
   if (error instanceof ParseFailure) {
-    return new ContentsSearchProviderError({
+    return new SearchBodyProviderError({
       code: "source_parse_failure",
       message: error.message,
       retryable: false,
@@ -168,7 +168,7 @@ export const toDsab007ContentsProviderError = (
     });
   }
 
-  return new ContentsSearchProviderError({
+  return new SearchBodyProviderError({
     code: "internal_provider_error",
     message: dsab007ContentsMessages.internalProvider,
     retryable: false,

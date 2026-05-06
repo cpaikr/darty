@@ -1,4 +1,4 @@
-import type { ReportViewNavigation } from "../../../../capabilities/report-view/contract.ts";
+import type { ViewReportNavigation } from "../../../../capabilities/view-report/contract.ts";
 import type {
   SourceReportSection,
   SourceReportShell,
@@ -28,7 +28,7 @@ const toNavigationEntry = (section: SourceReportSection) => ({
 export const buildReportNavigation = (
   shell: SourceReportShell,
   selectedSection: SourceReportSection | undefined,
-): ReportViewNavigation | undefined => {
+): ViewReportNavigation | undefined => {
   if (selectedSection === undefined) {
     return undefined;
   }

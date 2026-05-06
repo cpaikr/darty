@@ -23,7 +23,7 @@ src/sources/dart/...
 DART web endpoint
 ```
 
-The important point: the CLI parses transport input, then delegates. It does not implement DART search or report-view behavior itself. Future MCP, Pi-native, SDK, or other adapters should join at the `src/app/` seam.
+The important point: the CLI parses transport input, then delegates. It does not implement DART search or view-report behavior itself. Future MCP, Pi-native, SDK, or other adapters should join at the `src/app/` seam.
 
 ## CLI Flow
 
@@ -67,7 +67,7 @@ This is why future adapters can get aligned behavior without duplicating validat
 ## DART Contents Search Adapter Flow
 
 ```text
-ContentsSearchRequest
+SearchBodyRequest
       |
       v
 toDsab007ContentsReplayInput()
@@ -105,7 +105,7 @@ A source row becomes a public item:
 SourceContentsRow
       |
       v
-ContentsSearchItem
+SearchBodyItem
   company      <- company name, market label, corp code
   filing       <- receipt number, document number, report title, date
   match        <- snippet and labels

@@ -1,4 +1,4 @@
-import { ReportViewProviderError } from "../../../../capabilities/report-view/provider.ts";
+import { ViewReportProviderError } from "../../../../capabilities/view-report/provider.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import { flattenSections } from "./navigation.ts";
 import type {
@@ -34,7 +34,7 @@ export const resolveReportContentPlan = (input: {
     )?.section;
 
     if (section === undefined) {
-      throw new ReportViewProviderError({
+      throw new ViewReportProviderError({
         code: "not_found",
         message: dsaf001ReportMessages.sectionNotFound(input.sectionId),
         retryable: false,
@@ -52,7 +52,7 @@ export const resolveReportContentPlan = (input: {
 
   if (input.shell.toc.length === 0) {
     if (input.shell.initialViewLocator === undefined) {
-      throw new ReportViewProviderError({
+      throw new ViewReportProviderError({
         code: "source_parse_failure",
         message: dsaf001ReportMessages.shellChanged,
         retryable: false,

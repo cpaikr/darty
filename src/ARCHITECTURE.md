@@ -6,8 +6,8 @@ shape and document ownership.
 
 ## Purpose
 
-`src/` contains the executable slice of `darty`: public `contents-search` and
-`report-view` capabilities, a local CLI transport, and internal DART source
+`src/` contains the executable slice of `darty`: public `search-body` and
+`view-report` capabilities, a local CLI transport, and internal DART source
 adapters for `dsab007` search and `dsaf001` report viewing.
 
 The design goal is to keep the core reusable across transports. The active
@@ -63,16 +63,16 @@ graph TD
 
 ## Component Map
 
-The diagram shows the established `contents-search` path. `report-view` uses the
-same transport/app/capability shape through `app/report-view.ts`,
-`capabilities/report-view/`, `cli/commands/report-view.ts`, and
+The diagram shows the established `search-body` path. `view-report` uses the
+same transport/app/capability shape through `app/view-report.ts`,
+`capabilities/view-report/`, `cli/commands/view-report.ts`, and
 `sources/dart/dsaf001/report/`.
 
 ```mermaid
 graph TD
-    CLI_TS["src/cli.ts"] --> CMD["src/cli/commands/contents-search.ts"]
-    CMD --> RUN["executeContentsSearchCommand()"]
-    CLI_TS --> APP["src/app/contents-search.ts"]
+    CLI_TS["src/cli.ts"] --> CMD["src/cli/commands/search-body.ts"]
+    CMD --> RUN["executeSearchBodyCommand()"]
+    CLI_TS --> APP["src/app/search-body.ts"]
     APP --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
     APP --> EXEC["execute.ts\nvia shared operation"]
     RUN --> EXEC
@@ -97,7 +97,7 @@ graph TD
     subgraph app ["src/app/"]
         APP
     end
-    subgraph cap ["src/capabilities/contents-search/"]
+    subgraph cap ["src/capabilities/search-body/"]
         CONTRACT
         SPEC
         EXEC
@@ -178,7 +178,7 @@ What is intentionally *not* centralized:
 
 ## Runtime Flow
 
-The detailed diagram below shows the `contents-search` path. `report-view`
+The detailed diagram below shows the `search-body` path. `view-report`
 follows the same transport/app/capability/provider layering, but its source
 adapter uses GET requests against `/dsaf001/main.do` and `/report/viewer.do`
 instead of the `dsab007` POST replay flow. Inside `dsaf001/report`, `view.ts`
@@ -190,10 +190,10 @@ truncation, and TOC navigation respectively.
 graph TD
     CLI_INPUT["CLI flags"]
     FUTURE_INPUT["Future adapter input"]
-    CLI_CMD["executeContentsSearchCommand()\nCLI-only stdout handling"]
-    APP["src/app/contents-search.ts\nshared operation"]
-    RESOLVE["resolveContentsSearchRequest()"]
-    REQUEST["Validated\nContentsSearchRequest"]
+    CLI_CMD["executeSearchBodyCommand()\nCLI-only stdout handling"]
+    APP["src/app/search-body.ts\nshared operation"]
+    RESOLVE["resolveSearchBodyRequest()"]
+    REQUEST["Validated\nSearchBodyRequest"]
     PROVIDER["provider.search()"]
     TO_REPLAY["toDsab007ContentsReplayInput()"]
     BUILD["buildContentsSearchForm()"]
@@ -203,7 +203,7 @@ graph TD
     PARSE_HTML["parseContentsSearchHtml()"]
     SOURCE_PAGE["SourceContentsSearchPage"]
     TO_RESULT["toDsab007ContentsProviderResult()"]
-    ENVELOPE["ContentsSearchResult\nenvelope"]
+    ENVELOPE["SearchBodyResult\nenvelope"]
     CLI_OUTPUT["JSON to stdout"]
     FUTURE_OUTPUT["Future adapter output"]
 
@@ -228,16 +228,16 @@ graph TD
 
 Step by step:
 
-1. CLI converts flags into a partial object keyed by public semantic names (`keyword`, `startDate`, etc.) and calls `executeContentsSearchCommand()`.
-2. Future adapters should convert their protocol input into the same public semantic object and call the shared operation from `src/app/contents-search.ts`.
-3. `resolveContentsSearchRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
-4. `src/app/contents-search.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
+1. CLI converts flags into a partial object keyed by public semantic names (`keyword`, `startDate`, etc.) and calls `executeSearchBodyCommand()`.
+2. Future adapters should convert their protocol input into the same public semantic object and call the shared operation from `src/app/search-body.ts`.
+3. `resolveSearchBodyRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
+4. `src/app/search-body.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
 5. `toDsab007ContentsReplayInput()` translates the public request into the internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
 6. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
 7. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax`.
 8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from the HTML fragment.
 9. `toDsab007ContentsProviderResult()` maps source rows into public items.
-10. `buildContentsSearchResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
+10. `buildSearchBodyResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
 11. The CLI serializes the envelope as exactly one JSON stdout payload.
 
 Semantic validation happens inside the capability executor, not in the CLI transport. This keeps future adapters aligned without reimplementing validation.
@@ -274,7 +274,7 @@ graph LR
     P_PAGE ---|renamed| I_PAGE
 ```
 
-- **Public semantic schema** (`ContentsSearchRequestSchema`, re-exported from
+- **Public semantic schema** (`SearchBodyRequestSchema`, re-exported from
   `contract.ts`): what users and future adapters see. Semantic names, clean
   enums, documented metadata.
 - **Internal replay schema** (`SourceContentsReplayInput` in
@@ -300,11 +300,11 @@ graph TD
         ADAPTER["Protocol handler\nsemantic JSON input"]
     end
 
-    OP_ID["contentsSearchOperationName"]
-    INPUT_SCHEMA["contentsSearchInputJsonSchema"]
-    RESULT_SCHEMA["contentsSearchResultJsonSchema"]
-    COMPOSE["src/app/contents-search.ts\nshared provider wiring"]
-    EXEC["executeContentsSearch()"]
+    OP_ID["searchBodyOperationName"]
+    INPUT_SCHEMA["searchBodyInputJsonSchema"]
+    RESULT_SCHEMA["searchBodyResultJsonSchema"]
+    COMPOSE["src/app/search-body.ts\nshared provider wiring"]
+    EXEC["executeSearchBody()"]
 
     OP_ID --> CLI_CMD
     OP_ID -.-> ADAPTER
@@ -317,11 +317,11 @@ graph TD
 
 A future adapter should reuse:
 
-- operation identifiers such as `contentsSearchOperationName`
-- input JSON Schemas such as `contentsSearchInputJsonSchema`
-- result JSON Schemas such as `contentsSearchResultJsonSchema`
+- operation identifiers such as `searchBodyOperationName`
+- input JSON Schemas such as `searchBodyInputJsonSchema`
+- result JSON Schemas such as `searchBodyResultJsonSchema`
 - `src/app/*` shared provider wiring plus raw semantic execution
-- capability executors such as `executeContentsSearch()` for validation and error normalization
+- capability executors such as `executeSearchBody()` for validation and error normalization
 
 This keeps adapters aligned on the same public contract and executor while each
 host keeps explicit control over adapter wiring.
@@ -329,14 +329,14 @@ host keeps explicit control over adapter wiring.
 ## Start Here
 
 - `src/cli.ts` — top-level transport entry point
-- `src/app/contents-search.ts` — shared transport composition seam
-- `src/cli/commands/contents-search.ts` — explicit CLI surface over the shared
+- `src/app/search-body.ts` — shared transport composition seam
+- `src/cli/commands/search-body.ts` — explicit CLI surface over the shared
   operation
-- `src/capabilities/contents-search/contract.ts` and `contract/` — public
+- `src/capabilities/search-body/contract.ts` and `contract/` — public
   input/output contract, typed failures, and request resolution
-- `src/capabilities/contents-search/spec.ts` — operation identifier and
+- `src/capabilities/search-body/spec.ts` — operation identifier and
   machine-readable request/result schemas
-- `src/capabilities/contents-search/execute.ts` — shared validation,
+- `src/capabilities/search-body/execute.ts` — shared validation,
   execution, and error normalization
 - `src/sources/dart/dsab007/contents/search.ts` — public-to-source mapping
   and provider boundary
@@ -346,7 +346,7 @@ host keeps explicit control over adapter wiring.
 Tests make the design relationships explicit:
 
 - `spec.test.ts` — request/result JSON Schemas come from the same core schemas
-- `contents-search.test.ts` — CLI surface is explicit while still delegating to
+- `search-body.test.ts` — CLI surface is explicit while still delegating to
   the shared executor
 - `contract.test.ts` — semantic resolution is shared and transport-independent
 - `execute.test.ts` — provider errors get normalized into capability-owned failures

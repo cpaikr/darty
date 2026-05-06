@@ -6,7 +6,7 @@
 
 The executable slice is intentionally narrow:
 
-- public CLI commands: `contents-search` and `report-view`
+- public CLI commands: `search-body` and `view-report`
 - DART source adapters for `dsab007` contents search and `dsaf001` report viewing
 - structured result envelopes with request echo, metadata, references, and warnings
 - deterministic tests plus opt-in live and agentic CLI eval tracks

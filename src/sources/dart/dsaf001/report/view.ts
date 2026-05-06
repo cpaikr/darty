@@ -1,15 +1,15 @@
 import type {
-  ReportViewDocument,
-  ReportViewRequest,
-  ReportViewTocNode,
-  ReportViewWarning,
-} from "../../../../capabilities/report-view/contract.ts";
-import { extractReceiptNumber } from "../../../../capabilities/report-view/contract.ts";
+  ViewReportDocument,
+  ViewReportRequest,
+  ViewReportTocNode,
+  ViewReportWarning,
+} from "../../../../capabilities/view-report/contract.ts";
+import { extractReceiptNumber } from "../../../../capabilities/view-report/contract.ts";
 import {
-  ReportViewProviderError,
-  type ReportViewProvider,
-  type ReportViewProviderResult,
-} from "../../../../capabilities/report-view/provider.ts";
+  ViewReportProviderError,
+  type ViewReportProvider,
+  type ViewReportProviderResult,
+} from "../../../../capabilities/view-report/provider.ts";
 import {
   ParseFailure,
   SourceChanged,
@@ -36,14 +36,14 @@ export { defaultDsaf001ReportSource } from "./source.ts";
 
 const toPublicDocument = (
   document: SourceReportDocument,
-): ReportViewDocument => ({
+): ViewReportDocument => ({
   id: document.id,
   title: document.title,
   kind: document.kind,
   selected: document.selected,
 });
 
-const toPublicTocNode = (section: SourceReportSection): ReportViewTocNode => ({
+const toPublicTocNode = (section: SourceReportSection): ViewReportTocNode => ({
   id: section.id,
   title: section.title,
   children: section.children.map(toPublicTocNode),
@@ -89,7 +89,7 @@ const selectShell = async (
   );
 
   if (document === undefined) {
-    throw new ReportViewProviderError({
+    throw new ViewReportProviderError({
       code: "not_found",
       message: dsaf001ReportMessages.documentNotFound(documentId),
       retryable: false,
@@ -102,13 +102,13 @@ const selectShell = async (
 };
 
 const viewReport = async (
-  request: ReportViewRequest,
+  request: ViewReportRequest,
   source: Dsaf001ReportSource,
-): Promise<ReportViewProviderResult> => {
+): Promise<ViewReportProviderResult> => {
   const receiptNumber = extractReceiptNumber(request.receipt);
 
   if (receiptNumber === undefined) {
-    throw new ReportViewProviderError({
+    throw new ViewReportProviderError({
       code: "source_parse_failure",
       message: dsaf001ReportMessages.shellChanged,
       retryable: false,
@@ -127,7 +127,7 @@ const viewReport = async (
     sectionId: request.sectionId,
     providerId,
   });
-  const warnings: ReportViewWarning[] = [];
+  const warnings: ViewReportWarning[] = [];
   const selectedSection =
     contentPlan.kind === "section" ? contentPlan.section : undefined;
   const contentResult =
@@ -192,9 +192,9 @@ const viewReport = async (
   };
 };
 
-export const createDsaf001ReportViewProvider = (
+export const createDsaf001ViewReportProvider = (
   source: Dsaf001ReportSource = defaultDsaf001ReportSource,
-): ReportViewProvider => ({
+): ViewReportProvider => ({
   view: async (request) => {
     try {
       return await viewReport(request, source);
@@ -204,17 +204,17 @@ export const createDsaf001ReportViewProvider = (
   },
 });
 
-export const dsaf001ReportViewProvider = createDsaf001ReportViewProvider();
+export const dsaf001ViewReportProvider = createDsaf001ViewReportProvider();
 
 export const toDsaf001ReportProviderError = (
   error: unknown,
-): ReportViewProviderError => {
-  if (error instanceof ReportViewProviderError) {
+): ViewReportProviderError => {
+  if (error instanceof ViewReportProviderError) {
     return error;
   }
 
   if (error instanceof SourceUnavailable) {
-    return new ReportViewProviderError({
+    return new ViewReportProviderError({
       code: "source_unavailable",
       message: error.message,
       retryable: true,
@@ -224,7 +224,7 @@ export const toDsaf001ReportProviderError = (
   }
 
   if (error instanceof SourceChanged) {
-    return new ReportViewProviderError({
+    return new ViewReportProviderError({
       code: "source_changed",
       message: error.message,
       retryable: false,
@@ -234,7 +234,7 @@ export const toDsaf001ReportProviderError = (
   }
 
   if (error instanceof ParseFailure) {
-    return new ReportViewProviderError({
+    return new ViewReportProviderError({
       code: "source_parse_failure",
       message: error.message,
       retryable: false,
@@ -243,7 +243,7 @@ export const toDsaf001ReportProviderError = (
     });
   }
 
-  return new ReportViewProviderError({
+  return new ViewReportProviderError({
     code: "internal_provider_error",
     message: dsaf001ReportMessages.internalProvider,
     retryable: false,

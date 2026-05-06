@@ -118,8 +118,8 @@ Guide-backed details that must stay out of the public contract until implemented
 
 ### Primary entities
 
-- `contents_search_input`
-  Semantic request for the public `contents-search` capability.
+- `search_body_input`
+  Semantic request for the public `search-body` capability.
 - `source_contents_replay_input`
   Internal DART replay request for the implemented `contents` mode.
 - `contents_row`

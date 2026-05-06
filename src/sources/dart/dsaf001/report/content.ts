@@ -1,7 +1,7 @@
 import type {
-  ReportViewContent,
-  ReportViewWarning,
-} from "../../../../capabilities/report-view/contract.ts";
+  ViewReportContent,
+  ViewReportWarning,
+} from "../../../../capabilities/view-report/contract.ts";
 import type {
   SourceReportLocator,
   SourceReportSection,
@@ -63,8 +63,8 @@ export const buildReportContent = async (input: {
   readonly maxBytes: number;
   readonly section?: SourceReportSection;
 }): Promise<{
-  readonly content: ReportViewContent;
-  readonly warning?: ReportViewWarning;
+  readonly content: ViewReportContent;
+  readonly warning?: ViewReportWarning;
 }> => {
   const sourceContent = await input.source.fetchContent(input.locator);
   const truncated = truncateUtf8(sourceContent.html, input.maxBytes);
@@ -75,7 +75,7 @@ export const buildReportContent = async (input: {
       }
     : undefined;
 
-  const content: ReportViewContent = {
+  const content: ViewReportContent = {
     scope: input.scope,
     format: "html",
     html: truncated.value,

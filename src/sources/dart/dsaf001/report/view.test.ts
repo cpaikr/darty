@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  createDsaf001ReportViewProvider,
+  createDsaf001ViewReportProvider,
   type Dsaf001ReportSource,
 } from "./view.ts";
 import type {
@@ -152,10 +152,10 @@ const createFakeSource = (controls?: FakeSourceControls) => {
   };
 };
 
-describe("createDsaf001ReportViewProvider", () => {
+describe("createDsaf001ViewReportProvider", () => {
   test("returns TOC-only reports without fetching iframe content", async () => {
     const fake = createFakeSource();
-    const provider = createDsaf001ReportViewProvider(fake.source);
+    const provider = createDsaf001ViewReportProvider(fake.source);
 
     const result = await provider.view({
       receipt: receiptNumber,
@@ -191,7 +191,7 @@ describe("createDsaf001ReportViewProvider", () => {
 
   test("fetches the selected TOC section through the source seam", async () => {
     const fake = createFakeSource({ contentHtml: "<div>배당 내용</div>" });
-    const provider = createDsaf001ReportViewProvider(fake.source);
+    const provider = createDsaf001ViewReportProvider(fake.source);
 
     const result = await provider.view({
       receipt: receiptNumber,
@@ -238,7 +238,7 @@ describe("createDsaf001ReportViewProvider", () => {
       shellForQuery: () => shell,
       contentHtml: "<p>정기주주총회결과</p>",
     });
-    const provider = createDsaf001ReportViewProvider(fake.source);
+    const provider = createDsaf001ViewReportProvider(fake.source);
 
     const result = await provider.view({
       receipt: "20260331904807",
@@ -263,7 +263,7 @@ describe("createDsaf001ReportViewProvider", () => {
 
   test("truncates oversized fetched HTML with explicit size metadata", async () => {
     const fake = createFakeSource({ contentHtml: `<p>${"가".repeat(600)}</p>` });
-    const provider = createDsaf001ReportViewProvider(fake.source);
+    const provider = createDsaf001ViewReportProvider(fake.source);
 
     const result = await provider.view({
       receipt: receiptNumber,
@@ -300,7 +300,7 @@ describe("createDsaf001ReportViewProvider", () => {
             })
           : createTocShell(),
     });
-    const provider = createDsaf001ReportViewProvider(fake.source);
+    const provider = createDsaf001ViewReportProvider(fake.source);
 
     const result = await provider.view({
       receipt: receiptNumber,

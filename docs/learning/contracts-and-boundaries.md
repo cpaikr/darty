@@ -4,7 +4,7 @@
 
 ## Public Semantic Contract
 
-The public `contents-search` request uses names that make sense to callers:
+The public `search-body` request uses names that make sense to callers:
 
 ```text
 page
@@ -18,7 +18,7 @@ presenterName?
 reportName?
 ```
 
-This contract lives under `src/capabilities/contents-search/contract/`. It is used for:
+This contract lives under `src/capabilities/search-body/contract/`. It is used for:
 
 - runtime validation with Effect Schema
 - TypeScript types
@@ -94,7 +94,7 @@ page              ------->  currentPage
 The capability layer does not call DART directly. It calls a provider:
 
 ```ts
-search(request: ContentsSearchRequest): Promise<ContentsSearchProviderResult>
+search(request: SearchBodyRequest): Promise<SearchBodyProviderResult>
 ```
 
 That provider result is already capability-shaped. This prevents raw DART source models from leaking upward into CLI, future adapters, or public result contracts.
@@ -126,8 +126,8 @@ Error classes narrow as they move up:
 | Layer | Error ownership |
 |---|---|
 | Source adapter | `SourceUnavailable`, `SourceChanged`, `ParseFailure`, `InvalidInput` |
-| Provider seam | `ContentsSearchProviderError` |
-| Public capability | `ContentsSearchFailure` |
+| Provider seam | `SearchBodyProviderError` |
+| Public capability | `SearchBodyFailure` |
 | Transport | CLI process error or future adapter-specific error result |
 
 External callers should reason about public capability failure codes, not source-internal classes.

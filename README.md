@@ -2,7 +2,7 @@
 
 한국 DART 공시를 검색하고 조회하는 Bun CLI입니다.
 
-`darty`는 DART 검색/조회 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `contents-search`로 DART 공시 본문내용 검색을, `report-view`로 접수번호 기반 보고서 목차/섹션 조회를 지원합니다.
+`darty`는 DART 검색/조회 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `search-body`로 DART 공시 본문내용 검색을, `view-report`로 접수번호 기반 보고서 목차/섹션 조회를 지원합니다.
 
 ## 필요 사항
 
@@ -13,7 +13,7 @@
 설치 없이 실행:
 
 ```bash
-bunx @sjunepark/darty contents-search \
+bunx @sjunepark/darty search-body \
   --keyword 배당 \
   --start-date 20250331 \
   --end-date 20260331
@@ -24,7 +24,7 @@ bunx @sjunepark/darty contents-search \
 ```bash
 bun add -g @sjunepark/darty
 
-darty contents-search \
+darty search-body \
   --keyword 배당 \
   --start-date 20250331 \
   --end-date 20260331
@@ -32,12 +32,12 @@ darty contents-search \
 
 ## 명령
 
-### `contents-search`
+### `search-body`
 
 DART 공시 본문내용을 검색하고 구조화된 JSON을 표준 출력으로 반환합니다.
 
 ```bash
-darty contents-search --keyword <검색어> --start-date <YYYYMMDD> --end-date <YYYYMMDD>
+darty search-body --keyword <검색어> --start-date <YYYYMMDD> --end-date <YYYYMMDD>
 ```
 
 필수 옵션:
@@ -58,21 +58,21 @@ darty contents-search --keyword <검색어> --start-date <YYYYMMDD> --end-date <
 명령 도움말 보기:
 
 ```bash
-darty contents-search --help
+darty search-body --help
 ```
 
-### `report-view`
+### `view-report`
 
 DART 접수번호 또는 viewer URL로 보고서 문서 목록/목차를 확인하고, 필요한 목차 섹션만 정제된 HTML로 반환합니다.
 
 ```bash
-darty report-view --receipt <접수번호-or-viewer-url>
+darty view-report --receipt <접수번호-or-viewer-url>
 ```
 
 섹션 조회:
 
 ```bash
-darty report-view --receipt 20260331004166 --section-id section:5.6
+darty view-report --receipt 20260331004166 --section-id section:5.6
 ```
 
 필수 옵션:
@@ -81,8 +81,8 @@ darty report-view --receipt 20260331004166 --section-id section:5.6
 
 선택 옵션:
 
-- `--document-id <id>`: `report-view` 결과의 `documents[].id`. 생략하면 기본 본문 문서입니다.
-- `--section-id <id>`: `report-view` 결과의 `toc[].id`. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다.
+- `--document-id <id>`: `view-report` 결과의 `documents[].id`. 생략하면 기본 본문 문서입니다.
+- `--section-id <id>`: `view-report` 결과의 `toc[].id`. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다.
 - `--output-format <html>`: 출력 형식. 현재는 `html`만 지원하며 기본값도 `html`입니다.
 - `--max-bytes <숫자>`: 반환 HTML 최대 바이트 수, 기본값 `200000`
 
@@ -96,7 +96,7 @@ darty report-view --receipt 20260331004166 --section-id section:5.6
 ## 참고
 
 - 이 도구는 읽기 전용입니다.
-- 현재 `contents-search`는 DART `공시통합검색` 화면의 `본문내용` 검색 모드만 구현합니다. 회사명, 보고서명, 목차명, 고급검색 전체를 구현한 것은 아닙니다.
-- `report-view`는 DART `dsaf001` viewer shell과 `/report/viewer.do` 본문 iframe 동작에 기반합니다.
+- 현재 `search-body`는 DART `공시통합검색` 화면의 `본문내용` 검색 모드만 구현합니다. 회사명, 보고서명, 목차명, 고급검색 전체를 구현한 것은 아닙니다.
+- `view-report`는 DART `dsaf001` viewer shell과 `/report/viewer.do` 본문 iframe 동작에 기반합니다.
 - 공개 DART 웹 동작을 사용하므로 DART 변경의 영향을 받을 수 있습니다.
 - 현재 공개 CLI는 의미 기반 옵션만 노출하며, 내부 DART 재현 필드는 CLI 계약에 포함하지 않습니다.

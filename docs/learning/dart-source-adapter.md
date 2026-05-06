@@ -19,7 +19,7 @@ src/sources/dart/dsab007/contents/
 
 The adapter owns four jobs:
 
-1. Translate a public `ContentsSearchRequest` into `SourceContentsReplayInput`.
+1. Translate a public `SearchBodyRequest` into `SourceContentsReplayInput`.
 2. Serialize that replay input into the form body DART expects.
 3. Fetch and parse DART's HTML response.
 4. Map source rows and source failures back to the provider seam.
@@ -95,7 +95,7 @@ SourceContentsRow
 `search.ts` maps that into the public item shape:
 
 ```text
-ContentsSearchItem
+SearchBodyItem
   company
   filing
   match

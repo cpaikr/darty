@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { ParseFailure, SourceUnavailable } from "../../errors.ts";
 import {
-  observedContentsSearchBehavior,
+  observedSearchBodyBehavior,
   toDsab007ContentsProviderError,
   toDsab007ContentsProviderResult,
   toDsab007ContentsReplayInput,
@@ -25,8 +25,8 @@ describe("toDsab007ContentsReplayInput", () => {
     ).toEqual({
       option: "contents",
       currentPage: 2,
-      maxResults: observedContentsSearchBehavior.effectivePageSize,
-      maxLinks: observedContentsSearchBehavior.effectivePagerWidth,
+      maxResults: observedSearchBodyBehavior.effectivePageSize,
+      maxLinks: observedSearchBodyBehavior.effectivePagerWidth,
       sort: "rpt_nm",
       sortType: "asc",
       keyword: "배당",
@@ -147,7 +147,7 @@ describe("toDsab007ContentsProviderResult", () => {
           surface: "dsab007",
           endpoint: "https://dart.fss.or.kr/dsab007/search.ax",
         },
-        sourceBehavior: observedContentsSearchBehavior,
+        sourceBehavior: observedSearchBodyBehavior,
         completeness: "partial",
         droppedItemCount: 1,
       },

@@ -39,7 +39,7 @@ src/
 
 ### `src/app/`
 
-`src/app/contents-search.ts` is the composition seam. It wires:
+`src/app/search-body.ts` is the composition seam. It wires:
 
 - operation name
 - input/result JSON Schemas
@@ -60,7 +60,7 @@ The capability layer owns public behavior:
 - provider interface
 - shared execution flow
 
-This is the layer to read when asking, "What is the public contract of `contents-search`?"
+This is the layer to read when asking, "What is the public contract of `search-body`?"
 
 ### `src/sources/dart/`
 
@@ -95,7 +95,7 @@ The early MCP adapter was removed from the active tree and preserved at git tag 
 - Colocated `*.test.ts` files prove module-level contracts and boundaries.
 - `test/cli/` runs subprocess CLI smoke checks.
 - `test/live/` contains opt-in live checks against DART.
-- `evals/contents-search/` checks fixed CLI scenarios and model/tool-use behavior.
+- `evals/search-body/` checks fixed CLI scenarios and model/tool-use behavior.
 
 See [Verification map](verification-map.md) for the testing boundary in learning order.
 
@@ -106,7 +106,7 @@ See [Verification map](verification-map.md) for the testing boundary in learning
 | How do I run the tool? | [README](../../README.md) |
 | What is the product trying to become? | [VISION](../../VISION.md) |
 | How does the current source architecture work? | [src/ARCHITECTURE](../../src/ARCHITECTURE.md) |
-| What does `contents-search` accept and return? | `src/capabilities/contents-search/contract/` |
+| What does `search-body` accept and return? | `src/capabilities/search-body/contract/` |
 | How does public input become a DART POST body? | `src/sources/dart/dsab007/contents/search.ts` then `build-form.ts` |
 | How are rows parsed from DART HTML? | `src/sources/dart/dsab007/contents/parse-html.ts` |
 | How are agentic evals organized? | [evals README](../../evals/README.md) |

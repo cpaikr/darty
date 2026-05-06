@@ -22,14 +22,14 @@ describe("scripts/search.ts", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("Usage: darty [options] [command]");
-    expect(result.stdout).toContain("contents-search");
+    expect(result.stdout).toContain("search-body");
   });
 
   test("forwards subcommands to the darty CLI", async () => {
-    const result = await runSearchScript(["contents-search", "--help"]);
+    const result = await runSearchScript(["search-body", "--help"]);
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
-    expect(result.stdout).toContain("Usage: darty contents-search [options]");
+    expect(result.stdout).toContain("Usage: darty search-body [options]");
   });
 });
