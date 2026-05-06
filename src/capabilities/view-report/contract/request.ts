@@ -32,11 +32,11 @@ const defaultedField = <A, I, R>(spec: {
     { default: spec.defaultValue },
   );
 
-export const viewReportOutputFormatValues = ["html"] as const;
+export const viewReportOutputFormatValues = ["html", "markdown"] as const;
 export type ViewReportOutputFormat =
   (typeof viewReportOutputFormatValues)[number];
 
-const ViewReportOutputFormatSchema = Schema.Literal(
+export const ViewReportOutputFormatSchema = Schema.Literal(
   ...viewReportOutputFormatValues,
 );
 
@@ -56,7 +56,7 @@ const viewReportRequestFields = {
   outputFormat: defaultedField({
     schema: ViewReportOutputFormatSchema,
     description: viewReportFieldCopy.outputFormat.description,
-    defaultValue: "html" as const,
+    defaultValue: "markdown" as const,
   }),
   maxBytes: defaultedField({
     schema: ViewReportMaxBytesSchema,
@@ -106,7 +106,7 @@ const fieldExpected: Record<string, string> = {
   receipt: viewReportValidationCopy.expectedReceipt,
   documentId: viewReportValidationCopy.expectedNonEmptyString,
   sectionId: viewReportValidationCopy.expectedNonEmptyString,
-  outputFormat: viewReportValidationCopy.expectedHtmlOutput,
+  outputFormat: viewReportValidationCopy.expectedOutputFormat,
   maxBytes: viewReportValidationCopy.expectedMaxBytes,
 };
 

@@ -1,7 +1,7 @@
 export const viewReportToolCopy = {
   title: "DART 보고서 보기",
   description:
-    "DART 접수번호 또는 viewer URL로 보고서 문서 목록과 목차를 확인하고, 선택한 목차 섹션의 정제된 HTML을 반환합니다.",
+    "DART 접수번호 또는 viewer URL로 보고서 문서 목록과 목차를 확인하고, 선택한 목차 섹션의 정제된 HTML 또는 Markdown을 반환합니다.",
 } as const;
 
 export const viewReportFieldCopy = {
@@ -21,20 +21,21 @@ export const viewReportFieldCopy = {
     cliDescription: "조회할 목차 섹션 ID(toc[].id)",
   },
   outputFormat: {
-    description: "JSON 결과의 content.html 본문 형식. 현재는 html만 지원합니다.",
-    cliDescription: "[기본값: html] JSON 결과의 content.html 본문 형식",
+    description:
+      "JSON 결과의 본문 형식. html 또는 best-effort markdown을 지원하며 기본값은 markdown입니다.",
+    cliDescription: "[기본값: markdown] JSON 결과의 본문 형식(html 또는 markdown)",
   },
   maxBytes: {
     description:
-      "반환할 HTML 최대 바이트 수. 기본값은 200000이며, 초과하면 잘라내고 warnings에 표시합니다.",
-    cliDescription: "[기본값: 200000] 반환할 HTML 최대 바이트 수",
+      "반환할 본문 최대 바이트 수. 기본값은 200000이며, 초과하면 잘라내고 warnings에 표시합니다.",
+    cliDescription: "[기본값: 200000] 반환할 본문 최대 바이트 수",
   },
 } as const;
 
 export const viewReportSchemaCopy = {
   requestDescription: "DART 보고서 보기 요청.",
   resultDescription:
-    "DART 보고서 문서/목차와 선택 섹션 또는 전체 문서 HTML 결과.",
+    "DART 보고서 문서/목차와 선택 섹션 또는 전체 문서 본문 결과.",
 } as const;
 
 export const viewReportValidationCopy = {
@@ -46,12 +47,12 @@ export const viewReportValidationCopy = {
     `매개변수 "${parameter}"이(가) 올바르지 않습니다. 필요한 값: ${expected}.`,
   expectedReceipt: "DART 접수번호 또는 rcpNo를 포함한 viewer URL",
   expectedNonEmptyString: "비어 있지 않은 문자열",
-  expectedHtmlOutput: "html",
+  expectedOutputFormat: "html 또는 markdown",
   expectedMaxBytes: "1,000 이상 1,000,000 이하의 정수",
 } as const;
 
 export const viewReportCliCopy = {
-  summary: "DART 보고서 목차 또는 섹션 HTML을 조회합니다.",
+  summary: "DART 보고서 목차 또는 섹션 본문을 조회합니다.",
   invalidInteger: (actual: string) =>
     `정수를 입력해야 하지만 "${actual}"을(를) 받았습니다.`,
   examplesHeading: "예시",
@@ -62,7 +63,14 @@ export const viewReportCliCopy = {
     },
     {
       description: "목차 섹션 HTML 보기",
-      argv: ["--receipt", "20260331004166", "--section-id", "section:3.6"],
+      argv: [
+        "--receipt",
+        "20260331004166",
+        "--section-id",
+        "section:3.6",
+        "--output-format",
+        "html",
+      ],
     },
   ],
 } as const;

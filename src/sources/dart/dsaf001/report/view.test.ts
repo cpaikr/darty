@@ -204,7 +204,7 @@ describe("createDsaf001ViewReportProvider", () => {
     expect(result.content).toMatchObject({
       scope: "section",
       format: "html",
-      html: "<div>배당 내용</div>",
+      body: "<div>배당 내용</div>",
       section: {
         id: "section:1.1",
         title: "배당에 관한 사항",
@@ -232,6 +232,47 @@ describe("createDsaf001ViewReportProvider", () => {
     });
   });
 
+  test("sanitizes presentation-only HTML attributes in returned content", async () => {
+    const fake = createFakeSource({
+      contentHtml:
+        '<table class="nb" border="1" width="601"><colgroup><col width="123"></colgroup><tr height="30"><td width="114" height="24" align="RIGHT" valign="BOTTOM" style="font-size:12pt;" colspan="2">소 &nbsp;<span style="color:red">계</span><br></td></tr></table>',
+    });
+    const provider = createDsaf001ViewReportProvider(fake.source);
+
+    const result = await provider.view({
+      receipt: receiptNumber,
+      sectionId: "section:1.1",
+      outputFormat: "html",
+      maxBytes: 200000,
+    });
+
+    expect(result.content?.body).toBe(
+      '<table><tbody><tr><td colspan="2">소 계</td></tr></tbody></table>',
+    );
+  });
+
+  test("returns best-effort markdown for selected content when requested", async () => {
+    const fake = createFakeSource({
+      contentHtml:
+        "<h2>배당</h2><p><strong>현금</strong> 배당</p><table><tr><td colspan=\"2\">표</td></tr></table>",
+    });
+    const provider = createDsaf001ViewReportProvider(fake.source);
+
+    const result = await provider.view({
+      receipt: receiptNumber,
+      sectionId: "section:1.1",
+      outputFormat: "markdown",
+      maxBytes: 200000,
+    });
+
+    expect(result.content).toMatchObject({
+      scope: "section",
+      format: "markdown",
+      body: "## 배당\n\n**현금** 배당\n\n표",
+      truncated: false,
+    });
+  });
+
   test("returns no-TOC document content by default", async () => {
     const shell = createNoTocShell();
     const fake = createFakeSource({
@@ -250,13 +291,14 @@ describe("createDsaf001ViewReportProvider", () => {
     expect(fake.contentLocators).toEqual([shell.initialViewLocator as SourceReportLocator]);
     expect(result.content).toMatchObject({
       scope: "document",
-      html: "<p>정기주주총회결과</p>",
+      format: "html",
+      body: "<p>정기주주총회결과</p>",
     });
     expect(result.warnings).toEqual([
       {
         code: "no_toc_returned_document",
         message:
-          "DART did not provide a table of contents for this document, so the selected document HTML was returned.",
+          "DART did not provide a table of contents for this document, so the selected document content was returned.",
       },
     ]);
   });

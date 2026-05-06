@@ -36,8 +36,8 @@ describe("view-report capability schemas", () => {
     expect(sectionId.type).toBe("string");
     expect(outputFormat).toMatchObject({
       type: "string",
-      enum: ["html"],
-      default: "html",
+      enum: ["html", "markdown"],
+      default: "markdown",
     });
     expect(maxBytes).toMatchObject({
       type: "integer",
@@ -71,7 +71,7 @@ describe("view-report capability schemas", () => {
     });
   });
 
-  test("accepts the existing successful result envelope", async () => {
+  test("accepts an html result envelope", async () => {
     const decoded = await Effect.runPromise(
       Schema.decodeUnknown(ViewReportResultSchema)({
         result: {
@@ -109,7 +109,7 @@ describe("view-report capability schemas", () => {
           content: {
             scope: "section",
             format: "html",
-            html: "<p>본문</p>",
+            body: "<p>본문</p>",
             sizeBytes: 13,
             returnedBytes: 13,
             truncated: false,
@@ -136,7 +136,6 @@ describe("view-report capability schemas", () => {
             },
           },
           tocSource: "dart",
-          outputFormat: "html",
         },
         references: {
           viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
@@ -148,5 +147,64 @@ describe("view-report capability schemas", () => {
     expect(decoded.result.request.receipt).toBe("20260331004166");
     expect(decoded.result.toc[0]?.children).toEqual([]);
     expect(decoded.result.content?.section?.id).toBe("section:1");
+  });
+
+  test("accepts markdown content in the result envelope", async () => {
+    const decoded = await Effect.runPromise(
+      Schema.decodeUnknown(ViewReportResultSchema)({
+        result: {
+          request: {
+            receipt: "20260331004166",
+            documentId: undefined,
+            sectionId: "section:1",
+            outputFormat: "markdown",
+            maxBytes: 200000,
+          },
+          receipt: {
+            receiptNumber: "20260331004166",
+          },
+          document: {
+            id: "document:body:1",
+            title: "사업보고서",
+            kind: "body",
+            selected: true,
+          },
+          documents: [],
+          toc: [],
+          content: {
+            scope: "section",
+            format: "markdown",
+            body: "# 본문",
+            sizeBytes: 8,
+            returnedBytes: 8,
+            truncated: false,
+            section: {
+              id: "section:1",
+              title: "사 업 보 고 서",
+            },
+          },
+          navigation: undefined,
+        },
+        metadata: {
+          fetchedAt: "2026-05-05T00:00:00.000Z",
+          source: {
+            system: "dart",
+            surface: "dsaf001",
+            endpoints: {
+              shell: "https://dart.fss.or.kr/dsaf001/main.do",
+              content: "https://dart.fss.or.kr/report/viewer.do",
+            },
+          },
+          tocSource: "dart",
+        },
+        references: {
+          viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+        },
+        warnings: [],
+      }),
+    );
+
+    expect(decoded.result.content?.format).toBe("markdown");
+    expect(decoded.result.content?.body).toBe("# 본문");
   });
 });

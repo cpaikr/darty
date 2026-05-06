@@ -83,7 +83,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption[] => [
   ),
   createRegisteredOption(
     "outputFormat",
-    "--output-format <html>",
+    "--output-format <html|markdown>",
     viewReportFieldCopy.outputFormat.cliDescription,
   ),
   createRegisteredOption(

@@ -1,7 +1,10 @@
 import { Schema } from "effect";
 
 import { viewReportSchemaCopy } from "../copy.ts";
-import { ViewReportRequestSchema } from "./request.ts";
+import {
+  ViewReportOutputFormatSchema,
+  ViewReportRequestSchema,
+} from "./request.ts";
 
 export interface ViewReportTocNode {
   readonly id: string;
@@ -33,19 +36,23 @@ export const ViewReportReceiptSchema = Schema.Struct({
 });
 export type ViewReportReceipt = typeof ViewReportReceiptSchema.Type;
 
-export const ViewReportContentSchema = Schema.Struct({
+const ViewReportContentSectionSchema = Schema.Struct({
+  id: Schema.String,
+  title: Schema.String,
+});
+
+const ViewReportContentBaseFields = {
   scope: Schema.Literal("document", "section"),
-  format: Schema.Literal("html"),
-  html: Schema.String,
   sizeBytes: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
   returnedBytes: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
   truncated: Schema.Boolean,
-  section: Schema.optional(
-    Schema.Struct({
-      id: Schema.String,
-      title: Schema.String,
-    }),
-  ),
+  section: Schema.optional(ViewReportContentSectionSchema),
+} as const;
+
+export const ViewReportContentSchema = Schema.Struct({
+  ...ViewReportContentBaseFields,
+  format: ViewReportOutputFormatSchema,
+  body: Schema.String,
 });
 export type ViewReportContent = typeof ViewReportContentSchema.Type;
 
@@ -75,7 +82,6 @@ export const ViewReportMetadataSchema = Schema.Struct({
     }),
   }),
   tocSource: Schema.Literal("dart", "none"),
-  outputFormat: Schema.Literal("html"),
 });
 export type ViewReportMetadata = typeof ViewReportMetadataSchema.Type;
 

@@ -66,7 +66,7 @@ describe("parseViewReportCommandArgs", () => {
         "--section-id",
         "section:1.2",
         "--output-format",
-        "html",
+        "markdown",
         "--max-bytes",
         "50000",
       ]),
@@ -74,7 +74,7 @@ describe("parseViewReportCommandArgs", () => {
       receipt: "20260331004166",
       documentId: "document:attachment:1",
       sectionId: "section:1.2",
-      outputFormat: "html",
+      outputFormat: "markdown",
       maxBytes: 50000,
     });
   });
@@ -83,13 +83,13 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("--receipt <receipt-or-url>");
     expect(viewReportUsage).toContain("--document-id <id>");
     expect(viewReportUsage).toContain("--section-id <id>");
-    expect(viewReportUsage).toContain("--output-format <html>");
-    expect(viewReportUsage).toContain(
-      "[기본값: html] JSON 결과의 content.html 본문 형식",
-    );
+    expect(viewReportUsage).toContain("--output-format <html|markdown>");
+    expect(viewReportUsage).toContain("[기본값: markdown]");
+    expect(viewReportUsage).toContain("JSON 결과의 본문 형식(html 또는");
+    expect(viewReportUsage).toContain("markdown)");
     expect(viewReportUsage).toContain("--max-bytes <number>");
     expect(viewReportUsage).toContain(
-      "[기본값: 200000] 반환할 HTML 최대 바이트 수",
+      "[기본값: 200000] 반환할 본문 최대 바이트 수",
     );
   });
 

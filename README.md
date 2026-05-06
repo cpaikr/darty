@@ -63,7 +63,7 @@ darty search-body --help
 
 ### `view-report`
 
-DART 접수번호 또는 viewer URL로 보고서 문서 목록/목차를 확인하고, 필요한 목차 섹션만 정제된 HTML로 반환합니다.
+DART 접수번호 또는 viewer URL로 보고서 문서 목록/목차를 확인하고, 필요한 목차 섹션만 정제된 HTML 또는 best-effort Markdown으로 반환합니다.
 
 ```bash
 darty view-report --receipt <접수번호-or-viewer-url>
@@ -83,14 +83,14 @@ darty view-report --receipt 20260331004166 --section-id section:5.6
 
 - `--document-id <id>`: `view-report` 결과의 `documents[].id`. 생략하면 기본 본문 문서입니다.
 - `--section-id <id>`: `view-report` 결과의 `toc[].id`. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다.
-- `--output-format <html>`: 출력 형식. 현재는 `html`만 지원하며 기본값도 `html`입니다.
-- `--max-bytes <숫자>`: 반환 HTML 최대 바이트 수, 기본값 `200000`
+- `--output-format <html|markdown>`: 출력 형식. 기본값은 `markdown`입니다. `markdown`은 읽기 쉬운 best-effort 변환이며 복잡한 표는 HTML 태그로 보존합니다.
+- `--max-bytes <숫자>`: 반환 본문 최대 바이트 수, 기본값 `200000`
 
 동작:
 
 - TOC가 있는 문서는 기본 호출에서 문서 목록과 목차만 반환합니다.
-- `--section-id`를 지정하면 해당 섹션의 sanitized HTML과 이전/다음/상위 navigation을 반환합니다.
-- TOC가 없는 문서는 `--section-id` 없이 기본 호출에서 선택 문서 HTML을 반환하고 warning을 포함합니다.
+- `--section-id`를 지정하면 해당 섹션의 본문(`content.body`)과 이전/다음/상위 navigation을 반환합니다.
+- TOC가 없는 문서는 `--section-id` 없이 기본 호출에서 선택 문서 본문(`content.body`)을 반환하고 warning을 포함합니다.
 - 내부 DART viewer 파라미터(`dcmNo`, `eleId`, `offset`, `length`, `dtd`)는 공개 옵션으로 노출하지 않습니다.
 
 ## 참고

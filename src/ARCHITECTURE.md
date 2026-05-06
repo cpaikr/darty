@@ -128,7 +128,8 @@ graph TD
 - **`src/sources/dart/`** — Internal DART adapters. Owns replay/viewer schemas,
   request construction, HTML parsing/sanitization, source models, and error mapping.
   `dsab007/contents` powers search; `dsaf001/report` resolves receipt viewer
-  shells, document selectors, TOCs, content planning, navigation, and section HTML.
+  shells, document selectors, TOCs, content planning, navigation, sanitized HTML,
+  and best-effort Markdown.
 
 ## Behavior-First Core
 

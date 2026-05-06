@@ -1,11 +1,14 @@
 import type {
   ViewReportContent,
+  ViewReportOutputFormat,
   ViewReportWarning,
 } from "../../../../capabilities/view-report/contract.ts";
 import type {
   SourceReportLocator,
   SourceReportSection,
 } from "./source-model.ts";
+import { convertReportHtmlToMarkdown } from "./markdown.ts";
+import { sanitizeReportHtml } from "./sanitize-html.ts";
 import type { Dsaf001ReportSource } from "./source.ts";
 
 const textEncoder = new TextEncoder();
@@ -60,6 +63,7 @@ export const buildReportContent = async (input: {
   readonly source: Dsaf001ReportSource;
   readonly locator: SourceReportLocator;
   readonly scope: "document" | "section";
+  readonly outputFormat: ViewReportOutputFormat;
   readonly maxBytes: number;
   readonly section?: SourceReportSection;
 }): Promise<{
@@ -67,18 +71,22 @@ export const buildReportContent = async (input: {
   readonly warning?: ViewReportWarning;
 }> => {
   const sourceContent = await input.source.fetchContent(input.locator);
-  const truncated = truncateUtf8(sourceContent.html, input.maxBytes);
+  const value =
+    input.outputFormat === "markdown"
+      ? convertReportHtmlToMarkdown(sourceContent.html)
+      : sanitizeReportHtml(sourceContent.html);
+  const truncated = truncateUtf8(value, input.maxBytes);
+  const formatLabel = input.outputFormat === "markdown" ? "Markdown" : "HTML";
   const warning = truncated.truncated
     ? {
         code: "content_truncated" as const,
-        message: `HTML content was truncated from ${truncated.sizeBytes} bytes to ${truncated.returnedBytes} bytes.`,
+        message: `${formatLabel} content was truncated from ${truncated.sizeBytes} bytes to ${truncated.returnedBytes} bytes.`,
       }
     : undefined;
-
   const content: ViewReportContent = {
     scope: input.scope,
-    format: "html",
-    html: truncated.value,
+    format: input.outputFormat,
+    body: truncated.value,
     sizeBytes: truncated.sizeBytes,
     returnedBytes: truncated.returnedBytes,
     truncated: truncated.truncated,

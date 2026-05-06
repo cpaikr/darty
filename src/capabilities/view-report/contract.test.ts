@@ -11,8 +11,19 @@ describe("resolveViewReportRequest", () => {
       receipt: "20260331004166",
       documentId: undefined,
       sectionId: undefined,
-      outputFormat: "html",
+      outputFormat: "markdown",
       maxBytes: 200000,
+    });
+  });
+
+  test("accepts markdown output", () => {
+    expect(
+      resolveViewReportRequest({
+        receipt: "20260331004166",
+        outputFormat: "markdown",
+      }),
+    ).toMatchObject({
+      outputFormat: "markdown",
     });
   });
 
@@ -28,7 +39,7 @@ describe("resolveViewReportRequest", () => {
       receipt:
         "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331904807",
       sectionId: "section:1.2",
-      outputFormat: "html",
+      outputFormat: "markdown",
       maxBytes: 50000,
     });
   });

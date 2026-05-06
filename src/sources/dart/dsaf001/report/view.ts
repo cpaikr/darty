@@ -137,6 +137,7 @@ const viewReport = async (
           source,
           locator: contentPlan.locator,
           scope: contentPlan.kind,
+          outputFormat: request.outputFormat,
           maxBytes: request.maxBytes,
           ...(contentPlan.kind === "section"
             ? { section: contentPlan.section }
@@ -151,7 +152,7 @@ const viewReport = async (
     warnings.push({
       code: "no_toc_returned_document",
       message:
-        "DART did not provide a table of contents for this document, so the selected document HTML was returned.",
+        "DART did not provide a table of contents for this document, so the selected document content was returned.",
     });
   }
 
@@ -183,7 +184,6 @@ const viewReport = async (
               },
       },
       tocSource: shell.toc.length > 0 ? "dart" : "none",
-      outputFormat: "html",
     },
     references: {
       viewerUrl: shell.sourceUrl,
