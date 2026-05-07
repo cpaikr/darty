@@ -32,6 +32,10 @@ Current project decision:
 - `/dsab007/main.do?option=corp`
   Integrated filing search page with selectable modes:
   company name, report name, report table of contents name, body content, and advanced search.
+- `/dsab007/detailSearch.ax`
+  Integrated filing search fragment endpoint. Observed for `option=corp` company-name filing search; page source indicates `option=report` and `option=reportList` also use this endpoint, but those modes were not replayed in this investigation.
+- `/corp/searchCorp.ax`
+  Company finder popup endpoint used by integrated search company selection flows.
 - `/dsaf001/main.do?rcpNo={rcpNo}`
   Filing report viewer with embedded table-of-contents state and iframe-based section loading.
 - `/dsae001/main.do`
@@ -161,6 +165,72 @@ When `본문내용` is selected, the UI shows these relevant controls:
 | pager `[현재/전체] [총 N건]` | `.pageInfo` | parsed into `pagination.currentPage`, `totalPages`, and `totalCount` |
 
 Observed browser UI serialization for a `본문내용` search on 2026-05-05 included `currentPage=1`, `maxResults=15`, `maxLinks=10`, `sort=DATE`, `sortType=desc`, `option=contents`, `keyword`, `b_keyword`, `startDate`, `b_startDate`, `endDate`, and `b_endDate`. The response still returned 10 rows for the tested search, matching the earlier finding that `maxResults` is accepted but not caller-controlled for this mode.
+
+### Integrated Company-Name Filing Search Notes
+
+Observed on 2026-05-07 at `https://dart.fss.or.kr/dsab007/main.do?option=corp` using browser interaction and direct POST replay.
+
+The `회사명` mode (`option=corp`) uses an explicit company-selection step when a typed company name maps to multiple DART companies. Searching `케이티` opened the `회사명찾기` popup before loading filing results. The popup showed two checked candidates:
+
+| Market badge | Company name | DART company code | Representative | Stock code | Industry |
+|---|---|---|---|---|---|
+| `기` | `케이티` | `00186461` | `이영순` | empty | `기타 엔지니어링 서비스업` |
+| `유` | `케이티` | `00190321` | `박윤영` | `030200` | `전기 통신업` |
+
+Observed popup replay endpoint and fields:
+
+- endpoint: `POST /corp/searchCorp.ax`
+- fields: `currentPage=1`, `maxResults=15`, `maxLinks=10`, `textCrpNm=케이티`, `histYn=Y`, repeated `corpType=P/A/X/E`
+- candidate company codes are in hidden `hiddenCikCD1` inputs; candidate names are in `hiddenCikNM1`
+- candidate row title text includes company name, English name, representative, business registration number, and industry
+
+After deselecting the `기` row and confirming the `유 케이티` row, the main form held `textCrpCik=00190321`, `textCrpNm=케이티`, and `textCrpNm2=케이티`. The subsequent filing search replayed against `POST /dsab007/detailSearch.ax`.
+
+A direct replay with `textCrpCik=00190321` and empty `textCrpNm` / `textCrpNm2` returned the same result set, so the filing search can bypass the UI resolution popup when the 8-digit DART company code is already known.
+
+Observed selected-company filing replay fields:
+
+- `currentPage=1`
+- `maxResults=15`
+- `maxLinks=10`
+- `sort=date`
+- `series=desc`
+- `option=corp`
+- `textCrpNm=케이티`
+- `textCrpNm2=케이티`
+- `textCrpCik=00190321`
+- `startDate=20250507`
+- `endDate=20260507`
+- `finalReport=recent`
+- `businessCode=all`
+- `businessNm=전체`
+- `corporationType=all`
+- `closingAccountsMonth=all`
+- `autoSearch=N`
+- `autoSearchCorp=Y`
+
+Observed result shape:
+
+- table columns: `번호`, `공시대상회사`, `보고서명`, `제출인`, `접수일자`, `비고`
+- company cell includes market badge and a company popup link such as `openCorpInfoNew('00190321', ...)`
+- report link points to `/dsaf001/main.do?rcpNo={rcpNo}` and calls `openReportViewer(rcpNo, '')`; no `dcmNo` was present in the observed rows
+- pager for selected `유 케이티` showed `[1/12] [총 169건]`
+- first observed row was receipt `20260504800404`, report `기업설명회(IR)개최(안내공시)`, presenter `케이티`, date `2026.05.04`
+
+Observed page-size and sort behavior for selected `유 케이티`:
+
+- `maxResults=15`, `30`, `50`, and `100` were honored and matched the UI dropdown
+- `maxResults=2` fell back to 15 rows, so arbitrary page sizes should not be exposed as a public contract
+- `sort=date` with `series=desc` was replay-observed
+- the UI exposes `회사명` and `보고서명` sort anchors whose IDs suggest `sort=crp` and `sort=rpt`, but those replay values were not verified in this investigation
+
+Current implication:
+
+- integrated company-name filing search is replayable without browser automation
+- the public `search-company-reports` contract should be code-first and require the resolved 8-digit DART company code
+- callers that only know a company name should use the existing `search-company` capability first, then pass the selected `companyCode` to `search-company-reports`
+- `/corp/searchCorp.ax` remains useful source evidence for the browser UI's chooser, but it should not be part of this operation unless a separate convenience wrapper is intentionally added later
+- the draft target spec is `docs/specs/dsab007-search-company-reports-v1.md`
 
 ### Official DART Search Guide
 

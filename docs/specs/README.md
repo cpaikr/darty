@@ -14,6 +14,7 @@ Current specs:
 - [company-rss-v1.md](company-rss-v1.md)
 - [dsae001-company-detail-v1.md](dsae001-company-detail-v1.md)
 - [dsae001-search-company-v1.md](dsae001-search-company-v1.md)
+- [dsab007-search-company-reports-v1.md](dsab007-search-company-reports-v1.md)
 - [dsab007-search-v1.md](dsab007-search-v1.md)
 - [dsaf001-view-report-v1.md](dsaf001-view-report-v1.md)
 
