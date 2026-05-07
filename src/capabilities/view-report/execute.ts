@@ -1,3 +1,4 @@
+import { toCommonSourceFailure } from "../provider-errors.ts";
 import { viewReportFailureCopy } from "./copy.ts";
 import {
   InvalidViewReportRequest,
@@ -32,31 +33,13 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
       });
     }
 
-    if (error.code === "source_unavailable") {
-      return new ViewReportFailure({
-        code: "source_unavailable",
-        message: error.message,
-        retryable: error.retryable,
-        sourceUrl: error.sourceUrl,
-      });
-    }
+    const sourceFailure = toCommonSourceFailure(
+      error,
+      (fields) => new ViewReportFailure(fields),
+    );
 
-    if (error.code === "source_changed") {
-      return new ViewReportFailure({
-        code: "source_changed",
-        message: error.message,
-        retryable: error.retryable,
-        sourceUrl: error.sourceUrl,
-      });
-    }
-
-    if (error.code === "source_parse_failure") {
-      return new ViewReportFailure({
-        code: "source_parse_failure",
-        message: error.message,
-        retryable: error.retryable,
-        sourceUrl: error.sourceUrl,
-      });
+    if (sourceFailure !== undefined) {
+      return sourceFailure;
     }
 
     return new ViewReportFailure({

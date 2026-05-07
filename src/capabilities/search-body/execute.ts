@@ -1,3 +1,4 @@
+import { toCommonSourceFailure } from "../provider-errors.ts";
 import { searchBodyFailureCopy } from "./copy.ts";
 import {
   SearchBodyFailure,
@@ -23,31 +24,13 @@ const toSearchBodyFailure = (error: unknown): SearchBodyFailure => {
   }
 
   if (error instanceof SearchBodyProviderError) {
-    if (error.code === "source_unavailable") {
-      return new SearchBodyFailure({
-        code: "source_unavailable",
-        message: error.message,
-        retryable: error.retryable,
-        sourceUrl: error.sourceUrl,
-      });
-    }
+    const sourceFailure = toCommonSourceFailure(
+      error,
+      (fields) => new SearchBodyFailure(fields),
+    );
 
-    if (error.code === "source_changed") {
-      return new SearchBodyFailure({
-        code: "source_changed",
-        message: error.message,
-        retryable: error.retryable,
-        sourceUrl: error.sourceUrl,
-      });
-    }
-
-    if (error.code === "source_parse_failure") {
-      return new SearchBodyFailure({
-        code: "source_parse_failure",
-        message: error.message,
-        retryable: error.retryable,
-        sourceUrl: error.sourceUrl,
-      });
+    if (sourceFailure !== undefined) {
+      return sourceFailure;
     }
 
     return new SearchBodyFailure({

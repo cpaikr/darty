@@ -54,7 +54,7 @@ export const searchBodyFieldCopy = {
 } as const;
 
 export const searchBodyCliCopy = {
-  summary: "DART 공시통합검색의 본문내용 검색 결과를 구조화된 JSON으로 반환합니다.",
+  summary: "DART 공시통합검색의 본문내용을 검색합니다.",
   examplesHeading: "예시",
   examples: [
     {
@@ -114,7 +114,7 @@ export const searchBodySchemaCopy = {
 export const searchBodyToolCopy = {
   title: "DART 본문내용 검색",
   description:
-    `DART 공시통합검색의 \`본문내용\` 모드로 제출 공시문서의 내용 검색 결과를 구조화된 JSON으로 반환합니다. ${dartSearchSyntaxSummary}`,
+    `DART 공시통합검색의 \`본문내용\` 모드로 제출 공시문서 내용을 검색합니다. ${dartSearchSyntaxSummary}`,
 } as const;
 
 export const searchBodyValidationCopy = {

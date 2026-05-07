@@ -6,9 +6,11 @@ shape and document ownership.
 
 ## Purpose
 
-`src/` contains the executable slice of `darty`: public `search-body` and
-`view-report` capabilities, a local CLI transport, and internal DART source
-adapters for `dsab007` search and `dsaf001` report viewing.
+`src/` contains the executable slice of `darty`: public `search-body`,
+`search-company`, `company-detail`, `company-rss`, and `view-report`
+capabilities, a local CLI transport, and internal DART source adapters for
+`dsab007` search, `dsae001` company overview search/detail, DART company RSS,
+and `dsaf001` report viewing.
 
 The design goal is to keep the core reusable across transports. The active
 transport is CLI, but future MCP, Pi-native, SDK, or other adapters should bind
@@ -63,10 +65,10 @@ graph TD
 
 ## Component Map
 
-The diagram shows the established `search-body` path. `view-report` uses the
-same transport/app/capability shape through `app/view-report.ts`,
-`capabilities/view-report/`, `cli/commands/view-report.ts`, and
-`sources/dart/dsaf001/report/`.
+The diagram shows the established `search-body` path. `search-company`,
+`company-detail`, `company-rss`, and `view-report` use the same
+transport/app/capability shape through their matching `app/`, `capabilities/`,
+`cli/commands/`, and `sources/dart/` modules.
 
 ```mermaid
 graph TD
@@ -127,9 +129,11 @@ graph TD
   execution logic.
 - **`src/sources/dart/`** — Internal DART adapters. Owns replay/viewer schemas,
   request construction, HTML parsing/sanitization, source models, and error mapping.
-  `dsab007/contents` powers search; `dsaf001/report` resolves receipt viewer
-  shells, document selectors, TOCs, content planning, navigation, sanitized HTML,
-  and best-effort Markdown.
+  `dsab007/contents` powers body-content search; `dsae001/company` powers
+  company-name search; `dsae001/detail` powers company detail lookup;
+  `api/company-rss` powers company RSS; `dsaf001/report` resolves receipt
+  viewer shells, document selectors, TOCs, content planning, navigation,
+  sanitized HTML, and best-effort Markdown.
 
 ## Behavior-First Core
 
@@ -330,17 +334,19 @@ host keeps explicit control over adapter wiring.
 ## Start Here
 
 - `src/cli.ts` — top-level transport entry point
-- `src/app/search-body.ts` — shared transport composition seam
-- `src/cli/commands/search-body.ts` — explicit CLI surface over the shared
-  operation
-- `src/capabilities/search-body/contract.ts` and `contract/` — public
-  input/output contract, typed failures, and request resolution
-- `src/capabilities/search-body/spec.ts` — operation identifier and
-  machine-readable request/result schemas
-- `src/capabilities/search-body/execute.ts` — shared validation,
-  execution, and error normalization
-- `src/sources/dart/dsab007/contents/search.ts` — public-to-source mapping
-  and provider boundary
+- `src/app/*` — shared transport composition seams
+- `src/cli/commands/*` — explicit CLI surfaces over shared operations
+- `src/cli/command-helpers.ts` — small Commander transport helpers shared by
+  command files
+- `src/capabilities/*/contract.ts` — public input/output contracts, typed
+  failures, and request resolution
+- `src/capabilities/*/spec.ts` — operation identifiers and machine-readable
+  request/result schemas
+- `src/capabilities/*/execute.ts` — shared validation, execution, and error
+  normalization
+- `src/sources/dart/dsab007/contents/search.ts` and
+  `src/sources/dart/dsae001/company/search.ts` — public-to-source mapping and
+  provider boundaries
 
 ## Test Coverage Map
 

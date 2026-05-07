@@ -69,10 +69,46 @@ describe("CLI entrypoints", () => {
     expect(result.exitCode).toBe(0);
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage: darty [options] [command]");
+    expect(stdout).toContain("company-detail [options]");
+    expect(stdout).toContain("company-rss [options]");
     expect(stdout).toContain("search-body [options]");
+    expect(stdout).toContain("search-company [options]");
     expect(stdout).toContain("view-report [options]");
     expect(stdout).not.toContain("contents-search [options]");
     expect(stdout).not.toContain("report-view [options]");
+  });
+
+  test("bundled CLI accepts the documented company-detail command", () => {
+    const result = runEntrypoint(builtEntrypoint, ["company-detail", "--help"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage: darty company-detail [options]");
+    expect(stdout).toContain("--company-code <text>");
+  });
+
+  test("bundled CLI accepts the documented company-rss command", () => {
+    const result = runEntrypoint(builtEntrypoint, ["company-rss", "--help"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage: darty company-rss [options]");
+    expect(stdout).toContain("--company-code <text>");
+  });
+
+  test("bundled CLI accepts the documented search-company command", () => {
+    const result = runEntrypoint(builtEntrypoint, ["search-company", "--help"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage: darty search-company [options]");
+    expect(stdout).toContain("--company-name <text>");
   });
 
   test("bundled CLI accepts the documented view-report command", () => {

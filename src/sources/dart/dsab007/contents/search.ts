@@ -10,11 +10,7 @@ import {
   type SearchBodyProvider,
   type SearchBodyProviderResult,
 } from "../../../../capabilities/search-body/provider.ts";
-import {
-  ParseFailure,
-  SourceChanged,
-  SourceUnavailable,
-} from "../../errors.ts";
+import { toCommonDartSourceProviderError } from "../../provider-errors.ts";
 import { searchContentsSourcePage, searchUrl } from "./fetch.ts";
 import { dsab007ContentsMessages } from "./messages.ts";
 import type { SourceContentsRow, SourceContentsSearchPage } from "./source-model.ts";
@@ -138,34 +134,14 @@ export const dsab007ContentsProvider: SearchBodyProvider = {
 export const toDsab007ContentsProviderError = (
   error: unknown,
 ): SearchBodyProviderError => {
-  if (error instanceof SourceUnavailable) {
-    return new SearchBodyProviderError({
-      code: "source_unavailable",
-      message: error.message,
-      retryable: true,
-      providerId,
-      sourceUrl: error.sourceUrl,
-    });
-  }
+  const sourceError = toCommonDartSourceProviderError(
+    error,
+    providerId,
+    (fields) => new SearchBodyProviderError(fields),
+  );
 
-  if (error instanceof SourceChanged) {
-    return new SearchBodyProviderError({
-      code: "source_changed",
-      message: error.message,
-      retryable: false,
-      providerId,
-      sourceUrl: error.sourceUrl,
-    });
-  }
-
-  if (error instanceof ParseFailure) {
-    return new SearchBodyProviderError({
-      code: "source_parse_failure",
-      message: error.message,
-      retryable: false,
-      providerId,
-      sourceUrl: error.sourceUrl,
-    });
+  if (sourceError !== undefined) {
+    return sourceError;
   }
 
   return new SearchBodyProviderError({

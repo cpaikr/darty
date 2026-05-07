@@ -52,7 +52,7 @@ describe("search-body CLI subprocess", () => {
     expect(result.exitCode).toBe(0);
     expect(stdout).toContain("Usage: darty search-body [options]");
     expect(stdout).toContain(
-      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서의 내용 검색 결과를 구조화된 JSON으로 반환합니다.",
+      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서 내용을 검색합니다.",
     );
     expect(stdout).toContain("--keyword <text>");
     expect(stdout).toContain("명령 도움말을 표시합니다.");

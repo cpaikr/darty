@@ -13,8 +13,11 @@ and shapes results. The current active transport is CLI, but the core stays
 transport-neutral so future MCP, Pi-native, SDK, or other adapters can bind to
 the same capabilities without duplicating DART logic.
 
-The current core has two public capabilities: `search-body` for DART body
-search and `view-report` for receipt-based report TOC/section retrieval.
+The current core has five public capabilities: `search-body` for DART body
+search, `search-company` for DART company overview company-name search,
+`company-detail` for company overview detail lookup, `company-rss` for
+company-specific RSS, and `view-report` for receipt-based report TOC/section
+retrieval.
 
 For layer diagrams, the schema derivation chain, the runtime pipeline, and the
 adapter extension seam, see [src/ARCHITECTURE.md](src/ARCHITECTURE.md).
@@ -33,7 +36,7 @@ current supported surface.
 - [VISION.md](VISION.md)
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
-  Durable source investigation notes for `dsab007` search and the report viewer.
+  Durable source investigation notes for `dsab007` search, `dsae001` company overview search, and the report viewer.
 - [docs/learning/](docs/learning/INDEX.md)
   Onboarding-oriented explanations for new readers. These pages are secondary learning material, not the source of truth for implementation behavior, product decisions, or project policy.
 - [docs/tools/](docs/tools/)
@@ -86,6 +89,24 @@ argv -> src/cli.ts -> cli/commands/search-body.ts
      -> app/search-body.ts -> capabilities/search-body/execute.ts
      -> sources/dart/dsab007/contents/search.ts
      -> /dsab007/search.ax
+
+argv -> src/cli.ts -> cli/commands/search-company.ts
+     -> executeSearchCompanyCommand()
+     -> app/search-company.ts -> capabilities/search-company/execute.ts
+     -> sources/dart/dsae001/company/search.ts
+     -> /dsae001/search.ax
+
+argv -> src/cli.ts -> cli/commands/company-detail.ts
+     -> executeCompanyDetailCommand()
+     -> app/company-detail.ts -> capabilities/company-detail/execute.ts
+     -> sources/dart/dsae001/detail/detail.ts
+     -> /dsae001/select.ax
+
+argv -> src/cli.ts -> cli/commands/company-rss.ts
+     -> executeCompanyRssCommand()
+     -> app/company-rss.ts -> capabilities/company-rss/execute.ts
+     -> sources/dart/api/company-rss/rss.ts
+     -> /api/companyRSS.xml
 
 argv -> src/cli.ts -> cli/commands/view-report.ts
      -> executeViewReportCommand()

@@ -2,7 +2,7 @@
 
 한국 DART 공시를 검색하고 조회하는 Bun CLI입니다.
 
-`darty`는 DART 검색/조회 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `search-body`로 DART 공시 본문내용 검색을, `view-report`로 접수번호 기반 보고서 목차/섹션 조회를 지원합니다.
+`darty`는 DART 검색/조회 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `search-body`로 DART 공시 본문내용 검색을, `search-company`로 DART 기업개황 회사별 검색을, `company-detail`로 기업개황 상세 조회를, `company-rss`로 회사별 공시 RSS 조회를, `view-report`로 접수번호 기반 보고서 목차/섹션 조회를 지원합니다.
 
 ## 필요 사항
 
@@ -32,9 +32,56 @@ darty search-body \
 
 ## 명령
 
+### `company-detail`
+
+DART 8자리 회사 코드로 기업개황 상세 정보를 조회합니다.
+
+```bash
+darty company-detail --company-code <8자리 DART 회사 코드>
+```
+
+예시:
+
+```bash
+darty company-detail --company-code 00126380
+```
+
+### `company-rss`
+
+DART 8자리 회사 코드로 회사별 공시 RSS를 조회합니다.
+
+```bash
+darty company-rss --company-code <8자리 DART 회사 코드>
+```
+
+예시:
+
+```bash
+darty company-rss --company-code 00126380
+```
+
+### `search-company`
+
+DART 기업개황의 `회사별` 검색으로 DART 회사 고유코드(8자리, `companyCode`)를 찾습니다. DART가 표시하는 경우 6자리 종목코드(`stockCode`)도 확인할 수 있습니다. 상세 정보와 RSS는 각각 `company-detail`, `company-rss`로 조회합니다.
+
+```bash
+darty search-company --company-name <회사명>
+```
+
+선택 옵션:
+
+- `--page <숫자>`: 검색 결과 페이지, 기본값 `1`
+- `--page-size <숫자>`: 한 페이지에 요청할 회사 수, 기본값 `45`, 최대 `45`
+
+예시:
+
+```bash
+darty search-company --company-name 삼성전자
+```
+
 ### `search-body`
 
-DART 공시 본문내용을 검색하고 구조화된 JSON을 표준 출력으로 반환합니다.
+DART 공시 본문내용을 검색합니다.
 
 ```bash
 darty search-body --keyword <검색어> --start-date <YYYYMMDD> --end-date <YYYYMMDD>
@@ -96,6 +143,7 @@ darty view-report --receipt 20260331004166 --section-id section:5.6
 ## 참고
 
 - 이 도구는 읽기 전용입니다.
+- 현재 `search-company`는 DART `기업개황` 화면의 `회사별` 회사명 검색만 구현합니다. `업종별`, 사업자등록번호, 법인등록번호 검색은 구현하지 않았습니다.
 - 현재 `search-body`는 DART `공시통합검색` 화면의 `본문내용` 검색 모드만 구현합니다. 회사명, 보고서명, 목차명, 고급검색 전체를 구현한 것은 아닙니다.
 - `view-report`는 DART `dsaf001` viewer shell과 `/report/viewer.do` 본문 iframe 동작에 기반합니다.
 - 공개 DART 웹 동작을 사용하므로 DART 변경의 영향을 받을 수 있습니다.

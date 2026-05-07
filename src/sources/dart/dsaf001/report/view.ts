@@ -10,11 +10,7 @@ import {
   type ViewReportProvider,
   type ViewReportProviderResult,
 } from "../../../../capabilities/view-report/provider.ts";
-import {
-  ParseFailure,
-  SourceChanged,
-  SourceUnavailable,
-} from "../../errors.ts";
+import { toCommonDartSourceProviderError } from "../../provider-errors.ts";
 import { buildReportContent } from "./content.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import { buildReportNavigation } from "./navigation.ts";
@@ -213,34 +209,14 @@ export const toDsaf001ReportProviderError = (
     return error;
   }
 
-  if (error instanceof SourceUnavailable) {
-    return new ViewReportProviderError({
-      code: "source_unavailable",
-      message: error.message,
-      retryable: true,
-      providerId,
-      sourceUrl: error.sourceUrl,
-    });
-  }
+  const sourceError = toCommonDartSourceProviderError(
+    error,
+    providerId,
+    (fields) => new ViewReportProviderError(fields),
+  );
 
-  if (error instanceof SourceChanged) {
-    return new ViewReportProviderError({
-      code: "source_changed",
-      message: error.message,
-      retryable: false,
-      providerId,
-      sourceUrl: error.sourceUrl,
-    });
-  }
-
-  if (error instanceof ParseFailure) {
-    return new ViewReportProviderError({
-      code: "source_parse_failure",
-      message: error.message,
-      retryable: false,
-      providerId,
-      sourceUrl: error.sourceUrl,
-    });
+  if (sourceError !== undefined) {
+    return sourceError;
   }
 
   return new ViewReportProviderError({

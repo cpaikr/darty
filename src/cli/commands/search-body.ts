@@ -1,4 +1,4 @@
-import { Command, InvalidArgumentError, Option } from "commander";
+import { Command } from "commander";
 
 import {
   searchBodyCliCopy,
@@ -11,24 +11,24 @@ import {
   type SearchBodyResult,
 } from "../../capabilities/search-body/contract.ts";
 import { searchBodyOperationName } from "../../capabilities/search-body/spec.ts";
+import {
+  buildCliNameByOptionKey,
+  createRegisteredOption,
+  extractCliOptions,
+  parseIntegerCliOption,
+  renderInvalidRequestCliErrorMessage,
+  type CliOptions as SharedCliOptions,
+  type RegisteredOption,
+} from "../command-helpers.ts";
 
 type CliOptionKey = keyof SearchBodyRawInput;
-type CliOptionValue = number | string;
 
 /**
  * Commander returns only the flags the caller provided. This partial shape lets
  * the CLI preserve caller intent until the shared semantic resolver applies
  * defaults and validates the domain contract.
  */
-export type CliOptions = Partial<Record<CliOptionKey, CliOptionValue>> &
-  Record<string, unknown>;
-
-type RegisteredOption = {
-  readonly key: CliOptionKey;
-  readonly attributeName: string;
-  readonly cliName: string;
-  readonly option: Option;
-};
+export type CliOptions = SharedCliOptions<CliOptionKey>;
 
 export type SearchBodyCommandExecutor = {
   readonly runOperation: (
@@ -37,40 +37,10 @@ export type SearchBodyCommandExecutor = {
   readonly writeStdout: (text: string) => void;
 };
 
-const parseIntegerOption = (value: string): number => {
-  if (!/^\d+$/.test(value)) {
-    throw new InvalidArgumentError(searchBodyCliCopy.invalidInteger(value));
-  }
+const parseIntegerOption = (value: string): number =>
+  parseIntegerCliOption(value, searchBodyCliCopy.invalidInteger);
 
-  return Number.parseInt(value, 10);
-};
-
-const createRegisteredOption = (
-  key: CliOptionKey,
-  flags: string,
-  description: string,
-  configure?: (option: Option) => void,
-): RegisteredOption => {
-  const option = new Option(flags, description);
-  const cliName = flags
-    .split(/[ ,]+/)
-    .find((token) => token.startsWith("--"));
-
-  if (cliName === undefined) {
-    throw new Error(`Missing long flag for CLI option ${key}.`);
-  }
-
-  configure?.(option);
-
-  return {
-    key,
-    attributeName: option.attributeName(),
-    cliName,
-    option,
-  };
-};
-
-const buildRegisteredOptions = (): readonly RegisteredOption[] => [
+const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => [
   createRegisteredOption(
     "page",
     "--page <number>",
@@ -121,25 +91,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption[] => [
   ),
 ];
 
-const extractCliOptions = (
-  rawOptions: Record<string, unknown>,
-  registeredOptions: readonly RegisteredOption[],
-): CliOptions => {
-  const options: CliOptions = {};
-
-  for (const registeredOption of registeredOptions) {
-    const value = rawOptions[registeredOption.attributeName];
-    if (value !== undefined) {
-      options[registeredOption.key] = value as CliOptionValue;
-    }
-  }
-
-  return options;
-};
-
-const cliNameByOptionKey = Object.fromEntries(
-  buildRegisteredOptions().map((option) => [option.key, option.cliName]),
-) as Partial<Record<CliOptionKey, string>>;
+const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
 
 export const renderSearchBodyCliErrorMessage = (
   error: unknown,
@@ -148,20 +100,7 @@ export const renderSearchBodyCliErrorMessage = (
     return undefined;
   }
 
-  if (error.code !== "invalid_request") {
-    return undefined;
-  }
-
-  const cliName = cliNameByOptionKey[error.parameter as CliOptionKey];
-
-  if (cliName === undefined) {
-    return undefined;
-  }
-
-  return error.message
-    .replaceAll(`"${error.parameter}"`, `"${cliName}"`)
-    .replaceAll("필수 매개변수", "필수 옵션")
-    .replaceAll("매개변수", "옵션");
+  return renderInvalidRequestCliErrorMessage(error, cliNameByOptionKey);
 };
 
 const renderSupplementalHelp = (): string => {

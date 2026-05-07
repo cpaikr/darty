@@ -34,6 +34,14 @@ Current project decision:
   company name, report name, report table of contents name, body content, and advanced search.
 - `/dsaf001/main.do?rcpNo={rcpNo}`
   Filing report viewer with embedded table-of-contents state and iframe-based section loading.
+- `/dsae001/main.do`
+  Company overview page with `회사별` and `업종별` search tabs.
+- `/dsae001/search.ax`
+  Company overview search fragment endpoint used by the `회사별` search tab.
+- `/dsae001/select.ax`
+  Company overview detail fragment endpoint. It accepts `selectKey={companyCode}`.
+- `/api/companyRSS.xml`
+  Company-specific disclosure RSS endpoint. It accepts `crpCd={companyCode}`.
 - `/dsae001/selectPopup.ax`
   Company info popup endpoint referenced by the home page source.
 - `/pdf/download/main.do?rcp_no={rcpNo}&dcm_no={dcmNo}`
@@ -226,6 +234,70 @@ Current implication:
 - body-content search is replayable today without browser automation
 - the response still needs HTML parsing, but the implementation should keep `dsab007` field semantics explicit instead of normalizing too early
 - v1 should start with one mode, but under a shared `dsab007` search core rather than a one-off body-search module
+
+## Company Overview Search Surface Notes
+
+Observed on 2026-05-07 at `https://dart.fss.or.kr/dsae001/main.do` using browser interaction and direct POST replay.
+
+The visible page title is `기업개황`. The main tabs are:
+
+- `회사별`
+- `업종별`
+
+The current implementation covers only `회사별` company-name search.
+
+Observed `회사별` UI controls:
+
+| Korean UI control | Observed DOM or POST field | Current implementation status |
+|---|---|---|
+| `회사별` tab | fixed page tab | implemented as fixed capability choice |
+| `검색조건 선택=회사명` | `searchType=1` | implemented as fixed capability choice |
+| `검색어입력` | `textCrpNm` | implemented as required public `companyName` |
+| result page | `currentPage` | implemented as public `page`, default `1` |
+| result page size | `maxResults` | implemented as public `pageSize`, default/max `45` |
+| `유가`, `코스닥`, `코넥스`, `기타` | repeated `corpType=P/A/X/E`, `corpTypeAll=all` | implemented as fixed all-company search, not caller-configurable |
+| `사업자등록번호` | `searchType=2`, `bsnRgsNo` and split visible fields | observed, not implemented |
+| `법인등록번호` | `searchType=3`, `crpRgsNo` | observed, not implemented |
+| Korean initial links `ㄱ` ... `M~Z` | `searchIndex` | observed, not implemented |
+| `업종별` tab | `businessCode` via industry tree | observed, not implemented |
+
+Observed direct replay payload for company-name search:
+
+- `currentPage`, `maxResults`, `maxLinks`
+- `searchType=1`
+- `textCrpNm={companyName}`
+- `businessCode=all`
+- `corpTypeAll=all`
+- repeated `corpType=P`, `corpType=A`, `corpType=X`, `corpType=E`
+- supporting empty fields: `sort`, `series`, `gubun`, `selectKey`, `searchIndex`, `textCrpCik`, `bsnRgsNo`, `bsnRgsNo_1`, `bsnRgsNo_2`, `bsnRgsNo_3`, `crpRgsNo`
+
+Observed result fragment shape:
+
+- table `#corpTable`
+- company rows with market badge, company link, and stock-code cell
+- company links like `javascript:select('00126380');`
+- pager text like `[1/7] [총 296건]`
+- no-result row `tr.noData` containing `일치하는 회사명이 없습니다.`
+
+Company code finding:
+
+- The company search result row does include the 8-digit DART company code in the company link's `select(...)` argument.
+- Example for 삼성전자: link `javascript:select('00126380');`, stock code `005930`.
+- The selected company detail request uses the same code as `selectKey` for `POST /dsae001/select.ax`.
+- The selected company detail fragment includes fields such as `회사이름`, `영문명`, `공시회사명`, `종목코드`, `대표자명`, `법인구분`, `법인등록번호`, `사업자등록번호`, `주소`, `홈페이지`, `전화번호`, `팩스번호`, `업종명`, `설립일`, and `결산월`.
+
+Observed page-size behavior:
+
+- Without `maxResults`, the tested `삼성` search returned 45 rows per page.
+- `maxResults=10`, `15`, and `20` were honored in tested requests.
+- `maxResults=50` still returned 45 rows, so the implemented public maximum is 45.
+
+Current implication:
+
+- `dsae001` company-name search is replayable without browser automation.
+- The result list is enough to resolve company names to DART company codes.
+- Full company detail normalization is handled by the separate `company-detail` command through `/dsae001/select.ax`.
+- Company-specific RSS is handled by the separate `company-rss` command through `/api/companyRSS.xml?crpCd={companyCode}`.
 
 ## Adjacent Feeds And Supporting Surfaces
 

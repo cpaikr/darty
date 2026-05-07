@@ -1,7 +1,7 @@
 export const viewReportToolCopy = {
   title: "DART 보고서 보기",
   description:
-    "DART 접수번호 또는 viewer URL로 보고서 문서 목록과 목차를 확인하고, 선택한 목차 섹션의 정제된 HTML 또는 Markdown을 반환합니다.",
+    "DART 접수번호 또는 viewer URL로 보고서 문서 목록과 목차를 확인하고, 선택한 본문을 HTML 또는 Markdown으로 반환합니다.",
 } as const;
 
 export const viewReportFieldCopy = {
@@ -52,7 +52,7 @@ export const viewReportValidationCopy = {
 } as const;
 
 export const viewReportCliCopy = {
-  summary: "DART 보고서 목차 또는 섹션 본문을 조회합니다.",
+  summary: "DART 보고서 목차 또는 본문을 조회합니다.",
   invalidInteger: (actual: string) =>
     `정수를 입력해야 하지만 "${actual}"을(를) 받았습니다.`,
   examplesHeading: "예시",

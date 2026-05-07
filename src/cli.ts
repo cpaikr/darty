@@ -2,13 +2,31 @@
 
 import { Command } from "commander";
 
+import { defaultCompanyDetailOperation } from "./app/company-detail.ts";
+import { defaultCompanyRssOperation } from "./app/company-rss.ts";
 import { defaultSearchBodyOperation } from "./app/search-body.ts";
+import { defaultSearchCompanyOperation } from "./app/search-company.ts";
 import { defaultViewReportOperation } from "./app/view-report.ts";
+import {
+  createCompanyDetailCommandWithRunner,
+  executeCompanyDetailCommand,
+  renderCompanyDetailCliErrorMessage,
+} from "./cli/commands/company-detail.ts";
+import {
+  createCompanyRssCommandWithRunner,
+  executeCompanyRssCommand,
+  renderCompanyRssCliErrorMessage,
+} from "./cli/commands/company-rss.ts";
 import {
   createSearchBodyCommandWithRunner,
   executeSearchBodyCommand,
   renderSearchBodyCliErrorMessage,
 } from "./cli/commands/search-body.ts";
+import {
+  createSearchCompanyCommandWithRunner,
+  executeSearchCompanyCommand,
+  renderSearchCompanyCliErrorMessage,
+} from "./cli/commands/search-company.ts";
 import {
   createViewReportCommandWithRunner,
   executeViewReportCommand,
@@ -19,9 +37,27 @@ const writeStdout = (text: string) => {
   console.log(text);
 };
 
+const defaultCompanyDetailExecutor = {
+  runOperation: (input: Record<string, unknown>) =>
+    defaultCompanyDetailOperation.execute(input),
+  writeStdout,
+};
+
+const defaultCompanyRssExecutor = {
+  runOperation: (input: Record<string, unknown>) =>
+    defaultCompanyRssOperation.execute(input),
+  writeStdout,
+};
+
 const defaultSearchBodyExecutor = {
   runOperation: (input: Record<string, unknown>) =>
     defaultSearchBodyOperation.execute(input),
+  writeStdout,
+};
+
+const defaultSearchCompanyExecutor = {
+  runOperation: (input: Record<string, unknown>) =>
+    defaultSearchCompanyOperation.execute(input),
   writeStdout,
 };
 
@@ -37,8 +73,23 @@ const program = new Command()
   .helpOption("-h, --help", "도움말을 표시합니다.")
   .addHelpCommand("help [command]", "명령 도움말을 표시합니다.")
   .addCommand(
+    createCompanyDetailCommandWithRunner((options) =>
+      executeCompanyDetailCommand(options, defaultCompanyDetailExecutor),
+    ),
+  )
+  .addCommand(
+    createCompanyRssCommandWithRunner((options) =>
+      executeCompanyRssCommand(options, defaultCompanyRssExecutor),
+    ),
+  )
+  .addCommand(
     createSearchBodyCommandWithRunner((options) =>
       executeSearchBodyCommand(options, defaultSearchBodyExecutor),
+    ),
+  )
+  .addCommand(
+    createSearchCompanyCommandWithRunner((options) =>
+      executeSearchCompanyCommand(options, defaultSearchCompanyExecutor),
     ),
   )
   .addCommand(
@@ -52,7 +103,10 @@ if (process.argv.length <= 2) {
 } else {
   program.parseAsync(process.argv).catch((error) => {
     const cliMessage =
+      renderCompanyDetailCliErrorMessage(error) ??
+      renderCompanyRssCliErrorMessage(error) ??
       renderSearchBodyCliErrorMessage(error) ??
+      renderSearchCompanyCliErrorMessage(error) ??
       renderViewReportCliErrorMessage(error);
 
     if (cliMessage !== undefined) {

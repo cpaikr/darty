@@ -23,6 +23,14 @@ export class SourceChanged extends Schema.TaggedError<SourceChanged>()(
   },
 ) {}
 
+export class SourceNotFound extends Schema.TaggedError<SourceNotFound>()(
+  "SourceNotFound",
+  {
+    message: Schema.String,
+    sourceUrl: Schema.String,
+  },
+) {}
+
 export class ParseFailure extends Schema.TaggedError<ParseFailure>()(
   "ParseFailure",
   {

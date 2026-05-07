@@ -1,4 +1,4 @@
-import { Command, InvalidArgumentError, Option } from "commander";
+import { Command } from "commander";
 
 import {
   viewReportCliCopy,
@@ -11,19 +11,19 @@ import {
   type ViewReportResult,
 } from "../../capabilities/view-report/contract.ts";
 import { viewReportOperationName } from "../../capabilities/view-report/spec.ts";
+import {
+  buildCliNameByOptionKey,
+  createRegisteredOption,
+  extractCliOptions,
+  parseIntegerCliOption,
+  renderInvalidRequestCliErrorMessage,
+  type CliOptions,
+  type RegisteredOption,
+} from "../command-helpers.ts";
 
 type CliOptionKey = keyof ViewReportRawInput;
-type CliOptionValue = number | string;
 
-export type ViewReportCliOptions = Partial<Record<CliOptionKey, CliOptionValue>> &
-  Record<string, unknown>;
-
-type RegisteredOption = {
-  readonly key: CliOptionKey;
-  readonly attributeName: string;
-  readonly cliName: string;
-  readonly option: Option;
-};
+export type ViewReportCliOptions = CliOptions<CliOptionKey>;
 
 export type ViewReportCommandExecutor = {
   readonly runOperation: (
@@ -32,40 +32,10 @@ export type ViewReportCommandExecutor = {
   readonly writeStdout: (text: string) => void;
 };
 
-const parseIntegerOption = (value: string): number => {
-  if (!/^\d+$/.test(value)) {
-    throw new InvalidArgumentError(viewReportCliCopy.invalidInteger(value));
-  }
+const parseIntegerOption = (value: string): number =>
+  parseIntegerCliOption(value, viewReportCliCopy.invalidInteger);
 
-  return Number.parseInt(value, 10);
-};
-
-const createRegisteredOption = (
-  key: CliOptionKey,
-  flags: string,
-  description: string,
-  configure?: (option: Option) => void,
-): RegisteredOption => {
-  const option = new Option(flags, description);
-  const cliName = flags
-    .split(/[ ,]+/)
-    .find((token) => token.startsWith("--"));
-
-  if (cliName === undefined) {
-    throw new Error(`Missing long flag for CLI option ${key}.`);
-  }
-
-  configure?.(option);
-
-  return {
-    key,
-    attributeName: option.attributeName(),
-    cliName,
-    option,
-  };
-};
-
-const buildRegisteredOptions = (): readonly RegisteredOption[] => [
+const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => [
   createRegisteredOption(
     "receipt",
     "--receipt <receipt-or-url>",
@@ -96,25 +66,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption[] => [
   ),
 ];
 
-const extractCliOptions = (
-  rawOptions: Record<string, unknown>,
-  registeredOptions: readonly RegisteredOption[],
-): ViewReportCliOptions => {
-  const options: ViewReportCliOptions = {};
-
-  for (const registeredOption of registeredOptions) {
-    const value = rawOptions[registeredOption.attributeName];
-    if (value !== undefined) {
-      options[registeredOption.key] = value as CliOptionValue;
-    }
-  }
-
-  return options;
-};
-
-const cliNameByOptionKey = Object.fromEntries(
-  buildRegisteredOptions().map((option) => [option.key, option.cliName]),
-) as Partial<Record<CliOptionKey, string>>;
+const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
 
 export const renderViewReportCliErrorMessage = (
   error: unknown,
@@ -123,20 +75,7 @@ export const renderViewReportCliErrorMessage = (
     return undefined;
   }
 
-  if (error.code !== "invalid_request") {
-    return undefined;
-  }
-
-  const cliName = cliNameByOptionKey[error.parameter as CliOptionKey];
-
-  if (cliName === undefined) {
-    return undefined;
-  }
-
-  return error.message
-    .replaceAll(`"${error.parameter}"`, `"${cliName}"`)
-    .replaceAll("필수 매개변수", "필수 옵션")
-    .replaceAll("매개변수", "옵션");
+  return renderInvalidRequestCliErrorMessage(error, cliNameByOptionKey);
 };
 
 const renderSupplementalHelp = (): string => {

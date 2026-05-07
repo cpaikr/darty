@@ -1,0 +1,76 @@
+import { companyRssValidationCopy } from "../copy.ts";
+import { InvalidCompanyRssRequest } from "./errors.ts";
+import {
+  companyRssFieldSpecs,
+  type CompanyRssRawInput,
+  type CompanyRssRequest,
+} from "./request.ts";
+
+const allowedKeys = new Set<string>(Object.keys(companyRssFieldSpecs));
+const companyCodePattern = /^\d{8}$/;
+
+export const resolveCompanyRssRequest = (
+  input: Partial<CompanyRssRawInput> & Record<string, unknown>,
+): CompanyRssRequest => {
+  if (input === null || typeof input !== "object" || Array.isArray(input)) {
+    throw new InvalidCompanyRssRequest({
+      code: "invalid_parameter",
+      parameter: "input",
+      reason: "invalid_type",
+      expected: companyRssValidationCopy.inputExpected,
+      actual: input,
+      message: companyRssValidationCopy.inputMustBeObject,
+    });
+  }
+
+  for (const key of Object.keys(input)) {
+    if (!allowedKeys.has(key)) {
+      throw new InvalidCompanyRssRequest({
+        code: "unknown_parameter",
+        parameter: key,
+        reason: "unknown_parameter",
+        actual: input[key],
+        message: companyRssValidationCopy.unknownParameter(key),
+      });
+    }
+  }
+
+  const companyCode = input.companyCode;
+  if (companyCode === undefined) {
+    throw new InvalidCompanyRssRequest({
+      code: "missing_parameter",
+      parameter: "companyCode",
+      reason: "required",
+      expected: companyRssValidationCopy.expectedCompanyCode,
+      message: companyRssValidationCopy.missingRequired(
+        "companyCode",
+        companyRssValidationCopy.expectedCompanyCode,
+      ),
+    });
+  }
+
+  if (typeof companyCode !== "string") {
+    throw new InvalidCompanyRssRequest({
+      code: "invalid_parameter",
+      parameter: "companyCode",
+      reason: "invalid_type",
+      expected: "string",
+      actual: companyCode,
+      message: companyRssValidationCopy.mustBeString("companyCode"),
+    });
+  }
+
+  const trimmedCompanyCode = companyCode.trim();
+  if (!companyCodePattern.test(trimmedCompanyCode)) {
+    throw new InvalidCompanyRssRequest({
+      code: "invalid_parameter",
+      parameter: "companyCode",
+      reason: "invalid_format",
+      expected: companyRssValidationCopy.expectedCompanyCode,
+      actual: companyCode,
+      message: companyRssValidationCopy.invalidCompanyCode("companyCode"),
+    });
+  }
+
+  return { companyCode: trimmedCompanyCode };
+};
