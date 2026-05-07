@@ -105,7 +105,7 @@ Current implication:
 
 - Receipt rendering can start from public `receiptNumber` by first fetching `/dsaf001/main.do?rcpNo={receiptNumber}` and parsing the selected document context.
 - Direct report-body retrieval should use `/report/viewer.do` only after the shell provides `dcmNo`, `dtd`, and, for sectioned documents, the TOC section parameters.
-- A future capability should decide whether it exposes a browser-like rendered receipt shell, a selected document, a TOC, individual sections, or a stitched full document. The source model supports section retrieval, but full-document stitching is not yet specified.
+- The implemented `view-report` v1 starts with selected-document discovery, TOC listing, individual section retrieval for TOC-backed documents, and full selected-document retrieval only when DART exposes no TOC. Full-document stitching for TOC-backed documents remains outside the current contract.
 
 ## Search Surface Notes
 
@@ -252,7 +252,13 @@ Completed for the first search-body slice:
 - classified the implemented `/dsab007/search.ax` contents replay fields into public semantic inputs versus internal replay-only fields
 - defined and implemented the parsed result row model for the current tool contract
 
-Still open:
+Completed for the first view-report slice:
 
-- confirm what request shape `/report/viewer.do` accepts directly and what it returns
-- choose whether v1 section retrieval starts at full filing documents or specific TOC sections
+- confirmed `/report/viewer.do` content retrieval through shell-provided viewer parameters
+- implemented `view-report` as receipt-to-document/TOC discovery plus selected section retrieval for TOC-backed documents
+- implemented selected-document retrieval for no-TOC documents through the shell's initial viewer locator
+
+Future investigation, not current v1 scope:
+
+- decide whether TOC-backed full-document stitching is useful enough to specify
+- evaluate PDF download and XBRL preview mappings when those become product priorities
