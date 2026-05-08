@@ -94,6 +94,12 @@ darty search-company-reports --company-code <8자리 DART 회사 코드> --start
 - `--page <숫자>`: 검색 결과 페이지, 기본값 `1`
 - `--page-size <15|30|50|100>`: 한 페이지에 요청할 공시 수, 기본값 `15`
 - `--sort-direction <asc|desc>`: 접수일자 정렬 방향, 기본값 `desc`
+- `--presenter-name <텍스트>`: 제출인명
+- `--report-name <텍스트>`: 보고서명
+- `--disclosure-type <코드>`: 공시유형 상세 코드. 여러 코드는 옵션을 반복해서 지정합니다. 예: `A001`, `I001`
+- `--industry-code <코드>`: DART 업종 코드, 기본값 `all`
+- `--corporation-type <all|P|A|N|E>`: 법인유형, 기본값 `all`
+- `--closing-accounts-month <all|01-12>`: 결산월, 기본값 `all`
 - `--include-all-reports`: 기본 최종보고서 필터를 해제하고 정정 전 보고서까지 포함합니다.
 
 예시:
@@ -173,7 +179,7 @@ darty view-report --receipt 20260331004166 --section-id section:5.6
 
 - 이 도구는 읽기 전용입니다.
 - 현재 `search-company`는 DART `기업개황` 화면의 `회사별` 회사명 검색만 구현합니다. `업종별`, 사업자등록번호, 법인등록번호 검색은 구현하지 않았습니다.
-- 현재 `search-company-reports`는 DART `공시통합검색` 화면의 `회사명` 모드를 8자리 회사 코드로 실행합니다. 회사명 입력/팝업 선택, 다중 회사 선택, 고급 필터는 구현하지 않았습니다.
+- 현재 `search-company-reports`는 DART `공시통합검색` 화면의 `회사명` 모드를 8자리 회사 코드로 실행합니다. 회사명 입력/팝업 선택과 다중 회사 선택은 구현하지 않았습니다.
 - 현재 `search-body`는 DART `공시통합검색` 화면의 `본문내용` 검색 모드만 구현합니다. 보고서명, 목차명, 고급검색 전체를 구현한 것은 아닙니다.
 - `view-report`는 DART `dsaf001` viewer shell과 `/report/viewer.do` 본문 iframe 동작에 기반합니다.
 - 공개 DART 웹 동작을 사용하므로 DART 변경의 영향을 받을 수 있습니다.

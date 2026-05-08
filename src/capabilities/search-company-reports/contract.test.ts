@@ -20,11 +20,15 @@ describe("resolveSearchCompanyReportsRequest", () => {
       page: 1,
       pageSize: 15,
       sortDirection: "desc",
+      disclosureTypes: [],
+      industryCode: "all",
+      corporationType: "all",
+      closingAccountsMonth: "all",
       includeAllReports: false,
     });
   });
 
-  test("accepts explicit paging, sort direction, and include-all setting", () => {
+  test("accepts explicit paging, filters, sort direction, and include-all setting", () => {
     expect(
       resolveSearchCompanyReportsRequest({
         companyCode: "00190321",
@@ -33,12 +37,24 @@ describe("resolveSearchCompanyReportsRequest", () => {
         page: 2,
         pageSize: 30,
         sortDirection: "asc",
+        presenterName: "케이티",
+        reportName: "사업보고서",
+        disclosureTypes: ["A001", "I001"],
+        industryCode: "612",
+        corporationType: "P",
+        closingAccountsMonth: "12",
         includeAllReports: true,
       }),
     ).toMatchObject({
       page: 2,
       pageSize: 30,
       sortDirection: "asc",
+      presenterName: "케이티",
+      reportName: "사업보고서",
+      disclosureTypes: ["A001", "I001"],
+      industryCode: "612",
+      corporationType: "P",
+      closingAccountsMonth: "12",
       includeAllReports: true,
     });
   });
@@ -84,6 +100,50 @@ describe("resolveSearchCompanyReportsRequest", () => {
       expect(error.expected).toBe("8_digit_company_code");
       expect(error.message).toContain("8자리 DART 회사 코드");
       expect(error.message).toContain("6자리 종목코드");
+    }
+  });
+
+  test("rejects empty text filters", () => {
+    try {
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        reportName: "",
+      });
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidSearchCompanyReportsRequest);
+
+      if (!(error instanceof InvalidSearchCompanyReportsRequest)) {
+        throw error;
+      }
+
+      expect(error.parameter).toBe("reportName");
+      expect(error.reason).toBe("empty_string");
+      expect(error.expected).toBe("non_empty_string");
+    }
+  });
+
+  test("rejects unsupported disclosure type codes", () => {
+    try {
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        disclosureTypes: ["사업보고서"],
+      } as Record<string, unknown>);
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidSearchCompanyReportsRequest);
+
+      if (!(error instanceof InvalidSearchCompanyReportsRequest)) {
+        throw error;
+      }
+
+      expect(error.parameter).toBe("disclosureTypes");
+      expect(error.reason).toBe("invalid_format");
+      expect(error.expected).toBe("array_of_disclosure_type_codes");
     }
   });
 

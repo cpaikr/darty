@@ -29,6 +29,38 @@ export const searchCompanyReportsFieldCopy = {
     cliDescription:
       "[기본값: desc] 접수일자 정렬 방향입니다(asc 또는 desc).",
   },
+  presenterName: {
+    description: "제출인명 필터입니다. DART의 `제출인명` 입력에 대응합니다.",
+    cliDescription: "제출인명으로 검색 결과를 좁힙니다.",
+  },
+  reportName: {
+    description: "보고서명 필터입니다. DART의 `보고서명` 입력에 대응합니다.",
+    cliDescription: "보고서명으로 검색 결과를 좁힙니다.",
+  },
+  disclosureTypes: {
+    description:
+      "DART 공시유형 상세 코드 목록입니다. 예: A001(사업보고서), I001(수시공시).",
+    cliDescription:
+      "공시유형 상세 코드를 추가합니다. 여러 번 지정할 수 있습니다. 예: A001, I001.",
+  },
+  industryCode: {
+    description:
+      "[기본값: all] DART 업종 코드입니다. 예: 612(전기 통신업). `all`이면 업종 필터를 적용하지 않습니다.",
+    cliDescription:
+      "DART 업종 코드로 검색 결과를 좁힙니다. 기본값은 all입니다.",
+  },
+  corporationType: {
+    description:
+      "[기본값: all] 법인유형 필터입니다. all, P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나입니다.",
+    cliDescription:
+      "법인유형으로 검색 결과를 좁힙니다(all, P, A, N, E).",
+  },
+  closingAccountsMonth: {
+    description:
+      "[기본값: all] 결산월 필터입니다. all 또는 01부터 12까지의 월 코드입니다.",
+    cliDescription:
+      "결산월로 검색 결과를 좁힙니다(all 또는 01~12).",
+  },
   includeAllReports: {
     description:
       "[기본값: false] true이면 DART의 최종보고서 필터를 해제하고 정정 전 보고서까지 포함해 검색합니다.",
@@ -66,11 +98,27 @@ export const searchCompanyReportsCliCopy = {
         "--include-all-reports",
       ],
     },
+    {
+      description: "공시유형과 보고서명으로 회사별 공시를 좁혀 검색합니다.",
+      argv: [
+        "--company-code",
+        "00190321",
+        "--start-date",
+        "20250507",
+        "--end-date",
+        "20260507",
+        "--disclosure-type",
+        "A001",
+        "--report-name",
+        "사업보고서",
+      ],
+    },
   ],
   notesHeading: "검색 팁",
   notes: [
     "회사명을 알고 회사 코드를 모르면 먼저 `darty search-company --company-name <회사명>`으로 8자리 companyCode를 확인하세요.",
     "기본값은 DART의 최종보고서 필터를 적용합니다. `--include-all-reports`를 지정하면 정정 전 보고서까지 포함할 수 있어 총 건수가 늘어날 수 있습니다.",
+    "공시유형은 DART 상세 코드(A001, I001 등)를 사용합니다. 여러 코드는 `--disclosure-type`을 반복해서 전달하세요.",
     "결과의 filing.receiptNumber 또는 references.viewerUrl은 `view-report`로 이어서 조회할 수 있습니다.",
   ],
   invalidInteger: (value: string): string =>
@@ -110,14 +158,20 @@ export const searchCompanyReportsValidationCopy = {
     `${minimum} 이상 ${maximum} 이하의 정수`,
   expectedOneOf: (choices: readonly string[]): string => choices.join(" 또는 "),
   expectedBoolean: "boolean",
+  expectedNonEmptyString: "비어 있지 않은 문자열",
+  expectedStringArray: "문자열 배열",
   missingRequired: (parameter: string, expectedDescription: string): string =>
     `필수 매개변수 "${parameter}"이(가) 없습니다. 필요한 값: ${expectedDescription}.`,
   mustBeString: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) 문자열이어야 합니다.`,
+  mustNotBeEmpty: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) 비워 둘 수 없습니다.`,
   mustBeInteger: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) 정수여야 합니다.`,
   mustBeBoolean: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) boolean이어야 합니다.`,
+  mustBeStringArray: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) 문자열 배열이어야 합니다.`,
   mustBeInRange: (parameter: string, minimum: number, maximum: number): string =>
     `매개변수 "${parameter}"은(는) ${minimum} 이상 ${maximum} 이하여야 합니다.`,
   mustBeOneOf: (parameter: string, choices: readonly string[]): string =>
@@ -130,6 +184,8 @@ export const searchCompanyReportsValidationCopy = {
     `검색 시작일은 종료일보다 늦을 수 없습니다. startDate=${startDate}, endDate=${endDate}.`,
   mustUseDartCompanyCode: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) 8자리 DART 회사 코드여야 합니다. 회사명이나 6자리 종목코드는 사용할 수 없습니다. 예: 삼성전자 DART 회사 코드 00126380.`,
+  mustUseKnownPattern: (parameter: string, expected: string): string =>
+    `매개변수 "${parameter}"은(는) ${expected} 형식이어야 합니다.`,
   invalidParameter: (parameter: string): string =>
     `매개변수 "${parameter}"이(가) 올바르지 않습니다.`,
   unknownParameter: (parameter: string): string =>

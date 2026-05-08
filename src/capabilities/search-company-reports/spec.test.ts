@@ -30,6 +30,27 @@ describe("search-company-reports capability schemas", () => {
       enum: ["asc", "desc"],
       default: "desc",
     });
+    expect(jsonSchema.properties.presenterName).toMatchObject({ minLength: 1 });
+    expect(jsonSchema.properties.reportName).toMatchObject({ minLength: 1 });
+    expect(jsonSchema.properties.disclosureTypes).toMatchObject({
+      type: "array",
+      default: [],
+    });
+    expect(jsonSchema.properties.disclosureTypes?.items).toMatchObject({
+      pattern: "^[A-J]\\d{3}$",
+    });
+    expect(jsonSchema.properties.industryCode).toMatchObject({
+      pattern: "^(all|ROOT\\d{4}|\\d{2,5})$",
+      default: "all",
+    });
+    expect(jsonSchema.properties.corporationType).toMatchObject({
+      enum: ["all", "P", "A", "N", "E"],
+      default: "all",
+    });
+    expect(jsonSchema.properties.closingAccountsMonth).toMatchObject({
+      enum: ["all", "12", "11", "10", "09", "08", "07", "06", "05", "04", "03", "02", "01"],
+      default: "all",
+    });
     expect(jsonSchema.properties.includeAllReports).toMatchObject({
       type: "boolean",
       default: false,

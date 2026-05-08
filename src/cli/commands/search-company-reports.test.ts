@@ -28,6 +28,20 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
       "30",
       "--sort-direction",
       "asc",
+      "--presenter-name",
+      "케이티",
+      "--report-name",
+      "사업보고서",
+      "--disclosure-type",
+      "A001",
+      "--disclosure-type",
+      "I001",
+      "--industry-code",
+      "612",
+      "--corporation-type",
+      "P",
+      "--closing-accounts-month",
+      "12",
       "--include-all-reports",
       "--verbose",
     ]);
@@ -40,6 +54,12 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         page: 2,
         pageSize: 30,
         sortDirection: "asc",
+        presenterName: "케이티",
+        reportName: "사업보고서",
+        disclosureTypes: ["A001", "I001"],
+        industryCode: "612",
+        corporationType: "P",
+        closingAccountsMonth: "12",
         includeAllReports: true,
       },
       output: { pretty: false, verbose: true },
@@ -72,6 +92,12 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("--end-date <YYYYMMDD>");
     expect(searchCompanyReportsUsage).toContain("--page-size <number>");
     expect(searchCompanyReportsUsage).toContain("--sort-direction <asc|desc>");
+    expect(searchCompanyReportsUsage).toContain("--presenter-name <text>");
+    expect(searchCompanyReportsUsage).toContain("--report-name <text>");
+    expect(searchCompanyReportsUsage).toContain("--disclosure-type <code>");
+    expect(searchCompanyReportsUsage).toContain("--industry-code <code>");
+    expect(searchCompanyReportsUsage).toContain("--corporation-type <all|P|A|N|E>");
+    expect(searchCompanyReportsUsage).toContain("--closing-accounts-month <all|01-12>");
     expect(searchCompanyReportsUsage).toContain("--include-all-reports");
     expect(searchCompanyReportsUsage).toContain("--pretty");
     expect(searchCompanyReportsUsage).toContain("--verbose");
@@ -103,6 +129,10 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
       page: 1,
       pageSize: 15,
       sortDirection: "desc",
+      disclosureTypes: [],
+      industryCode: "all",
+      corporationType: "all",
+      closingAccountsMonth: "all",
       includeAllReports: false,
     });
   });
@@ -118,6 +148,10 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
           page: 1,
           pageSize: 15,
           sortDirection: "desc",
+          disclosureTypes: [],
+          industryCode: "all",
+          corporationType: "all",
+          closingAccountsMonth: "all",
           includeAllReports: true,
         },
         company: { companyCode: "00190321" },
@@ -235,6 +269,10 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
           page: 1,
           pageSize: 15,
           sortDirection: "desc",
+          disclosureTypes: [],
+          industryCode: "all",
+          corporationType: "all",
+          closingAccountsMonth: "all",
           includeAllReports: false,
         },
         company: { companyCode: "00190321" },

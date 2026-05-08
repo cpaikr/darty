@@ -1,5 +1,12 @@
 import { Schema } from "effect";
 
+import {
+  searchCompanyReportsClosingAccountsMonthValues,
+  searchCompanyReportsCorporationTypeValues,
+  searchCompanyReportsDisclosureTypePattern,
+  searchCompanyReportsIndustryCodePattern,
+} from "../../../../capabilities/search-company-reports/contract/filter-values.ts";
+
 const DateString = Schema.String.pipe(
   Schema.pattern(/^\d{8}$/),
   Schema.annotations({
@@ -36,6 +43,18 @@ export const SourceCompanyReportsReplayInput = Schema.Struct({
   sort: Schema.Literal("date"),
   series: SourceCompanyReportsSortDirection,
   textCrpCik: Schema.String.pipe(Schema.pattern(/^\d{8}$/)),
+  textPresenterNm: Schema.optional(Schema.NonEmptyString),
+  reportName: Schema.optional(Schema.NonEmptyString),
+  publicTypes: Schema.Array(
+    Schema.String.pipe(Schema.pattern(searchCompanyReportsDisclosureTypePattern)),
+  ),
+  businessCode: Schema.String.pipe(
+    Schema.pattern(searchCompanyReportsIndustryCodePattern),
+  ),
+  corporationType: Schema.Literal(...searchCompanyReportsCorporationTypeValues),
+  closingAccountsMonth: Schema.Literal(
+    ...searchCompanyReportsClosingAccountsMonthValues,
+  ),
   startDate: DateString,
   endDate: DateString,
   finalReportOnly: Schema.Boolean,

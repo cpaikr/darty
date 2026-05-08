@@ -64,6 +64,12 @@ Target input mapping:
 | page-size dropdown `15/30/50/100` | `pageSize` | `maxResults` | target; default `15` |
 | result sort `접수일자` | fixed internal default | `sort=date` | target; replay-observed; not caller-configurable in v1 |
 | sort direction | `sortDirection=asc\|desc` | `series=asc\|desc` | target; default `desc` |
+| `제출인명` | `presenterName` | `textPresenterNm` | target; optional |
+| `보고서명` | `reportName` | `reportName`, `reportName2` | target; optional |
+| `공시유형` detailed checkboxes | `disclosureTypes[]` | repeated `publicType` | target; DART detail codes such as `A001`, `I001` |
+| `업종` | `industryCode` | `businessCode` | target; default `all`; DART industry tree code such as `612` |
+| `법인유형` | `corporationType` | `corporationType` | target; default `all`; values `P`, `A`, `N`, `E` |
+| `결산유형` | `closingAccountsMonth` | `closingAccountsMonth` | target; default `all`; values `01` through `12` |
 | `최종보고서` filter opt-out | `includeAllReports` | omit/blank `finalReport` when true; otherwise `finalReport=recent` | target; default `false` |
 
 Observed but not included in the first public contract:
@@ -71,12 +77,6 @@ Observed but not included in the first public contract:
 - free-text `회사명` input and popup company resolution
 - selecting multiple companies at once
 - result sort by `회사명` (`sort=crp`) and `보고서명` (`sort=rpt`); observed in UI, replay verification pending
-- `제출인명`
-- `보고서명`
-- `공시유형`
-- `업종`
-- `법인유형`
-- `결산유형`
 - quick date buttons and extended date presets
 
 ## 4. Company Identity Contract
@@ -117,6 +117,12 @@ Inputs:
 | `page` | no | integer `>= 1` | default `1` |
 | `pageSize` | no | `15`, `30`, `50`, or `100` | default `15` |
 | `sortDirection` | no | `asc`, `desc` | default `desc`; sort field is fixed internally to receipt date |
+| `presenterName` | no | non-empty text when supplied | DART `제출인명` filter |
+| `reportName` | no | non-empty text when supplied | DART `보고서명` filter |
+| `disclosureTypes` | no | array of DART detailed public type codes like `A001` | repeated `publicType`; exposed in the CLI by repeating `--disclosure-type` |
+| `industryCode` | no | `all`, `ROOTdddd`, or 2-5 digit DART industry code | default `all`; exposed as `--industry-code` |
+| `corporationType` | no | `all`, `P`, `A`, `N`, or `E` | default `all`; maps to 법인유형 |
+| `closingAccountsMonth` | no | `all` or `01` through `12` | default `all`; maps to 결산월 |
 | `includeAllReports` | no | boolean | default `false`; exposed in the CLI as `--include-all-reports` |
 
 Output envelope:
@@ -197,6 +203,9 @@ Observed filing replay fields after selecting `유 케이티`:
 - `textCrpNm=케이티`
 - `textCrpNm2=케이티`
 - `textCrpCik=00190321`
+- optional `textPresenterNm`
+- optional `reportName` and `reportName2`
+- repeated optional `publicType`
 - `startDate=20250507`
 - `endDate=20260507`
 - `finalReport=recent`
@@ -221,6 +230,15 @@ Observed code-first replay variation:
 - `textCrpNm2=` empty
 - same date, sort, and filter fields as above
 - result still returned 15 rows and pager `[1/12] [총 169건]`
+
+Observed advanced filter behavior on 2026-05-08 for `textCrpCik=00190321`, `20250507..20260507`:
+
+- `textPresenterNm=케이티` reduced the result set from 169 to 63 rows.
+- `reportName=사업보고서` and `reportName2=사업보고서` returned 1 row.
+- `publicType=I001` returned 20 rows; `publicType=A001` returned 1 row.
+- `businessCode=612` matched the baseline company result set, while unrelated `businessCode=011` returned no rows.
+- `corporationType=P` matched the baseline company result set, while `corporationType=A` returned no rows.
+- `closingAccountsMonth=12` matched the baseline company result set, while `closingAccountsMonth=11` returned no rows.
 
 Observed result row shape:
 

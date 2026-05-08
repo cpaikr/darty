@@ -14,6 +14,10 @@ const baselineCompanyReportsReplayInput = {
   sort: "date",
   series: "desc",
   textCrpCik: "00190321",
+  publicTypes: [],
+  businessCode: "all",
+  corporationType: "all",
+  closingAccountsMonth: "all",
   startDate: "20250507",
   endDate: "20260507",
   finalReportOnly: true,
@@ -35,5 +39,18 @@ describe("searchCompanyReports live DART replay probes", () => {
     expect(result.rows[0]?.viewerUrl).toStartWith(
       "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=",
     );
+  });
+
+  liveTest("replays company-report advanced filters", async () => {
+    const result = await Effect.runPromise(
+      searchCompanyReportsSourcePage({
+        ...baselineCompanyReportsReplayInput,
+        reportName: "사업보고서",
+        publicTypes: ["A001"],
+      }),
+    );
+
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.rows[0]?.reportTitle).toContain("사업보고서");
   });
 });

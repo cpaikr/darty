@@ -47,6 +47,11 @@ export type SearchCompanyReportsCommandExecutor = {
 const parseIntegerOption = (value: string): number =>
   parseIntegerCliOption(value, searchCompanyReportsCliCopy.invalidInteger);
 
+const collectStringOption = (
+  value: string,
+  previous: readonly string[] | undefined,
+): readonly string[] => [...(previous ?? []), value];
+
 const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => [
   createRegisteredOption(
     "companyCode",
@@ -83,6 +88,39 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     "sortDirection",
     "--sort-direction <asc|desc>",
     searchCompanyReportsFieldCopy.sortDirection.cliDescription,
+  ),
+  createRegisteredOption(
+    "presenterName",
+    "--presenter-name <text>",
+    searchCompanyReportsFieldCopy.presenterName.cliDescription,
+  ),
+  createRegisteredOption(
+    "reportName",
+    "--report-name <text>",
+    searchCompanyReportsFieldCopy.reportName.cliDescription,
+  ),
+  createRegisteredOption(
+    "disclosureTypes",
+    "--disclosure-type <code>",
+    searchCompanyReportsFieldCopy.disclosureTypes.cliDescription,
+    (option) => {
+      option.argParser(collectStringOption);
+    },
+  ),
+  createRegisteredOption(
+    "industryCode",
+    "--industry-code <code>",
+    searchCompanyReportsFieldCopy.industryCode.cliDescription,
+  ),
+  createRegisteredOption(
+    "corporationType",
+    "--corporation-type <all|P|A|N|E>",
+    searchCompanyReportsFieldCopy.corporationType.cliDescription,
+  ),
+  createRegisteredOption(
+    "closingAccountsMonth",
+    "--closing-accounts-month <all|01-12>",
+    searchCompanyReportsFieldCopy.closingAccountsMonth.cliDescription,
   ),
   createRegisteredOption(
     "includeAllReports",

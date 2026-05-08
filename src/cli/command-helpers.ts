@@ -1,6 +1,6 @@
 import { InvalidArgumentError, Option } from "commander";
 
-export type CliOptionValue = boolean | number | string;
+export type CliOptionValue = boolean | number | string | readonly string[];
 
 export type CliJsonOptions = {
   readonly pretty: boolean;

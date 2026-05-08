@@ -199,6 +199,9 @@ Observed selected-company filing replay fields:
 - `textCrpNm=케이티`
 - `textCrpNm2=케이티`
 - `textCrpCik=00190321`
+- optional `textPresenterNm`
+- optional `reportName` and `reportName2`
+- repeated optional `publicType`
 - `startDate=20250507`
 - `endDate=20260507`
 - `finalReport=recent`
@@ -217,12 +220,15 @@ Observed result shape:
 - pager for selected `유 케이티` showed `[1/12] [총 169건]`
 - first observed row was receipt `20260504800404`, report `기업설명회(IR)개최(안내공시)`, presenter `케이티`, date `2026.05.04`
 
-Observed page-size and sort behavior for selected `유 케이티`:
+Observed page-size, sort, and filter behavior for selected `유 케이티`:
 
 - `maxResults=15`, `30`, `50`, and `100` were honored and matched the UI dropdown
 - `maxResults=2` fell back to 15 rows, so arbitrary page sizes should not be exposed as a public contract
 - `sort=date` with `series=desc` was replay-observed
 - the UI exposes `회사명` and `보고서명` sort anchors whose IDs suggest `sort=crp` and `sort=rpt`, but those replay values were not verified in this investigation
+- on 2026-05-08, `textPresenterNm=케이티`, `reportName=사업보고서`, repeated `publicType`, `businessCode`, `corporationType`, and `closingAccountsMonth` were replay-observed as honored filters
+- observed `publicType` examples: `I001` returned 20 rows and `A001` returned 1 row for the seeded 케이티 date window
+- observed business/corporation/closing filters matched or excluded the seeded company as expected: `businessCode=612`, `corporationType=P`, and `closingAccountsMonth=12` matched the baseline; unrelated values returned no rows
 
 Current implication:
 

@@ -75,6 +75,10 @@ const getExpectedToken = (rule: SearchCompanyReportsFieldSpec): string => {
       return "date_YYYYMMDD";
     case "boolean":
       return "boolean";
+    case "string":
+      return "non_empty_string";
+    case "stringArray":
+      return rule.expectedToken;
   }
 };
 
@@ -95,6 +99,10 @@ const getExpectedDescription = (rule: SearchCompanyReportsFieldSpec): string => 
       return searchCompanyReportsValidationCopy.expectedDateYYYYMMDD;
     case "boolean":
       return searchCompanyReportsValidationCopy.expectedBoolean;
+    case "string":
+      return searchCompanyReportsValidationCopy.expectedNonEmptyString;
+    case "stringArray":
+      return searchCompanyReportsValidationCopy.expectedStringArray;
   }
 };
 
@@ -172,6 +180,22 @@ const toInvalidSearchCompanyReportsRequest = (
     });
   }
 
+  if (rule.kind === "stringArray") {
+    return new InvalidSearchCompanyReportsRequest({
+      code: "invalid_parameter",
+      parameter,
+      reason: Array.isArray(actual) ? "invalid_format" : "invalid_type",
+      expected: getExpectedToken(rule),
+      actual,
+      message: Array.isArray(actual)
+        ? searchCompanyReportsValidationCopy.mustUseKnownPattern(
+            parameter,
+            "DART 공시유형 상세 코드(A001 등)",
+          )
+        : searchCompanyReportsValidationCopy.mustBeStringArray(parameter),
+    });
+  }
+
   if (rule.kind === "enum") {
     const choices = rule.enumValues.map(String);
     return new InvalidSearchCompanyReportsRequest({
@@ -195,6 +219,17 @@ const toInvalidSearchCompanyReportsRequest = (
     });
   }
 
+  if (rule.kind === "string" && rule.nonEmpty && actual.length === 0) {
+    return new InvalidSearchCompanyReportsRequest({
+      code: "invalid_parameter",
+      parameter,
+      reason: "empty_string",
+      expected: getExpectedToken(rule),
+      actual,
+      message: searchCompanyReportsValidationCopy.mustNotBeEmpty(parameter),
+    });
+  }
+
   if (rule.kind === "date" || rule.kind === "patternString") {
     return new InvalidSearchCompanyReportsRequest({
       code: "invalid_parameter",
@@ -205,7 +240,12 @@ const toInvalidSearchCompanyReportsRequest = (
       message:
         rule.kind === "date"
           ? searchCompanyReportsValidationCopy.mustUseDateFormat(parameter)
-          : searchCompanyReportsValidationCopy.mustUseDartCompanyCode(parameter),
+          : parameter === "companyCode"
+            ? searchCompanyReportsValidationCopy.mustUseDartCompanyCode(parameter)
+            : searchCompanyReportsValidationCopy.mustUseKnownPattern(
+                parameter,
+                getExpectedToken(rule),
+              ),
     });
   }
 
