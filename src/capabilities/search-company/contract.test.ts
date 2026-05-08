@@ -9,7 +9,7 @@ describe("resolveSearchCompanyRequest", () => {
   test("applies defaults to the public semantic request", () => {
     expect(resolveSearchCompanyRequest({ companyName: "삼성전자" })).toEqual({
       page: 1,
-      pageSize: 45,
+      pageSize: 15,
       companyName: "삼성전자",
     });
   });

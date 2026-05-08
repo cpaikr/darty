@@ -13,15 +13,22 @@ import {
 import { searchBodyOperationName } from "../../capabilities/search-body/spec.ts";
 import {
   buildCliNameByOptionKey,
+  createCliVerboseOutputOptions,
+  createPrettyOption,
   createRegisteredOption,
+  createVerboseOption,
   extractCliOptions,
   parseIntegerCliOption,
+  renderCliJson,
   renderInvalidRequestCliErrorMessage,
+  splitCliCommandOptions,
   type CliOptions as SharedCliOptions,
+  type CliVerboseOutputOptions,
+  type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof SearchBodyRawInput;
+type CliOptionKey = keyof SearchBodyRawInput | "pretty" | "verbose";
 
 /**
  * Commander returns only the flags the caller provided. This partial shape lets
@@ -29,6 +36,10 @@ type CliOptionKey = keyof SearchBodyRawInput;
  * defaults and validates the domain contract.
  */
 export type CliOptions = SharedCliOptions<CliOptionKey>;
+export type SearchBodyCliCommand = ParsedCliCommand<
+  SearchBodyRawInput,
+  CliVerboseOutputOptions
+>;
 
 export type SearchBodyCommandExecutor = {
   readonly runOperation: (
@@ -89,6 +100,8 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     "--report-name <text>",
     searchBodyFieldCopy.reportName.cliDescription,
   ),
+  createPrettyOption(),
+  createVerboseOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -124,8 +137,19 @@ const renderSupplementalHelp = (): string => {
   return `\n${searchBodyCliCopy.examplesHeading}:\n${examples}${notesSection}\n`;
 };
 
+const toSearchBodyCliCommand = (options: CliOptions): SearchBodyCliCommand =>
+  splitCliCommandOptions<
+    SearchBodyRawInput,
+    CliOptionKey,
+    CliVerboseOutputOptions
+  >(
+    options,
+    ["pretty", "verbose"],
+    createCliVerboseOutputOptions(options),
+  );
+
 const buildSearchBodyCommand = (
-  onRun?: (options: CliOptions) => Promise<void>,
+  onRun?: (command: SearchBodyCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
   const command = new Command(searchBodyOperationName)
@@ -150,28 +174,61 @@ const buildSearchBodyCommand = (
         return undefined;
       }
 
-      return onRun(options);
+      return onRun(toSearchBodyCliCommand(options));
     });
   }
 
   return command;
 };
 
+export type SearchBodyCompactCliItem = Omit<
+  SearchBodyResult["result"]["items"][number],
+  "evidence"
+>;
+
+export type SearchBodyCompactCliResult = Omit<SearchBodyResult, "result"> & {
+  readonly result: Omit<SearchBodyResult["result"], "items"> & {
+    readonly items: readonly SearchBodyCompactCliItem[];
+  };
+};
+
+export type SearchBodyCliResult = SearchBodyResult | SearchBodyCompactCliResult;
+
+export const toSearchBodyCliResult = (
+  result: SearchBodyResult,
+  output: CliVerboseOutputOptions,
+): SearchBodyCliResult => {
+  if (output.verbose) {
+    return result;
+  }
+
+  return {
+    ...result,
+    result: {
+      ...result.result,
+      items: result.result.items.map(({ evidence: _evidence, ...item }) => item),
+    },
+  };
+};
+
 const renderSearchBodyResult = (
   result: SearchBodyResult,
-): string => JSON.stringify(result, null, 2);
+  output: CliVerboseOutputOptions,
+): string => renderCliJson(toSearchBodyCliResult(result, output), output);
 
 /**
  * Runs the search-body operation only after the shared semantic resolver has accepted
  * the request, then writes exactly one JSON payload to stdout.
  */
 export const executeSearchBodyCommand = (
-  options: CliOptions,
+  command: SearchBodyCliCommand,
   executor: SearchBodyCommandExecutor,
 ): Promise<void> =>
   executor
-    .runOperation(options as Partial<SearchBodyRawInput> & Record<string, unknown>)
-    .then((result) => executor.writeStdout(renderSearchBodyResult(result)));
+    .runOperation(command.request)
+    .then((result) =>
+      executor.writeStdout(renderSearchBodyResult(result, command.output)),
+    );
 
 export const searchBodyUsage = `${buildSearchBodyCommand().helpInformation()}${renderSupplementalHelp()}`;
 
@@ -182,7 +239,9 @@ export const searchBodyUsage = `${buildSearchBodyCommand().helpInformation()}${r
  * choices, and date formats are validated later by the shared semantic
  * resolver.
  */
-export const parseSearchBodyCommandArgs = (argv: string[]): CliOptions => {
+export const parseSearchBodyCommandArgs = (
+  argv: string[],
+): SearchBodyCliCommand => {
   const command = buildSearchBodyCommand().exitOverride();
   const registeredOptions = buildRegisteredOptions();
 
@@ -192,9 +251,8 @@ export const parseSearchBodyCommandArgs = (argv: string[]): CliOptions => {
   });
   command.parse(argv, { from: "user" });
 
-  return extractCliOptions(
-    command.opts<Record<string, unknown>>(),
-    registeredOptions,
+  return toSearchBodyCliCommand(
+    extractCliOptions(command.opts<Record<string, unknown>>(), registeredOptions),
   );
 };
 
@@ -203,5 +261,5 @@ export const parseSearchBodyCommandArgs = (argv: string[]): CliOptions => {
  * hosts that need the same CLI surface with custom side effects.
  */
 export const createSearchBodyCommandWithRunner = (
-  onRun: (options: CliOptions) => Promise<void>,
+  onRun: (command: SearchBodyCliCommand) => Promise<void>,
 ): Command => buildSearchBodyCommand(onRun);

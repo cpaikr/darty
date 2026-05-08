@@ -69,14 +69,29 @@ describe("parseViewReportCommandArgs", () => {
         "markdown",
         "--max-bytes",
         "50000",
+        "--verbose",
+        "--toc-depth",
+        "2",
+        "--pretty",
       ]),
     ).toEqual({
-      receipt: "20260331004166",
-      documentId: "document:attachment:1",
-      sectionId: "section:1.2",
-      outputFormat: "markdown",
-      maxBytes: 50000,
+      request: {
+        receipt: "20260331004166",
+        documentId: "document:attachment:1",
+        sectionId: "section:1.2",
+        outputFormat: "markdown",
+        maxBytes: 50000,
+      },
+      output: { pretty: true, verbose: true, tocDepth: 2 },
     });
+  });
+
+  test("rejects non-positive TOC depth options early", () => {
+    expect(() =>
+      parseViewReportCommandArgs(["--receipt", "20260331004166", "--toc-depth", "0"]),
+    ).toThrow(
+      "option '--toc-depth <number>' argument '0' is invalid. 1 이상의 정수를 입력해야 합니다.",
+    );
   });
 
   test("documents the explicit CLI surface locally", () => {
@@ -89,8 +104,12 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("markdown)");
     expect(viewReportUsage).toContain("--max-bytes <number>");
     expect(viewReportUsage).toContain(
-      "[기본값: 200000] 반환할 본문 최대 바이트 수",
+      "[기본값: 50000] 반환할 본문 최대 바이트 수",
     );
+    expect(viewReportUsage).toContain("--verbose");
+    expect(viewReportUsage).toContain("--toc-depth <number>");
+    expect(viewReportUsage).toContain("--pretty");
+    expect(viewReportUsage).not.toContain("--include-toc");
   });
 
   test("passes parsed options to the command runner", async () => {
@@ -112,8 +131,11 @@ describe("parseViewReportCommandArgs", () => {
     );
 
     expect(received).toEqual({
-      receipt: "20260331004166",
-      sectionId: "section:1",
+      request: {
+        receipt: "20260331004166",
+        sectionId: "section:1",
+      },
+      output: { pretty: false, verbose: false },
     });
   });
 
@@ -131,13 +153,14 @@ describe("parseViewReportCommandArgs", () => {
     );
   });
 
-  test("prints a single JSON payload with the capability result", async () => {
+  test("prints a compact JSON payload with the capability result", async () => {
     const writes: string[] = [];
     let receivedInput: Record<string, unknown> | undefined;
 
     await executeViewReportCommand(
       {
-        receipt: "20260331004166",
+        request: { receipt: "20260331004166" },
+        output: { pretty: false, verbose: false },
       },
       {
         runOperation: async (input) => {
@@ -151,6 +174,193 @@ describe("parseViewReportCommandArgs", () => {
     );
 
     expect(receivedInput).toEqual({ receipt: "20260331004166" });
-    expect(writes).toEqual([JSON.stringify(result, null, 2)]);
+    expect(writes).toEqual([JSON.stringify(result)]);
+  });
+
+  test("pretty prints JSON when requested", async () => {
+    const writes: string[] = [];
+
+    await executeViewReportCommand(
+      {
+        request: { receipt: "20260331004166" },
+        output: { pretty: true, verbose: false },
+      },
+      {
+        runOperation: async () => result,
+        writeStdout: (text) => {
+          writes.push(text);
+        },
+      },
+    );
+
+    expect(writes).toEqual([JSON.stringify(result, undefined, 2)]);
+  });
+
+  test("omits full documents and toc from section body output by default", async () => {
+    const writes: string[] = [];
+    const sectionResult = {
+      ...result,
+      result: {
+        ...result.result,
+        request: {
+          ...result.result.request,
+          sectionId: "section:1",
+        },
+        toc: [
+          {
+            id: "section:1",
+            title: "I. 회사의 개요",
+            children: [
+              {
+                id: "section:1.1",
+                title: "1. 회사의 개요",
+                children: [],
+              },
+            ],
+          },
+        ],
+        content: {
+          scope: "section" as const,
+          format: "html" as const,
+          sizeBytes: 100,
+          returnedBytes: 100,
+          truncated: false,
+          body: "본문",
+        },
+      },
+    } as const;
+
+    await executeViewReportCommand(
+      {
+        request: {
+          receipt: "20260331004166",
+          sectionId: "section:1",
+        },
+        output: { pretty: false, verbose: false },
+      },
+      {
+        runOperation: async () => sectionResult,
+        writeStdout: (text) => {
+          writes.push(text);
+        },
+      },
+    );
+
+    const payload = JSON.parse(writes[0]!) as { result: Record<string, unknown> };
+    expect(payload.result.documents).toBeUndefined();
+    expect(payload.result.toc).toBeUndefined();
+    expect(payload.result.document).toBeDefined();
+    expect(payload.result.content).toBeDefined();
+  });
+
+  test("includes section locator fields in verbose output", async () => {
+    const writes: string[] = [];
+    const sectionResult = {
+      ...result,
+      result: {
+        ...result.result,
+        request: {
+          ...result.result.request,
+          sectionId: "section:1",
+        },
+        toc: [
+          {
+            id: "section:1",
+            title: "I. 회사의 개요",
+            children: [],
+          },
+        ],
+        content: {
+          scope: "section" as const,
+          format: "html" as const,
+          sizeBytes: 100,
+          returnedBytes: 100,
+          truncated: false,
+          body: "본문",
+        },
+      },
+    } as const;
+
+    await executeViewReportCommand(
+      {
+        request: {
+          receipt: "20260331004166",
+          sectionId: "section:1",
+        },
+        output: { pretty: false, verbose: true },
+      },
+      {
+        runOperation: async (input) => {
+          expect(input).toEqual({
+            receipt: "20260331004166",
+            sectionId: "section:1",
+          });
+          return sectionResult;
+        },
+        writeStdout: (text) => {
+          writes.push(text);
+        },
+      },
+    );
+
+    expect(writes).toEqual([JSON.stringify(sectionResult)]);
+  });
+
+  test("limits included TOC depth", async () => {
+    const writes: string[] = [];
+    const sectionResult = {
+      ...result,
+      result: {
+        ...result.result,
+        request: {
+          ...result.result.request,
+          sectionId: "section:1",
+        },
+        toc: [
+          {
+            id: "section:1",
+            title: "I. 회사의 개요",
+            children: [
+              {
+                id: "section:1.1",
+                title: "1. 회사의 개요",
+                children: [
+                  {
+                    id: "section:1.1.1",
+                    title: "가. 개요",
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    } as const;
+
+    await executeViewReportCommand(
+      {
+        request: {
+          receipt: "20260331004166",
+          sectionId: "section:1",
+        },
+        output: { pretty: false, verbose: false, tocDepth: 2 },
+      },
+      {
+        runOperation: async () => sectionResult,
+        writeStdout: (text) => {
+          writes.push(text);
+        },
+      },
+    );
+
+    const payload = JSON.parse(writes[0]!) as {
+      result: {
+        documents?: unknown;
+        toc?: Array<{ children: Array<{ children: unknown[] }> }>;
+      };
+    };
+    expect(payload.result.documents).toBeDefined();
+    expect(payload.result.toc?.[0]?.children[0]?.children).toEqual([]);
   });
 });

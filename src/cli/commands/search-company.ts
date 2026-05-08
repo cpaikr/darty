@@ -13,17 +13,28 @@ import {
 import { searchCompanyOperationName } from "../../capabilities/search-company/spec.ts";
 import {
   buildCliNameByOptionKey,
+  createCliVerboseOutputOptions,
+  createPrettyOption,
   createRegisteredOption,
+  createVerboseOption,
   extractCliOptions,
   parseIntegerCliOption,
+  renderCliJson,
   renderInvalidRequestCliErrorMessage,
+  splitCliCommandOptions,
   type CliOptions as SharedCliOptions,
+  type CliVerboseOutputOptions,
+  type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof SearchCompanyRawInput;
+type CliOptionKey = keyof SearchCompanyRawInput | "pretty" | "verbose";
 
 export type CliOptions = SharedCliOptions<CliOptionKey>;
+export type SearchCompanyCliCommand = ParsedCliCommand<
+  SearchCompanyRawInput,
+  CliVerboseOutputOptions
+>;
 
 export type SearchCompanyCommandExecutor = {
   readonly runOperation: (
@@ -57,6 +68,8 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
       option.argParser((value) => parseIntegerOption(value));
     },
   ),
+  createPrettyOption(),
+  createVerboseOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -90,8 +103,21 @@ const renderSupplementalHelp = (): string => {
   return `\n${searchCompanyCliCopy.examplesHeading}:\n${examples}${notesSection}\n`;
 };
 
+const toSearchCompanyCliCommand = (
+  options: CliOptions,
+): SearchCompanyCliCommand =>
+  splitCliCommandOptions<
+    SearchCompanyRawInput,
+    CliOptionKey,
+    CliVerboseOutputOptions
+  >(
+    options,
+    ["pretty", "verbose"],
+    createCliVerboseOutputOptions(options),
+  );
+
 const buildSearchCompanyCommand = (
-  onRun?: (options: CliOptions) => Promise<void>,
+  onRun?: (command: SearchCompanyCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
   const command = new Command(searchCompanyOperationName)
@@ -116,27 +142,65 @@ const buildSearchCompanyCommand = (
         return undefined;
       }
 
-      return onRun(options);
+      return onRun(toSearchCompanyCliCommand(options));
     });
   }
 
   return command;
 };
 
-const renderSearchCompanyResult = (result: SearchCompanyResult): string =>
-  JSON.stringify(result, null, 2);
+export type SearchCompanyCompactCliItem = Omit<
+  SearchCompanyResult["result"]["items"][number],
+  "evidence"
+>;
+
+export type SearchCompanyCompactCliResult = Omit<SearchCompanyResult, "result"> & {
+  readonly result: Omit<SearchCompanyResult["result"], "items"> & {
+    readonly items: readonly SearchCompanyCompactCliItem[];
+  };
+};
+
+export type SearchCompanyCliResult =
+  | SearchCompanyResult
+  | SearchCompanyCompactCliResult;
+
+export const toSearchCompanyCliResult = (
+  result: SearchCompanyResult,
+  output: CliVerboseOutputOptions,
+): SearchCompanyCliResult => {
+  if (output.verbose) {
+    return result;
+  }
+
+  return {
+    ...result,
+    result: {
+      ...result.result,
+      items: result.result.items.map(({ evidence: _evidence, ...item }) => item),
+    },
+  };
+};
+
+const renderSearchCompanyResult = (
+  result: SearchCompanyResult,
+  output: CliVerboseOutputOptions,
+): string => renderCliJson(toSearchCompanyCliResult(result, output), output);
 
 export const executeSearchCompanyCommand = (
-  options: CliOptions,
+  command: SearchCompanyCliCommand,
   executor: SearchCompanyCommandExecutor,
 ): Promise<void> =>
   executor
-    .runOperation(options as Partial<SearchCompanyRawInput> & Record<string, unknown>)
-    .then((result) => executor.writeStdout(renderSearchCompanyResult(result)));
+    .runOperation(command.request)
+    .then((result) =>
+      executor.writeStdout(renderSearchCompanyResult(result, command.output)),
+    );
 
 export const searchCompanyUsage = `${buildSearchCompanyCommand().helpInformation()}${renderSupplementalHelp()}`;
 
-export const parseSearchCompanyCommandArgs = (argv: string[]): CliOptions => {
+export const parseSearchCompanyCommandArgs = (
+  argv: string[],
+): SearchCompanyCliCommand => {
   const command = buildSearchCompanyCommand().exitOverride();
   const registeredOptions = buildRegisteredOptions();
 
@@ -146,12 +210,11 @@ export const parseSearchCompanyCommandArgs = (argv: string[]): CliOptions => {
   });
   command.parse(argv, { from: "user" });
 
-  return extractCliOptions(
-    command.opts<Record<string, unknown>>(),
-    registeredOptions,
+  return toSearchCompanyCliCommand(
+    extractCliOptions(command.opts<Record<string, unknown>>(), registeredOptions),
   );
 };
 
 export const createSearchCompanyCommandWithRunner = (
-  onRun: (options: CliOptions) => Promise<void>,
+  onRun: (command: SearchCompanyCliCommand) => Promise<void>,
 ): Command => buildSearchCompanyCommand(onRun);

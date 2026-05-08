@@ -13,17 +13,15 @@ import {
 describe("parseCompanyDetailCommandArgs", () => {
   test("parses company code flag", () => {
     expect(parseCompanyDetailCommandArgs(["--company-code", "00126380"])).toEqual({
-      companyCode: "00126380",
+      request: { companyCode: "00126380" },
+      output: { pretty: false },
     });
   });
 
   test("resolves parsed options through the shared resolver", () => {
     expect(
       resolveCompanyDetailRequest(
-        parseCompanyDetailCommandArgs(["--company-code", "00126380"]) as Record<
-          string,
-          unknown
-        >,
+        parseCompanyDetailCommandArgs(["--company-code", "00126380"]).request,
       ),
     ).toEqual({ companyCode: "00126380" });
   });

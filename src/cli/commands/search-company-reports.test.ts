@@ -32,18 +32,24 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     ]);
 
     expect(options).toEqual({
-      companyCode: "00190321",
-      startDate: "20250507",
-      endDate: "20260507",
-      page: 2,
-      pageSize: 30,
-      sortDirection: "asc",
-      includeAllReports: true,
+      request: {
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        page: 2,
+        pageSize: 30,
+        sortDirection: "asc",
+        includeAllReports: true,
+      },
+      output: { pretty: false, verbose: false },
     });
   });
 
   test("parses transport syntax without enforcing required fields", () => {
-    expect(parseSearchCompanyReportsCommandArgs([])).toEqual({});
+    expect(parseSearchCompanyReportsCommandArgs([])).toEqual({
+      request: {},
+      output: { pretty: false, verbose: false },
+    });
   });
 
   test("rejects invalid integer options early", () => {
@@ -66,9 +72,12 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("--page-size <number>");
     expect(searchCompanyReportsUsage).toContain("--sort-direction <asc|desc>");
     expect(searchCompanyReportsUsage).toContain("--include-all-reports");
+    expect(searchCompanyReportsUsage).toContain("--pretty");
+    expect(searchCompanyReportsUsage).toContain("--verbose");
     expect(searchCompanyReportsUsage).toContain("최종보고서 필터");
     expect(searchCompanyReportsUsage).toContain("정정 전 보고서까지 포함");
     expect(searchCompanyReportsUsage).not.toContain("--sort-by");
+    expect(searchCompanyReportsUsage).not.toContain("--include-evidence");
     expect(searchCompanyReportsUsage).toContain(
       "search-company --company-name <회사명>",
     );
@@ -83,7 +92,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         "20250507",
         "--end-date",
         "20260507",
-      ]) as Record<string, unknown>,
+      ]).request,
     );
 
     expect(request).toEqual({
@@ -145,10 +154,13 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
 
     await executeSearchCompanyReportsCommand(
       {
-        companyCode: "00190321",
-        startDate: "20250507",
-        endDate: "20260507",
-        includeAllReports: true,
+        request: {
+          companyCode: "00190321",
+          startDate: "20250507",
+          endDate: "20260507",
+          includeAllReports: true,
+        },
+        output: { pretty: false, verbose: false },
       },
       {
         runOperation: async (input) => {
@@ -189,9 +201,12 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     );
 
     expect(received).toEqual({
-      companyCode: "00190321",
-      startDate: "20250507",
-      endDate: "20260507",
+      request: {
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+      },
+      output: { pretty: false, verbose: false },
     });
   });
 
@@ -209,12 +224,121 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     );
   });
 
+  test("omits evidence by default and includes it in verbose output", async () => {
+    const result = {
+      result: {
+        request: {
+          companyCode: "00190321",
+          startDate: "20250507",
+          endDate: "20260507",
+          page: 1,
+          pageSize: 15,
+          sortDirection: "desc",
+          includeAllReports: false,
+        },
+        company: { companyCode: "00190321" },
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: 1,
+          returnedCount: 1,
+        },
+        items: [
+          {
+            company: { companyCode: "00190321", name: "유 케이티" },
+            filing: {
+              receiptNumber: "20260331004166",
+              reportTitle: "사업보고서",
+              receiptDate: "20260331",
+            },
+            references: {
+              viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+            },
+            remarks: [],
+            evidence: {
+              rawRowText: "유 케이티 사업보고서 20260331",
+            },
+          },
+        ],
+      },
+      metadata: {
+        fetchedAt: "2026-05-07T00:00:00.000Z",
+        source: {
+          system: "dart",
+          surface: "dsab007",
+          endpoint: "https://dart.fss.or.kr/dsab007/detailSearch.ax",
+        },
+        sourceBehavior: {
+          searchMode: "corp",
+          sortBy: "date",
+          callerControlsPageSize: true,
+          pageSizeChoices: [15, 30, 50, 100],
+          finalReportDefault: true,
+          observationStatus: "observed",
+        },
+        completeness: "complete",
+        droppedItemCount: 0,
+      },
+      references: {
+        searchUrl: "https://dart.fss.or.kr/dsab007/detailSearch.ax",
+      },
+      warnings: [],
+    } as const;
+    const compactWrites: string[] = [];
+    const verboseWrites: string[] = [];
+
+    await executeSearchCompanyReportsCommand(
+      {
+        request: {
+          companyCode: "00190321",
+          startDate: "20250507",
+          endDate: "20260507",
+        },
+        output: { pretty: false, verbose: false },
+      },
+      {
+        runOperation: async () => result,
+        writeStdout: (text) => compactWrites.push(text),
+      },
+    );
+    await executeSearchCompanyReportsCommand(
+      {
+        request: {
+          companyCode: "00190321",
+          startDate: "20250507",
+          endDate: "20260507",
+        },
+        output: { pretty: false, verbose: true },
+      },
+      {
+        runOperation: async (input) => {
+          expect(input).toEqual({
+            companyCode: "00190321",
+            startDate: "20250507",
+            endDate: "20260507",
+          });
+          return result;
+        },
+        writeStdout: (text) => verboseWrites.push(text),
+      },
+    );
+
+    const compactPayload = JSON.parse(compactWrites[0]!) as {
+      result: { items: Array<Record<string, unknown>> };
+    };
+    expect(compactPayload.result.items[0]!.evidence).toBeUndefined();
+    expect(verboseWrites).toEqual([JSON.stringify(result)]);
+  });
+
   test("rejects invalid capability input before execution", async () => {
     try {
       await executeSearchCompanyReportsCommand(
         {
-          startDate: "20250507",
-          endDate: "20260507",
+          request: {
+            startDate: "20250507",
+            endDate: "20260507",
+          },
+          output: { pretty: false, verbose: false },
         },
         {
           runOperation: (input) =>

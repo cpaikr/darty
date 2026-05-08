@@ -234,7 +234,7 @@ graph TD
 
 Step by step:
 
-1. CLI converts flags into a partial object keyed by public semantic names (`keyword`, `startDate`, etc.) and calls `executeSearchBodyCommand()`.
+1. CLI converts flags into a parsed command with separate `request` and `output` buckets. `request` contains only public semantic capability keys (`keyword`, `startDate`, etc.); `output` contains CLI presentation controls such as `pretty` and `verbose`.
 2. Future adapters should convert their protocol input into the same public semantic object and call the shared operation from `src/app/search-body.ts`.
 3. `resolveSearchBodyRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
 4. `src/app/search-body.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
@@ -244,9 +244,9 @@ Step by step:
 8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from the HTML fragment.
 9. `toDsab007ContentsProviderResult()` maps source rows into public items.
 10. `buildSearchBodyResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
-11. The CLI serializes the envelope as exactly one JSON stdout payload.
+11. The CLI projects the capability envelope into its CLI output contract, then serializes exactly one JSON stdout payload. Default CLI output may omit low-benefit diagnostic/context fields; `--verbose` restores them.
 
-Semantic validation happens inside the capability executor, not in the CLI transport. This keeps future adapters aligned without reimplementing validation.
+Semantic validation happens inside the capability executor, not in the CLI transport. CLI-only presentation options are kept out of the capability request so future adapters stay aligned without reimplementing validation.
 
 ## Two Schemas
 

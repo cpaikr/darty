@@ -2,6 +2,22 @@ import { InvalidArgumentError, Option } from "commander";
 
 export type CliOptionValue = boolean | number | string;
 
+export type CliJsonOptions = {
+  readonly pretty: boolean;
+};
+
+export type CliVerboseOutputOptions = CliJsonOptions & {
+  readonly verbose: boolean;
+};
+
+export type ParsedCliCommand<
+  RequestInput,
+  OutputOptions extends CliJsonOptions = CliJsonOptions,
+> = {
+  readonly request: Partial<RequestInput> & Record<string, unknown>;
+  readonly output: OutputOptions;
+};
+
 export type RegisteredOption<Key extends string> = {
   readonly key: Key;
   readonly attributeName: string;
@@ -97,3 +113,56 @@ export const renderInvalidRequestCliErrorMessage = <Key extends string>(
     .replaceAll("필수 매개변수", "필수 옵션")
     .replaceAll("매개변수", "옵션");
 };
+
+export const createPrettyOption = (): RegisteredOption<"pretty"> =>
+  createRegisteredOption(
+    "pretty",
+    "--pretty",
+    "사람이 읽기 쉬운 들여쓰기 JSON으로 출력합니다.",
+  );
+
+export const createVerboseOption = (): RegisteredOption<"verbose"> =>
+  createRegisteredOption(
+    "verbose",
+    "--verbose",
+    "기본 출력에서 생략하는 진단/출처 필드를 포함합니다.",
+  );
+
+export const createCliJsonOptions = (
+  options: Record<string, unknown>,
+): CliJsonOptions => ({
+  pretty: options.pretty === true,
+});
+
+export const createCliVerboseOutputOptions = (
+  options: Record<string, unknown>,
+): CliVerboseOutputOptions => ({
+  ...createCliJsonOptions(options),
+  verbose: options.verbose === true,
+});
+
+export const splitCliCommandOptions = <
+  RequestInput,
+  Key extends string,
+  OutputOptions extends CliJsonOptions = CliJsonOptions,
+>(
+  options: CliOptions<Key>,
+  outputKeys: readonly Key[],
+  output: OutputOptions,
+): ParsedCliCommand<RequestInput, OutputOptions> => {
+  const outputKeySet = new Set<string>(outputKeys);
+  const request = Object.fromEntries(
+    Object.entries(options).filter(([key]) => !outputKeySet.has(key)),
+  );
+
+  return {
+    request: request as Partial<RequestInput> & Record<string, unknown>,
+    output,
+  };
+};
+
+export const renderCliJson = (
+  value: unknown,
+  options: Partial<CliJsonOptions> = {},
+): string =>
+  JSON.stringify(value, undefined, options.pretty === true ? 2 : undefined);

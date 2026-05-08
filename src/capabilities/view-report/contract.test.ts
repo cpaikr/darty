@@ -9,10 +9,8 @@ describe("resolveViewReportRequest", () => {
   test("accepts a bare receipt number and applies defaults", () => {
     expect(resolveViewReportRequest({ receipt: "20260331004166" })).toEqual({
       receipt: "20260331004166",
-      documentId: undefined,
-      sectionId: undefined,
       outputFormat: "markdown",
-      maxBytes: 200000,
+      maxBytes: 50000,
     });
   });
 

@@ -13,15 +13,21 @@ import {
 import { companyDetailOperationName } from "../../capabilities/company-detail/spec.ts";
 import {
   buildCliNameByOptionKey,
+  createCliJsonOptions,
+  createPrettyOption,
   createRegisteredOption,
   extractCliOptions,
+  renderCliJson,
   renderInvalidRequestCliErrorMessage,
+  splitCliCommandOptions,
   type CliOptions as SharedCliOptions,
+  type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof CompanyDetailRawInput;
+type CliOptionKey = keyof CompanyDetailRawInput | "pretty";
 export type CompanyDetailCliOptions = SharedCliOptions<CliOptionKey>;
+export type CompanyDetailCliCommand = ParsedCliCommand<CompanyDetailRawInput>;
 
 export type CompanyDetailCommandExecutor = {
   readonly runOperation: (
@@ -36,6 +42,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     "--company-code <text>",
     companyDetailFieldCopy.companyCode.cliDescription,
   ),
+  createPrettyOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -63,8 +70,17 @@ const renderSupplementalHelp = (): string => {
   return `\n${companyDetailCliCopy.examplesHeading}:\n${examples}\n`;
 };
 
+const toCompanyDetailCliCommand = (
+  options: CompanyDetailCliOptions,
+): CompanyDetailCliCommand =>
+  splitCliCommandOptions<CompanyDetailRawInput, CliOptionKey>(
+    options,
+    ["pretty"],
+    createCliJsonOptions(options),
+  );
+
 const buildCompanyDetailCommand = (
-  onRun?: (options: CompanyDetailCliOptions) => Promise<void>,
+  onRun?: (command: CompanyDetailCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
   const command = new Command(companyDetailOperationName)
@@ -89,29 +105,33 @@ const buildCompanyDetailCommand = (
         return undefined;
       }
 
-      return onRun(options);
+      return onRun(toCompanyDetailCliCommand(options));
     });
   }
 
   return command;
 };
 
-const renderCompanyDetailResult = (result: CompanyDetailResult): string =>
-  JSON.stringify(result, null, 2);
+const renderCompanyDetailResult = (
+  result: CompanyDetailResult,
+  output: CompanyDetailCliCommand["output"],
+): string => renderCliJson(result, output);
 
 export const executeCompanyDetailCommand = (
-  options: CompanyDetailCliOptions,
+  command: CompanyDetailCliCommand,
   executor: CompanyDetailCommandExecutor,
 ): Promise<void> =>
   executor
-    .runOperation(options as Partial<CompanyDetailRawInput> & Record<string, unknown>)
-    .then((result) => executor.writeStdout(renderCompanyDetailResult(result)));
+    .runOperation(command.request)
+    .then((result) =>
+      executor.writeStdout(renderCompanyDetailResult(result, command.output)),
+    );
 
 export const companyDetailUsage = `${buildCompanyDetailCommand().helpInformation()}${renderSupplementalHelp()}`;
 
 export const parseCompanyDetailCommandArgs = (
   argv: string[],
-): CompanyDetailCliOptions => {
+): CompanyDetailCliCommand => {
   const command = buildCompanyDetailCommand().exitOverride();
   const registeredOptions = buildRegisteredOptions();
 
@@ -121,12 +141,11 @@ export const parseCompanyDetailCommandArgs = (
   });
   command.parse(argv, { from: "user" });
 
-  return extractCliOptions(
-    command.opts<Record<string, unknown>>(),
-    registeredOptions,
+  return toCompanyDetailCliCommand(
+    extractCliOptions(command.opts<Record<string, unknown>>(), registeredOptions),
   );
 };
 
 export const createCompanyDetailCommandWithRunner = (
-  onRun: (options: CompanyDetailCliOptions) => Promise<void>,
+  onRun: (command: CompanyDetailCliCommand) => Promise<void>,
 ): Command => buildCompanyDetailCommand(onRun);

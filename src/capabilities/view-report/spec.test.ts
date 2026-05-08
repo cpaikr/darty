@@ -41,7 +41,7 @@ describe("view-report capability schemas", () => {
     });
     expect(maxBytes).toMatchObject({
       type: "integer",
-      default: 200000,
+      default: 50000,
       minimum: 1000,
       maximum: 1000000,
     });

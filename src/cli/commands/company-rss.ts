@@ -13,15 +13,21 @@ import {
 import { companyRssOperationName } from "../../capabilities/company-rss/spec.ts";
 import {
   buildCliNameByOptionKey,
+  createCliJsonOptions,
+  createPrettyOption,
   createRegisteredOption,
   extractCliOptions,
+  renderCliJson,
   renderInvalidRequestCliErrorMessage,
+  splitCliCommandOptions,
   type CliOptions as SharedCliOptions,
+  type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof CompanyRssRawInput;
+type CliOptionKey = keyof CompanyRssRawInput | "pretty";
 export type CompanyRssCliOptions = SharedCliOptions<CliOptionKey>;
+export type CompanyRssCliCommand = ParsedCliCommand<CompanyRssRawInput>;
 
 export type CompanyRssCommandExecutor = {
   readonly runOperation: (
@@ -36,6 +42,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     "--company-code <text>",
     companyRssFieldCopy.companyCode.cliDescription,
   ),
+  createPrettyOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -63,8 +70,17 @@ const renderSupplementalHelp = (): string => {
   return `\n${companyRssCliCopy.examplesHeading}:\n${examples}\n`;
 };
 
+const toCompanyRssCliCommand = (
+  options: CompanyRssCliOptions,
+): CompanyRssCliCommand =>
+  splitCliCommandOptions<CompanyRssRawInput, CliOptionKey>(
+    options,
+    ["pretty"],
+    createCliJsonOptions(options),
+  );
+
 const buildCompanyRssCommand = (
-  onRun?: (options: CompanyRssCliOptions) => Promise<void>,
+  onRun?: (command: CompanyRssCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
   const command = new Command(companyRssOperationName)
@@ -89,29 +105,33 @@ const buildCompanyRssCommand = (
         return undefined;
       }
 
-      return onRun(options);
+      return onRun(toCompanyRssCliCommand(options));
     });
   }
 
   return command;
 };
 
-const renderCompanyRssResult = (result: CompanyRssResult): string =>
-  JSON.stringify(result, null, 2);
+const renderCompanyRssResult = (
+  result: CompanyRssResult,
+  output: CompanyRssCliCommand["output"],
+): string => renderCliJson(result, output);
 
 export const executeCompanyRssCommand = (
-  options: CompanyRssCliOptions,
+  command: CompanyRssCliCommand,
   executor: CompanyRssCommandExecutor,
 ): Promise<void> =>
   executor
-    .runOperation(options as Partial<CompanyRssRawInput> & Record<string, unknown>)
-    .then((result) => executor.writeStdout(renderCompanyRssResult(result)));
+    .runOperation(command.request)
+    .then((result) =>
+      executor.writeStdout(renderCompanyRssResult(result, command.output)),
+    );
 
 export const companyRssUsage = `${buildCompanyRssCommand().helpInformation()}${renderSupplementalHelp()}`;
 
 export const parseCompanyRssCommandArgs = (
   argv: string[],
-): CompanyRssCliOptions => {
+): CompanyRssCliCommand => {
   const command = buildCompanyRssCommand().exitOverride();
   const registeredOptions = buildRegisteredOptions();
 
@@ -121,12 +141,11 @@ export const parseCompanyRssCommandArgs = (
   });
   command.parse(argv, { from: "user" });
 
-  return extractCliOptions(
-    command.opts<Record<string, unknown>>(),
-    registeredOptions,
+  return toCompanyRssCliCommand(
+    extractCliOptions(command.opts<Record<string, unknown>>(), registeredOptions),
   );
 };
 
 export const createCompanyRssCommandWithRunner = (
-  onRun: (options: CompanyRssCliOptions) => Promise<void>,
+  onRun: (command: CompanyRssCliCommand) => Promise<void>,
 ): Command => buildCompanyRssCommand(onRun);

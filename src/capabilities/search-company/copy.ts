@@ -8,8 +8,8 @@ export const searchCompanyFieldCopy = {
     cliDescription: "[기본값: 1] DART 기업개황 회사별 검색 결과 페이지입니다(1부터 시작).",
   },
   pageSize: {
-    description: "[기본값: 45] 한 페이지에 요청할 회사 수입니다. DART 회사별 검색에서 관찰된 최대값은 45입니다.",
-    cliDescription: "[기본값: 45] 한 페이지에 요청할 회사 수입니다(최대 45).",
+    description: "[기본값: 15] 한 페이지에 요청할 회사 수입니다. DART 회사별 검색에서 관찰된 최대값은 45입니다.",
+    cliDescription: "[기본값: 15] 한 페이지에 요청할 회사 수입니다(최대 45).",
   },
 } as const;
 

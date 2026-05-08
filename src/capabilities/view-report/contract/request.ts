@@ -61,7 +61,7 @@ const viewReportRequestFields = {
   maxBytes: defaultedField({
     schema: ViewReportMaxBytesSchema,
     description: viewReportFieldCopy.maxBytes.description,
-    defaultValue: 200_000,
+    defaultValue: 50_000,
   }),
 } as const;
 

@@ -32,6 +32,8 @@ darty search-body \
 
 ## 명령
 
+기본 출력은 에이전트 사용을 위해 공백을 줄인 JSON입니다. 사람이 읽을 때는 각 명령에 `--pretty`를 추가하세요. CLI 기본 출력은 전체 capability 스키마의 compact projection입니다. 검색 계열 명령의 파서 검증용 `evidence`와 섹션 조회의 반복 목차 같은 진단/출처 필드는 기본 출력에서 생략되며, 필요하면 `--verbose`를 추가하세요.
+
 ### `company-detail`
 
 DART 8자리 회사 코드로 기업개황 상세 정보를 조회합니다.
@@ -71,7 +73,7 @@ darty search-company --company-name <회사명>
 선택 옵션:
 
 - `--page <숫자>`: 검색 결과 페이지, 기본값 `1`
-- `--page-size <숫자>`: 한 페이지에 요청할 회사 수, 기본값 `45`, 최대 `45`
+- `--page-size <숫자>`: 한 페이지에 요청할 회사 수, 기본값 `15`, 최대 `45`
 
 예시:
 
@@ -155,12 +157,15 @@ darty view-report --receipt 20260331004166 --section-id section:5.6
 - `--document-id <id>`: `view-report` 결과의 `documents[].id`. 생략하면 기본 본문 문서입니다.
 - `--section-id <id>`: `view-report` 결과의 `toc[].id`. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다.
 - `--output-format <html|markdown>`: 출력 형식. 기본값은 `markdown`입니다. `markdown`은 읽기 쉬운 best-effort 변환이며 복잡한 표는 HTML 태그로 보존합니다.
-- `--max-bytes <숫자>`: 반환 본문 최대 바이트 수, 기본값 `200000`
+- `--max-bytes <숫자>`: 반환 본문 최대 바이트 수, 기본값 `50000`
+- `--verbose`: `--section-id` 섹션 본문 조회 출력에도 문서 목록과 목차를 포함합니다.
+- `--toc-depth <숫자>`: 목차를 지정한 깊이까지만 출력합니다. 섹션 본문 조회에서는 목차 포함도 함께 켭니다.
+- `--pretty`: 사람이 읽기 쉬운 들여쓰기 JSON으로 출력합니다.
 
 동작:
 
 - TOC가 있는 문서는 기본 호출에서 문서 목록과 목차만 반환합니다.
-- `--section-id`를 지정하면 해당 섹션의 본문(`content.body`)과 이전/다음/상위 navigation을 반환합니다.
+- `--section-id`를 지정하면 해당 섹션의 본문(`content.body`)과 이전/다음/상위 navigation을 반환합니다. CLI 출력은 기본적으로 반복되는 전체 문서 목록과 목차를 생략합니다.
 - TOC가 없는 문서는 `--section-id` 없이 기본 호출에서 선택 문서 본문(`content.body`)을 반환하고 warning을 포함합니다.
 - 내부 DART viewer 파라미터(`dcmNo`, `eleId`, `offset`, `length`, `dtd`)는 공개 옵션으로 노출하지 않습니다.
 

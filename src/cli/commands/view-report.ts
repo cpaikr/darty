@@ -1,4 +1,4 @@
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 
 import {
   viewReportCliCopy,
@@ -13,17 +13,31 @@ import {
 import { viewReportOperationName } from "../../capabilities/view-report/spec.ts";
 import {
   buildCliNameByOptionKey,
+  createCliVerboseOutputOptions,
+  createPrettyOption,
   createRegisteredOption,
+  createVerboseOption,
   extractCliOptions,
   parseIntegerCliOption,
+  renderCliJson,
   renderInvalidRequestCliErrorMessage,
+  splitCliCommandOptions,
   type CliOptions,
+  type CliVerboseOutputOptions,
+  type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof ViewReportRawInput;
+type CliOptionKey = keyof ViewReportRawInput | "pretty" | "tocDepth" | "verbose";
 
 export type ViewReportCliOptions = CliOptions<CliOptionKey>;
+export type ViewReportCliVerboseOutputOptions = CliVerboseOutputOptions & {
+  readonly tocDepth?: number;
+};
+export type ViewReportCliCommand = ParsedCliCommand<
+  ViewReportRawInput,
+  ViewReportCliVerboseOutputOptions
+>;
 
 export type ViewReportCommandExecutor = {
   readonly runOperation: (
@@ -34,6 +48,16 @@ export type ViewReportCommandExecutor = {
 
 const parseIntegerOption = (value: string): number =>
   parseIntegerCliOption(value, viewReportCliCopy.invalidInteger);
+
+const parseTocDepthOption = (value: string): number => {
+  const parsed = parseIntegerOption(value);
+
+  if (parsed < 1) {
+    throw new InvalidArgumentError("1 이상의 정수를 입력해야 합니다.");
+  }
+
+  return parsed;
+};
 
 const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => [
   createRegisteredOption(
@@ -64,6 +88,16 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
       option.argParser((value) => parseIntegerOption(value));
     },
   ),
+  createVerboseOption(),
+  createRegisteredOption(
+    "tocDepth",
+    "--toc-depth <number>",
+    "목차를 지정한 깊이까지만 출력합니다. 섹션 본문 출력에서는 목차 포함도 함께 켭니다.",
+    (option) => {
+      option.argParser((value) => parseTocDepthOption(value));
+    },
+  ),
+  createPrettyOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -91,8 +125,27 @@ const renderSupplementalHelp = (): string => {
   return `\n${viewReportCliCopy.examplesHeading}:\n${examples}\n`;
 };
 
+const toViewReportCliCommand = (
+  options: ViewReportCliOptions,
+): ViewReportCliCommand => {
+  const output = {
+    ...createCliVerboseOutputOptions(options),
+    ...(typeof options.tocDepth === "number" ? { tocDepth: options.tocDepth } : {}),
+  };
+
+  return splitCliCommandOptions<
+    ViewReportRawInput,
+    CliOptionKey,
+    ViewReportCliVerboseOutputOptions
+  >(
+    options,
+    ["pretty", "verbose", "tocDepth"],
+    output,
+  );
+};
+
 const buildViewReportCommand = (
-  onRun?: (options: ViewReportCliOptions) => Promise<void>,
+  onRun?: (command: ViewReportCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
   const command = new Command(viewReportOperationName)
@@ -117,27 +170,87 @@ const buildViewReportCommand = (
         return undefined;
       }
 
-      return onRun(options);
+      return onRun(toViewReportCliCommand(options));
     });
   }
 
   return command;
 };
 
-const renderViewReportResult = (result: ViewReportResult): string =>
-  JSON.stringify(result, null, 2);
+type ViewReportTocNode = ViewReportResult["result"]["toc"][number];
+
+export type ViewReportCliResult = Omit<ViewReportResult, "result"> & {
+  readonly result: Omit<ViewReportResult["result"], "documents" | "toc"> & {
+    readonly documents?: ViewReportResult["result"]["documents"];
+    readonly toc?: ViewReportResult["result"]["toc"];
+  };
+};
+
+const limitTocDepth = (
+  nodes: readonly ViewReportTocNode[],
+  remainingDepth: number,
+): ViewReportTocNode[] => {
+  if (remainingDepth <= 0) {
+    return [];
+  }
+
+  return nodes.map((node) => ({
+    ...node,
+    children: limitTocDepth(node.children, remainingDepth - 1),
+  }));
+};
+
+export const toViewReportCliResult = (
+  result: ViewReportResult,
+  output: ViewReportCliVerboseOutputOptions,
+): ViewReportCliResult => {
+  const tocDepth = output.tocDepth;
+  const sectionRequested = result.result.request.sectionId !== undefined;
+  const includeLocator =
+    !sectionRequested || output.verbose || tocDepth !== undefined;
+  const resultPayload = {
+    ...result.result,
+    toc:
+      tocDepth === undefined
+        ? result.result.toc
+        : limitTocDepth(result.result.toc, tocDepth),
+  };
+  const cliResult: ViewReportCliResult = {
+    ...result,
+    result: resultPayload,
+  };
+
+  if (!includeLocator) {
+    const { documents, toc, ...sectionResult } = resultPayload;
+    return {
+      ...cliResult,
+      result: sectionResult,
+    };
+  }
+
+  return cliResult;
+};
+
+const renderViewReportResult = (
+  result: ViewReportResult,
+  output: ViewReportCliVerboseOutputOptions,
+): string => renderCliJson(toViewReportCliResult(result, output), output);
 
 export const executeViewReportCommand = (
-  options: ViewReportCliOptions,
+  command: ViewReportCliCommand,
   executor: ViewReportCommandExecutor,
 ): Promise<void> =>
   executor
-    .runOperation(options as Partial<ViewReportRawInput> & Record<string, unknown>)
-    .then((result) => executor.writeStdout(renderViewReportResult(result)));
+    .runOperation(command.request)
+    .then((result) =>
+      executor.writeStdout(renderViewReportResult(result, command.output)),
+    );
 
 export const viewReportUsage = `${buildViewReportCommand().helpInformation()}${renderSupplementalHelp()}`;
 
-export const parseViewReportCommandArgs = (argv: string[]): ViewReportCliOptions => {
+export const parseViewReportCommandArgs = (
+  argv: string[],
+): ViewReportCliCommand => {
   const command = buildViewReportCommand().exitOverride();
   const registeredOptions = buildRegisteredOptions();
 
@@ -147,12 +260,11 @@ export const parseViewReportCommandArgs = (argv: string[]): ViewReportCliOptions
   });
   command.parse(argv, { from: "user" });
 
-  return extractCliOptions(
-    command.opts<Record<string, unknown>>(),
-    registeredOptions,
+  return toViewReportCliCommand(
+    extractCliOptions(command.opts<Record<string, unknown>>(), registeredOptions),
   );
 };
 
 export const createViewReportCommandWithRunner = (
-  onRun: (options: ViewReportCliOptions) => Promise<void>,
+  onRun: (command: ViewReportCliCommand) => Promise<void>,
 ): Command => buildViewReportCommand(onRun);

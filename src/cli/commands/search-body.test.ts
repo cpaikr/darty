@@ -37,20 +37,26 @@ describe("parseSearchBodyCommandArgs", () => {
     ]);
 
     expect(options).toEqual({
-      keyword: "배당",
-      startDate: "20250331",
-      endDate: "20260331",
-      companyCode: "01368637",
-      presenterName: "IR",
-      page: 2,
-      sortBy: "reportName",
-      sortDirection: "asc",
-      reportName: "정기주주총회결과",
+      request: {
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        companyCode: "01368637",
+        presenterName: "IR",
+        page: 2,
+        sortBy: "reportName",
+        sortDirection: "asc",
+        reportName: "정기주주총회결과",
+      },
+      output: { pretty: false, verbose: false },
     });
   });
 
   test("parses transport syntax without enforcing required fields", () => {
-    expect(parseSearchBodyCommandArgs([])).toEqual({});
+    expect(parseSearchBodyCommandArgs([])).toEqual({
+      request: {},
+      output: { pretty: false, verbose: false },
+    });
   });
 
   test("rejects invalid integer options early", () => {
@@ -80,7 +86,10 @@ describe("parseSearchBodyCommandArgs", () => {
     expect(searchBodyUsage).toContain("--company-code <text>");
     expect(searchBodyUsage).toContain("--presenter-name <text>");
     expect(searchBodyUsage).toContain("--report-name <text>");
+    expect(searchBodyUsage).toContain("--pretty");
+    expect(searchBodyUsage).toContain("--verbose");
     expect(searchBodyUsage).toContain("명령 도움말을 표시합니다.");
+    expect(searchBodyUsage).not.toContain("--include-evidence");
     expect(searchBodyUsage).not.toContain("display help for command");
   });
 
@@ -129,7 +138,7 @@ describe("parseSearchBodyCommandArgs", () => {
         "20250331",
         "--end-date",
         "20260331",
-      ]) as Record<string, unknown>,
+      ]).request,
     );
 
     expect(request).toEqual({
@@ -175,12 +184,15 @@ describe("parseSearchBodyCommandArgs", () => {
     );
 
     expect(received).toEqual({
-      keyword: "배당",
-      startDate: "20250331",
-      endDate: "20260331",
-      companyCode: "01368637",
-      page: 2,
-      sortDirection: "asc",
+      request: {
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        companyCode: "01368637",
+        page: 2,
+        sortDirection: "asc",
+      },
+      output: { pretty: false, verbose: false },
     });
   });
 
@@ -202,8 +214,11 @@ describe("parseSearchBodyCommandArgs", () => {
     try {
       await executeSearchBodyCommand(
         {
-          startDate: "20250331",
-          endDate: "20260331",
+          request: {
+            startDate: "20250331",
+            endDate: "20260331",
+          },
+          output: { pretty: false, verbose: false },
         },
         {
           runOperation: (input) =>
@@ -231,7 +246,7 @@ describe("parseSearchBodyCommandArgs", () => {
     }
   });
 
-  test("prints a single JSON payload with the capability result", async () => {
+  test("prints a compact JSON payload with the capability result", async () => {
     const writes: string[] = [];
     let receivedInput:
       | Record<string, unknown>
@@ -256,7 +271,30 @@ describe("parseSearchBodyCommandArgs", () => {
           totalCount: 21,
           returnedCount: 10,
         },
-        items: [],
+        items: [
+          {
+            company: {
+              name: "삼성전자",
+              companyCode: "00126380",
+            },
+            filing: {
+              receiptNumber: "20260331004166",
+              reportTitle: "사업보고서",
+              receiptDate: "20260331",
+            },
+            match: {
+              snippetText: "배당 관련 내용",
+            },
+            references: {
+              viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+            },
+            evidence: {
+              reportNameRaw: "사업보고서",
+              rawInfoText: "[정기공시] 본문 제출인 : 삼성전자",
+              snippetHtml: "<span>배당</span> 관련 내용",
+            },
+          },
+        ],
       },
       metadata: {
         fetchedAt: "2026-03-31T00:00:00.000Z",
@@ -315,6 +353,98 @@ describe("parseSearchBodyCommandArgs", () => {
       endDate: "20260331",
       page: 2,
     });
-    expect(writes).toEqual([JSON.stringify(result, null, 2)]);
+    const payload = JSON.parse(writes[0]!) as {
+      result: { items: Array<Record<string, unknown>> };
+    };
+    expect(payload.result.items[0]!.evidence).toBeUndefined();
+  });
+
+  test("prints evidence fields in verbose output", async () => {
+    const writes: string[] = [];
+    const result = {
+      result: {
+        request: {
+          page: 1,
+          sortBy: "date",
+          sortDirection: "desc",
+          keyword: "배당",
+          startDate: "20250331",
+          endDate: "20260331",
+          companyCode: undefined,
+          presenterName: undefined,
+          reportName: undefined,
+        },
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: 1,
+          returnedCount: 1,
+        },
+        items: [
+          {
+            company: { name: "삼성전자" },
+            filing: {
+              receiptNumber: "20260331004166",
+              reportTitle: "사업보고서",
+              receiptDate: "20260331",
+            },
+            match: { snippetText: "배당 관련 내용" },
+            references: {
+              viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+            },
+            evidence: {
+              reportNameRaw: "사업보고서",
+              rawInfoText: "[정기공시] 본문 제출인 : 삼성전자",
+              snippetHtml: "<span>배당</span> 관련 내용",
+            },
+          },
+        ],
+      },
+      metadata: {
+        fetchedAt: "2026-03-31T00:00:00.000Z",
+        source: {
+          system: "dart",
+          surface: "dsab007",
+          endpoint: "https://dart.fss.or.kr/dsab007/search.ax",
+        },
+        sourceBehavior: {
+          effectivePageSize: 10,
+          effectivePagerWidth: 10,
+          callerControlsPageSize: false,
+          callerControlsPagerWidth: false,
+          observationStatus: "observed",
+        },
+        completeness: "complete",
+        droppedItemCount: 0,
+      },
+      references: { searchUrl: "https://dart.fss.or.kr/dsab007/search.ax" },
+      warnings: [],
+    } as const;
+
+    await executeSearchBodyCommand(
+      {
+        request: {
+          keyword: "배당",
+          startDate: "20250331",
+          endDate: "20260331",
+        },
+        output: { pretty: false, verbose: true },
+      },
+      {
+        runOperation: async (input) => {
+          expect(input).toEqual({
+            keyword: "배당",
+            startDate: "20250331",
+            endDate: "20260331",
+          });
+          return result;
+        },
+        writeStdout: (text) => {
+          writes.push(text);
+        },
+      },
+    );
+
+    expect(writes).toEqual([JSON.stringify(result)]);
   });
 });

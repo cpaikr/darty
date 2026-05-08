@@ -27,8 +27,8 @@ export const viewReportFieldCopy = {
   },
   maxBytes: {
     description:
-      "반환할 본문 최대 바이트 수. 기본값은 200000이며, 초과하면 잘라내고 warnings에 표시합니다.",
-    cliDescription: "[기본값: 200000] 반환할 본문 최대 바이트 수",
+      "반환할 본문 최대 바이트 수. 기본값은 50000이며, 초과하면 잘라내고 warnings에 표시합니다.",
+    cliDescription: "[기본값: 50000] 반환할 본문 최대 바이트 수",
   },
 } as const;
 

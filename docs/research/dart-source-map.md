@@ -324,7 +324,7 @@ Observed `회사별` UI controls:
 | `검색조건 선택=회사명` | `searchType=1` | implemented as fixed capability choice |
 | `검색어입력` | `textCrpNm` | implemented as required public `companyName` |
 | result page | `currentPage` | implemented as public `page`, default `1` |
-| result page size | `maxResults` | implemented as public `pageSize`, default/max `45` |
+| result page size | `maxResults` | implemented as public `pageSize`, default `15`, max `45` |
 | `유가`, `코스닥`, `코넥스`, `기타` | repeated `corpType=P/A/X/E`, `corpTypeAll=all` | implemented as fixed all-company search, not caller-configurable |
 | `사업자등록번호` | `searchType=2`, `bsnRgsNo` and split visible fields | observed, not implemented |
 | `법인등록번호` | `searchType=3`, `crpRgsNo` | observed, not implemented |

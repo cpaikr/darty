@@ -50,7 +50,7 @@ export const searchCompanyFieldSpecs = {
     kind: "integer",
     minimum: 1,
     maximum: 45,
-    defaultValue: 45,
+    defaultValue: 15,
     schema: Schema.Int.pipe(
       Schema.greaterThanOrEqualTo(1),
       Schema.lessThanOrEqualTo(45),

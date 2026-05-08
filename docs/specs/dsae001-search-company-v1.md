@@ -42,7 +42,7 @@ Implemented input mapping:
 | `검색조건 선택=회사명` | fixed capability choice | `searchType=1` | implemented; not caller-configurable |
 | `검색어입력` | `companyName` | `textCrpNm` | implemented and required |
 | result page | `page` | `currentPage` | implemented; default `1` |
-| result page size | `pageSize` | `maxResults` | implemented; default/max `45` |
+| result page size | `pageSize` | `maxResults` | implemented; default `15`, max `45` |
 | company-type checkboxes `유가`, `코스닥`, `코넥스`, `기타` | fixed all-company search | `corpType=P/A/X/E`, `corpTypeAll=all` | implemented as all selected; not caller-configurable |
 
 Implemented output mapping:
@@ -78,7 +78,7 @@ Inputs:
 
 - `companyName` (required): company-name query, minimum 2 characters
 - `page` (optional): 1-based page number, default `1`
-- `pageSize` (optional): number of rows to request, default `45`, maximum `45`
+- `pageSize` (optional): number of rows to request, default `15`, maximum `45`
 
 Output envelope:
 

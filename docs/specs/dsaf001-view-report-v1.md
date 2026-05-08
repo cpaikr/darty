@@ -24,7 +24,7 @@ Optional:
 - `documentId`: a returned `documents[].id`; defaults to the selected body document
 - `sectionId`: a returned `toc[].id`; used only to fetch one TOC section
 - `outputFormat`: `html` or `markdown`, default `markdown`
-- `maxBytes`: maximum returned content bytes, default `200000`
+- `maxBytes`: maximum returned content bytes, default `50000`
 
 ## Response Behavior
 
