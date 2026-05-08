@@ -11,6 +11,7 @@ import {
   type SearchCompanyResult,
 } from "../../capabilities/search-company/contract.ts";
 import { searchCompanyOperationName } from "../../capabilities/search-company/spec.ts";
+import { toSearchCompanyCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
   createCliVerboseOutputOptions,
@@ -147,38 +148,6 @@ const buildSearchCompanyCommand = (
   }
 
   return command;
-};
-
-export type SearchCompanyCompactCliItem = Omit<
-  SearchCompanyResult["result"]["items"][number],
-  "evidence"
->;
-
-export type SearchCompanyCompactCliResult = Omit<SearchCompanyResult, "result"> & {
-  readonly result: Omit<SearchCompanyResult["result"], "items"> & {
-    readonly items: readonly SearchCompanyCompactCliItem[];
-  };
-};
-
-export type SearchCompanyCliResult =
-  | SearchCompanyResult
-  | SearchCompanyCompactCliResult;
-
-export const toSearchCompanyCliResult = (
-  result: SearchCompanyResult,
-  output: CliVerboseOutputOptions,
-): SearchCompanyCliResult => {
-  if (output.verbose) {
-    return result;
-  }
-
-  return {
-    ...result,
-    result: {
-      ...result.result,
-      items: result.result.items.map(({ evidence: _evidence, ...item }) => item),
-    },
-  };
 };
 
 const renderSearchCompanyResult = (

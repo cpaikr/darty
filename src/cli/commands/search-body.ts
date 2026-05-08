@@ -11,6 +11,7 @@ import {
   type SearchBodyResult,
 } from "../../capabilities/search-body/contract.ts";
 import { searchBodyOperationName } from "../../capabilities/search-body/spec.ts";
+import { toSearchBodyCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
   createCliVerboseOutputOptions,
@@ -179,36 +180,6 @@ const buildSearchBodyCommand = (
   }
 
   return command;
-};
-
-export type SearchBodyCompactCliItem = Omit<
-  SearchBodyResult["result"]["items"][number],
-  "evidence"
->;
-
-export type SearchBodyCompactCliResult = Omit<SearchBodyResult, "result"> & {
-  readonly result: Omit<SearchBodyResult["result"], "items"> & {
-    readonly items: readonly SearchBodyCompactCliItem[];
-  };
-};
-
-export type SearchBodyCliResult = SearchBodyResult | SearchBodyCompactCliResult;
-
-export const toSearchBodyCliResult = (
-  result: SearchBodyResult,
-  output: CliVerboseOutputOptions,
-): SearchBodyCliResult => {
-  if (output.verbose) {
-    return result;
-  }
-
-  return {
-    ...result,
-    result: {
-      ...result.result,
-      items: result.result.items.map(({ evidence: _evidence, ...item }) => item),
-    },
-  };
 };
 
 const renderSearchBodyResult = (

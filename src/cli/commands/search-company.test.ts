@@ -22,6 +22,7 @@ describe("parseSearchCompanyCommandArgs", () => {
       "2",
       "--page-size",
       "20",
+      "--verbose",
     ]);
 
     expect(options).toEqual({
@@ -30,7 +31,7 @@ describe("parseSearchCompanyCommandArgs", () => {
         page: 2,
         pageSize: 20,
       },
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: true },
     });
   });
 
@@ -150,7 +151,7 @@ describe("parseSearchCompanyCommandArgs", () => {
     }
   });
 
-  test("prints a compact JSON payload without evidence by default", async () => {
+  test("prints a compact JSON payload with the capability result", async () => {
     const writes: string[] = [];
     let receivedInput: Record<string, unknown> | undefined;
 
@@ -225,97 +226,7 @@ describe("parseSearchCompanyCommandArgs", () => {
     );
 
     expect(receivedInput).toEqual({ companyName: "삼성전자" });
-    expect(writes).toEqual([
-      JSON.stringify({
-        ...result,
-        result: {
-          ...result.result,
-          items: [
-            {
-              companyCode: "00126380",
-              companyName: "삼성전자",
-              stockCode: "005930",
-              marketKind: "kospi",
-              marketLabel: "유가증권시장",
-              references: {
-                detailEndpoint:
-                  "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00126380",
-              },
-            },
-          ],
-        },
-      }),
-    ]);
-  });
-
-  test("prints full evidence fields in verbose output", async () => {
-    const writes: string[] = [];
-    const result = {
-      result: {
-        request: {
-          page: 1,
-          pageSize: 15,
-          companyName: "삼성전자",
-        },
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalCount: 1,
-          returnedCount: 1,
-        },
-        items: [
-          {
-            companyCode: "00126380",
-            companyName: "삼성전자",
-            marketKind: "kospi",
-            references: {
-              detailEndpoint:
-                "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00126380",
-            },
-            evidence: {
-              rawCompanyLinkHref: "javascript:select('00126380');",
-            },
-          },
-        ],
-      },
-      metadata: {
-        fetchedAt: "2026-05-07T00:00:00.000Z",
-        source: {
-          system: "dart",
-          surface: "dsae001",
-          endpoint: "https://dart.fss.or.kr/dsae001/search.ax",
-        },
-        sourceBehavior: {
-          searchMode: "company",
-          callerControlsPageSize: true,
-          maxObservedPageSize: 45,
-          observationStatus: "observed",
-        },
-        completeness: "complete",
-        droppedItemCount: 0,
-      },
-      references: {
-        searchUrl: "https://dart.fss.or.kr/dsae001/search.ax",
-      },
-      warnings: [],
-    } as const;
-
-    await executeSearchCompanyCommand(
-      {
-        request: { companyName: "삼성전자" },
-        output: { pretty: false, verbose: true },
-      },
-      {
-        runOperation: async (input) => {
-          expect(input).toEqual({ companyName: "삼성전자" });
-          return result;
-        },
-        writeStdout: (text) => {
-          writes.push(text);
-        },
-      },
-    );
-
-    expect(writes).toEqual([JSON.stringify(result)]);
+    expect(writes).toHaveLength(1);
+    expect(JSON.parse(writes[0]!).result.request).toEqual(result.result.request);
   });
 });

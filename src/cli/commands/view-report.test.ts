@@ -196,7 +196,7 @@ describe("parseViewReportCommandArgs", () => {
     expect(writes).toEqual([JSON.stringify(result, undefined, 2)]);
   });
 
-  test("omits full documents and toc from section body output by default", async () => {
+  test("prints a section JSON payload with the capability result", async () => {
     const writes: string[] = [];
     const sectionResult = {
       ...result,
@@ -246,121 +246,9 @@ describe("parseViewReportCommandArgs", () => {
       },
     );
 
-    const payload = JSON.parse(writes[0]!) as { result: Record<string, unknown> };
-    expect(payload.result.documents).toBeUndefined();
-    expect(payload.result.toc).toBeUndefined();
-    expect(payload.result.document).toBeDefined();
-    expect(payload.result.content).toBeDefined();
-  });
-
-  test("includes section locator fields in verbose output", async () => {
-    const writes: string[] = [];
-    const sectionResult = {
-      ...result,
-      result: {
-        ...result.result,
-        request: {
-          ...result.result.request,
-          sectionId: "section:1",
-        },
-        toc: [
-          {
-            id: "section:1",
-            title: "I. 회사의 개요",
-            children: [],
-          },
-        ],
-        content: {
-          scope: "section" as const,
-          format: "html" as const,
-          sizeBytes: 100,
-          returnedBytes: 100,
-          truncated: false,
-          body: "본문",
-        },
-      },
-    } as const;
-
-    await executeViewReportCommand(
-      {
-        request: {
-          receipt: "20260331004166",
-          sectionId: "section:1",
-        },
-        output: { pretty: false, verbose: true },
-      },
-      {
-        runOperation: async (input) => {
-          expect(input).toEqual({
-            receipt: "20260331004166",
-            sectionId: "section:1",
-          });
-          return sectionResult;
-        },
-        writeStdout: (text) => {
-          writes.push(text);
-        },
-      },
+    expect(writes).toHaveLength(1);
+    expect(JSON.parse(writes[0]!).result.request).toEqual(
+      sectionResult.result.request,
     );
-
-    expect(writes).toEqual([JSON.stringify(sectionResult)]);
-  });
-
-  test("limits included TOC depth", async () => {
-    const writes: string[] = [];
-    const sectionResult = {
-      ...result,
-      result: {
-        ...result.result,
-        request: {
-          ...result.result.request,
-          sectionId: "section:1",
-        },
-        toc: [
-          {
-            id: "section:1",
-            title: "I. 회사의 개요",
-            children: [
-              {
-                id: "section:1.1",
-                title: "1. 회사의 개요",
-                children: [
-                  {
-                    id: "section:1.1.1",
-                    title: "가. 개요",
-                    children: [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    } as const;
-
-    await executeViewReportCommand(
-      {
-        request: {
-          receipt: "20260331004166",
-          sectionId: "section:1",
-        },
-        output: { pretty: false, verbose: false, tocDepth: 2 },
-      },
-      {
-        runOperation: async () => sectionResult,
-        writeStdout: (text) => {
-          writes.push(text);
-        },
-      },
-    );
-
-    const payload = JSON.parse(writes[0]!) as {
-      result: {
-        documents?: unknown;
-        toc?: Array<{ children: Array<{ children: unknown[] }> }>;
-      };
-    };
-    expect(payload.result.documents).toBeDefined();
-    expect(payload.result.toc?.[0]?.children[0]?.children).toEqual([]);
   });
 });

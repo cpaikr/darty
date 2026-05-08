@@ -11,6 +11,7 @@ import {
   type SearchCompanyReportsResult,
 } from "../../capabilities/search-company-reports/contract.ts";
 import { searchCompanyReportsOperationName } from "../../capabilities/search-company-reports/spec.ts";
+import { toSearchCompanyReportsCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
   createCliVerboseOutputOptions,
@@ -169,41 +170,6 @@ const buildSearchCompanyReportsCommand = (
   }
 
   return command;
-};
-
-export type SearchCompanyReportsCompactCliItem = Omit<
-  SearchCompanyReportsResult["result"]["items"][number],
-  "evidence"
->;
-
-export type SearchCompanyReportsCompactCliResult = Omit<
-  SearchCompanyReportsResult,
-  "result"
-> & {
-  readonly result: Omit<SearchCompanyReportsResult["result"], "items"> & {
-    readonly items: readonly SearchCompanyReportsCompactCliItem[];
-  };
-};
-
-export type SearchCompanyReportsCliResult =
-  | SearchCompanyReportsResult
-  | SearchCompanyReportsCompactCliResult;
-
-export const toSearchCompanyReportsCliResult = (
-  result: SearchCompanyReportsResult,
-  output: CliVerboseOutputOptions,
-): SearchCompanyReportsCliResult => {
-  if (output.verbose) {
-    return result;
-  }
-
-  return {
-    ...result,
-    result: {
-      ...result.result,
-      items: result.result.items.map(({ evidence: _evidence, ...item }) => item),
-    },
-  };
 };
 
 const renderSearchCompanyReportsResult = (

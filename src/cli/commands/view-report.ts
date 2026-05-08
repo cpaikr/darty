@@ -12,6 +12,10 @@ import {
 } from "../../capabilities/view-report/contract.ts";
 import { viewReportOperationName } from "../../capabilities/view-report/spec.ts";
 import {
+  toViewReportCliResult,
+  type ViewReportCliVerboseOutputOptions,
+} from "../presentation/view-report.ts";
+import {
   buildCliNameByOptionKey,
   createCliVerboseOutputOptions,
   createPrettyOption,
@@ -23,7 +27,6 @@ import {
   renderInvalidRequestCliErrorMessage,
   splitCliCommandOptions,
   type CliOptions,
-  type CliVerboseOutputOptions,
   type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
@@ -31,9 +34,6 @@ import {
 type CliOptionKey = keyof ViewReportRawInput | "pretty" | "tocDepth" | "verbose";
 
 export type ViewReportCliOptions = CliOptions<CliOptionKey>;
-export type ViewReportCliVerboseOutputOptions = CliVerboseOutputOptions & {
-  readonly tocDepth?: number;
-};
 export type ViewReportCliCommand = ParsedCliCommand<
   ViewReportRawInput,
   ViewReportCliVerboseOutputOptions
@@ -175,60 +175,6 @@ const buildViewReportCommand = (
   }
 
   return command;
-};
-
-type ViewReportTocNode = ViewReportResult["result"]["toc"][number];
-
-export type ViewReportCliResult = Omit<ViewReportResult, "result"> & {
-  readonly result: Omit<ViewReportResult["result"], "documents" | "toc"> & {
-    readonly documents?: ViewReportResult["result"]["documents"];
-    readonly toc?: ViewReportResult["result"]["toc"];
-  };
-};
-
-const limitTocDepth = (
-  nodes: readonly ViewReportTocNode[],
-  remainingDepth: number,
-): ViewReportTocNode[] => {
-  if (remainingDepth <= 0) {
-    return [];
-  }
-
-  return nodes.map((node) => ({
-    ...node,
-    children: limitTocDepth(node.children, remainingDepth - 1),
-  }));
-};
-
-export const toViewReportCliResult = (
-  result: ViewReportResult,
-  output: ViewReportCliVerboseOutputOptions,
-): ViewReportCliResult => {
-  const tocDepth = output.tocDepth;
-  const sectionRequested = result.result.request.sectionId !== undefined;
-  const includeLocator =
-    !sectionRequested || output.verbose || tocDepth !== undefined;
-  const resultPayload = {
-    ...result.result,
-    toc:
-      tocDepth === undefined
-        ? result.result.toc
-        : limitTocDepth(result.result.toc, tocDepth),
-  };
-  const cliResult: ViewReportCliResult = {
-    ...result,
-    result: resultPayload,
-  };
-
-  if (!includeLocator) {
-    const { documents, toc, ...sectionResult } = resultPayload;
-    return {
-      ...cliResult,
-      result: sectionResult,
-    };
-  }
-
-  return cliResult;
 };
 
 const renderViewReportResult = (

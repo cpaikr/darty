@@ -29,6 +29,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
       "--sort-direction",
       "asc",
       "--include-all-reports",
+      "--verbose",
     ]);
 
     expect(options).toEqual({
@@ -41,7 +42,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         sortDirection: "asc",
         includeAllReports: true,
       },
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: true },
     });
   });
 
@@ -224,7 +225,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     );
   });
 
-  test("omits evidence by default and includes it in verbose output", async () => {
+  test("prints a compact JSON payload with the capability result", async () => {
     const result = {
       result: {
         request: {
@@ -284,8 +285,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
       },
       warnings: [],
     } as const;
-    const compactWrites: string[] = [];
-    const verboseWrites: string[] = [];
+    const writes: string[] = [];
 
     await executeSearchCompanyReportsCommand(
       {
@@ -297,20 +297,6 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         output: { pretty: false, verbose: false },
       },
       {
-        runOperation: async () => result,
-        writeStdout: (text) => compactWrites.push(text),
-      },
-    );
-    await executeSearchCompanyReportsCommand(
-      {
-        request: {
-          companyCode: "00190321",
-          startDate: "20250507",
-          endDate: "20260507",
-        },
-        output: { pretty: false, verbose: true },
-      },
-      {
         runOperation: async (input) => {
           expect(input).toEqual({
             companyCode: "00190321",
@@ -319,15 +305,12 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
           });
           return result;
         },
-        writeStdout: (text) => verboseWrites.push(text),
+        writeStdout: (text) => writes.push(text),
       },
     );
 
-    const compactPayload = JSON.parse(compactWrites[0]!) as {
-      result: { items: Array<Record<string, unknown>> };
-    };
-    expect(compactPayload.result.items[0]!.evidence).toBeUndefined();
-    expect(verboseWrites).toEqual([JSON.stringify(result)]);
+    expect(writes).toHaveLength(1);
+    expect(JSON.parse(writes[0]!).result.request).toEqual(result.result.request);
   });
 
   test("rejects invalid capability input before execution", async () => {
