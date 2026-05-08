@@ -73,6 +73,7 @@ describe("CLI entrypoints", () => {
     expect(stdout).toContain("company-rss [options]");
     expect(stdout).toContain("search-body [options]");
     expect(stdout).toContain("search-company [options]");
+    expect(stdout).toContain("search-company-reports [options]");
     expect(stdout).toContain("view-report [options]");
     expect(stdout).not.toContain("contents-search [options]");
     expect(stdout).not.toContain("report-view [options]");
@@ -109,6 +110,22 @@ describe("CLI entrypoints", () => {
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage: darty search-company [options]");
     expect(stdout).toContain("--company-name <text>");
+  });
+
+  test("bundled CLI accepts the documented search-company-reports command", () => {
+    const result = runEntrypoint(builtEntrypoint, [
+      "search-company-reports",
+      "--help",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage: darty search-company-reports [options]");
+    expect(stdout).toContain("--company-code <text>");
+    expect(stdout).toContain("--include-all-reports");
+    expect(stdout).not.toContain("--sort-by");
   });
 
   test("bundled CLI accepts the documented view-report command", () => {

@@ -2,7 +2,7 @@
 
 한국 DART 공시를 검색하고 조회하는 Bun CLI입니다.
 
-`darty`는 DART 검색/조회 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `search-body`로 DART 공시 본문내용 검색을, `search-company`로 DART 기업개황 회사별 검색을, `company-detail`로 기업개황 상세 조회를, `company-rss`로 회사별 공시 RSS 조회를, `view-report`로 접수번호 기반 보고서 목차/섹션 조회를 지원합니다.
+`darty`는 DART 검색/조회 화면을 읽기 전용 구조화 데이터로 사용할 수 있게 합니다. 현재 공개 버전은 `search-body`로 DART 공시 본문내용 검색을, `search-company`로 DART 기업개황 회사별 검색을, `search-company-reports`로 회사 코드 기반 공시 목록 검색을, `company-detail`로 기업개황 상세 조회를, `company-rss`로 회사별 공시 RSS 조회를, `view-report`로 접수번호 기반 보고서 목차/섹션 조회를 지원합니다.
 
 ## 필요 사항
 
@@ -79,6 +79,30 @@ darty search-company --company-name <회사명>
 darty search-company --company-name 삼성전자
 ```
 
+### `search-company-reports`
+
+DART 8자리 회사 코드로 공시통합검색의 회사별 공시 목록을 조회합니다. 회사명을 알고 회사 코드를 모르면 먼저 `search-company`로 `companyCode`를 확인하세요.
+
+```bash
+darty search-company-reports --company-code <8자리 DART 회사 코드> --start-date <YYYYMMDD> --end-date <YYYYMMDD>
+```
+
+선택 옵션:
+
+- `--page <숫자>`: 검색 결과 페이지, 기본값 `1`
+- `--page-size <15|30|50|100>`: 한 페이지에 요청할 공시 수, 기본값 `15`
+- `--sort-direction <asc|desc>`: 접수일자 정렬 방향, 기본값 `desc`
+- `--include-all-reports`: 기본 최종보고서 필터를 해제하고 정정 전 보고서까지 포함합니다.
+
+예시:
+
+```bash
+darty search-company-reports \
+  --company-code 00190321 \
+  --start-date 20250507 \
+  --end-date 20260507
+```
+
 ### `search-body`
 
 DART 공시 본문내용을 검색합니다.
@@ -144,7 +168,8 @@ darty view-report --receipt 20260331004166 --section-id section:5.6
 
 - 이 도구는 읽기 전용입니다.
 - 현재 `search-company`는 DART `기업개황` 화면의 `회사별` 회사명 검색만 구현합니다. `업종별`, 사업자등록번호, 법인등록번호 검색은 구현하지 않았습니다.
-- 현재 `search-body`는 DART `공시통합검색` 화면의 `본문내용` 검색 모드만 구현합니다. 회사명, 보고서명, 목차명, 고급검색 전체를 구현한 것은 아닙니다.
+- 현재 `search-company-reports`는 DART `공시통합검색` 화면의 `회사명` 모드를 8자리 회사 코드로 실행합니다. 회사명 입력/팝업 선택, 다중 회사 선택, 고급 필터는 구현하지 않았습니다.
+- 현재 `search-body`는 DART `공시통합검색` 화면의 `본문내용` 검색 모드만 구현합니다. 보고서명, 목차명, 고급검색 전체를 구현한 것은 아닙니다.
 - `view-report`는 DART `dsaf001` viewer shell과 `/report/viewer.do` 본문 iframe 동작에 기반합니다.
 - 공개 DART 웹 동작을 사용하므로 DART 변경의 영향을 받을 수 있습니다.
 - 현재 공개 CLI는 의미 기반 옵션만 노출하며, 내부 DART 재현 필드는 CLI 계약에 포함하지 않습니다.

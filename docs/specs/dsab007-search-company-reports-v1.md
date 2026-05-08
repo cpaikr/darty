@@ -62,9 +62,9 @@ Target input mapping:
 | `검색종료일` | `endDate` | `endDate` | target and required |
 | result page | `page` | `currentPage` | target; default `1` |
 | page-size dropdown `15/30/50/100` | `pageSize` | `maxResults` | target; default `15` |
-| result sort `접수일자` | `sortBy=date` | `sort=date` | target; default; replay-observed |
+| result sort `접수일자` | fixed internal default | `sort=date` | target; replay-observed; not caller-configurable in v1 |
 | sort direction | `sortDirection=asc\|desc` | `series=asc\|desc` | target; default `desc` |
-| `최종보고서` | `finalReportOnly` | `finalReport=recent` when true | target; default `true` |
+| `최종보고서` filter opt-out | `includeAllReports` | omit/blank `finalReport` when true; otherwise `finalReport=recent` | target; default `false` |
 
 Observed but not included in the first public contract:
 
@@ -116,9 +116,8 @@ Inputs:
 | `endDate` | yes | `YYYYMMDD` | DART search end date; window must stay within DART's accepted range |
 | `page` | no | integer `>= 1` | default `1` |
 | `pageSize` | no | `15`, `30`, `50`, or `100` | default `15` |
-| `sortBy` | no | `date` | default `date`; other UI sort fields are deferred until replay-verified |
-| `sortDirection` | no | `asc`, `desc` | default `desc` |
-| `finalReportOnly` | no | boolean | default `true` |
+| `sortDirection` | no | `asc`, `desc` | default `desc`; sort field is fixed internally to receipt date |
+| `includeAllReports` | no | boolean | default `false`; exposed in the CLI as `--include-all-reports` |
 
 Output envelope:
 
@@ -211,8 +210,9 @@ Observed filing replay fields after selecting `유 케이티`:
 Observed sort behavior:
 
 - `sort=date` and `series=desc` were replay-observed for the selected `케이티` search.
+- The public v1 contract keeps `sort=date` internal and exposes only `sortDirection`.
 - The UI exposes sort anchors for `접수일자`, `회사명`, and `보고서명`; their anchor IDs suggest `date`, `crp`, and `rpt`.
-- `crp` and `rpt` should stay out of the public contract until direct replay proves they are honored.
+- `crp` and `rpt` should stay out of the public contract until direct replay proves they are honored and the product chooses to expose a sort-field option.
 
 Observed code-first replay variation:
 

@@ -6,6 +6,7 @@ import { defaultCompanyDetailOperation } from "./app/company-detail.ts";
 import { defaultCompanyRssOperation } from "./app/company-rss.ts";
 import { defaultSearchBodyOperation } from "./app/search-body.ts";
 import { defaultSearchCompanyOperation } from "./app/search-company.ts";
+import { defaultSearchCompanyReportsOperation } from "./app/search-company-reports.ts";
 import { defaultViewReportOperation } from "./app/view-report.ts";
 import {
   createCompanyDetailCommandWithRunner,
@@ -27,6 +28,11 @@ import {
   executeSearchCompanyCommand,
   renderSearchCompanyCliErrorMessage,
 } from "./cli/commands/search-company.ts";
+import {
+  createSearchCompanyReportsCommandWithRunner,
+  executeSearchCompanyReportsCommand,
+  renderSearchCompanyReportsCliErrorMessage,
+} from "./cli/commands/search-company-reports.ts";
 import {
   createViewReportCommandWithRunner,
   executeViewReportCommand,
@@ -58,6 +64,12 @@ const defaultSearchBodyExecutor = {
 const defaultSearchCompanyExecutor = {
   runOperation: (input: Record<string, unknown>) =>
     defaultSearchCompanyOperation.execute(input),
+  writeStdout,
+};
+
+const defaultSearchCompanyReportsExecutor = {
+  runOperation: (input: Record<string, unknown>) =>
+    defaultSearchCompanyReportsOperation.execute(input),
   writeStdout,
 };
 
@@ -93,6 +105,14 @@ const program = new Command()
     ),
   )
   .addCommand(
+    createSearchCompanyReportsCommandWithRunner((options) =>
+      executeSearchCompanyReportsCommand(
+        options,
+        defaultSearchCompanyReportsExecutor,
+      ),
+    ),
+  )
+  .addCommand(
     createViewReportCommandWithRunner((options) =>
       executeViewReportCommand(options, defaultViewReportExecutor),
     ),
@@ -107,6 +127,7 @@ if (process.argv.length <= 2) {
       renderCompanyRssCliErrorMessage(error) ??
       renderSearchBodyCliErrorMessage(error) ??
       renderSearchCompanyCliErrorMessage(error) ??
+      renderSearchCompanyReportsCliErrorMessage(error) ??
       renderViewReportCliErrorMessage(error);
 
     if (cliMessage !== undefined) {

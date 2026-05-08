@@ -1,6 +1,6 @@
 import { InvalidArgumentError, Option } from "commander";
 
-export type CliOptionValue = number | string;
+export type CliOptionValue = boolean | number | string;
 
 export type RegisteredOption<Key extends string> = {
   readonly key: Key;

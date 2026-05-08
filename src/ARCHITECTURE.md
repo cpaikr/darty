@@ -7,10 +7,10 @@ shape and document ownership.
 ## Purpose
 
 `src/` contains the executable slice of `darty`: public `search-body`,
-`search-company`, `company-detail`, `company-rss`, and `view-report`
-capabilities, a local CLI transport, and internal DART source adapters for
-`dsab007` search, `dsae001` company overview search/detail, DART company RSS,
-and `dsaf001` report viewing.
+`search-company`, `search-company-reports`, `company-detail`, `company-rss`,
+and `view-report` capabilities, a local CLI transport, and internal DART source
+adapters for `dsab007` search, `dsae001` company overview search/detail, DART
+company RSS, and `dsaf001` report viewing.
 
 The design goal is to keep the core reusable across transports. The active
 transport is CLI, but future MCP, Pi-native, SDK, or other adapters should bind
@@ -66,9 +66,9 @@ graph TD
 ## Component Map
 
 The diagram shows the established `search-body` path. `search-company`,
-`company-detail`, `company-rss`, and `view-report` use the same
-transport/app/capability shape through their matching `app/`, `capabilities/`,
-`cli/commands/`, and `sources/dart/` modules.
+`search-company-reports`, `company-detail`, `company-rss`, and `view-report` use
+the same transport/app/capability shape through their matching `app/`,
+`capabilities/`, `cli/commands/`, and `sources/dart/` modules.
 
 ```mermaid
 graph TD
@@ -129,9 +129,10 @@ graph TD
   execution logic.
 - **`src/sources/dart/`** — Internal DART adapters. Owns replay/viewer schemas,
   request construction, HTML parsing/sanitization, source models, and error mapping.
-  `dsab007/contents` powers body-content search; `dsae001/company` powers
-  company-name search; `dsae001/detail` powers company detail lookup;
-  `api/company-rss` powers company RSS; `dsaf001/report` resolves receipt
+  `dsab007/contents` powers body-content search; `dsab007/company-reports`
+  powers company-code filing search; `dsae001/company` powers company-name
+  search; `dsae001/detail` powers company detail lookup; `api/company-rss` powers
+  company RSS; `dsaf001/report` resolves receipt
   viewer shells, document selectors, TOCs, content planning, navigation,
   sanitized HTML, and best-effort Markdown.
 

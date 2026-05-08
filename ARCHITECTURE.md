@@ -13,11 +13,11 @@ and shapes results. The current active transport is CLI, but the core stays
 transport-neutral so future MCP, Pi-native, SDK, or other adapters can bind to
 the same capabilities without duplicating DART logic.
 
-The current core has five public capabilities: `search-body` for DART body
+The current core has six public capabilities: `search-body` for DART body
 search, `search-company` for DART company overview company-name search,
-`company-detail` for company overview detail lookup, `company-rss` for
-company-specific RSS, and `view-report` for receipt-based report TOC/section
-retrieval.
+`search-company-reports` for company-code based filing search, `company-detail`
+for company overview detail lookup, `company-rss` for company-specific RSS, and
+`view-report` for receipt-based report TOC/section retrieval.
 
 For layer diagrams, the schema derivation chain, the runtime pipeline, and the
 adapter extension seam, see [src/ARCHITECTURE.md](src/ARCHITECTURE.md).
@@ -95,6 +95,12 @@ argv -> src/cli.ts -> cli/commands/search-company.ts
      -> app/search-company.ts -> capabilities/search-company/execute.ts
      -> sources/dart/dsae001/company/search.ts
      -> /dsae001/search.ax
+
+argv -> src/cli.ts -> cli/commands/search-company-reports.ts
+     -> executeSearchCompanyReportsCommand()
+     -> app/search-company-reports.ts -> capabilities/search-company-reports/execute.ts
+     -> sources/dart/dsab007/company-reports/search.ts
+     -> /dsab007/detailSearch.ax
 
 argv -> src/cli.ts -> cli/commands/company-detail.ts
      -> executeCompanyDetailCommand()
