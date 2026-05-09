@@ -24,7 +24,8 @@ Optional:
 - `documentId`: a returned `documents[].id`; defaults to the selected body document
 - `sectionId`: a returned `toc[].id`; used only to fetch one TOC section. Section IDs are assigned per report, so callers must not reuse them across years, amendments, or receipt numbers.
 - `outputFormat`: `html` or `markdown`, default `markdown`
-- `maxBytes`: maximum returned content bytes, default `50000`. Raising this value can substantially increase CLI output and agent context use for long sections.
+- `maxBytes`: maximum returned content-window bytes, default `50000`. Raising this value can substantially increase CLI output and agent context use for long sections.
+- `contentStartByte`: UTF-8 byte offset into the rendered `content.body` format, default `0`. This is not DART's raw viewer `offset`; use `content.window.nextStartByte` to continue reading.
 
 ## Response Behavior
 
@@ -34,6 +35,12 @@ Optional:
   along with parent/previous/next/children navigation when available. Long
   sections can produce large outputs; callers should fetch the TOC first, request
   only needed sections, and keep `maxBytes` as low as practical.
+- Returned content includes `content.window` with `unit: "utf8-bytes"`,
+  `startByte`, exclusive `endByte`, `hasMore`, and optional `nextStartByte`.
+  The window is over the rendered output (`markdown` or sanitized `html`), not
+  the DART viewer source. If a caller gives a byte offset inside a multibyte
+  character, the implementation advances to the next valid UTF-8 boundary and
+  reports the actual `window.startByte`.
 - `markdown` output is best-effort. Common headings, paragraphs, emphasis,
   links, code blocks, and lists are converted; complex or unknown structures may
   be simplified. Tables are preserved as sanitized HTML inside the Markdown so
@@ -41,7 +48,7 @@ Optional:
   pipe tables.
 - Documents with no DART TOC return the selected document content by default when
   `sectionId` is omitted and add a `no_toc_returned_document` warning.
-- Oversized `content.body` is truncated and adds a `content_truncated` warning.
+- Windowed `content.body` responses add a `content_truncated` warning only when `content.window.hasMore` is true. Final continuation windows can still have `truncated: true` because they are not the full rendered content, but they do not warn.
 - `metadata.source.endpoints.shell` records the viewer shell endpoint. When
   content is returned, `metadata.source.endpoints.content` records the iframe
   content endpoint without exposing raw DART viewer params.

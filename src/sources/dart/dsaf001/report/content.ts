@@ -7,57 +7,10 @@ import type {
   SourceReportLocator,
   SourceReportSection,
 } from "./source-model.ts";
+import { windowUtf8 } from "../../../../capabilities/view-report/content-window.ts";
 import { convertReportHtmlToMarkdown } from "./markdown.ts";
 import { sanitizeReportHtml } from "./sanitize-html.ts";
 import type { Dsaf001ReportSource } from "./source.ts";
-
-const textEncoder = new TextEncoder();
-
-const truncateUtf8 = (
-  value: string,
-  maxBytes: number,
-): {
-  readonly value: string;
-  readonly sizeBytes: number;
-  readonly returnedBytes: number;
-  readonly truncated: boolean;
-} => {
-  const encoded = textEncoder.encode(value);
-
-  if (encoded.byteLength <= maxBytes) {
-    return {
-      value,
-      sizeBytes: encoded.byteLength,
-      returnedBytes: encoded.byteLength,
-      truncated: false,
-    };
-  }
-
-  const characters = Array.from(value);
-  let low = 0;
-  let high = characters.length;
-
-  while (low < high) {
-    const mid = Math.ceil((low + high) / 2);
-    const candidate = characters.slice(0, mid).join("");
-
-    if (textEncoder.encode(candidate).byteLength <= maxBytes) {
-      low = mid;
-    } else {
-      high = mid - 1;
-    }
-  }
-
-  const truncated = characters.slice(0, low).join("");
-  const returnedBytes = textEncoder.encode(truncated).byteLength;
-
-  return {
-    value: truncated,
-    sizeBytes: encoded.byteLength,
-    returnedBytes,
-    truncated: true,
-  };
-};
 
 export const buildReportContent = async (input: {
   readonly source: Dsaf001ReportSource;
@@ -65,6 +18,7 @@ export const buildReportContent = async (input: {
   readonly scope: "document" | "section";
   readonly outputFormat: ViewReportOutputFormat;
   readonly maxBytes: number;
+  readonly contentStartByte: number;
   readonly section?: SourceReportSection;
 }): Promise<{
   readonly content: ViewReportContent;
@@ -75,12 +29,16 @@ export const buildReportContent = async (input: {
     input.outputFormat === "markdown"
       ? convertReportHtmlToMarkdown(sourceContent.html)
       : sanitizeReportHtml(sourceContent.html);
-  const truncated = truncateUtf8(value, input.maxBytes);
+  const truncated = windowUtf8(
+    value,
+    input.contentStartByte,
+    input.maxBytes,
+  );
   const formatLabel = input.outputFormat === "markdown" ? "Markdown" : "HTML";
-  const warning = truncated.truncated
+  const warning = truncated.window.hasMore
     ? {
         code: "content_truncated" as const,
-        message: `${formatLabel} content was truncated from ${truncated.sizeBytes} bytes to ${truncated.returnedBytes} bytes.`,
+        message: `${formatLabel} content window returned UTF-8 bytes [${truncated.window.startByte}, ${truncated.window.endByte}) of ${truncated.sizeBytes}.`,
       }
     : undefined;
   const content: ViewReportContent = {
@@ -90,6 +48,7 @@ export const buildReportContent = async (input: {
     sizeBytes: truncated.sizeBytes,
     returnedBytes: truncated.returnedBytes,
     truncated: truncated.truncated,
+    window: truncated.window,
     ...(input.section === undefined
       ? {}
       : {

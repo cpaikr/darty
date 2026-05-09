@@ -45,6 +45,10 @@ const ViewReportMaxBytesSchema = Schema.Int.pipe(
   Schema.lessThanOrEqualTo(1_000_000),
 );
 
+const ViewReportContentStartByteSchema = Schema.Int.pipe(
+  Schema.greaterThanOrEqualTo(0),
+);
+
 const viewReportRequestFields = {
   receipt: nonEmptyField(viewReportFieldCopy.receipt.description),
   documentId: Schema.optional(
@@ -62,6 +66,11 @@ const viewReportRequestFields = {
     schema: ViewReportMaxBytesSchema,
     description: viewReportFieldCopy.maxBytes.description,
     defaultValue: 50_000,
+  }),
+  contentStartByte: defaultedField({
+    schema: ViewReportContentStartByteSchema,
+    description: viewReportFieldCopy.contentStartByte.description,
+    defaultValue: 0,
   }),
 } as const;
 
@@ -108,6 +117,7 @@ const fieldExpected: Record<string, string> = {
   sectionId: viewReportValidationCopy.expectedNonEmptyString,
   outputFormat: viewReportValidationCopy.expectedOutputFormat,
   maxBytes: viewReportValidationCopy.expectedMaxBytes,
+  contentStartByte: viewReportValidationCopy.expectedContentStartByte,
 };
 
 const collectIssuePath = (

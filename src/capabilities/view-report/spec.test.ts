@@ -9,6 +9,60 @@ import {
   viewReportResultJsonSchema,
 } from "./spec.ts";
 
+const makeResultEnvelopeWithWindow = (window: unknown): unknown => ({
+  result: {
+    request: {
+      receipt: "20260331004166",
+      documentId: undefined,
+      sectionId: "section:1",
+      outputFormat: "html",
+      maxBytes: 200000,
+      contentStartByte: 0,
+    },
+    receipt: {
+      receiptNumber: "20260331004166",
+    },
+    document: {
+      id: "document:body:1",
+      title: "사업보고서",
+      kind: "body",
+      selected: true,
+    },
+    documents: [],
+    toc: [],
+    content: {
+      scope: "section",
+      format: "html",
+      body: "본문",
+      sizeBytes: 6,
+      returnedBytes: 6,
+      truncated: false,
+      window,
+      section: {
+        id: "section:1",
+        title: "사 업 보 고 서",
+      },
+    },
+    navigation: undefined,
+  },
+  metadata: {
+    fetchedAt: "2026-05-05T00:00:00.000Z",
+    source: {
+      system: "dart",
+      surface: "dsaf001",
+      endpoints: {
+        shell: "https://dart.fss.or.kr/dsaf001/main.do",
+        content: "https://dart.fss.or.kr/report/viewer.do",
+      },
+    },
+    tocSource: "dart",
+  },
+  references: {
+    viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+  },
+  warnings: [],
+});
+
 describe("view-report capability schemas", () => {
   test("exports the shared operation identifier and input schema", () => {
     const jsonSchema = viewReportInputJsonSchema as JsonSchema7Root & {
@@ -20,6 +74,7 @@ describe("view-report capability schemas", () => {
     const sectionId = jsonSchema.properties.sectionId!;
     const outputFormat = jsonSchema.properties.outputFormat!;
     const maxBytes = jsonSchema.properties.maxBytes!;
+    const contentStartByte = jsonSchema.properties.contentStartByte!;
 
     expect(viewReportOperationName).toBe("view-report");
     expect(jsonSchema).toMatchObject({
@@ -44,6 +99,11 @@ describe("view-report capability schemas", () => {
       default: 50000,
       minimum: 1000,
       maximum: 1000000,
+    });
+    expect(contentStartByte).toMatchObject({
+      type: "integer",
+      default: 0,
+      minimum: 0,
     });
   });
 
@@ -81,6 +141,7 @@ describe("view-report capability schemas", () => {
             sectionId: "section:1",
             outputFormat: "html",
             maxBytes: 200000,
+            contentStartByte: 0,
           },
           receipt: {
             receiptNumber: "20260331004166",
@@ -113,6 +174,12 @@ describe("view-report capability schemas", () => {
             sizeBytes: 13,
             returnedBytes: 13,
             truncated: false,
+            window: {
+              unit: "utf8-bytes",
+              startByte: 0,
+              endByte: 13,
+              hasMore: false,
+            },
             section: {
               id: "section:1",
               title: "사 업 보 고 서",
@@ -159,6 +226,7 @@ describe("view-report capability schemas", () => {
             sectionId: "section:1",
             outputFormat: "markdown",
             maxBytes: 200000,
+            contentStartByte: 0,
           },
           receipt: {
             receiptNumber: "20260331004166",
@@ -178,6 +246,12 @@ describe("view-report capability schemas", () => {
             sizeBytes: 8,
             returnedBytes: 8,
             truncated: false,
+            window: {
+              unit: "utf8-bytes",
+              startByte: 0,
+              endByte: 8,
+              hasMore: false,
+            },
             section: {
               id: "section:1",
               title: "사 업 보 고 서",
@@ -206,5 +280,34 @@ describe("view-report capability schemas", () => {
 
     expect(decoded.result.content?.format).toBe("markdown");
     expect(decoded.result.content?.body).toBe("# 본문");
+  });
+
+  test("requires a next content byte only when more content remains", async () => {
+    await expect(
+      Effect.runPromise(
+        Schema.decodeUnknown(ViewReportResultSchema)(
+          makeResultEnvelopeWithWindow({
+            unit: "utf8-bytes",
+            startByte: 0,
+            endByte: 6,
+            hasMore: true,
+            nextStartByte: 6,
+          }),
+        ),
+      ),
+    ).resolves.toBeDefined();
+
+    await expect(
+      Effect.runPromise(
+        Schema.decodeUnknown(ViewReportResultSchema)(
+          makeResultEnvelopeWithWindow({
+            unit: "utf8-bytes",
+            startByte: 0,
+            endByte: 6,
+            hasMore: true,
+          }),
+        ),
+      ),
+    ).rejects.toThrow();
   });
 });

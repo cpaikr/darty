@@ -32,6 +32,12 @@ export const viewReportFieldCopy = {
     cliDescription:
       "[기본값: 50000] 반환할 본문 최대 바이트 수. 크게 지정하면 출력/context가 커질 수 있습니다.",
   },
+  contentStartByte: {
+    description:
+      "렌더링된 content.body 형식 기준 UTF-8 시작 바이트 위치. 기본값은 0입니다. DART viewer offset이 아니며, 다음 창은 content.window.nextStartByte 값을 사용하세요.",
+    cliDescription:
+      "[기본값: 0] 렌더링된 본문 기준 UTF-8 시작 바이트. DART viewer offset이 아닙니다.",
+  },
 } as const;
 
 export const viewReportSchemaCopy = {
@@ -51,6 +57,7 @@ export const viewReportValidationCopy = {
   expectedNonEmptyString: "비어 있지 않은 문자열",
   expectedOutputFormat: "html 또는 markdown",
   expectedMaxBytes: "1,000 이상 1,000,000 이하의 정수",
+  expectedContentStartByte: "0 이상의 정수",
 } as const;
 
 export const viewReportCliCopy = {
@@ -79,6 +86,7 @@ export const viewReportCliCopy = {
   notes: [
     "toc[].id/section ID는 한 보고서 안에서만 쓰는 값입니다. 연도, 정정, 다른 접수번호의 보고서에 재사용하지 말고 매 보고서에서 목차를 먼저 조회하세요.",
     "`--section-id`로 본문을 조회하거나 TOC 없는 문서를 조회하면 content.body가 반환됩니다. 긴 섹션은 출력과 에이전트 context가 커질 수 있으니 필요한 섹션만 조회하고 `--max-bytes`는 필요한 만큼만 키우세요.",
+    "content.window.hasMore가 true이면 다음 호출에 `--content-start-byte`를 content.window.nextStartByte 값으로 넘겨 이어서 읽으세요. 이 값은 렌더링된 본문 기준이며 DART viewer offset이 아닙니다.",
     "`--output-format markdown`은 복잡한 DART 표를 HTML table로 보존할 수 있습니다. rowspan/colspan이 있는 표는 자동 파싱 전 원문 구조를 확인하세요.",
     "PDF는 darty 내부에서 처리하지 않습니다. PDF 링크는 직접 다운로드하거나 다른 PDF 처리/읽기 도구로 열어 사용하세요.",
   ],

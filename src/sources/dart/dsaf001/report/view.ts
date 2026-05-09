@@ -135,6 +135,7 @@ const viewReport = async (
           scope: contentPlan.kind,
           outputFormat: request.outputFormat,
           maxBytes: request.maxBytes,
+          contentStartByte: request.contentStartByte,
           ...(contentPlan.kind === "section"
             ? { section: contentPlan.section }
             : {}),

@@ -88,6 +88,14 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
       option.argParser((value) => parseIntegerOption(value));
     },
   ),
+  createRegisteredOption(
+    "contentStartByte",
+    "--content-start-byte <number>",
+    viewReportFieldCopy.contentStartByte.cliDescription,
+    (option) => {
+      option.argParser((value) => parseIntegerOption(value));
+    },
+  ),
   createVerboseOption(),
   createRegisteredOption(
     "tocDepth",

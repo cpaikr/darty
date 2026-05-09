@@ -11,6 +11,7 @@ describe("resolveViewReportRequest", () => {
       receipt: "20260331004166",
       outputFormat: "markdown",
       maxBytes: 50000,
+      contentStartByte: 0,
     });
   });
 
@@ -22,6 +23,17 @@ describe("resolveViewReportRequest", () => {
       }),
     ).toMatchObject({
       outputFormat: "markdown",
+    });
+  });
+
+  test("accepts an explicit rendered-content byte window", () => {
+    expect(
+      resolveViewReportRequest({
+        receipt: "20260331004166",
+        contentStartByte: 25000,
+      }),
+    ).toMatchObject({
+      contentStartByte: 25000,
     });
   });
 
@@ -39,7 +51,17 @@ describe("resolveViewReportRequest", () => {
       sectionId: "section:1.2",
       outputFormat: "markdown",
       maxBytes: 50000,
+      contentStartByte: 0,
     });
+  });
+
+  test("rejects negative content window starts", () => {
+    expect(() =>
+      resolveViewReportRequest({
+        receipt: "20260331004166",
+        contentStartByte: -1,
+      }),
+    ).toThrow(InvalidViewReportRequest);
   });
 
   test("rejects unknown fields before provider execution", () => {

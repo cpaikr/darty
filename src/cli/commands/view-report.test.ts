@@ -17,6 +17,7 @@ const result = {
       sectionId: undefined,
       outputFormat: "html",
       maxBytes: 200000,
+      contentStartByte: 0,
     },
     receipt: {
       receiptNumber: "20260331004166",
@@ -69,6 +70,8 @@ describe("parseViewReportCommandArgs", () => {
         "markdown",
         "--max-bytes",
         "50000",
+        "--content-start-byte",
+        "25000",
         "--verbose",
         "--toc-depth",
         "2",
@@ -81,6 +84,7 @@ describe("parseViewReportCommandArgs", () => {
         sectionId: "section:1.2",
         outputFormat: "markdown",
         maxBytes: 50000,
+        contentStartByte: 25000,
       },
       output: { pretty: true, verbose: true, tocDepth: 2 },
     });
@@ -91,6 +95,19 @@ describe("parseViewReportCommandArgs", () => {
       parseViewReportCommandArgs(["--receipt", "20260331004166", "--toc-depth", "0"]),
     ).toThrow(
       "option '--toc-depth <number>' argument '0' is invalid. 1 이상의 정수를 입력해야 합니다.",
+    );
+  });
+
+  test("rejects negative content window starts early", () => {
+    expect(() =>
+      parseViewReportCommandArgs([
+        "--receipt",
+        "20260331004166",
+        "--content-start-byte",
+        "-1",
+      ]),
+    ).toThrow(
+      "option '--content-start-byte <number>' argument '-1' is invalid. 정수를 입력해야 하지만 \"-1\"을(를) 받았습니다.",
     );
   });
 
@@ -108,12 +125,15 @@ describe("parseViewReportCommandArgs", () => {
       "[기본값: 50000] 반환할 본문 최대 바이트 수",
     );
     expect(viewReportUsage).toContain("출력/context가 커질 수 있습니다");
+    expect(viewReportUsage).toContain("--content-start-byte <number>");
+    expect(viewReportUsage).toContain("DART viewer offset이 아닙니다");
     expect(viewReportUsage).toContain("--verbose");
     expect(viewReportUsage).toContain("--toc-depth <number>");
     expect(viewReportUsage).toContain("--pretty");
     expect(viewReportUsage).toContain("주의사항");
     expect(viewReportUsage).toContain("연도, 정정, 다른 접수번호");
     expect(viewReportUsage).toContain("content.body가 반환됩니다");
+    expect(viewReportUsage).toContain("content.window.nextStartByte");
     expect(viewReportUsage).toContain("PDF는 darty 내부에서 처리하지 않습니다");
     expect(viewReportUsage).not.toContain("--include-toc");
   });
@@ -232,6 +252,12 @@ describe("parseViewReportCommandArgs", () => {
           returnedBytes: 100,
           truncated: false,
           body: "본문",
+          window: {
+            unit: "utf8-bytes" as const,
+            startByte: 0,
+            endByte: 100,
+            hasMore: false,
+          },
         },
       },
     } as const;

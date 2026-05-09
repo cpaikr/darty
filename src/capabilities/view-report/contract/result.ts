@@ -41,11 +41,36 @@ const ViewReportContentSectionSchema = Schema.Struct({
   title: Schema.String,
 });
 
+const ViewReportContentWindowBaseFields = {
+  unit: Schema.Literal("utf8-bytes"),
+  startByte: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+  endByte: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+} as const;
+
+const ViewReportContinuableContentWindowSchema = Schema.Struct({
+  ...ViewReportContentWindowBaseFields,
+  hasMore: Schema.Literal(true),
+  nextStartByte: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+});
+
+const ViewReportFinalContentWindowSchema = Schema.Struct({
+  ...ViewReportContentWindowBaseFields,
+  hasMore: Schema.Literal(false),
+});
+
+const ViewReportContentWindowSchema = Schema.Union(
+  ViewReportContinuableContentWindowSchema,
+  ViewReportFinalContentWindowSchema,
+);
+export type ViewReportContentWindow =
+  typeof ViewReportContentWindowSchema.Type;
+
 const ViewReportContentBaseFields = {
   scope: Schema.Literal("document", "section"),
   sizeBytes: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
   returnedBytes: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
   truncated: Schema.Boolean,
+  window: ViewReportContentWindowSchema,
   section: Schema.optional(ViewReportContentSectionSchema),
 } as const;
 

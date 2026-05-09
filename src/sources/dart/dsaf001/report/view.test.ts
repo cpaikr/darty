@@ -161,6 +161,7 @@ describe("createDsaf001ViewReportProvider", () => {
       receipt: receiptNumber,
       outputFormat: "html",
       maxBytes: 200000,
+      contentStartByte: 0,
     });
 
     expect(fake.shellQueries).toEqual([undefined]);
@@ -198,6 +199,7 @@ describe("createDsaf001ViewReportProvider", () => {
       sectionId: "section:1.1",
       outputFormat: "html",
       maxBytes: 200000,
+      contentStartByte: 0,
     });
 
     expect(fake.contentLocators).toEqual([childLocator]);
@@ -244,6 +246,7 @@ describe("createDsaf001ViewReportProvider", () => {
       sectionId: "section:1.1",
       outputFormat: "html",
       maxBytes: 200000,
+      contentStartByte: 0,
     });
 
     expect(result.content?.body).toBe(
@@ -263,6 +266,7 @@ describe("createDsaf001ViewReportProvider", () => {
       sectionId: "section:1.1",
       outputFormat: "markdown",
       maxBytes: 200000,
+      contentStartByte: 0,
     });
 
     expect(result.content).toMatchObject({
@@ -285,6 +289,7 @@ describe("createDsaf001ViewReportProvider", () => {
       receipt: "20260331904807",
       outputFormat: "html",
       maxBytes: 200000,
+      contentStartByte: 0,
     });
 
     expect(shell.initialViewLocator).toBeDefined();
@@ -312,6 +317,7 @@ describe("createDsaf001ViewReportProvider", () => {
       sectionId: "section:1.1",
       outputFormat: "html",
       maxBytes: 1000,
+      contentStartByte: 0,
     });
 
     expect(result.content?.truncated).toBe(true);
@@ -319,9 +325,61 @@ describe("createDsaf001ViewReportProvider", () => {
     expect(result.warnings).toEqual([
       {
         code: "content_truncated",
-        message: `HTML content was truncated from ${result.content?.sizeBytes} bytes to ${result.content?.returnedBytes} bytes.`,
+        message: `HTML content window returned UTF-8 bytes [0, ${result.content?.returnedBytes}) of ${result.content?.sizeBytes}.`,
       },
     ]);
+  });
+
+  test("returns an explicit rendered-content byte window", async () => {
+    const fake = createFakeSource({ contentHtml: `<p>${"a".repeat(2_000)}</p>` });
+    const provider = createDsaf001ViewReportProvider(fake.source);
+
+    const result = await provider.view({
+      receipt: receiptNumber,
+      sectionId: "section:1.1",
+      outputFormat: "html",
+      maxBytes: 1_000,
+      contentStartByte: 500,
+    });
+
+    expect(result.content).toMatchObject({
+      body: "a".repeat(1_000),
+      sizeBytes: 2_007,
+      returnedBytes: 1_000,
+      truncated: true,
+      window: {
+        unit: "utf8-bytes",
+        startByte: 500,
+        endByte: 1_500,
+        hasMore: true,
+        nextStartByte: 1_500,
+      },
+    });
+  });
+
+  test("does not warn for a final continuation window", async () => {
+    const fake = createFakeSource({ contentHtml: `<p>${"a".repeat(1_200)}</p>` });
+    const provider = createDsaf001ViewReportProvider(fake.source);
+
+    const result = await provider.view({
+      receipt: receiptNumber,
+      sectionId: "section:1.1",
+      outputFormat: "html",
+      maxBytes: 1_000,
+      contentStartByte: 1_000,
+    });
+
+    expect(result.content).toMatchObject({
+      body: `${"a".repeat(203)}</p>`,
+      returnedBytes: 207,
+      truncated: true,
+      window: {
+        startByte: 1_000,
+        endByte: 1_207,
+        hasMore: false,
+      },
+    });
+    expect(result.warnings).toEqual([]);
   });
 
   test("selects attachments by fetching the returned document query", async () => {
@@ -349,6 +407,7 @@ describe("createDsaf001ViewReportProvider", () => {
       documentId: "document:attachment:1",
       outputFormat: "html",
       maxBytes: 200000,
+      contentStartByte: 0,
     });
 
     expect(fake.shellQueries).toEqual([undefined, attachmentDocument.query]);
