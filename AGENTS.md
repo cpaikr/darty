@@ -18,6 +18,8 @@
 - Install deps: `bun install`
 - Typecheck: `bun run typecheck`
 - Test: `bun test`
+- Build npm CLI: `bun run build`
+- Build standalone release binaries: `bun run build:binaries`
 - Live tests: `bun run test:live`
 - Manual search check: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
 - Do not add placeholder build, lint, or format commands to docs. Only document commands that exist in the repo.
@@ -28,6 +30,13 @@
 - Live DART investigation and source evidence: `docs/research/dart-source-map.md`
 - Stable, evidence-backed capability contracts: `docs/specs/`
 - Shared tool-design guidance: `docs/tools/`
+- Release automation and required secrets: `docs/release.md`
+
+## Release and Publishing
+
+- Read `docs/release.md` before preparing a release commit or tag.
+- Release tags must match `package.json` exactly: version `0.0.5` uses source tag `v0.0.5`.
+- The release workflow publishes npm and uploads standalone binaries to `open-creo/open-creo`; do not add a separate manual publishing path unless the docs change.
 
 ## Working Rules
 

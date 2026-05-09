@@ -39,6 +39,8 @@ current supported surface.
   Durable source investigation notes for `dsab007` search, `dsae001` company overview search, and the report viewer.
 - [docs/learning/](docs/learning/INDEX.md)
   Onboarding-oriented explanations for new readers. These pages are secondary learning material, not the source of truth for implementation behavior, product decisions, or project policy.
+- [docs/release.md](docs/release.md)
+  Release automation setup for npm publishing and public standalone binary uploads.
 - [docs/tools/](docs/tools/)
   Canonical home for single-tool design.
 - [docs/specs/](docs/specs/)

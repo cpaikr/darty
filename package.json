@@ -17,6 +17,7 @@
   },
   "scripts": {
     "build": "bun run scripts/build-cli.ts",
+    "build:binaries": "bun run scripts/build-binaries.ts",
     "prepack": "bun run build",
     "prepublishOnly": "bun run typecheck && bun test",
     "env:check": "varlock load",
