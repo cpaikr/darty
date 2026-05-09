@@ -98,7 +98,7 @@ darty search-company-reports --company-code <8자리 DART 회사 코드> --start
 - `--report-name <텍스트>`: 보고서명
 - `--disclosure-type <코드>`: 공시유형 상세 코드. 여러 코드는 옵션을 반복해서 지정합니다. 예: `A001`, `I001`
 - `--industry-code <코드>`: DART 업종 코드, 기본값 `all`
-- `--corporation-type <all|P|A|N|E>`: 법인유형, 기본값 `all`
+- `--corporation-type <all|P|A|N|E>`: 법인유형, 기본값 `all`. `P`=유가증권시장, `A`=코스닥시장, `N`=코넥스시장, `E`=기타법인
 - `--closing-accounts-month <all|01-12>`: 결산월, 기본값 `all`
 - `--include-all-reports`: 기본 최종보고서 필터를 해제하고 정정 전 보고서까지 포함합니다.
 

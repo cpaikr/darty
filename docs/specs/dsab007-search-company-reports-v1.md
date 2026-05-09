@@ -148,7 +148,7 @@ Result item fields:
 - `remarks[]` for `비고` badges/text, including raw title text when DART provides it
 - `evidence.rawRowText`
 
-Empty result sets are successful searches, not failures. When DART returns a recognized no-result table, return `items: []`, `totalCount: 0`, and `returnedCount: 0`.
+Empty result sets are successful searches, not failures. When DART returns a recognized no-result table, return `items: []`, `currentPage: 1`, `totalPages: 1`, `totalCount: 0`, and `returnedCount: 0` so consumers do not render an awkward page `1/0`.
 
 Failures:
 

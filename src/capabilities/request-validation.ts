@@ -26,6 +26,24 @@ export const assertNoUnknownKeys = <E extends Error>(
   }
 };
 
+export const normalizeTextFilterFields = <Key extends string>(
+  input: Record<string, unknown>,
+  fields: readonly Key[],
+): Record<string, unknown> => {
+  let normalizedInput: Record<string, unknown> | undefined;
+
+  for (const field of fields) {
+    const value = input[field];
+
+    if (typeof value === "string") {
+      normalizedInput ??= { ...input };
+      normalizedInput[field] = value.trim();
+    }
+  }
+
+  return normalizedInput ?? input;
+};
+
 export const collectParseIssues = (
   issue: ParseResult.ParseIssue,
   path: readonly PropertyKey[] = [],

@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { searchCompanyReportsResultCopy } from "../../../../capabilities/search-company-reports/copy.ts";
 import type {
   SearchCompanyReportsItem,
+  SearchCompanyReportsPagination,
   SearchCompanyReportsRequest,
 } from "../../../../capabilities/search-company-reports/contract.ts";
 import {
@@ -31,6 +32,21 @@ export const observedSearchCompanyReportsBehavior = {
   finalReportDefault: true,
   observationStatus: "observed",
 } as const;
+
+const toCapabilityPagination = (
+  page: SourceCompanyReportsSearchPage,
+): SearchCompanyReportsPagination => {
+  if (page.pagination.totalCount === 0 && page.rows.length === 0) {
+    return {
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
+      returnedCount: 0,
+    };
+  }
+
+  return page.pagination;
+};
 
 const toSearchCompanyReportsItem = (
   row: SourceCompanyReportsRow,
@@ -62,7 +78,7 @@ export const toDsab007CompanyReportsProviderResult = (
 
   return {
     company: page.company,
-    pagination: page.pagination,
+    pagination: toCapabilityPagination(page),
     items: page.rows.map(toSearchCompanyReportsItem),
     metadata: {
       fetchedAt: page.fetchedAt,

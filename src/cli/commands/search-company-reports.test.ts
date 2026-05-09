@@ -103,11 +103,14 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("--verbose");
     expect(searchCompanyReportsUsage).toContain("최종보고서 필터");
     expect(searchCompanyReportsUsage).toContain("정정 전 보고서까지 포함");
+    expect(searchCompanyReportsUsage).toContain("P=유가증권시장");
+    expect(searchCompanyReportsUsage).toContain("E=기타법인");
     expect(searchCompanyReportsUsage).not.toContain("--sort-by");
     expect(searchCompanyReportsUsage).not.toContain("--include-evidence");
     expect(searchCompanyReportsUsage).toContain(
       "search-company --company-name <회사명>",
     );
+    expect(searchCompanyReportsUsage).not.toContain("공시통합검색의 `회사명` 모드");
   });
 
   test("resolves parsed options through the shared capability resolver", () => {

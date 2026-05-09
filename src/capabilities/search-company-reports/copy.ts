@@ -53,7 +53,7 @@ export const searchCompanyReportsFieldCopy = {
     description:
       "[기본값: all] 법인유형 필터입니다. all, P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나입니다.",
     cliDescription:
-      "법인유형으로 검색 결과를 좁힙니다(all, P, A, N, E).",
+      "법인유형으로 검색 결과를 좁힙니다(all, P=유가증권시장, A=코스닥시장, N=코넥스시장, E=기타법인).",
   },
   closingAccountsMonth: {
     description:
@@ -146,7 +146,7 @@ export const searchCompanyReportsSchemaCopy = {
 export const searchCompanyReportsToolCopy = {
   title: "DART 회사별 공시 검색",
   description:
-    "DART 공시통합검색의 `회사명` 모드를 8자리 DART 회사 코드로 실행해 회사별 공시 목록을 반환합니다. 회사명 해석은 하지 않으므로 필요한 경우 search-company로 companyCode를 먼저 확인하세요.",
+    "8자리 DART 회사 코드로 DART 회사별 공시 목록을 반환합니다. 회사명 해석은 하지 않으므로 필요한 경우 search-company로 companyCode를 먼저 확인하세요.",
 } as const;
 
 export const searchCompanyReportsValidationCopy = {
@@ -161,7 +161,9 @@ export const searchCompanyReportsValidationCopy = {
   expectedNonEmptyString: "비어 있지 않은 문자열",
   expectedStringArray: "문자열 배열",
   missingRequired: (parameter: string, expectedDescription: string): string =>
-    `필수 매개변수 "${parameter}"이(가) 없습니다. 필요한 값: ${expectedDescription}.`,
+    `필수 매개변수 "${parameter}"이(가) 없습니다. 필요한 값: ${expectedDescription}${
+      expectedDescription.endsWith(".") ? "" : "."
+    }`,
   mustBeString: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) 문자열이어야 합니다.`,
   mustNotBeEmpty: (parameter: string): string =>

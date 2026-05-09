@@ -26,6 +26,41 @@ describe("resolveSearchBodyRequest", () => {
     });
   });
 
+  test("trims semantic text filters and rejects empty text filters", () => {
+    expect(
+      resolveSearchBodyRequest({
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        presenterName: " 유일에너테크 ",
+        reportName: " 사업보고서 ",
+      }),
+    ).toMatchObject({
+      presenterName: "유일에너테크",
+      reportName: "사업보고서",
+    });
+
+    try {
+      resolveSearchBodyRequest({
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        presenterName: " ",
+      });
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidSearchBodyRequest);
+
+      if (!(error instanceof InvalidSearchBodyRequest)) {
+        throw error;
+      }
+
+      expect(error.parameter).toBe("presenterName");
+      expect(error.reason).toBe("empty_string");
+      expect(error.actual).toBe("");
+    }
+  });
+
   test("rejects missing required parameters with structured data", () => {
     try {
       resolveSearchBodyRequest({

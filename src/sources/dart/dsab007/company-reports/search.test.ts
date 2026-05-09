@@ -162,4 +162,44 @@ describe("toDsab007CompanyReportsProviderResult", () => {
       ],
     });
   });
+
+  test("normalizes source no-result pagination for the public result contract", () => {
+    const result = toDsab007CompanyReportsProviderResult({
+      request: {
+        option: "corp",
+        currentPage: 2,
+        maxResults: 15,
+        maxLinks: 10,
+        sort: "date",
+        series: "desc",
+        textCrpCik: "00190321",
+        publicTypes: [],
+        businessCode: "all",
+        corporationType: "all",
+        closingAccountsMonth: "all",
+        startDate: "20250507",
+        endDate: "20260507",
+        finalReportOnly: true,
+      },
+      company: { companyCode: "00190321" },
+      pagination: {
+        currentPage: 2,
+        totalPages: 0,
+        totalCount: 0,
+        returnedCount: 0,
+      },
+      rows: [],
+      warnings: [],
+      droppedRowCount: 0,
+      fetchedAt: "2026-05-07T00:00:00.000Z",
+      sourceUrl: "https://dart.fss.or.kr/dsab007/detailSearch.ax",
+    });
+
+    expect(result.pagination).toEqual({
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
+      returnedCount: 0,
+    });
+  });
 });

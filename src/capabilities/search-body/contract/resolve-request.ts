@@ -5,6 +5,7 @@ import {
   assertObjectInput,
   assertYYYYMMDDDateRange,
   getFirstParameterIssues,
+  normalizeTextFilterFields,
 } from "../../request-validation.ts";
 import { searchBodyValidationCopy } from "../copy.ts";
 import { InvalidSearchBodyRequest } from "./errors.ts";
@@ -250,12 +251,16 @@ export const resolveSearchBodyRequest = (
       }),
   );
 
-  const result = decodeSearchBodyRequest(input);
+  const normalizedInput = normalizeTextFilterFields(input, [
+    "presenterName",
+    "reportName",
+  ]);
+  const result = decodeSearchBodyRequest(normalizedInput);
 
   if (result._tag === "Right") {
     validateResolvedRequest(result.right);
     return result.right;
   }
 
-  throw toInvalidSearchBodyRequest(input, result.left);
+  throw toInvalidSearchBodyRequest(normalizedInput, result.left);
 };

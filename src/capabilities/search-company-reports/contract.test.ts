@@ -103,13 +103,22 @@ describe("resolveSearchCompanyReportsRequest", () => {
     }
   });
 
-  test("rejects empty text filters", () => {
+  test("trims text filters and rejects empty text filters", () => {
+    expect(
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        presenterName: " 케이티 ",
+      }),
+    ).toMatchObject({ presenterName: "케이티" });
+
     try {
       resolveSearchCompanyReportsRequest({
         companyCode: "00190321",
         startDate: "20250507",
         endDate: "20260507",
-        reportName: "",
+        reportName: " ",
       });
       throw new Error("Expected resolution to fail.");
     } catch (error) {
