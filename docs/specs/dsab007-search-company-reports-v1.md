@@ -69,7 +69,7 @@ Target input mapping:
 | `공시유형` detailed checkboxes | `disclosureTypes[]` | repeated `publicType` | target; DART detail codes such as `A001`, `I001` |
 | `업종` | `industryCode` | `businessCode` | target; default `all`; DART industry tree code such as `612` |
 | `법인유형` | `corporationType` | `corporationType` | target; default `all`; values `P`, `A`, `N`, `E` |
-| `결산유형` | `closingAccountsMonth` | `closingAccountsMonth` | target; default `all`; values `01` through `12` |
+| `결산유형` | `closingAccountsMonth` | `closingAccountsMonth` | target; default `all`; canonical values `01` through `12`; CLI aliases `1` through `9` normalize to `01` through `09` |
 | `최종보고서` filter opt-out | `includeAllReports` | omit/blank `finalReport` when true; otherwise `finalReport=recent` | target; default `false` |
 
 Observed but not included in the first public contract:
@@ -122,7 +122,7 @@ Inputs:
 | `disclosureTypes` | no | array of DART detailed public type codes like `A001` | repeated `publicType`; exposed in the CLI by repeating `--disclosure-type` |
 | `industryCode` | no | `all`, `ROOTdddd`, or 2-5 digit DART industry code | default `all`; exposed as `--industry-code` |
 | `corporationType` | no | `all`, `P`, `A`, `N`, or `E` | default `all`; maps to 법인유형 |
-| `closingAccountsMonth` | no | `all` or `01` through `12` | default `all`; maps to 결산월 |
+| `closingAccountsMonth` | no | `all` or `01` through `12` | default `all`; maps to 결산월; CLI accepts `1` through `9` and normalizes output request values to zero-padded canonical values |
 | `includeAllReports` | no | boolean | default `false`; exposed in the CLI as `--include-all-reports` |
 
 Output envelope:

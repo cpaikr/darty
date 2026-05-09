@@ -73,6 +73,15 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     });
   });
 
+  test("normalizes unpadded closing accounts months in CLI input", () => {
+    expect(
+      parseSearchCompanyReportsCommandArgs([
+        "--closing-accounts-month",
+        "1",
+      ]).request,
+    ).toEqual({ closingAccountsMonth: "01" });
+  });
+
   test("rejects invalid integer options early", () => {
     expect(() =>
       parseSearchCompanyReportsCommandArgs([
@@ -97,12 +106,13 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("--disclosure-type <code>");
     expect(searchCompanyReportsUsage).toContain("--industry-code <code>");
     expect(searchCompanyReportsUsage).toContain("--corporation-type <all|P|A|N|E>");
-    expect(searchCompanyReportsUsage).toContain("--closing-accounts-month <all|01-12>");
+    expect(searchCompanyReportsUsage).toContain("--closing-accounts-month <all|1-12|01-12>");
     expect(searchCompanyReportsUsage).toContain("--include-all-reports");
     expect(searchCompanyReportsUsage).toContain("--pretty");
     expect(searchCompanyReportsUsage).toContain("--verbose");
     expect(searchCompanyReportsUsage).toContain("최종보고서 필터");
     expect(searchCompanyReportsUsage).toContain("정정 전 보고서까지 포함");
+    expect(searchCompanyReportsUsage).toContain("1~9는 01~09로 처리");
     expect(searchCompanyReportsUsage).toContain("P=유가증권시장");
     expect(searchCompanyReportsUsage).toContain("E=기타법인");
     expect(searchCompanyReportsUsage).not.toContain("--sort-by");

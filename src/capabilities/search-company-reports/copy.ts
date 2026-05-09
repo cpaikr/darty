@@ -57,9 +57,9 @@ export const searchCompanyReportsFieldCopy = {
   },
   closingAccountsMonth: {
     description:
-      "[기본값: all] 결산월 필터입니다. all 또는 01부터 12까지의 월 코드입니다.",
+      "[기본값: all] 결산월 필터입니다. all 또는 01부터 12까지의 두 자리 월 코드입니다. 예: 1월은 01입니다.",
     cliDescription:
-      "결산월로 검색 결과를 좁힙니다(all 또는 01~12).",
+      "결산월로 검색 결과를 좁힙니다(all, 1~12 또는 01~12). 1~9는 01~09로 처리됩니다.",
   },
   includeAllReports: {
     description:
@@ -119,6 +119,7 @@ export const searchCompanyReportsCliCopy = {
     "회사명을 알고 회사 코드를 모르면 먼저 `darty search-company --company-name <회사명>`으로 8자리 companyCode를 확인하세요.",
     "기본값은 DART의 최종보고서 필터를 적용합니다. `--include-all-reports`를 지정하면 정정 전 보고서까지 포함할 수 있어 총 건수가 늘어날 수 있습니다.",
     "공시유형은 DART 상세 코드(A001, I001 등)를 사용합니다. 여러 코드는 `--disclosure-type`을 반복해서 전달하세요.",
+    "결산월은 DART 월 코드(01~12)로 전달됩니다. CLI에서는 `--closing-accounts-month 1`처럼 입력해도 `01`로 정규화됩니다.",
     "결과의 filing.receiptNumber 또는 references.viewerUrl은 `view-report`로 이어서 조회할 수 있습니다.",
   ],
   invalidInteger: (value: string): string =>

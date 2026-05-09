@@ -52,6 +52,9 @@ const collectStringOption = (
   previous: readonly string[] | undefined,
 ): readonly string[] => [...(previous ?? []), value];
 
+const parseClosingAccountsMonthOption = (value: string): string =>
+  /^[1-9]$/.test(value) ? `0${value}` : value;
+
 const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => [
   createRegisteredOption(
     "companyCode",
@@ -119,8 +122,11 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
   ),
   createRegisteredOption(
     "closingAccountsMonth",
-    "--closing-accounts-month <all|01-12>",
+    "--closing-accounts-month <all|1-12|01-12>",
     searchCompanyReportsFieldCopy.closingAccountsMonth.cliDescription,
+    (option) => {
+      option.argParser(parseClosingAccountsMonthOption);
+    },
   ),
   createRegisteredOption(
     "includeAllReports",
