@@ -7,12 +7,18 @@ This repo publishes two artifacts for the same `package.json` version:
 
 ## Manual setup
 
-Configure these secrets in this private repository:
+Configure npm trusted publishing for `@sjunepark/darty`:
 
-- `NPM_TOKEN`: npm **Automation** access token for publishing `@sjunepark/darty`. Keep npm 2FA enabled; automation tokens do not require an OTP in CI.
+- Publisher: GitHub Actions
+- Organization or user: `sjunepark`
+- Repository: `darty`
+- Workflow filename: `release.yml`
+
+Configure this secret in this private repository:
+
 - `OPEN_CREO_RELEASE_TOKEN`: fine-grained GitHub token that can create releases and upload assets in `open-creo/open-creo`. Grant repository Contents read/write access and authorize org SSO if required.
 
-The public repository must allow release creation by the token owner.
+The public repository must allow release creation by the token owner. npm publishing uses OIDC trusted publishing, so no npm publish token is required.
 
 ## Release flow
 
