@@ -98,6 +98,7 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("--receipt <receipt-or-url>");
     expect(viewReportUsage).toContain("--document-id <id>");
     expect(viewReportUsage).toContain("--section-id <id>");
+    expect(viewReportUsage).toContain("보고서별 값");
     expect(viewReportUsage).toContain("--output-format <html|markdown>");
     expect(viewReportUsage).toContain("[기본값: markdown]");
     expect(viewReportUsage).toContain("JSON 결과의 본문 형식(html 또는");
@@ -106,9 +107,13 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain(
       "[기본값: 50000] 반환할 본문 최대 바이트 수",
     );
+    expect(viewReportUsage).toContain("출력/context가 커질 수 있습니다");
     expect(viewReportUsage).toContain("--verbose");
     expect(viewReportUsage).toContain("--toc-depth <number>");
     expect(viewReportUsage).toContain("--pretty");
+    expect(viewReportUsage).toContain("주의사항");
+    expect(viewReportUsage).toContain("연도, 정정, 다른 접수번호");
+    expect(viewReportUsage).toContain("content.body가 반환됩니다");
     expect(viewReportUsage).not.toContain("--include-toc");
   });
 

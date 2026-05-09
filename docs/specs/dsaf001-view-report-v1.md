@@ -22,16 +22,18 @@ Required:
 Optional:
 
 - `documentId`: a returned `documents[].id`; defaults to the selected body document
-- `sectionId`: a returned `toc[].id`; used only to fetch one TOC section
+- `sectionId`: a returned `toc[].id`; used only to fetch one TOC section. Section IDs are assigned per report, so callers must not reuse them across years, amendments, or receipt numbers.
 - `outputFormat`: `html` or `markdown`, default `markdown`
-- `maxBytes`: maximum returned content bytes, default `50000`
+- `maxBytes`: maximum returned content bytes, default `50000`. Raising this value can substantially increase CLI output and agent context use for long sections.
 
 ## Response Behavior
 
 - TOC-backed documents return `documents` and `toc` without content unless a
   `sectionId` is supplied.
 - Section calls return `content.format` plus the rendered string in `content.body`,
-  along with parent/previous/next/children navigation when available.
+  along with parent/previous/next/children navigation when available. Long
+  sections can produce large outputs; callers should fetch the TOC first, request
+  only needed sections, and keep `maxBytes` as low as practical.
 - `markdown` output is best-effort. Common headings, paragraphs, emphasis,
   links, code blocks, and lists are converted; complex or unknown structures may
   be simplified. Tables are preserved as sanitized HTML inside the Markdown so

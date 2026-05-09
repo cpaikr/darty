@@ -17,8 +17,9 @@ export const viewReportFieldCopy = {
   },
   sectionId: {
     description:
-      "view-report 결과의 toc[].id 값. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다.",
-    cliDescription: "조회할 목차 섹션 ID(toc[].id)",
+      "view-report 결과의 toc[].id 값. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다. 섹션 ID는 보고서별로 새로 부여되므로 다른 접수번호나 연도 보고서에 재사용하지 마세요.",
+    cliDescription:
+      "조회할 목차 섹션 ID(toc[].id). 보고서별 값이므로 다른 보고서에 재사용하지 마세요.",
   },
   outputFormat: {
     description:
@@ -27,8 +28,9 @@ export const viewReportFieldCopy = {
   },
   maxBytes: {
     description:
-      "반환할 본문 최대 바이트 수. 기본값은 50000이며, 초과하면 잘라내고 warnings에 표시합니다.",
-    cliDescription: "[기본값: 50000] 반환할 본문 최대 바이트 수",
+      "반환할 본문 최대 바이트 수. 기본값은 50000이며, 초과하면 잘라내고 warnings에 표시합니다. 크게 지정하면 긴 섹션의 출력과 에이전트 context 사용량이 커질 수 있습니다.",
+    cliDescription:
+      "[기본값: 50000] 반환할 본문 최대 바이트 수. 크게 지정하면 출력/context가 커질 수 있습니다.",
   },
 } as const;
 
@@ -72,6 +74,12 @@ export const viewReportCliCopy = {
         "html",
       ],
     },
+  ],
+  notesHeading: "주의사항",
+  notes: [
+    "toc[].id/section ID는 한 보고서 안에서만 쓰는 값입니다. 연도, 정정, 다른 접수번호의 보고서에 재사용하지 말고 매 보고서에서 목차를 먼저 조회하세요.",
+    "`--section-id`로 본문을 조회하거나 TOC 없는 문서를 조회하면 content.body가 반환됩니다. 긴 섹션은 출력과 에이전트 context가 커질 수 있으니 필요한 섹션만 조회하고 `--max-bytes`는 필요한 만큼만 키우세요.",
+    "`--output-format markdown`은 복잡한 DART 표를 HTML table로 보존할 수 있습니다. rowspan/colspan이 있는 표는 자동 파싱 전 원문 구조를 확인하세요.",
   ],
 } as const;
 

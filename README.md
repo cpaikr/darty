@@ -161,9 +161,9 @@ darty view-report --receipt 20260331004166 --section-id section:5.6
 선택 옵션:
 
 - `--document-id <id>`: `view-report` 결과의 `documents[].id`. 생략하면 기본 본문 문서입니다.
-- `--section-id <id>`: `view-report` 결과의 `toc[].id`. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다.
+- `--section-id <id>`: `view-report` 결과의 `toc[].id`. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다. 섹션 ID는 보고서별로 새로 부여되므로 연도, 정정, 다른 접수번호의 보고서에 재사용하지 말고 매 보고서에서 목차를 먼저 조회하세요.
 - `--output-format <html|markdown>`: 출력 형식. 기본값은 `markdown`입니다. `markdown`은 읽기 쉬운 best-effort 변환이며 복잡한 표는 HTML 태그로 보존합니다.
-- `--max-bytes <숫자>`: 반환 본문 최대 바이트 수, 기본값 `50000`
+- `--max-bytes <숫자>`: 반환 본문 최대 바이트 수, 기본값 `50000`. 크게 지정하면 긴 섹션의 출력과 에이전트 context 사용량이 커질 수 있습니다.
 - `--verbose`: `--section-id` 섹션 본문 조회 출력에도 문서 목록과 목차를 포함합니다.
 - `--toc-depth <숫자>`: 목차를 지정한 깊이까지만 출력합니다. 섹션 본문 조회에서는 목차 포함도 함께 켭니다.
 - `--pretty`: 사람이 읽기 쉬운 들여쓰기 JSON으로 출력합니다.
@@ -172,6 +172,7 @@ darty view-report --receipt 20260331004166 --section-id section:5.6
 
 - TOC가 있는 문서는 기본 호출에서 문서 목록과 목차만 반환합니다.
 - `--section-id`를 지정하면 해당 섹션의 본문(`content.body`)과 이전/다음/상위 navigation을 반환합니다. CLI 출력은 기본적으로 반복되는 전체 문서 목록과 목차를 생략합니다.
+- 섹션 본문과 TOC 없는 문서 본문은 길 수 있습니다. 에이전트 context 부담을 줄이려면 먼저 목차만 확인하고 필요한 섹션만 조회하며, `--toc-depth`로 목차 출력을 줄이고 `--max-bytes`는 필요한 만큼만 키우세요.
 - TOC가 없는 문서는 `--section-id` 없이 기본 호출에서 선택 문서 본문(`content.body`)을 반환하고 warning을 포함합니다.
 - 내부 DART viewer 파라미터(`dcmNo`, `eleId`, `offset`, `length`, `dtd`)는 공개 옵션으로 노출하지 않습니다.
 

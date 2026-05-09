@@ -10,3 +10,4 @@
 ## Later
 
 - Support XBRL views
+- Consider semantic `view-report` content pagination/chunking for very large sections or TOC-less reports. Keep DART raw viewer params hidden; prefer a stable cursor or explicit content window contract.

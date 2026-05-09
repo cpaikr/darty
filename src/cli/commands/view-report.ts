@@ -122,7 +122,11 @@ const renderSupplementalHelp = (): string => {
     )
     .join("\n\n");
 
-  return `\n${viewReportCliCopy.examplesHeading}:\n${examples}\n`;
+  const notes = viewReportCliCopy.notes.map((note) => `  - ${note}`).join("\n");
+  const notesSection =
+    notes.length > 0 ? `\n\n${viewReportCliCopy.notesHeading}:\n${notes}` : "";
+
+  return `\n${viewReportCliCopy.examplesHeading}:\n${examples}${notesSection}\n`;
 };
 
 const toViewReportCliCommand = (
