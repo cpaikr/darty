@@ -8,7 +8,7 @@ describe("windowUtf8", () => {
       value: "56789",
       sizeBytes: 10,
       returnedBytes: 5,
-      truncated: true,
+      isFullContent: false,
       window: {
         unit: "utf8-bytes",
         startByte: 5,
@@ -23,7 +23,7 @@ describe("windowUtf8", () => {
       value: "23456",
       sizeBytes: 10,
       returnedBytes: 5,
-      truncated: true,
+      isFullContent: false,
       window: {
         unit: "utf8-bytes",
         startByte: 2,
@@ -39,7 +39,7 @@ describe("windowUtf8", () => {
       value: "나",
       sizeBytes: 6,
       returnedBytes: 3,
-      truncated: true,
+      isFullContent: false,
       window: {
         unit: "utf8-bytes",
         startByte: 3,
@@ -54,7 +54,7 @@ describe("windowUtf8", () => {
       value: "",
       sizeBytes: 3,
       returnedBytes: 0,
-      truncated: true,
+      isFullContent: false,
       window: {
         unit: "utf8-bytes",
         startByte: 3,

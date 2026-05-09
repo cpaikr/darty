@@ -9,7 +9,7 @@ export type WindowedUtf8Content = {
   readonly value: string;
   readonly sizeBytes: number;
   readonly returnedBytes: number;
-  readonly truncated: boolean;
+  readonly isFullContent: boolean;
   readonly window: ViewReportContentWindow;
 };
 
@@ -27,7 +27,7 @@ export const windowUtf8 = (
       value: "",
       sizeBytes,
       returnedBytes: 0,
-      truncated: startByte > 0 && sizeBytes > 0,
+      isFullContent: sizeBytes === 0 || startByte === 0,
       window: {
         unit: "utf8-bytes",
         startByte: sizeBytes,
@@ -68,7 +68,7 @@ export const windowUtf8 = (
     value: windowValue,
     sizeBytes,
     returnedBytes,
-    truncated: actualStartByte > 0 || hasMore,
+    isFullContent: actualStartByte === 0 && !hasMore,
     window: hasMore
       ? {
           unit: "utf8-bytes",

@@ -29,26 +29,22 @@ export const buildReportContent = async (input: {
     input.outputFormat === "markdown"
       ? convertReportHtmlToMarkdown(sourceContent.html)
       : sanitizeReportHtml(sourceContent.html);
-  const truncated = windowUtf8(
-    value,
-    input.contentStartByte,
-    input.maxBytes,
-  );
+  const windowed = windowUtf8(value, input.contentStartByte, input.maxBytes);
   const formatLabel = input.outputFormat === "markdown" ? "Markdown" : "HTML";
-  const warning = truncated.window.hasMore
+  const warning = windowed.window.hasMore
     ? {
         code: "content_truncated" as const,
-        message: `${formatLabel} content window returned UTF-8 bytes [${truncated.window.startByte}, ${truncated.window.endByte}) of ${truncated.sizeBytes}.`,
+        message: `${formatLabel} content window returned UTF-8 bytes [${windowed.window.startByte}, ${windowed.window.endByte}) of ${windowed.sizeBytes}.`,
       }
     : undefined;
   const content: ViewReportContent = {
     scope: input.scope,
     format: input.outputFormat,
-    body: truncated.value,
-    sizeBytes: truncated.sizeBytes,
-    returnedBytes: truncated.returnedBytes,
-    truncated: truncated.truncated,
-    window: truncated.window,
+    body: windowed.value,
+    sizeBytes: windowed.sizeBytes,
+    returnedBytes: windowed.returnedBytes,
+    isFullContent: windowed.isFullContent,
+    window: windowed.window,
     ...(input.section === undefined
       ? {}
       : {

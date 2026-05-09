@@ -36,7 +36,7 @@ const makeResultEnvelopeWithWindow = (window: unknown): unknown => ({
       body: "본문",
       sizeBytes: 6,
       returnedBytes: 6,
-      truncated: false,
+      isFullContent: true,
       window,
       section: {
         id: "section:1",
@@ -173,7 +173,7 @@ describe("view-report capability schemas", () => {
             body: "<p>본문</p>",
             sizeBytes: 13,
             returnedBytes: 13,
-            truncated: false,
+            isFullContent: true,
             window: {
               unit: "utf8-bytes",
               startByte: 0,
@@ -245,7 +245,7 @@ describe("view-report capability schemas", () => {
             body: "# 본문",
             sizeBytes: 8,
             returnedBytes: 8,
-            truncated: false,
+            isFullContent: true,
             window: {
               unit: "utf8-bytes",
               startByte: 0,

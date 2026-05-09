@@ -1,5 +1,6 @@
 import { ParseResult, Schema } from "effect";
 
+import { viewReportContentWindowLimits } from "../constants.ts";
 import {
   viewReportFieldCopy,
   viewReportSchemaCopy,
@@ -41,12 +42,12 @@ export const ViewReportOutputFormatSchema = Schema.Literal(
 );
 
 const ViewReportMaxBytesSchema = Schema.Int.pipe(
-  Schema.greaterThanOrEqualTo(1_000),
-  Schema.lessThanOrEqualTo(1_000_000),
+  Schema.greaterThanOrEqualTo(viewReportContentWindowLimits.minMaxBytes),
+  Schema.lessThanOrEqualTo(viewReportContentWindowLimits.maxMaxBytes),
 );
 
 const ViewReportContentStartByteSchema = Schema.Int.pipe(
-  Schema.greaterThanOrEqualTo(0),
+  Schema.greaterThanOrEqualTo(viewReportContentWindowLimits.defaultStartByte),
 );
 
 const viewReportRequestFields = {
@@ -65,12 +66,12 @@ const viewReportRequestFields = {
   maxBytes: defaultedField({
     schema: ViewReportMaxBytesSchema,
     description: viewReportFieldCopy.maxBytes.description,
-    defaultValue: 50_000,
+    defaultValue: viewReportContentWindowLimits.defaultMaxBytes,
   }),
   contentStartByte: defaultedField({
     schema: ViewReportContentStartByteSchema,
     description: viewReportFieldCopy.contentStartByte.description,
-    defaultValue: 0,
+    defaultValue: viewReportContentWindowLimits.defaultStartByte,
   }),
 } as const;
 

@@ -211,7 +211,7 @@ describe("createDsaf001ViewReportProvider", () => {
         id: "section:1.1",
         title: "배당에 관한 사항",
       },
-      truncated: false,
+      isFullContent: true,
     });
     expect(result.navigation).toEqual({
       parent: {
@@ -273,7 +273,7 @@ describe("createDsaf001ViewReportProvider", () => {
       scope: "section",
       format: "markdown",
       body: "## 배당\n\n**현금** 배당\n\n표",
-      truncated: false,
+      isFullContent: true,
     });
   });
 
@@ -320,7 +320,7 @@ describe("createDsaf001ViewReportProvider", () => {
       contentStartByte: 0,
     });
 
-    expect(result.content?.truncated).toBe(true);
+    expect(result.content?.isFullContent).toBe(false);
     expect(result.content?.returnedBytes).toBeLessThanOrEqual(1000);
     expect(result.warnings).toEqual([
       {
@@ -346,7 +346,7 @@ describe("createDsaf001ViewReportProvider", () => {
       body: "a".repeat(1_000),
       sizeBytes: 2_007,
       returnedBytes: 1_000,
-      truncated: true,
+      isFullContent: false,
       window: {
         unit: "utf8-bytes",
         startByte: 500,
@@ -372,7 +372,7 @@ describe("createDsaf001ViewReportProvider", () => {
     expect(result.content).toMatchObject({
       body: `${"a".repeat(203)}</p>`,
       returnedBytes: 207,
-      truncated: true,
+      isFullContent: false,
       window: {
         startByte: 1_000,
         endByte: 1_207,

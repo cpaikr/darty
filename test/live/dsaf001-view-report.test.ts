@@ -48,7 +48,7 @@ describe("view-report live DART viewer probes", () => {
       section: {
         id: "section:1",
       },
-      truncated: false,
+      isFullContent: true,
     });
     expect(result.result.content?.body).toContain("사 업 보 고 서");
     expect(result.result.content?.body).toContain("사업연도");
@@ -71,7 +71,7 @@ describe("view-report live DART viewer probes", () => {
     expect(result.result.content).toMatchObject({
       scope: "document",
       format: "markdown",
-      truncated: false,
+      isFullContent: true,
     });
     expect(result.result.content?.body).toContain("정기주주총회 결과");
     expect(result.metadata.tocSource).toBe("none");

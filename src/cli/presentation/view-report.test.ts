@@ -38,7 +38,7 @@ const result = {
       body: "본문",
       sizeBytes: 6,
       returnedBytes: 6,
-      truncated: false,
+      isFullContent: true,
       window: {
         unit: "utf8-bytes",
         startByte: 0,

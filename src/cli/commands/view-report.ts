@@ -59,6 +59,20 @@ const parseTocDepthOption = (value: string): number => {
   return parsed;
 };
 
+const parseContentStartByteOption = (value: string): number => {
+  if (!/^-?\d+$/.test(value)) {
+    throw new InvalidArgumentError(viewReportCliCopy.invalidInteger(value));
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  if (parsed < 0) {
+    throw new InvalidArgumentError("0 이상의 정수를 입력해야 합니다.");
+  }
+
+  return parsed;
+};
+
 const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => [
   createRegisteredOption(
     "receipt",
@@ -93,7 +107,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     "--content-start-byte <number>",
     viewReportFieldCopy.contentStartByte.cliDescription,
     (option) => {
-      option.argParser((value) => parseIntegerOption(value));
+      option.argParser((value) => parseContentStartByteOption(value));
     },
   ),
   createVerboseOption(),
@@ -122,12 +136,12 @@ export const renderViewReportCliErrorMessage = (
 
 const renderSupplementalHelp = (): string => {
   const examples = viewReportCliCopy.examples
-    .map(
-      (example) =>
-        `  # ${example.description}\n  darty ${viewReportOperationName} ${example.argv.join(
-          " ",
-        )}`,
-    )
+    .map((example) => {
+      const invocation =
+        "argv" in example ? example.argv.join(" ") : example.command;
+
+      return `  # ${example.description}\n  darty ${viewReportOperationName} ${invocation}`;
+    })
     .join("\n\n");
 
   const notes = viewReportCliCopy.notes.map((note) => `  - ${note}`).join("\n");

@@ -107,7 +107,7 @@ describe("parseViewReportCommandArgs", () => {
         "-1",
       ]),
     ).toThrow(
-      "option '--content-start-byte <number>' argument '-1' is invalid. 정수를 입력해야 하지만 \"-1\"을(를) 받았습니다.",
+      "option '--content-start-byte <number>' argument '-1' is invalid. 0 이상의 정수를 입력해야 합니다.",
     );
   });
 
@@ -121,12 +121,11 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("JSON 결과의 본문 형식(html 또는");
     expect(viewReportUsage).toContain("markdown)");
     expect(viewReportUsage).toContain("--max-bytes <number>");
-    expect(viewReportUsage).toContain(
-      "[기본값: 50000] 반환할 본문 최대 바이트 수",
-    );
+    expect(viewReportUsage).toContain("[기본값: 50000, 범위: 1000~1000000]");
+    expect(viewReportUsage).toContain("반환할 본문 최대 바이트");
     expect(viewReportUsage).toContain("출력/context가 커질 수 있습니다");
     expect(viewReportUsage).toContain("--content-start-byte <number>");
-    expect(viewReportUsage).toContain("DART viewer offset이 아닙니다");
+    expect(viewReportUsage).toContain("outputFormat으로 이어서 읽으세요");
     expect(viewReportUsage).toContain("--verbose");
     expect(viewReportUsage).toContain("--toc-depth <number>");
     expect(viewReportUsage).toContain("--pretty");
@@ -134,6 +133,12 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("연도, 정정, 다른 접수번호");
     expect(viewReportUsage).toContain("content.body가 반환됩니다");
     expect(viewReportUsage).toContain("content.window.nextStartByte");
+    expect(viewReportUsage).toContain(
+      "--content-start-byte <content.window.nextStartByte>",
+    );
+    expect(viewReportUsage).toContain("search-body 결과의 viewerUrl로 목차 보기");
+    expect(viewReportUsage).toContain("긴 섹션을 작은 창으로 읽기");
+    expect(viewReportUsage).toContain("content.isFullContent");
     expect(viewReportUsage).toContain("PDF는 darty 내부에서 처리하지 않습니다");
     expect(viewReportUsage).not.toContain("--include-toc");
   });
@@ -250,7 +255,7 @@ describe("parseViewReportCommandArgs", () => {
           format: "html" as const,
           sizeBytes: 100,
           returnedBytes: 100,
-          truncated: false,
+          isFullContent: true,
           body: "본문",
           window: {
             unit: "utf8-bytes" as const,

@@ -69,7 +69,7 @@ const ViewReportContentBaseFields = {
   scope: Schema.Literal("document", "section"),
   sizeBytes: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
   returnedBytes: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
-  truncated: Schema.Boolean,
+  isFullContent: Schema.Boolean,
   window: ViewReportContentWindowSchema,
   section: Schema.optional(ViewReportContentSectionSchema),
 } as const;
