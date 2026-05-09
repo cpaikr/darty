@@ -114,6 +114,7 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("주의사항");
     expect(viewReportUsage).toContain("연도, 정정, 다른 접수번호");
     expect(viewReportUsage).toContain("content.body가 반환됩니다");
+    expect(viewReportUsage).toContain("PDF는 darty 내부에서 처리하지 않습니다");
     expect(viewReportUsage).not.toContain("--include-toc");
   });
 

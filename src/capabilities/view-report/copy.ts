@@ -80,6 +80,7 @@ export const viewReportCliCopy = {
     "toc[].id/section ID는 한 보고서 안에서만 쓰는 값입니다. 연도, 정정, 다른 접수번호의 보고서에 재사용하지 말고 매 보고서에서 목차를 먼저 조회하세요.",
     "`--section-id`로 본문을 조회하거나 TOC 없는 문서를 조회하면 content.body가 반환됩니다. 긴 섹션은 출력과 에이전트 context가 커질 수 있으니 필요한 섹션만 조회하고 `--max-bytes`는 필요한 만큼만 키우세요.",
     "`--output-format markdown`은 복잡한 DART 표를 HTML table로 보존할 수 있습니다. rowspan/colspan이 있는 표는 자동 파싱 전 원문 구조를 확인하세요.",
+    "PDF는 darty 내부에서 처리하지 않습니다. PDF 링크는 직접 다운로드하거나 다른 PDF 처리/읽기 도구로 열어 사용하세요.",
   ],
 } as const;
 

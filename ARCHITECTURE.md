@@ -32,7 +32,7 @@ current supported surface.
 ## Document Ownership
 
 - [README.md](README.md)
-  Public CLI orientation, install-free quickstart, command usage, and current read-only caveats.
+  Minimal public/package orientation that points users to CLI help as the usage source of truth.
 - [VISION.md](VISION.md)
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)

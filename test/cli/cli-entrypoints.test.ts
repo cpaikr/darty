@@ -75,6 +75,9 @@ describe("CLI entrypoints", () => {
     expect(stdout).toContain("search-company [options]");
     expect(stdout).toContain("search-company-reports [options]");
     expect(stdout).toContain("view-report [options]");
+    expect(stdout).toContain("브라우저 상호작용 중 발생하는 API 호출을 모방");
+    expect(stdout).toContain("DART의 공식 OpenDART API를 사용하지 않습니다");
+    expect(stdout).toContain("정확성을 보장하지 않습니다");
     expect(stdout).not.toContain("contents-search [options]");
     expect(stdout).not.toContain("report-view [options]");
   });
