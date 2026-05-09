@@ -1,5 +1,3 @@
-#!/usr/bin/env bun
-
 import { Command } from "commander";
 
 import { defaultCompanyDetailOperation } from "./app/company-detail.ts";

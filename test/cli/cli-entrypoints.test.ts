@@ -8,9 +8,24 @@ const repoRoot = join(import.meta.dir, "..", "..");
 const decode = (value: Uint8Array<ArrayBufferLike>) =>
   new TextDecoder().decode(value);
 
-const runEntrypoint = (entrypoint: string, argv: readonly string[]) =>
+const nodeRuntime = process.env.DART_NODE_RUNTIME ?? "node";
+
+const runEntrypoint = (
+  runtime: string,
+  entrypoint: string,
+  argv: readonly string[],
+) =>
   Bun.spawnSync({
-    cmd: [process.execPath, entrypoint, ...argv],
+    cmd: [runtime, entrypoint, ...argv],
+    cwd: repoRoot,
+    stdout: "pipe",
+    stderr: "pipe",
+    env: process.env,
+  });
+
+const runExecutable = (entrypoint: string, argv: readonly string[]) =>
+  Bun.spawnSync({
+    cmd: [entrypoint, ...argv],
     cwd: repoRoot,
     stdout: "pipe",
     stderr: "pipe",
@@ -28,13 +43,10 @@ describe("CLI entrypoints", () => {
     const result = Bun.spawnSync({
       cmd: [
         process.execPath,
-        "build",
-        "src/cli.ts",
-        "--target=bun",
+        "run",
+        "scripts/build-cli.ts",
         "--outfile",
         builtEntrypoint,
-        "--minify",
-        "--sourcemap=none",
       ],
       cwd: repoRoot,
       stdout: "pipe",
@@ -56,34 +68,68 @@ describe("CLI entrypoints", () => {
   });
 
   test.each([
-    ["source", "src/cli.ts"],
-    ["bundled", () => builtEntrypoint],
-  ] as const)("%s root help exposes the public commands", (_label, entrypoint) => {
-    const result = runEntrypoint(
-      typeof entrypoint === "function" ? entrypoint() : entrypoint,
-      ["--help"],
-    );
+    ["source via Bun", process.execPath, "src/cli.ts"],
+    ["bundled via Node", nodeRuntime, () => builtEntrypoint],
+    ["bundled via Bun", process.execPath, () => builtEntrypoint],
+  ] as const)(
+    "%s root help exposes the public commands",
+    (_label, runtime, entrypoint) => {
+      const result = runEntrypoint(
+        runtime,
+        typeof entrypoint === "function" ? entrypoint() : entrypoint,
+        ["--help"],
+      );
+      const stdout = decode(result.stdout);
+      const stderr = decode(result.stderr);
+
+      expect(result.exitCode).toBe(0);
+      expect(stderr).toBe("");
+      expect(stdout).toContain("Usage: darty [options] [command]");
+      expect(stdout).toContain("company-detail [options]");
+      expect(stdout).toContain("company-rss [options]");
+      expect(stdout).toContain("search-body [options]");
+      expect(stdout).toContain("search-company [options]");
+      expect(stdout).toContain("search-company-reports [options]");
+      expect(stdout).toContain("view-report [options]");
+      expect(stdout).toContain("브라우저 상호작용 중 발생하는 API 호출을 모방");
+      expect(stdout).toContain("DART의 공식 OpenDART API를 사용하지 않습니다");
+      expect(stdout).toContain("정확성을 보장하지 않습니다");
+      expect(stdout).not.toContain("contents-search [options]");
+      expect(stdout).not.toContain("report-view [options]");
+    },
+  );
+
+  test("bundled CLI is executable through its Node shebang", () => {
+    const result = runExecutable(builtEntrypoint, ["--help"]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
     expect(result.exitCode).toBe(0);
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage: darty [options] [command]");
-    expect(stdout).toContain("company-detail [options]");
-    expect(stdout).toContain("company-rss [options]");
-    expect(stdout).toContain("search-body [options]");
-    expect(stdout).toContain("search-company [options]");
-    expect(stdout).toContain("search-company-reports [options]");
-    expect(stdout).toContain("view-report [options]");
-    expect(stdout).toContain("브라우저 상호작용 중 발생하는 API 호출을 모방");
-    expect(stdout).toContain("DART의 공식 OpenDART API를 사용하지 않습니다");
-    expect(stdout).toContain("정확성을 보장하지 않습니다");
-    expect(stdout).not.toContain("contents-search [options]");
-    expect(stdout).not.toContain("report-view [options]");
+  });
+
+  test("bundled CLI validates command input through Node", () => {
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "company-detail",
+      "--company-code",
+      "005930",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain(
+      '옵션 "--company-code"은(는) 8자리 DART 회사 코드여야 합니다.',
+    );
   });
 
   test("bundled CLI accepts the documented company-detail command", () => {
-    const result = runEntrypoint(builtEntrypoint, ["company-detail", "--help"]);
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "company-detail",
+      "--help",
+    ]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
@@ -94,7 +140,10 @@ describe("CLI entrypoints", () => {
   });
 
   test("bundled CLI accepts the documented company-rss command", () => {
-    const result = runEntrypoint(builtEntrypoint, ["company-rss", "--help"]);
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "company-rss",
+      "--help",
+    ]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
@@ -105,7 +154,10 @@ describe("CLI entrypoints", () => {
   });
 
   test("bundled CLI accepts the documented search-company command", () => {
-    const result = runEntrypoint(builtEntrypoint, ["search-company", "--help"]);
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "search-company",
+      "--help",
+    ]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
@@ -116,7 +168,7 @@ describe("CLI entrypoints", () => {
   });
 
   test("bundled CLI accepts the documented search-company-reports command", () => {
-    const result = runEntrypoint(builtEntrypoint, [
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
       "search-company-reports",
       "--help",
     ]);
@@ -132,7 +184,10 @@ describe("CLI entrypoints", () => {
   });
 
   test("bundled CLI accepts the documented view-report command", () => {
-    const result = runEntrypoint(builtEntrypoint, ["view-report", "--help"]);
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "view-report",
+      "--help",
+    ]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
 
