@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import {
   chmodSync,
   mkdirSync,
@@ -6,7 +5,13 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { homedir } from "node:os";
+import { join, parse, resolve } from "node:path";
+import {
+  checksumFile,
+  createExecutableArchive,
+  type ReleaseArchiveType,
+} from "./release-archive.ts";
 
 const defaultOutdir = "dist-bin";
 const entrypoint = "src/cli.ts";
@@ -16,7 +21,7 @@ type BinaryTarget = {
   readonly assetPlatform: string;
   readonly assetArch: string;
   readonly executableName: string;
-  readonly archiveType: "tar.gz" | "zip";
+  readonly archiveType: ReleaseArchiveType;
 };
 
 const targets: readonly BinaryTarget[] = [
@@ -67,6 +72,7 @@ if (!packageJson.version) {
 
 const parseArgs = (argv: readonly string[]) => {
   let outdir = defaultOutdir;
+  let smokeTest = false;
   const selectedTargets: string[] = [];
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -92,10 +98,28 @@ const parseArgs = (argv: readonly string[]) => {
       continue;
     }
 
+    if (arg === "--smoke-test") {
+      smokeTest = true;
+      continue;
+    }
+
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  return { outdir, selectedTargets };
+  return { outdir, selectedTargets, smokeTest };
+};
+
+const resolveManagedOutdir = (outdir: string): string => {
+  const resolved = resolve(outdir);
+  const forbidden = new Set([parse(resolved).root, resolve("."), resolve(homedir())]);
+
+  if (forbidden.has(resolved)) {
+    throw new Error(
+      `Refusing to use unsafe release outdir: ${resolved}. Choose a dedicated build directory.`,
+    );
+  }
+
+  return resolved;
 };
 
 const run = (cmd: string[]) => {
@@ -110,34 +134,22 @@ const run = (cmd: string[]) => {
   }
 };
 
-const checksumFile = (path: string): string => {
-  const hash = createHash("sha256");
-  hash.update(readFileSync(path));
-  return hash.digest("hex");
-};
-
 const createArchive = (target: BinaryTarget, executablePath: string, releaseDir: string) => {
   const archiveBase = `darty-v${packageJson.version}-${target.assetPlatform}-${target.assetArch}`;
   const archiveName = `${archiveBase}.${target.archiveType}`;
   const archivePath = join(releaseDir, archiveName);
 
-  if (target.archiveType === "zip") {
-    run(["zip", "-j", "-q", archivePath, executablePath]);
-  } else {
-    run([
-      "tar",
-      "-czf",
-      archivePath,
-      "-C",
-      dirname(executablePath),
-      basename(executablePath),
-    ]);
-  }
+  createExecutableArchive({
+    archivePath,
+    archiveType: target.archiveType,
+    executableName: target.executableName,
+    executable: readFileSync(executablePath),
+  });
 
   return { archiveName, archivePath };
 };
 
-const { outdir, selectedTargets } = parseArgs(Bun.argv.slice(2));
+const { outdir, selectedTargets, smokeTest } = parseArgs(Bun.argv.slice(2));
 const selectedTargetSet = new Set(selectedTargets);
 const buildTargets = selectedTargets.length === 0
   ? targets
@@ -155,10 +167,13 @@ if (buildTargets.length === 0) {
   throw new Error("No binary targets selected.");
 }
 
-const workDir = join(outdir, "work");
-const releaseDir = join(outdir, "release");
+const managedOutdir = resolveManagedOutdir(outdir);
+const workDir = join(managedOutdir, "work");
+const releaseDir = join(managedOutdir, "release");
 
-rmSync(outdir, { recursive: true, force: true });
+mkdirSync(managedOutdir, { recursive: true });
+rmSync(workDir, { recursive: true, force: true });
+rmSync(releaseDir, { recursive: true, force: true });
 mkdirSync(workDir, { recursive: true });
 mkdirSync(releaseDir, { recursive: true });
 
@@ -184,6 +199,10 @@ for (const target of buildTargets) {
 
   if (!target.executableName.endsWith(".exe")) {
     chmodSync(executablePath, 0o755);
+  }
+
+  if (smokeTest) {
+    run([executablePath, "--help"]);
   }
 
   const { archiveName, archivePath } = createArchive(target, executablePath, releaseDir);
