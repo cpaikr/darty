@@ -36,10 +36,17 @@ import {
   executeViewReportCommand,
   renderViewReportCliErrorMessage,
 } from "./cli/commands/view-report.ts";
+import {
+  configureCliTransport,
+  renderCliFailureJson,
+} from "./cli/command-helpers.ts";
 
 const writeStdout = (text: string) => {
   console.log(text);
 };
+
+const shouldPrettyPrintJson = (argv: readonly string[]): boolean =>
+  argv.includes("--pretty");
 
 const defaultCompanyDetailExecutor = {
   runOperation: (input: Record<string, unknown>) =>
@@ -84,7 +91,7 @@ const rootHelpNotes = `
   - 정확성을 보장하지 않습니다. 정보 사용 책임은 사용자에게 있으며, 이 도구는 어떤 보증도 제공하지 않습니다.
 `;
 
-const program = new Command()
+const program = configureCliTransport(new Command())
   .name("darty")
   .description("DART 검색 및 조회 기능을 도구 친화적으로 제공합니다.")
   .helpOption("-h, --help", "도움말을 표시합니다.")
@@ -136,13 +143,12 @@ if (process.argv.length <= 2) {
       renderSearchCompanyReportsCliErrorMessage(error) ??
       renderViewReportCliErrorMessage(error);
 
-    if (cliMessage !== undefined) {
-      console.error(cliMessage);
-    } else if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error(String(error));
-    }
+    writeStdout(
+      renderCliFailureJson(error, {
+        ...(cliMessage === undefined ? {} : { message: cliMessage }),
+        pretty: shouldPrettyPrintJson(process.argv),
+      }),
+    );
     process.exitCode = 1;
   });
 }

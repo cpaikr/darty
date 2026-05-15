@@ -15,6 +15,50 @@ const runCli = (argv: readonly string[]) =>
 const decode = (value: Uint8Array<ArrayBufferLike>) =>
   new TextDecoder().decode(value);
 
+const parseJsonStdout = (result: ReturnType<typeof runCli>): unknown =>
+  JSON.parse(decode(result.stdout));
+
+const expectJsonFailure = (
+  result: ReturnType<typeof runCli>,
+  expected: {
+    readonly code: string;
+    readonly messageIncludes: readonly string[];
+    readonly parameter?: string;
+  },
+) => {
+  const stdout = decode(result.stdout);
+  const stderr = decode(result.stderr);
+
+  expect(result.exitCode).toBe(1);
+  expect(stderr).toBe("");
+
+  const envelope = JSON.parse(stdout) as {
+    readonly result: unknown;
+    readonly metadata: { readonly cliTransportVersion: string };
+    readonly references: Record<string, unknown>;
+    readonly warnings: readonly unknown[];
+    readonly error: {
+      readonly code: string;
+      readonly message: string;
+      readonly retryable: boolean;
+      readonly parameter?: string;
+    };
+  };
+
+  expect(envelope.result).toBeNull();
+  expect(envelope.metadata.cliTransportVersion).toBe("1");
+  expect(envelope.references).toEqual({});
+  expect(envelope.warnings).toEqual([]);
+  expect(envelope.error.code).toBe(expected.code);
+  expect(envelope.error.retryable).toBe(false);
+  if (expected.parameter !== undefined) {
+    expect(envelope.error.parameter).toBe(expected.parameter);
+  }
+  for (const message of expected.messageIncludes) {
+    expect(envelope.error.message).toContain(message);
+  }
+};
+
 describe("search-body CLI subprocess", () => {
   test("prints root help to stdout when no command is passed", () => {
     const result = runCli([]);
@@ -92,19 +136,19 @@ describe("search-body CLI subprocess", () => {
     expect(stderr).toBe("");
   });
 
-  test("fails partial missing required arguments with stderr only", () => {
+  test("prints JSON failure for partial missing required arguments", () => {
     const result = runCli(["search-body", "--keyword", "배당"]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain(
-      '필수 옵션 "--start-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
-    );
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      parameter: "startDate",
+      messageIncludes: [
+        '필수 옵션 "--start-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+      ],
+    });
   });
 
-  test("fails later missing required arguments with CLI flag names", () => {
+  test("prints later missing required arguments with CLI flag names", () => {
     const result = runCli([
       "search-body",
       "--keyword",
@@ -112,17 +156,17 @@ describe("search-body CLI subprocess", () => {
       "--start-date",
       "20250331",
     ]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain(
-      '필수 옵션 "--end-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
-    );
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      parameter: "endDate",
+      messageIncludes: [
+        '필수 옵션 "--end-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+      ],
+    });
   });
 
-  test("fails invalid integer arguments with a non-zero exit code", () => {
+  test("prints JSON failure for invalid integer arguments", () => {
     const result = runCli([
       "search-body",
       "--keyword",
@@ -134,18 +178,34 @@ describe("search-body CLI subprocess", () => {
       "--page",
       "nope",
     ]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain(
-      "option '--page <number>' argument 'nope' is invalid",
-    );
-    expect(stderr).toContain('정수를 입력해야 하지만 "nope"을(를) 받았습니다.');
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      messageIncludes: [
+        "option '--page <number>' argument 'nope' is invalid",
+        '정수를 입력해야 하지만 "nope"을(를) 받았습니다.',
+      ],
+    });
   });
 
-  test("fails invalid enum arguments with a non-zero exit code", () => {
+  test("prints pretty JSON failures when requested", () => {
+    const result = runCli([
+      "search-body",
+      "--keyword",
+      "배당",
+      "--pretty",
+    ]);
+    const stdout = decode(result.stdout);
+
+    expect(result.exitCode).toBe(1);
+    expect(decode(result.stderr)).toBe("");
+    expect(stdout).toContain('\n  "result": null');
+    expect((parseJsonStdout(result) as { error: { code: string } }).error.code).toBe(
+      "invalid_request",
+    );
+  });
+
+  test("prints JSON failure for invalid enum arguments", () => {
     const result = runCli([
       "search-body",
       "--keyword",
@@ -157,14 +217,14 @@ describe("search-body CLI subprocess", () => {
       "--sort-by",
       "corp",
     ]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain(
-      '옵션 "--sort-by"은(는) 다음 중 하나여야 합니다: date, reportName.',
-    );
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      parameter: "sortBy",
+      messageIncludes: [
+        '옵션 "--sort-by"은(는) 다음 중 하나여야 합니다: date, reportName.',
+      ],
+    });
   });
 
   test("explains that company-code expects a DART company code, not a stock code", () => {
@@ -179,15 +239,15 @@ describe("search-body CLI subprocess", () => {
       "--company-code",
       "005930",
     ]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain(
-      '옵션 "--company-code"은(는) 8자리 DART 회사 코드여야 합니다.',
-    );
-    expect(stderr).toContain("회사명이나 6자리 종목코드는 사용할 수 없습니다.");
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      parameter: "companyCode",
+      messageIncludes: [
+        '옵션 "--company-code"은(는) 8자리 DART 회사 코드여야 합니다.',
+        "회사명이나 6자리 종목코드는 사용할 수 없습니다.",
+      ],
+    });
   });
 
   test("rejects impossible calendar dates before searching DART", () => {
@@ -200,15 +260,15 @@ describe("search-body CLI subprocess", () => {
       "--end-date",
       "20250331",
     ]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain(
-      '옵션 "--start-date"은(는) YYYYMMDD 형식의 실제 날짜여야 합니다.',
-    );
-    expect(stderr).toContain('"20250230"은(는) 유효한 날짜가 아닙니다.');
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      parameter: "startDate",
+      messageIncludes: [
+        '옵션 "--start-date"은(는) YYYYMMDD 형식의 실제 날짜여야 합니다.',
+        '"20250230"은(는) 유효한 날짜가 아닙니다.',
+      ],
+    });
   });
 
   test("rejects date ranges where start-date is after end-date before searching DART", () => {
@@ -221,12 +281,14 @@ describe("search-body CLI subprocess", () => {
       "--end-date",
       "20250101",
     ]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain("검색 시작일은 종료일보다 늦을 수 없습니다.");
-    expect(stderr).toContain("startDate=20250331, endDate=20250101");
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      parameter: "startDate",
+      messageIncludes: [
+        "검색 시작일은 종료일보다 늦을 수 없습니다.",
+        "startDate=20250331, endDate=20250101",
+      ],
+    });
   });
 });

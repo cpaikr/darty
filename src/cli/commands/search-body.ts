@@ -14,6 +14,7 @@ import { searchBodyOperationName } from "../../capabilities/search-body/spec.ts"
 import { toSearchBodyCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
+  configureCliTransport,
   createCliVerboseOutputOptions,
   createPrettyOption,
   createRegisteredOption,
@@ -153,7 +154,7 @@ const buildSearchBodyCommand = (
   onRun?: (command: SearchBodyCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
-  const command = new Command(searchBodyOperationName)
+  const command = configureCliTransport(new Command(searchBodyOperationName))
     .summary(searchBodyCliCopy.summary)
     .description(searchBodyToolCopy.description)
     .helpOption("-h, --help", "명령 도움말을 표시합니다.")

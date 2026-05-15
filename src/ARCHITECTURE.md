@@ -117,10 +117,11 @@ graph TD
 ```
 
 - **`src/cli.ts`** — Root Commander program. Registers commands and turns
-  failures into a process exit code.
+  failures into the CLI v1 JSON failure envelope plus a process exit code.
 - **`src/cli/commands/`** — CLI transport adapters. Own Commander flags, help
   text, examples, and stdout formatting while delegating semantic validation and
-  execution through an injected command runner.
+  execution through an injected command runner. Command success and failure both
+  serialize as JSON to stdout; help remains human-readable.
 - **`src/app/`** — Shared operation wiring. Exposes operation names, JSON
   Schemas, and capability executors with the default DART providers already
   attached.

@@ -31,7 +31,7 @@ The important point: the CLI parses transport input, then delegates. It does not
 2. `src/cli/commands/*` registers commands and flags.
 3. The command extracts only provided flags into a partial input object.
 4. The CLI command runner calls the injected operation runner.
-5. On success, the CLI writes one pretty-printed JSON result to stdout.
+5. On success, the CLI writes one JSON result envelope to stdout. `--pretty` only changes indentation.
 
 The CLI performs only shallow parsing where Commander needs it, such as converting `--page` to a number. Semantic validation still happens in the shared capability executor.
 
@@ -127,3 +127,5 @@ source error
 ```
 
 This keeps external callers from depending on DART-specific error classes while preserving useful categories such as `source_unavailable`, `source_changed`, and `source_parse_failure`.
+
+At the CLI boundary, normal command failures are still JSON: stdout contains one failure envelope with `result: null`, a typed `error`, and `metadata.cliTransportVersion: "1"`; stderr stays empty. Help output is the deliberate human-readable exception.

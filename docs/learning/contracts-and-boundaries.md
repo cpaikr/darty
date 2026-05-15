@@ -128,9 +128,9 @@ Error classes narrow as they move up:
 | Source adapter | `SourceUnavailable`, `SourceChanged`, `ParseFailure`, `InvalidInput` |
 | Provider seam | `SearchBodyProviderError` |
 | Public capability | `SearchBodyFailure` |
-| Transport | CLI process error or future adapter-specific error result |
+| Transport | CLI v1 JSON failure envelope or future adapter-specific error result |
 
-External callers should reason about public capability failure codes, not source-internal classes.
+External callers should reason about public capability failure codes, not source-internal classes. In the active CLI transport, those codes are projected into stdout JSON on both success and failure.
 
 ## Design Tradeoffs
 

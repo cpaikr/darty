@@ -17,6 +17,7 @@ import {
 } from "../presentation/view-report.ts";
 import {
   buildCliNameByOptionKey,
+  configureCliTransport,
   createCliVerboseOutputOptions,
   createPrettyOption,
   createRegisteredOption,
@@ -174,7 +175,7 @@ const buildViewReportCommand = (
   onRun?: (command: ViewReportCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
-  const command = new Command(viewReportOperationName)
+  const command = configureCliTransport(new Command(viewReportOperationName))
     .summary(viewReportCliCopy.summary)
     .description(viewReportToolCopy.description)
     .helpOption("-h, --help", "명령 도움말을 표시합니다.")

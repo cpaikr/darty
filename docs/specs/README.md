@@ -8,9 +8,11 @@ A document belongs here when it defines an implementation target, such as:
 - request and response schemas
 - identifier and citation rules
 - explicit errors, warnings, and constraints
+- active transport contracts such as CLI subprocess I/O
 
 Current specs:
 
+- [cli-transport-v1.md](cli-transport-v1.md)
 - [company-rss-v1.md](company-rss-v1.md)
 - [dsae001-company-detail-v1.md](dsae001-company-detail-v1.md)
 - [dsae001-search-company-v1.md](dsae001-search-company-v1.md)

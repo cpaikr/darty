@@ -14,6 +14,7 @@ import { searchCompanyReportsOperationName } from "../../capabilities/search-com
 import { toSearchCompanyReportsCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
+  configureCliTransport,
   createCliVerboseOutputOptions,
   createPrettyOption,
   createRegisteredOption,
@@ -187,7 +188,9 @@ const buildSearchCompanyReportsCommand = (
   onRun?: (command: SearchCompanyReportsCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
-  const command = new Command(searchCompanyReportsOperationName)
+  const command = configureCliTransport(
+    new Command(searchCompanyReportsOperationName),
+  )
     .summary(searchCompanyReportsCliCopy.summary)
     .description(searchCompanyReportsToolCopy.description)
     .helpOption("-h, --help", "명령 도움말을 표시합니다.")

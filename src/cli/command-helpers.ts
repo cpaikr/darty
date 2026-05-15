@@ -1,6 +1,26 @@
-import { InvalidArgumentError, Option } from "commander";
+import { Command, InvalidArgumentError, Option } from "commander";
 
 export type CliOptionValue = boolean | number | string | readonly string[];
+
+/**
+ * Commander normally exits the process for both help and parse failures. The CLI
+ * keeps help as text, but parse failures must flow into the JSON failure writer.
+ */
+export const exitAfterHelpOrThrowCommanderError = (error: {
+  readonly code: string;
+  readonly exitCode: number;
+}): never => {
+  if (error.code === "commander.helpDisplayed") {
+    process.exit(error.exitCode);
+  }
+
+  throw error;
+};
+
+export const configureCliTransport = (command: Command): Command =>
+  command.exitOverride(exitAfterHelpOrThrowCommanderError).configureOutput({
+    writeErr: () => undefined,
+  });
 
 export type CliJsonOptions = {
   readonly pretty: boolean;
@@ -161,8 +181,127 @@ export const splitCliCommandOptions = <
   };
 };
 
+export type CliFailureCode =
+  | "invalid_request"
+  | "not_found"
+  | "source_unavailable"
+  | "source_changed"
+  | "source_parse_failure"
+  | "internal_error";
+
+export type CliFailureError = {
+  readonly code: CliFailureCode;
+  readonly message: string;
+  readonly retryable: boolean;
+  readonly parameter?: string;
+  readonly sourceUrl?: string;
+};
+
+export type CliFailureEnvelope = {
+  readonly result: null;
+  readonly metadata: {
+    readonly cliTransportVersion: "1";
+  };
+  readonly references: Record<string, never>;
+  readonly warnings: readonly [];
+  readonly error: CliFailureError;
+};
+
 export const renderCliJson = (
   value: unknown,
   options: Partial<CliJsonOptions> = {},
 ): string =>
   JSON.stringify(value, undefined, options.pretty === true ? 2 : undefined);
+
+export const renderCliFailureJson = (
+  error: unknown,
+  options: Partial<CliJsonOptions> & { readonly message?: string } = {},
+): string => renderCliJson(toCliFailureEnvelope(error, options.message), options);
+
+const toCliFailureEnvelope = (
+  error: unknown,
+  messageOverride: string | undefined,
+): CliFailureEnvelope => ({
+  result: null,
+  metadata: {
+    cliTransportVersion: "1",
+  },
+  references: {},
+  warnings: [],
+  error: toCliFailureError(error, messageOverride),
+});
+
+const toCliFailureError = (
+  error: unknown,
+  messageOverride: string | undefined,
+): CliFailureError => {
+  const message = messageOverride ?? toErrorMessage(error);
+
+  if (isTypedCliFailure(error)) {
+    const fields = {
+      code: error.code,
+      message,
+      retryable: error.retryable,
+    } satisfies CliFailureError;
+
+    return {
+      ...fields,
+      ...(error.parameter === undefined ? {} : { parameter: error.parameter }),
+      ...(error.sourceUrl === undefined ? {} : { sourceUrl: error.sourceUrl }),
+    };
+  }
+
+  if (isCommanderError(error)) {
+    return {
+      code: "invalid_request",
+      message,
+      retryable: false,
+    };
+  }
+
+  return {
+    code: "internal_error",
+    message,
+    retryable: false,
+  };
+};
+
+const toErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+};
+
+const cliFailureCodes = new Set<string>([
+  "invalid_request",
+  "not_found",
+  "source_unavailable",
+  "source_changed",
+  "source_parse_failure",
+  "internal_error",
+]);
+
+const isTypedCliFailure = (
+  error: unknown,
+): error is {
+  readonly code: CliFailureCode;
+  readonly message: string;
+  readonly retryable: boolean;
+  readonly parameter?: string | undefined;
+  readonly sourceUrl?: string | undefined;
+} =>
+  isRecord(error) &&
+  typeof error.code === "string" &&
+  cliFailureCodes.has(error.code) &&
+  typeof error.message === "string" &&
+  typeof error.retryable === "boolean";
+
+const isCommanderError = (error: unknown): boolean =>
+  isRecord(error) &&
+  typeof error.code === "string" &&
+  error.code.startsWith("commander.");
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object";

@@ -109,6 +109,22 @@ describe("CLI entrypoints", () => {
     expect(stdout).toContain("Usage: darty [options] [command]");
   });
 
+  test("bundled CLI renders unknown commands as JSON failures", () => {
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, ["missing-command"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+    const envelope = JSON.parse(stdout) as {
+      readonly result: unknown;
+      readonly error: { readonly code: string; readonly message: string };
+    };
+
+    expect(result.exitCode).toBe(1);
+    expect(stderr).toBe("");
+    expect(envelope.result).toBeNull();
+    expect(envelope.error.code).toBe("invalid_request");
+    expect(envelope.error.message).toContain("unknown command 'missing-command'");
+  });
+
   test("bundled CLI validates command input through Node", () => {
     const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
       "company-detail",
@@ -117,10 +133,21 @@ describe("CLI entrypoints", () => {
     ]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
+    const envelope = JSON.parse(stdout) as {
+      readonly result: unknown;
+      readonly error: {
+        readonly code: string;
+        readonly message: string;
+        readonly parameter?: string;
+      };
+    };
 
     expect(result.exitCode).toBe(1);
-    expect(stdout).toBe("");
-    expect(stderr).toContain(
+    expect(stderr).toBe("");
+    expect(envelope.result).toBeNull();
+    expect(envelope.error.code).toBe("invalid_request");
+    expect(envelope.error.parameter).toBe("companyCode");
+    expect(envelope.error.message).toContain(
       '옵션 "--company-code"은(는) 8자리 DART 회사 코드여야 합니다.',
     );
   });

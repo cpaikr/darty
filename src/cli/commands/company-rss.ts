@@ -13,6 +13,7 @@ import {
 import { companyRssOperationName } from "../../capabilities/company-rss/spec.ts";
 import {
   buildCliNameByOptionKey,
+  configureCliTransport,
   createCliJsonOptions,
   createPrettyOption,
   createRegisteredOption,
@@ -83,7 +84,7 @@ const buildCompanyRssCommand = (
   onRun?: (command: CompanyRssCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
-  const command = new Command(companyRssOperationName)
+  const command = configureCliTransport(new Command(companyRssOperationName))
     .summary(companyRssCliCopy.summary)
     .description(companyRssToolCopy.description)
     .helpOption("-h, --help", "명령 도움말을 표시합니다.")

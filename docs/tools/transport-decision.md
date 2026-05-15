@@ -45,7 +45,7 @@ For each tool, decide which of these adapters are justified:
 
 Do not fork logic between adapters. Adapters should mostly validate input, call the core, and serialize output.
 
-Current repo stance: CLI is the only active adapter. The early MCP adapter is archived at git tag `archive/mcp-before-removal`; reintroduce MCP only when the core contract and agent-runtime need justify it.
+Current repo stance: CLI is the only active adapter. Its subprocess I/O contract is defined in [../specs/cli-transport-v1.md](../specs/cli-transport-v1.md): command success and command failure both emit one JSON envelope to stdout, while help remains human-readable. The early MCP adapter is archived at git tag `archive/mcp-before-removal`; reintroduce MCP only when the core contract and agent-runtime need justify it.
 
 ## Why CLI First Often Wins
 

@@ -13,6 +13,7 @@ import {
 import { companyDetailOperationName } from "../../capabilities/company-detail/spec.ts";
 import {
   buildCliNameByOptionKey,
+  configureCliTransport,
   createCliJsonOptions,
   createPrettyOption,
   createRegisteredOption,
@@ -83,7 +84,7 @@ const buildCompanyDetailCommand = (
   onRun?: (command: CompanyDetailCliCommand) => Promise<void>,
 ): Command => {
   const registeredOptions = buildRegisteredOptions();
-  const command = new Command(companyDetailOperationName)
+  const command = configureCliTransport(new Command(companyDetailOperationName))
     .summary(companyDetailCliCopy.summary)
     .description(companyDetailToolCopy.description)
     .helpOption("-h, --help", "명령 도움말을 표시합니다.")
