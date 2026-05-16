@@ -94,9 +94,8 @@ jobs:
           - name: linux-arm64
             os: ubuntu-24.04-arm
             target: bun-linux-arm64
-          - name: macos-x64
-            os: macos-13
-            target: bun-darwin-x64
+          # GitHub-hosted macos-13 Intel runners can remain queued indefinitely,
+          # which blocks the publish job. Ship the current macOS arm64 target only.
           - name: macos-arm64
             os: macos-14
             target: bun-darwin-arm64

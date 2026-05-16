@@ -51,7 +51,7 @@ To republish an existing source tag without moving it, run the `Release` workflo
 
 The workflow is idempotent. If the npm package version already exists, npm publish is skipped and the public release assets are uploaded with `--clobber`.
 
-Release binaries are built and smoke-tested on native GitHub-hosted runners for Linux x64, Linux arm64, macOS x64, macOS arm64, and Windows x64. The workflow uses the Bun version pinned in `package.json`.
+Release binaries are built and smoke-tested on native GitHub-hosted runners for Linux x64, Linux arm64, macOS arm64, and Windows x64. macOS x64 is intentionally omitted because GitHub-hosted `macos-13` Intel runners can remain queued long enough to block publishing. The workflow uses the Bun version pinned in `package.json`.
 
 ## Local binary build
 
