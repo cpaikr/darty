@@ -37,7 +37,7 @@
 - Read `docs/release.md` before preparing release automation changes or manual fallback tags.
 - Release Please owns normal version bumps and changelog updates.
 - Manual release tags must match `package.json` exactly: version `x.y.z` uses source tag `vx.y.z`.
-- The release workflow publishes npm and uploads standalone binaries to `open-creo/open-creo`; do not add a separate manual publishing path unless the docs change.
+- The release workflow publishes npm and uploads standalone binaries to `open-creo/skills`; do not add a separate manual publishing path unless the docs change.
 
 ## Working Rules
 

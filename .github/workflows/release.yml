@@ -204,13 +204,13 @@ jobs:
 
       - name: Upload assets to public GitHub Release
         run: |
-          if gh release view "$PUBLIC_RELEASE_TAG" --repo open-creo/open-creo >/dev/null 2>&1; then
+          if gh release view "$PUBLIC_RELEASE_TAG" --repo open-creo/skills >/dev/null 2>&1; then
             gh release upload "$PUBLIC_RELEASE_TAG" dist-bin/release/* \
-              --repo open-creo/open-creo \
+              --repo open-creo/skills \
               --clobber
           else
             gh release create "$PUBLIC_RELEASE_TAG" dist-bin/release/* \
-              --repo open-creo/open-creo \
+              --repo open-creo/skills \
               --title "darty v$PACKAGE_VERSION" \
               --notes "Standalone darty binaries for $PACKAGE_NAME@$PACKAGE_VERSION. The npm package is published separately."
           fi

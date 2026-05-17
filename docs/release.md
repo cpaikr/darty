@@ -3,7 +3,7 @@
 This repo publishes two artifacts for the same `package.json` version:
 
 - npm package: `@sjunepark/darty`
-- standalone Bun-compiled binaries uploaded to `open-creo/open-creo` GitHub Releases
+- standalone Bun-compiled binaries uploaded to `open-creo/skills` GitHub Releases
 
 Release Please owns normal version bumps, `CHANGELOG.md`, source tags, and GitHub Releases. The Release workflow publishes npm and uploads standalone binaries from source tags.
 
@@ -19,7 +19,7 @@ Configure npm trusted publishing for `@sjunepark/darty`:
 Configure these secrets in this private repository:
 
 - `RELEASE_PLEASE_TOKEN`: token used by `.github/workflows/release-please.yml` to open release PRs and create source tags/releases. Use a fine-grained PAT or GitHub App token, not the default `GITHUB_TOKEN`, so Release Please-created tags trigger `.github/workflows/release.yml`. Grant this repository Contents read/write and Pull requests read/write access.
-- `OPEN_CREO_RELEASE_TOKEN`: fine-grained GitHub token that can create releases and upload assets in `open-creo/open-creo`. Grant repository Contents read/write access and authorize org SSO if required.
+- `OPEN_CREO_RELEASE_TOKEN`: fine-grained GitHub token that can create releases and upload assets in `open-creo/skills`. Grant repository Contents read/write access and authorize org SSO if required.
 
 The public repository must allow release creation by the `OPEN_CREO_RELEASE_TOKEN` owner. npm publishing uses OIDC trusted publishing, so no npm publish token is required.
 
@@ -34,7 +34,7 @@ Ensure this repository can use the native runner labels in `.github/workflows/re
 3. `.github/workflows/release-please.yml` opens or updates a release PR that bumps `package.json`, updates `.release-please-manifest.json`, and writes `CHANGELOG.md`.
 4. Merge the release PR after CI passes.
 5. Release Please creates the source tag and private GitHub Release.
-6. The source tag triggers `.github/workflows/release.yml`, which validates the package again, publishes npm, builds standalone binaries, and uploads public binary assets to `open-creo/open-creo`.
+6. The source tag triggers `.github/workflows/release.yml`, which validates the package again, publishes npm, builds standalone binaries, and uploads public binary assets to `open-creo/skills`.
 
 The source tag must match `package.json` exactly. Version `x.y.z` uses source tag `vx.y.z` and public release tag `darty-vx.y.z`.
 
