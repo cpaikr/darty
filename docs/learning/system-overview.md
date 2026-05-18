@@ -9,7 +9,7 @@ The executable slice is intentionally narrow:
 - public CLI commands: `search-body` and `view-report`
 - DART source adapters for `dsab007` contents search and `dsaf001` report viewing
 - structured result envelopes with request echo, metadata, references, and warnings
-- deterministic tests plus opt-in live and agentic CLI eval tracks
+- deterministic tests plus opt-in live, agentic CLI, and agent-native typed-tool eval tracks
 
 The broader product direction is in [VISION](../../VISION.md). Do not infer the full product scope from the current capabilities; the repo explicitly treats current code as the first slice of a larger DART querying/searching tool.
 

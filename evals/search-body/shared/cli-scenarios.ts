@@ -8,6 +8,7 @@ export type SearchBodyCliScenario = {
   readonly companyCode?: string;
   readonly argv: readonly string[];
   readonly task: string;
+  readonly agentNativeTask: string;
 };
 
 export const searchBodyCliScenarios = [
@@ -28,6 +29,7 @@ export const searchBodyCliScenarios = [
       "20260331",
     ],
     task: `Use the local darty CLI to search DART filing contents for the keyword "배당" between 20250331 and 20260331.`,
+    agentNativeTask: `Use the local darty tools to search DART filing contents for the keyword "배당" between 20250331 and 20260331.`,
   },
   {
     id: "explicit-no-result-search",
@@ -46,6 +48,7 @@ export const searchBodyCliScenarios = [
       "20260331",
     ],
     task: `Use the local darty CLI to search DART filing contents for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331.`,
+    agentNativeTask: `Use the local darty tools to search DART filing contents for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331.`,
   },
   {
     id: "company-code-filtered-search",
@@ -67,5 +70,6 @@ export const searchBodyCliScenarios = [
       "00126380",
     ],
     task: `Use the local darty CLI to search DART filing contents for Samsung Electronics filings matching the keyword "배당" between 20250331 and 20260331. Use DART company code 00126380 as the company-code filter.`,
+    agentNativeTask: `Use the local darty tools to search DART filing contents for Samsung Electronics filings matching the keyword "배당" between 20250331 and 20260331. Use DART company code 00126380 as the company-code filter.`,
   },
 ] as const satisfies readonly SearchBodyCliScenario[];

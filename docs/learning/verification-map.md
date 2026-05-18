@@ -60,11 +60,13 @@ The main tracks are:
 
 - fixed-command CLI scenario evals
 - agentic CLI invocation evals
+- agent-native typed-tool evals
 
 These do not replace deterministic tests. They answer model/tool-use questions such as:
 
 - can a fixed live scenario return the expected structured envelope?
 - can a model use the provided local CLI runner with valid arguments?
+- can a model use typed `darty_*` tools without CLI syntax reasoning?
 
 The archived MCP eval track is preserved at git tag `archive/mcp-before-removal` and should only return if MCP becomes an active adapter again.
 
@@ -89,6 +91,7 @@ For eval tracks:
 bun run eval:search-body:cli
 bun run env:check
 bun run eval:search-body:agent:cli
+bun run eval:search-body:agent:native
 ```
 
 Agentic evals require `OPENAI_API_KEY` in `.env.local`.

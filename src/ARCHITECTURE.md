@@ -122,9 +122,9 @@ graph TD
   text, examples, and stdout formatting while delegating semantic validation and
   execution through an injected command runner. Command success and failure both
   serialize as JSON to stdout; help remains human-readable.
-- **`src/app/`** — Shared operation wiring. Exposes operation names, JSON
-  Schemas, and capability executors with the default DART providers already
-  attached.
+- **`src/app/`** — Shared operation wiring. Exposes internal operation names,
+  JSON Schemas, capability executors with the default DART providers already
+  attached, and the initial namespaced `darty_*` agent tool definitions.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
   flow. Defines semantic inputs, success result shapes, typed failures, and
   execution logic.
@@ -150,10 +150,12 @@ graph LR
     CONTRACT --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
 
     SPEC --> CLI_META["CLI name reuse"]
+    SPEC --> AGENT_META["darty_* tool schemas"]
     SPEC -.-> FUTURE_META["Future adapter schemas"]
     CONTRACT --> RESULT["Success result\nenvelope"]
 
     CLI_META -. transport local .-> CLI_FLAGS["CLI flags · help · examples"]
+    AGENT_META -. adapter local .-> AGENT_TOOLS["Agent-native typed tools"]
     FUTURE_META -. adapter local .-> FUTURE_UX["MCP · Pi-native · SDK metadata"]
 ```
 
@@ -168,8 +170,10 @@ How it works:
    implementations.
 4. **`cli/commands/`** defines each CLI UX explicitly, then delegates to the
    shared operation.
-5. Future adapters should use the same operation name, schemas, and app wiring
-   while keeping protocol-specific metadata local to that adapter.
+5. Agent-native exposure uses namespaced `darty_*` tool names over the same
+   schemas and app executors, while leaving internal operation names stable.
+6. Future adapters should use the same schemas and app wiring while keeping
+   protocol-specific names and metadata local to that adapter.
 
 One source of truth gives you:
 

@@ -39,6 +39,8 @@ that adapter is active again. The archived MCP evals are preserved at git tag
   Fixed-command live CLI scenarios that parse stdout JSON and assert the shared search-body envelope.
 - `search-body/agent-cli/run-eval.ts`
   Agentic CLI invocation runner where a model receives a structured local darty CLI runner and must call it with arguments that match the user request.
+- `search-body/agent-native/run-eval.ts`
+  Agent-native tool-use runner where a model receives typed `darty_*` tools backed directly by `src/app/*` operations.
 
 ## Environment
 
@@ -50,4 +52,5 @@ Useful commands:
 bun run env:check
 bun run eval:search-body:cli
 bun run eval:search-body:agent:cli
+bun run eval:search-body:agent:native
 ```
