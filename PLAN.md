@@ -40,24 +40,7 @@ Success criteria:
 - Invalid calls fail with parameter-specific `invalid_input` responses.
 - Tool metadata and runtime behavior do not contradict each other.
 
-## 3. Extend agent-native typed tools to company lookup helpers
-
-`src/app/agent-tools.ts` already exposes the package-based `darty_*` namespace for the four primary agent-facing capabilities, and `search-body` has a separate agent-native eval track. Extend the same surface only where the helper capabilities are useful in agent workflows.
-
-- Add typed tool definitions for the remaining current helper capabilities:
-  - `darty_get_company_detail`
-  - `darty_get_company_rss`
-- Reuse `src/app/*` operations so no DART logic is duplicated.
-- Keep CLI evals separate from agent-native typed-tool evals.
-- Do not introduce a new public transport from this item alone.
-
-Success criteria:
-
-- Agent evals can call typed parameters directly for all intended current capabilities.
-- CLI-specific syntax reasoning remains isolated to CLI evals.
-- Tool calls still return the shared capability envelopes.
-
-## 4. Add explicit response detail controls
+## 3. Add explicit response detail controls
 
 The CLI already omits raw `evidence` unless `--verbose`, and `view-report` has content-window controls, but future adapters may expose full capability result schemas by default.
 
@@ -80,7 +63,7 @@ Success criteria:
 - Detailed/raw evidence remains available when verification requires it.
 - Evals track output size or a token proxy metric.
 
-## 5. Reclassify routine format notes vs real warnings
+## 4. Reclassify routine format notes vs real warnings
 
 Warnings should mean "pay attention," not "this field is formatted as designed."
 
@@ -95,7 +78,7 @@ Success criteria:
 - Agents do not need to special-case normal output-format notes as warnings.
 - Warning semantics are consistent across capabilities.
 
-## 6. Improve recovery hints in failures
+## 5. Improve recovery hints in failures
 
 Typed failures exist, but recovery guidance should lead agents to the next correct call.
 
@@ -112,7 +95,7 @@ Success criteria:
 - Failure messages identify the bad parameter or source URL when known.
 - No human-readable diagnostics leak outside the structured envelope.
 
-## 7. Improve cryptic DART-code inputs
+## 6. Improve cryptic DART-code inputs
 
 Some fields are source-shaped and useful but hard for agents to use without prior DART knowledge.
 
@@ -137,7 +120,7 @@ Success criteria:
 - Invalid-code errors provide actionable correction hints.
 - Source-shaped fields remain explicit where exact DART behavior matters.
 
-## 8. Expand evals from single-capability search to multi-step workflows
+## 7. Expand evals from single-capability search to multi-step workflows
 
 Current evals cover `search-body` CLI and agent-native tracks. Add realistic agent workflows that require chaining tools.
 
@@ -166,7 +149,7 @@ Success criteria:
 - Failures reveal whether the issue is naming, schema design, output shape, or source behavior.
 - Held-out scenarios are kept separate from scenarios used to tune descriptions.
 
-## 9. Review descriptions and schemas after eval failures
+## 8. Review descriptions and schemas after eval failures
 
 Use eval transcripts to refine descriptions and schemas.
 

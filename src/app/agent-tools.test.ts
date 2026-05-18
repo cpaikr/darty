@@ -14,6 +14,8 @@ describe("agent-native darty tool definitions", () => {
       "darty_search_body",
       "darty_search_company",
       "darty_search_company_reports",
+      "darty_get_company_detail",
+      "darty_get_company_rss",
       "darty_view_report",
     ]);
 
@@ -21,6 +23,8 @@ describe("agent-native darty tool definitions", () => {
       "search-body",
       "search-company",
       "search-company-reports",
+      "company-detail",
+      "company-rss",
       "view-report",
     ]);
   });
@@ -31,6 +35,10 @@ describe("agent-native darty tool definitions", () => {
     const searchCompanyReports = getDartyAgentTool(
       "darty_search_company_reports",
     ).definition.function;
+    const companyDetail = getDartyAgentTool(
+      "darty_get_company_detail",
+    ).definition.function;
+    const companyRss = getDartyAgentTool("darty_get_company_rss").definition.function;
     const viewReport = getDartyAgentTool("darty_view_report").definition.function;
 
     expect(searchBody.parameters).toMatchObject({
@@ -48,6 +56,16 @@ describe("agent-native darty tool definitions", () => {
       additionalProperties: false,
       required: ["companyCode", "startDate", "endDate"],
     });
+    expect(companyDetail.parameters).toMatchObject({
+      type: "object",
+      additionalProperties: false,
+      required: ["companyCode"],
+    });
+    expect(companyRss.parameters).toMatchObject({
+      type: "object",
+      additionalProperties: false,
+      required: ["companyCode"],
+    });
     expect(viewReport.parameters).toMatchObject({
       type: "object",
       additionalProperties: false,
@@ -61,8 +79,10 @@ describe("agent-native darty tool definitions", () => {
   });
 
   test("publishes OpenAI-compatible function tool definitions", () => {
-    expect(dartyAgentToolDefinitions).toHaveLength(4);
+    expect(dartyAgentToolDefinitions).toHaveLength(6);
     expect(dartyAgentToolDefinitions.map((tool) => tool.type)).toEqual([
+      "function",
+      "function",
       "function",
       "function",
       "function",
