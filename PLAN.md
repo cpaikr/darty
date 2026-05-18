@@ -24,23 +24,7 @@ Success criteria:
 - Agents can identify the correct operation and parameters from schema metadata.
 - Schema descriptions match the stable capability contracts.
 
-## 2. Make `view-report` input and identifier rules explicit
-
-`view-report` intentionally hides raw DART viewer parameters behind returned `documentId` and `sectionId` values. Agents need that rule visible in metadata, schema descriptions, and runtime errors.
-
-- Clarify that `receipt` accepts a bare receipt number or a DART viewer URL.
-- Clarify that `documentId` must come from a prior `view-report` response and is not a raw `dcmNo` contract.
-- Clarify that `sectionId` must come from the same receipt/document TOC and must not be reused across years, amendments, or receipts.
-- Clarify that `contentStartByte` is a darty output-window offset from `content.window.nextStartByte`, not DART's raw viewer `offset`.
-- Keep runtime validation as the source of truth and keep error messages aligned with schema text.
-
-Success criteria:
-
-- Agents can perform the two-step TOC-then-section flow without guessing IDs.
-- Invalid calls fail with parameter-specific `invalid_input` responses.
-- Tool metadata and runtime behavior do not contradict each other.
-
-## 3. Add explicit response detail controls
+## 2. Add explicit response detail controls
 
 The CLI already omits raw `evidence` unless `--verbose`, and `view-report` has content-window controls, but future adapters may expose full capability result schemas by default.
 
@@ -63,7 +47,7 @@ Success criteria:
 - Detailed/raw evidence remains available when verification requires it.
 - Evals track output size or a token proxy metric.
 
-## 4. Reclassify routine format notes vs real warnings
+## 3. Reclassify routine format notes vs real warnings
 
 Warnings should mean "pay attention," not "this field is formatted as designed."
 
@@ -78,7 +62,7 @@ Success criteria:
 - Agents do not need to special-case normal output-format notes as warnings.
 - Warning semantics are consistent across capabilities.
 
-## 5. Improve recovery hints in failures
+## 4. Improve recovery hints in failures
 
 Typed failures exist, but recovery guidance should lead agents to the next correct call.
 
@@ -95,7 +79,7 @@ Success criteria:
 - Failure messages identify the bad parameter or source URL when known.
 - No human-readable diagnostics leak outside the structured envelope.
 
-## 6. Improve cryptic DART-code inputs
+## 5. Improve cryptic DART-code inputs
 
 Some fields are source-shaped and useful but hard for agents to use without prior DART knowledge.
 
@@ -120,7 +104,7 @@ Success criteria:
 - Invalid-code errors provide actionable correction hints.
 - Source-shaped fields remain explicit where exact DART behavior matters.
 
-## 7. Expand evals from single-capability search to multi-step workflows
+## 6. Expand evals from single-capability search to multi-step workflows
 
 Current evals cover `search-body` CLI and agent-native tracks. Add realistic agent workflows that require chaining tools.
 
@@ -149,7 +133,7 @@ Success criteria:
 - Failures reveal whether the issue is naming, schema design, output shape, or source behavior.
 - Held-out scenarios are kept separate from scenarios used to tune descriptions.
 
-## 8. Review descriptions and schemas after eval failures
+## 7. Review descriptions and schemas after eval failures
 
 Use eval transcripts to refine descriptions and schemas.
 

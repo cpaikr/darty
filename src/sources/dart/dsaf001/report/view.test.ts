@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { ViewReportProviderError } from "../../../../capabilities/view-report/provider.ts";
 import {
   createDsaf001ViewReportProvider,
   type Dsaf001ReportSource,
@@ -234,6 +235,29 @@ describe("createDsaf001ViewReportProvider", () => {
     });
   });
 
+  test("rejects stale section IDs with the correct recovery hint", async () => {
+    const fake = createFakeSource();
+    const provider = createDsaf001ViewReportProvider(fake.source);
+
+    try {
+      await provider.view({
+        receipt: receiptNumber,
+        sectionId: "section:old",
+        outputFormat: "html",
+        maxBytes: 200000,
+        contentStartByte: 0,
+      });
+      throw new Error("Expected provider to reject the stale section ID.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ViewReportProviderError);
+      if (!(error instanceof ViewReportProviderError)) throw error;
+      expect(error.code).toBe("not_found");
+      expect(error.parameter).toBe("sectionId");
+      expect(error.message).toContain("같은 receipt/documentId");
+      expect(error.message).toContain("toc[].id");
+    }
+  });
+
   test("sanitizes presentation-only HTML attributes in returned content", async () => {
     const fake = createFakeSource({
       contentHtml:
@@ -420,5 +444,28 @@ describe("createDsaf001ViewReportProvider", () => {
     expect(result.references.viewerUrl).toBe(
       `https://dart.fss.or.kr/dsaf001/main.do?${attachmentDocument.query}`,
     );
+  });
+
+  test("rejects raw or stale document IDs with the correct recovery hint", async () => {
+    const fake = createFakeSource();
+    const provider = createDsaf001ViewReportProvider(fake.source);
+
+    try {
+      await provider.view({
+        receipt: receiptNumber,
+        documentId: "11213016",
+        outputFormat: "html",
+        maxBytes: 200000,
+        contentStartByte: 0,
+      });
+      throw new Error("Expected provider to reject the document ID.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ViewReportProviderError);
+      if (!(error instanceof ViewReportProviderError)) throw error;
+      expect(error.code).toBe("not_found");
+      expect(error.parameter).toBe("documentId");
+      expect(error.message).toContain("documents[].id");
+      expect(error.message).toContain("dcmNo");
+    }
   });
 });

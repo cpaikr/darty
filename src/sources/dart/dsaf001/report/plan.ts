@@ -39,6 +39,7 @@ export const resolveReportContentPlan = (input: {
         message: dsaf001ReportMessages.sectionNotFound(input.sectionId),
         retryable: false,
         providerId: input.providerId,
+        parameter: "sectionId",
         sourceUrl: input.shell.sourceUrl,
       });
     }

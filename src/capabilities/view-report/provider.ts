@@ -38,6 +38,7 @@ export class ViewReportProviderError extends Schema.TaggedError<ViewReportProvid
     message: Schema.String,
     retryable: Schema.Boolean,
     providerId: Schema.String,
+    parameter: Schema.optional(Schema.String),
     sourceUrl: Schema.optional(Schema.String),
   },
 ) {}

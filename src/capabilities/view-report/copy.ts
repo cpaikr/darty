@@ -17,17 +17,17 @@ export const viewReportToolCopy = {
 export const viewReportFieldCopy = {
   receipt: {
     description:
-      "DART 접수번호 또는 /dsaf001/main.do?rcpNo=... viewer URL.",
+      "14자리 DART 접수번호 또는 rcpNo가 포함된 /dsaf001/main.do viewer URL. URL의 dcmNo는 내부 문서 선택에만 사용되며 별도 입력으로 받지 않습니다.",
     cliDescription: "DART 접수번호 또는 viewer URL",
   },
   documentId: {
     description:
-      "view-report 결과의 documents[].id 값. 생략하면 기본 본문 문서를 사용합니다.",
+      "이전 view-report 응답의 documents[].id 값. DART dcmNo가 아니며, 생략하면 선택된 기본 본문 문서를 사용합니다.",
     cliDescription: "조회할 문서 ID(documents[].id)",
   },
   sectionId: {
     description:
-      "view-report 결과의 toc[].id 값. TOC가 있는 문서에서 선택한 목차 섹션을 조회할 때 사용합니다. 섹션 ID는 보고서별로 새로 부여되므로 다른 접수번호나 연도 보고서에 재사용하지 마세요.",
+      "같은 receipt/documentId의 이전 view-report 응답에서 받은 toc[].id 값. DART eleId/offset이 아니며, 연도·정정·다른 접수번호에 재사용하지 마세요.",
     cliDescription:
       "조회할 목차 섹션 ID(toc[].id). 보고서별 값이므로 다른 보고서에 재사용하지 마세요.",
   },
@@ -51,23 +51,39 @@ export const viewReportFieldCopy = {
 } as const;
 
 export const viewReportSchemaCopy = {
-  requestDescription: "DART 보고서 보기 요청.",
+  requestDescription:
+    "DART 보고서 보기 요청. 먼저 receipt로 문서/목차를 조회한 뒤, 반환된 documentId/sectionId만 후속 호출에 사용하세요.",
   resultDescription:
     "DART 보고서 문서/목차와 선택 섹션 또는 전체 문서 본문 결과.",
 } as const;
 
+const rawDartViewerParameters = new Set([
+  "dcmNo",
+  "eleId",
+  "offset",
+  "length",
+  "dtd",
+  "tocNo",
+  "atocId",
+]);
+
 export const viewReportValidationCopy = {
   unknownParameter: (parameter: string) =>
-    `알 수 없는 매개변수 "${parameter}"입니다.`,
+    rawDartViewerParameters.has(parameter)
+      ? `raw DART viewer 매개변수 "${parameter}"은(는) 직접 입력할 수 없습니다. receipt로 목차를 조회한 뒤 반환된 documentId/sectionId를 사용하고, 이어 읽기는 content.window.nextStartByte를 contentStartByte로 넘기세요.`
+      : `알 수 없는 매개변수 "${parameter}"입니다.`,
   missingRequired: (parameter: string, expected: string) =>
     `필수 매개변수 "${parameter}"이(가) 없습니다. 필요한 값: ${expected}.`,
   invalidParameter: (parameter: string, expected: string) =>
     `매개변수 "${parameter}"이(가) 올바르지 않습니다. 필요한 값: ${expected}.`,
-  expectedReceipt: "DART 접수번호 또는 rcpNo를 포함한 viewer URL",
-  expectedNonEmptyString: "비어 있지 않은 문자열",
+  expectedReceipt:
+    "14자리 DART 접수번호 또는 rcpNo를 포함한 /dsaf001/main.do viewer URL",
+  expectedDocumentId: "이전 view-report 응답의 documents[].id",
+  expectedSectionId: "같은 receipt/documentId의 이전 view-report 응답의 toc[].id",
   expectedOutputFormat: "html 또는 markdown",
   expectedMaxBytes: formatViewReportExpectedMaxBytes(),
-  expectedContentStartByte: "0 이상의 정수",
+  expectedContentStartByte:
+    "0 이상의 정수. DART offset이 아니라 content.window.nextStartByte로 이어 읽는 렌더링 본문 바이트 위치",
 } as const;
 
 export const viewReportCliCopy = {

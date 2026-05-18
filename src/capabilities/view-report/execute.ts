@@ -29,6 +29,7 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
         code: "not_found",
         message: error.message,
         retryable: false,
+        parameter: error.parameter,
         sourceUrl: error.sourceUrl,
       });
     }

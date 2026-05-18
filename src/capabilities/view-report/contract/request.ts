@@ -114,8 +114,8 @@ export const extractReceiptNumber = (receipt: string): string | undefined => {
 
 const fieldExpected: Record<string, string> = {
   receipt: viewReportValidationCopy.expectedReceipt,
-  documentId: viewReportValidationCopy.expectedNonEmptyString,
-  sectionId: viewReportValidationCopy.expectedNonEmptyString,
+  documentId: viewReportValidationCopy.expectedDocumentId,
+  sectionId: viewReportValidationCopy.expectedSectionId,
   outputFormat: viewReportValidationCopy.expectedOutputFormat,
   maxBytes: viewReportValidationCopy.expectedMaxBytes,
   contentStartByte: viewReportValidationCopy.expectedContentStartByte,

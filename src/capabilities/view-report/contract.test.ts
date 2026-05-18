@@ -56,21 +56,34 @@ describe("resolveViewReportRequest", () => {
   });
 
   test("rejects negative content window starts", () => {
-    expect(() =>
+    try {
       resolveViewReportRequest({
         receipt: "20260331004166",
         contentStartByte: -1,
-      }),
-    ).toThrow(InvalidViewReportRequest);
+      });
+      throw new Error("Expected request to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidViewReportRequest);
+      if (!(error instanceof InvalidViewReportRequest)) throw error;
+      expect(error.parameter).toBe("contentStartByte");
+      expect(error.message).toContain("content.window.nextStartByte");
+    }
   });
 
-  test("rejects unknown fields before provider execution", () => {
-    expect(() =>
+  test("rejects raw DART viewer fields before provider execution", () => {
+    try {
       resolveViewReportRequest({
         receipt: "20260331004166",
         dcmNo: "11213016",
-      }),
-    ).toThrow(InvalidViewReportRequest);
+      });
+      throw new Error("Expected request to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidViewReportRequest);
+      if (!(error instanceof InvalidViewReportRequest)) throw error;
+      expect(error.parameter).toBe("dcmNo");
+      expect(error.message).toContain("raw DART viewer");
+      expect(error.message).toContain("documentId/sectionId");
+    }
   });
 
   test("rejects values without a valid receipt number", () => {

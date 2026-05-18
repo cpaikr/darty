@@ -90,6 +90,7 @@ const selectShell = async (
       message: dsaf001ReportMessages.documentNotFound(documentId),
       retryable: false,
       providerId,
+      parameter: "documentId",
       sourceUrl: initialShell.sourceUrl,
     });
   }

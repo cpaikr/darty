@@ -85,10 +85,19 @@ describe("view-report capability schemas", () => {
     });
     expect(receipt).toMatchObject({
       type: "string",
-      description: "DART 접수번호 또는 /dsaf001/main.do?rcpNo=... viewer URL.",
+      description:
+        "14자리 DART 접수번호 또는 rcpNo가 포함된 /dsaf001/main.do viewer URL. URL의 dcmNo는 내부 문서 선택에만 사용되며 별도 입력으로 받지 않습니다.",
     });
-    expect(documentId.type).toBe("string");
-    expect(sectionId.type).toBe("string");
+    expect(documentId).toMatchObject({
+      type: "string",
+      description:
+        "이전 view-report 응답의 documents[].id 값. DART dcmNo가 아니며, 생략하면 선택된 기본 본문 문서를 사용합니다.",
+    });
+    expect(sectionId).toMatchObject({
+      type: "string",
+      description:
+        "같은 receipt/documentId의 이전 view-report 응답에서 받은 toc[].id 값. DART eleId/offset이 아니며, 연도·정정·다른 접수번호에 재사용하지 마세요.",
+    });
     expect(outputFormat).toMatchObject({
       type: "string",
       enum: ["html", "markdown"],
@@ -125,9 +134,41 @@ describe("view-report capability schemas", () => {
     expect(jsonSchema.properties.references).toBeDefined();
     expect(jsonSchema.properties.warnings).toBeDefined();
     expect(jsonSchema.properties.error).toBeUndefined();
-    expect(jsonSchema.$defs?.ViewReportTocNode).toMatchObject({
+
+    const resultSchema = jsonSchema.properties.result as {
+      properties: Record<string, unknown>;
+    };
+    const receiptSchema = resultSchema.properties.receipt as {
+      properties: Record<string, unknown>;
+    };
+    const documentSchema = resultSchema.properties.document as {
+      properties: Record<string, unknown>;
+    };
+    const referencesSchema = jsonSchema.properties.references as {
+      properties: Record<string, unknown>;
+    };
+    const tocDefinition = jsonSchema.$defs?.ViewReportTocNode as {
+      properties: Record<string, unknown>;
+    };
+
+    expect(receiptSchema.properties.receiptNumber).toMatchObject({
+      description: "14자리 DART 접수번호(rcpNo).",
+    });
+    expect(documentSchema.properties.id).toMatchObject({
+      description:
+        "darty가 반환한 문서 ID. 후속 view-report documentId로 사용하며 DART dcmNo가 아닙니다.",
+    });
+    expect(referencesSchema.properties.viewerUrl).toMatchObject({
+      description:
+        "DART /dsaf001/main.do?rcpNo=... viewer URL. 후속 view-report receipt로 사용할 수 있습니다.",
+    });
+    expect(tocDefinition).toMatchObject({
       type: "object",
       required: ["id", "title", "children"],
+    });
+    expect(tocDefinition.properties.id).toMatchObject({
+      description:
+        "darty가 반환한 목차 섹션 ID. 같은 receipt/documentId의 후속 view-report sectionId로만 사용하세요.",
     });
   });
 
