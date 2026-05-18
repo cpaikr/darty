@@ -12,6 +12,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const truncate = (text: string, maxLength: number): string =>
   text.length <= maxLength ? text : `${text.slice(0, maxLength)}\n...<truncated>`;
 
+export const toAgentNativeToolMessageContent = (
+  execution: ToolExecution,
+): string =>
+  JSON.stringify({
+    ...execution,
+    stdout: truncate(execution.stdout, 16_000),
+    stderr: truncate(execution.stderr, 4_000),
+  });
+
 const parseToolArguments = (toolCall: ToolCall): unknown =>
   JSON.parse(toolCall.function.arguments);
 
@@ -55,7 +64,7 @@ export const executeAgentNativeToolCall = async (
       input,
       display: `${toolCall.function.name}(${JSON.stringify(input)})`,
       exitCode: 0,
-      stdout: truncate(JSON.stringify(result), 16_000),
+      stdout: JSON.stringify(result),
       stderr: "",
     };
   } catch (error) {

@@ -1,7 +1,11 @@
 import type { SearchBodyCliScenario } from "../shared/cli-scenarios.ts";
 import { evaluateAgentNativeInvocation } from "./invocation-assertions.ts";
 import { callOpenAi } from "./openai-chat.ts";
-import { agentNativeTools, executeAgentNativeToolCall } from "./tools.ts";
+import {
+  agentNativeTools,
+  executeAgentNativeToolCall,
+  toAgentNativeToolMessageContent,
+} from "./tools.ts";
 import type { ChatMessage, ScenarioRunResult, ToolExecution } from "./types.ts";
 
 export const runAgentNativeScenario = async (input: {
@@ -46,7 +50,7 @@ Use the darty_* tools when the user's request requires live DART data. Do not gu
       messages.push({
         role: "tool",
         tool_call_id: toolCall.id,
-        content: JSON.stringify(toolExecution),
+        content: toAgentNativeToolMessageContent(toolExecution),
       });
     }
   }
