@@ -1,24 +1,18 @@
 import { Schema } from "effect";
 
 import {
+  annotateSchema,
+  defaultedField,
+  optionalField,
+  requiredField,
+} from "../../schema-annotations.ts";
+import {
   searchBodyFieldCopy,
   searchBodySchemaCopy,
 } from "../copy.ts";
 
 const datePattern = /^\d{8}$/;
 const companyCodePattern = /^\d{8}$/;
-
-type AnnotatableSchema<S> = S & {
-  annotations: (
-    annotations: Record<PropertyKey, unknown>,
-  ) => S;
-};
-
-const annotateSchema = <S>(
-  schema: S,
-  annotations: Record<PropertyKey, unknown>,
-): S =>
-  (schema as AnnotatableSchema<S>).annotations(annotations) as S;
 
 const SearchBodyDateString = annotateSchema(
   Schema.String.pipe(Schema.pattern(datePattern)),
@@ -44,6 +38,7 @@ const SearchBodySortDirectionSchema = Schema.Literal(
 
 type BaseFieldSpecShape = {
   readonly description: string;
+  readonly examples?: readonly unknown[];
   readonly schema: unknown;
 };
 
@@ -85,39 +80,6 @@ type DefaultedFieldSpecShape = FieldSpecShape & {
 
 type RequiredFieldSpecShape = FieldSpecShape;
 
-const defaultedField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-  readonly defaultValue: A;
-}) =>
-  annotateSchema(
-    Schema.optionalWith(
-      annotateSchema(spec.schema, {
-        description: spec.description,
-      }),
-      { default: () => spec.defaultValue },
-    ),
-    { default: spec.defaultValue },
-  );
-
-const requiredField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-}) =>
-  annotateSchema(spec.schema, {
-    description: spec.description,
-  });
-
-const optionalField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-}) =>
-  Schema.optional(
-    annotateSchema(spec.schema, {
-      description: spec.description,
-    }),
-  );
-
 const inputSpecs = {
   defaulted: {
     page: {
@@ -130,6 +92,7 @@ const inputSpecs = {
         Schema.lessThanOrEqualTo(100),
       ),
       description: searchBodyFieldCopy.page.description,
+      examples: [1],
     },
     sortBy: {
       kind: "enum",
@@ -137,6 +100,7 @@ const inputSpecs = {
       defaultValue: "date",
       schema: SearchBodySortBySchema,
       description: searchBodyFieldCopy.sortBy.description,
+      examples: ["date"],
     },
     sortDirection: {
       kind: "enum",
@@ -144,6 +108,7 @@ const inputSpecs = {
       defaultValue: "desc",
       schema: SearchBodySortDirectionSchema,
       description: searchBodyFieldCopy.sortDirection.description,
+      examples: ["desc"],
     },
   } as const satisfies Record<string, DefaultedFieldSpecShape>,
   required: {
@@ -152,16 +117,19 @@ const inputSpecs = {
       nonEmpty: true,
       schema: Schema.NonEmptyString,
       description: searchBodyFieldCopy.keyword.description,
+      examples: ["배당", "사과|포도"],
     },
     startDate: {
       kind: "date",
       schema: SearchBodyDateString,
       description: searchBodyFieldCopy.startDate.description,
+      examples: ["20250331"],
     },
     endDate: {
       kind: "date",
       schema: SearchBodyDateString,
       description: searchBodyFieldCopy.endDate.description,
+      examples: ["20260331"],
     },
   } as const satisfies Record<string, RequiredFieldSpecShape>,
   optional: {
@@ -170,18 +138,21 @@ const inputSpecs = {
       expectedToken: "8_digit_company_code",
       schema: Schema.String.pipe(Schema.pattern(companyCodePattern)),
       description: searchBodyFieldCopy.companyCode.description,
+      examples: ["00126380"],
     },
     presenterName: {
       kind: "string",
       nonEmpty: true,
       schema: Schema.NonEmptyString,
       description: searchBodyFieldCopy.presenterName.description,
+      examples: ["삼성전자"],
     },
     reportName: {
       kind: "string",
       nonEmpty: true,
       schema: Schema.NonEmptyString,
       description: searchBodyFieldCopy.reportName.description,
+      examples: ["사업보고서"],
     },
   } as const satisfies Record<string, FieldSpecShape>,
 } as const;
@@ -214,6 +185,7 @@ export const SearchBodyRequestSchema = Schema.Struct(
 ).annotations({
   identifier: "SearchBodyRequest",
   description: searchBodySchemaCopy.requestDescription,
+  examples: searchBodySchemaCopy.requestExamples,
 });
 
 export type SearchBodyRawInput = typeof SearchBodyRequestSchema.Encoded;

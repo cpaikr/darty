@@ -1,5 +1,9 @@
 import { ParseResult, Schema } from "effect";
 
+import {
+  defaultedField,
+  describedNonEmptyString,
+} from "../../schema-annotations.ts";
 import { viewReportContentWindowLimits } from "../constants.ts";
 import {
   viewReportFieldCopy,
@@ -9,29 +13,6 @@ import {
 import { InvalidViewReportRequest } from "./errors.ts";
 
 const receiptNumberPattern = /^\d{14}$/;
-
-const annotateSchema = <S>(
-  schema: S,
-  annotations: Record<PropertyKey, unknown>,
-): S =>
-  (schema as S & { annotations: (annotations: Record<PropertyKey, unknown>) => S })
-    .annotations(annotations);
-
-const nonEmptyField = (description: string) =>
-  annotateSchema(Schema.NonEmptyString, { description });
-
-const defaultedField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-  readonly defaultValue: A;
-}) =>
-  annotateSchema(
-    Schema.optionalWith(
-      annotateSchema(spec.schema, { description: spec.description }),
-      { default: () => spec.defaultValue },
-    ),
-    { default: spec.defaultValue },
-  );
 
 export const viewReportOutputFormatValues = ["html", "markdown"] as const;
 export type ViewReportOutputFormat =
@@ -51,12 +32,19 @@ const ViewReportContentStartByteSchema = Schema.Int.pipe(
 );
 
 const viewReportRequestFields = {
-  receipt: nonEmptyField(viewReportFieldCopy.receipt.description),
+  receipt: describedNonEmptyString(viewReportFieldCopy.receipt.description, [
+    "20260331004166",
+    "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+  ]),
   documentId: Schema.optional(
-    nonEmptyField(viewReportFieldCopy.documentId.description),
+    describedNonEmptyString(viewReportFieldCopy.documentId.description, [
+      "document:body:1",
+    ]),
   ),
   sectionId: Schema.optional(
-    nonEmptyField(viewReportFieldCopy.sectionId.description),
+    describedNonEmptyString(viewReportFieldCopy.sectionId.description, [
+      "section:3.5",
+    ]),
   ),
   outputFormat: defaultedField({
     schema: ViewReportOutputFormatSchema,
@@ -80,6 +68,7 @@ export const ViewReportRequestSchema = Schema.Struct(
 ).annotations({
   identifier: "ViewReportRequest",
   description: viewReportSchemaCopy.requestDescription,
+  examples: viewReportSchemaCopy.requestExamples,
 });
 
 export type ViewReportRawInput = typeof ViewReportRequestSchema.Encoded;

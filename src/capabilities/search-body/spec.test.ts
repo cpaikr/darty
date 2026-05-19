@@ -48,9 +48,21 @@ describe("search-body capability schemas", () => {
     expect(startDate.pattern).toBe("^\\d{8}$");
     expect(endDate.pattern).toBe("^\\d{8}$");
     expect(keyword.type).toBe("string");
+    expect(keyword.examples).toEqual(["배당", "사과|포도"]);
     const keywordDescription = String(keyword.description);
     expect(keywordDescription).toContain("사과|포도");
     expect(keywordDescription).toContain("사과포도");
+    expect(jsonSchema.examples).toEqual([
+      {
+        page: 1,
+        sortBy: "date",
+        sortDirection: "desc",
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        companyCode: "00126380",
+      },
+    ]);
     expect(companyCode.type).toBe("string");
     expect(companyCode.pattern).toBe("^\\d{8}$");
     expect(String(companyCode.description)).toContain(
@@ -76,6 +88,16 @@ describe("search-body capability schemas", () => {
     expect(jsonSchema.properties.metadata).toBeDefined();
     expect(jsonSchema.properties.references).toBeDefined();
     expect(jsonSchema.properties.warnings).toBeDefined();
+    expect(
+      String(
+        (jsonSchema.properties.result as Record<string, any>).properties.items.items
+          .properties.filing.properties.receiptNumber.description,
+      ),
+    ).toContain("rcpNo");
+    expect(
+      (jsonSchema.properties.result as Record<string, any>).properties.items.items
+        .properties.references.properties.viewerUrl.description,
+    ).toContain("report-viewer URL");
     expect(jsonSchema.properties.error).toBeUndefined();
   });
 

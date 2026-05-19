@@ -22,6 +22,13 @@ describe("search-company-reports capability schemas", () => {
       required: ["companyCode", "startDate", "endDate"],
     });
     expect(jsonSchema.properties.companyCode?.pattern).toBe("^\\d{8}$");
+    expect(jsonSchema.properties.companyCode?.examples).toEqual(["00126380"]);
+    expect(jsonSchema.examples).toMatchObject([
+      {
+        companyCode: "00126380",
+        reportName: "사업보고서",
+      },
+    ]);
     expect(jsonSchema.properties.pageSize).toMatchObject({
       enum: [15, 30, 50, 100],
       default: 15,
@@ -61,11 +68,26 @@ describe("search-company-reports capability schemas", () => {
   });
 
   test("exports a success-only result schema", () => {
-    expect(searchCompanyReportsResultJsonSchema).toMatchObject({
+    const jsonSchema = searchCompanyReportsResultJsonSchema as JsonSchema7Root & {
+      type: "object";
+      properties: Record<string, Record<string, any>>;
+    };
+
+    expect(jsonSchema).toMatchObject({
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       additionalProperties: false,
       required: ["result", "metadata", "references", "warnings"],
     });
+    const result = jsonSchema.properties.result as Record<string, any>;
+
+    expect(
+      result.properties.items.items.properties.filing.properties.receiptNumber
+        .description,
+    ).toContain("rcpNo");
+    expect(
+      result.properties.items.items.properties.references.properties.viewerUrl
+        .description,
+    ).toContain("view-report");
   });
 });

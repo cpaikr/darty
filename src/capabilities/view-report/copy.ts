@@ -53,6 +53,21 @@ export const viewReportFieldCopy = {
 export const viewReportSchemaCopy = {
   requestDescription:
     "DART 보고서 보기 요청. 먼저 receipt로 문서/목차를 조회한 뒤, 반환된 documentId/sectionId만 후속 호출에 사용하세요.",
+  requestExamples: [
+    {
+      receipt: "20260331004166",
+      outputFormat: "markdown",
+      maxBytes: defaultMaxBytes,
+      contentStartByte: defaultStartByte,
+    },
+    {
+      receipt: "20260331004166",
+      sectionId: "section:3.5",
+      outputFormat: "markdown",
+      maxBytes: 2000,
+      contentStartByte: defaultStartByte,
+    },
+  ],
   resultDescription:
     "DART 보고서 문서/목차와 선택 섹션 또는 전체 문서 본문 결과.",
 } as const;

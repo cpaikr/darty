@@ -4,6 +4,8 @@ This plan applies Anthropic's "Writing effective tools for agents" guidance to d
 
 ## 1. Enrich capability schemas for agent use
 
+Status: executed. Public capability schemas now include request examples and annotated result identifiers/follow-up fields across the current operation set.
+
 Current operation schemas are useful for validation, but exported JSON Schemas should also explain intent, identifiers, and follow-up paths when used by eval tooling or future adapters.
 
 - Add concise descriptions and examples to request fields and important result fields.

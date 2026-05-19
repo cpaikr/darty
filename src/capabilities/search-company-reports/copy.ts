@@ -140,6 +140,22 @@ export const searchCompanyReportsSchemaCopy = {
   dateStringDescription: "YYYYMMDD 형식의 날짜 문자열입니다.",
   requestDescription:
     "DART 공시통합검색 `회사명` 모드를 8자리 DART 회사 코드로 실행하는 의미 기반 검색 입력입니다. 필수: companyCode, startDate, endDate.",
+  requestExamples: [
+    {
+      companyCode: "00126380",
+      startDate: "20250331",
+      endDate: "20260331",
+      page: 1,
+      pageSize: 15,
+      sortDirection: "desc",
+      reportName: "사업보고서",
+      disclosureTypes: [],
+      industryCode: "all",
+      corporationType: "all",
+      closingAccountsMonth: "all",
+      includeAllReports: false,
+    },
+  ],
   resultDescription:
     "성공한 search-company-reports 결과 객체입니다. 회사별 공시 결과, 메타데이터, 참조 URL, 경고를 포함합니다.",
 } as const;

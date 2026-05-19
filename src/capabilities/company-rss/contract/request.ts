@@ -1,15 +1,9 @@
 import { Schema } from "effect";
 
+import { annotateSchema } from "../../schema-annotations.ts";
 import { companyRssFieldCopy, companyRssSchemaCopy } from "../copy.ts";
 
 const DartCompanyCodeSchema = Schema.String.pipe(Schema.pattern(/^\d{8}$/));
-
-const annotateSchema = <S>(
-  schema: S,
-  annotations: Record<PropertyKey, unknown>,
-): S =>
-  (schema as S & { annotations: (annotations: Record<PropertyKey, unknown>) => S })
-    .annotations(annotations);
 
 export const companyRssFieldSpecs = {
   companyCode: {
@@ -25,10 +19,12 @@ export type CompanyRssInputKey = keyof typeof companyRssFieldSpecs;
 export const CompanyRssRequestSchema = Schema.Struct({
   companyCode: annotateSchema(DartCompanyCodeSchema, {
     description: companyRssFieldCopy.companyCode.description,
+    examples: ["00126380"],
   }),
 }).annotations({
   identifier: "CompanyRssRequest",
   description: companyRssSchemaCopy.requestDescription,
+  examples: companyRssSchemaCopy.requestExamples,
 });
 
 export type CompanyRssRawInput = typeof CompanyRssRequestSchema.Encoded;

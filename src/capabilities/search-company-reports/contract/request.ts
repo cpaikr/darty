@@ -1,6 +1,12 @@
 import { Schema } from "effect";
 
 import {
+  annotateSchema,
+  defaultedField,
+  optionalField,
+  requiredField,
+} from "../../schema-annotations.ts";
+import {
   searchCompanyReportsFieldCopy,
   searchCompanyReportsSchemaCopy,
 } from "../copy.ts";
@@ -13,13 +19,6 @@ import {
 
 const datePattern = /^\d{8}$/;
 const companyCodePattern = /^\d{8}$/;
-
-const annotateSchema = <S>(
-  schema: S,
-  annotations: Record<PropertyKey, unknown>,
-): S =>
-  (schema as S & { annotations: (annotations: Record<PropertyKey, unknown>) => S })
-    .annotations(annotations);
 
 const SearchCompanyReportsDateString = annotateSchema(
   Schema.String.pipe(Schema.pattern(datePattern)),
@@ -59,6 +58,7 @@ const SearchCompanyReportsDisclosureTypeSchema = Schema.String.pipe(
 
 type BaseFieldSpecShape = {
   readonly description: string;
+  readonly examples?: readonly unknown[];
   readonly schema: unknown;
 };
 
@@ -109,39 +109,6 @@ type DefaultedFieldSpecShape = SearchCompanyReportsFieldSpec & {
   readonly defaultValue: unknown;
 };
 
-const defaultedField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-  readonly defaultValue: A;
-}) =>
-  annotateSchema(
-    Schema.optionalWith(
-      annotateSchema(spec.schema, {
-        description: spec.description,
-      }),
-      { default: () => spec.defaultValue },
-    ),
-    { default: spec.defaultValue },
-  );
-
-const requiredField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-}) =>
-  annotateSchema(spec.schema, {
-    description: spec.description,
-  });
-
-const optionalField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-}) =>
-  Schema.optional(
-    annotateSchema(spec.schema, {
-      description: spec.description,
-    }),
-  );
-
 const inputSpecs = {
   defaulted: {
     page: {
@@ -154,6 +121,7 @@ const inputSpecs = {
         Schema.lessThanOrEqualTo(100),
       ),
       description: searchCompanyReportsFieldCopy.page.description,
+      examples: [1],
     },
     pageSize: {
       kind: "enum",
@@ -161,6 +129,7 @@ const inputSpecs = {
       defaultValue: 15,
       schema: SearchCompanyReportsPageSizeSchema,
       description: searchCompanyReportsFieldCopy.pageSize.description,
+      examples: [15, 30],
     },
     sortDirection: {
       kind: "enum",
@@ -168,6 +137,7 @@ const inputSpecs = {
       defaultValue: "desc",
       schema: SearchCompanyReportsSortDirectionSchema,
       description: searchCompanyReportsFieldCopy.sortDirection.description,
+      examples: ["desc"],
     },
     disclosureTypes: {
       kind: "stringArray",
@@ -175,6 +145,7 @@ const inputSpecs = {
       defaultValue: [],
       schema: Schema.Array(SearchCompanyReportsDisclosureTypeSchema),
       description: searchCompanyReportsFieldCopy.disclosureTypes.description,
+      examples: [["A001"], ["I001"]],
     },
     industryCode: {
       kind: "patternString",
@@ -184,6 +155,7 @@ const inputSpecs = {
         Schema.pattern(searchCompanyReportsIndustryCodePattern),
       ),
       description: searchCompanyReportsFieldCopy.industryCode.description,
+      examples: ["all", "612"],
     },
     corporationType: {
       kind: "enum",
@@ -191,6 +163,7 @@ const inputSpecs = {
       defaultValue: "all",
       schema: SearchCompanyReportsCorporationTypeSchema,
       description: searchCompanyReportsFieldCopy.corporationType.description,
+      examples: ["all", "P"],
     },
     closingAccountsMonth: {
       kind: "enum",
@@ -198,12 +171,14 @@ const inputSpecs = {
       defaultValue: "all",
       schema: SearchCompanyReportsClosingAccountsMonthSchema,
       description: searchCompanyReportsFieldCopy.closingAccountsMonth.description,
+      examples: ["all", "12"],
     },
     includeAllReports: {
       kind: "boolean",
       defaultValue: false,
       schema: Schema.Boolean,
       description: searchCompanyReportsFieldCopy.includeAllReports.description,
+      examples: [false],
     },
   } as const satisfies Record<string, DefaultedFieldSpecShape>,
   optional: {
@@ -212,12 +187,14 @@ const inputSpecs = {
       nonEmpty: true,
       schema: Schema.NonEmptyString,
       description: searchCompanyReportsFieldCopy.presenterName.description,
+      examples: ["삼성전자"],
     },
     reportName: {
       kind: "string",
       nonEmpty: true,
       schema: Schema.NonEmptyString,
       description: searchCompanyReportsFieldCopy.reportName.description,
+      examples: ["사업보고서"],
     },
   } as const satisfies Record<string, SearchCompanyReportsFieldSpec>,
   required: {
@@ -226,16 +203,19 @@ const inputSpecs = {
       expectedToken: "8_digit_company_code",
       schema: Schema.String.pipe(Schema.pattern(companyCodePattern)),
       description: searchCompanyReportsFieldCopy.companyCode.description,
+      examples: ["00126380"],
     },
     startDate: {
       kind: "date",
       schema: SearchCompanyReportsDateString,
       description: searchCompanyReportsFieldCopy.startDate.description,
+      examples: ["20250331"],
     },
     endDate: {
       kind: "date",
       schema: SearchCompanyReportsDateString,
       description: searchCompanyReportsFieldCopy.endDate.description,
+      examples: ["20260331"],
     },
   } as const satisfies Record<string, SearchCompanyReportsFieldSpec>,
 } as const;
@@ -271,6 +251,7 @@ export const SearchCompanyReportsRequestSchema = Schema.Struct(
 ).annotations({
   identifier: "SearchCompanyReportsRequest",
   description: searchCompanyReportsSchemaCopy.requestDescription,
+  examples: searchCompanyReportsSchemaCopy.requestExamples,
 });
 
 export type SearchCompanyReportsRawInput =

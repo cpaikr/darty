@@ -72,6 +72,20 @@ describe("agent-native darty tool definitions", () => {
       required: ["receipt"],
     });
 
+    for (const tool of [
+      searchBody,
+      searchCompany,
+      searchCompanyReports,
+      companyDetail,
+      companyRss,
+      viewReport,
+    ]) {
+      expect(
+        ((tool.parameters as { examples?: readonly unknown[] }).examples ?? [])
+          .length,
+      ).toBeGreaterThan(0);
+    }
+
     expect(getDartyAgentTool("darty_search_body").resultJsonSchema).toMatchObject({
       type: "object",
       required: ["result", "metadata", "references", "warnings"],

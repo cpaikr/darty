@@ -22,6 +22,7 @@ export const companyDetailFailureCopy = {
 
 export const companyDetailSchemaCopy = {
   requestDescription: "DART 기업개황 상세 조회 입력입니다. 필수: companyCode.",
+  requestExamples: [{ companyCode: "00126380" }],
   resultDescription: "성공한 company-detail 결과 객체입니다. 기업개황 상세 필드, 메타데이터, 참조 URL을 포함합니다.",
 } as const;
 

@@ -1,28 +1,16 @@
 import { Schema } from "effect";
 
+import {
+  annotateSchema,
+  describedBoolean,
+  describedString,
+  nonNegativeInt,
+} from "../../schema-annotations.ts";
 import { viewReportSchemaCopy } from "../copy.ts";
 import {
   ViewReportOutputFormatSchema,
   ViewReportRequestSchema,
 } from "./request.ts";
-
-const annotateSchema = <S>(
-  schema: S,
-  annotations: Record<PropertyKey, unknown>,
-): S =>
-  (schema as S & { annotations: (annotations: Record<PropertyKey, unknown>) => S })
-    .annotations(annotations);
-
-const describedString = (description: string) =>
-  annotateSchema(Schema.String, { description });
-
-const describedBoolean = (description: string) =>
-  annotateSchema(Schema.Boolean, { description });
-
-const nonNegativeInt = (description: string) =>
-  annotateSchema(Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)), {
-    description,
-  });
 
 export interface ViewReportTocNode {
   readonly id: string;

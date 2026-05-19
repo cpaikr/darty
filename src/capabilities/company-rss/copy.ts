@@ -22,6 +22,7 @@ export const companyRssFailureCopy = {
 
 export const companyRssSchemaCopy = {
   requestDescription: "DART 회사별 공시 RSS 조회 입력입니다. 필수: companyCode.",
+  requestExamples: [{ companyCode: "00126380" }],
   resultDescription: "성공한 company-rss 결과 객체입니다. RSS 채널, 공시 항목, 메타데이터, 참조 URL을 포함합니다.",
 } as const;
 

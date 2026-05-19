@@ -1,42 +1,55 @@
 import { Schema } from "effect";
 
+import {
+  annotateSchema,
+  describedString,
+  nonNegativeInt,
+} from "../../schema-annotations.ts";
 import { searchCompanyReportsSchemaCopy } from "../copy.ts";
 import { SearchCompanyReportsRequestSchema } from "./request.ts";
 
-const DartCompanyCodeSchema = Schema.String.pipe(Schema.pattern(/^\d{8}$/));
+const DartCompanyCodeSchema = annotateSchema(
+  Schema.String.pipe(Schema.pattern(/^\d{8}$/)),
+  {
+    description: "8자리 DART 회사 코드.",
+    examples: ["00126380"],
+  },
+);
 
 export const SearchCompanyReportsCompanySchema = Schema.Struct({
   companyCode: DartCompanyCodeSchema,
-  name: Schema.optional(Schema.String),
-  marketLabel: Schema.optional(Schema.String),
+  name: Schema.optional(describedString("DART 결과 행에서 확인된 회사명.")),
+  marketLabel: Schema.optional(describedString("DART 결과 행의 시장 구분 라벨.")),
 });
 export type SearchCompanyReportsCompany =
   typeof SearchCompanyReportsCompanySchema.Type;
 
 export const SearchCompanyReportsFilingSchema = Schema.Struct({
-  receiptNumber: Schema.String,
-  reportTitle: Schema.String,
-  receiptDate: Schema.String,
-  presenterName: Schema.optional(Schema.String),
+  receiptNumber: describedString("14자리 DART 접수번호(rcpNo). 후속 view-report receipt로 사용할 수 있습니다.", [
+    "20260331004166",
+  ]),
+  reportTitle: describedString("DART 결과 행의 보고서 제목."),
+  receiptDate: describedString("DART 접수일자(YYYY-MM-DD).", ["2026-03-31"]),
+  presenterName: Schema.optional(describedString("DART 결과 행의 제출인명.")),
 });
 export type SearchCompanyReportsFiling =
   typeof SearchCompanyReportsFilingSchema.Type;
 
 export const SearchCompanyReportsItemReferencesSchema = Schema.Struct({
-  viewerUrl: Schema.String,
+  viewerUrl: describedString("DART /dsaf001/main.do?rcpNo=... report-viewer URL. 후속 view-report receipt로 사용할 수 있습니다."),
 });
 export type SearchCompanyReportsItemReferences =
   typeof SearchCompanyReportsItemReferencesSchema.Type;
 
 export const SearchCompanyReportsRemarkSchema = Schema.Struct({
-  text: Schema.String,
-  title: Schema.optional(Schema.String),
+  text: describedString("DART 결과 행의 비고 텍스트."),
+  title: Schema.optional(describedString("DART 결과 행의 비고 title 속성.")),
 });
 export type SearchCompanyReportsRemark =
   typeof SearchCompanyReportsRemarkSchema.Type;
 
 export const SearchCompanyReportsEvidenceSchema = Schema.Struct({
-  rawRowText: Schema.String,
+  rawRowText: describedString("DART 결과 행의 원문 텍스트. 파서 검증용 evidence입니다."),
 });
 export type SearchCompanyReportsEvidence =
   typeof SearchCompanyReportsEvidenceSchema.Type;
@@ -52,45 +65,65 @@ export type SearchCompanyReportsItem =
   typeof SearchCompanyReportsItemSchema.Type;
 
 export const SearchCompanyReportsPaginationSchema = Schema.Struct({
-  currentPage: Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)),
-  totalPages: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
-  totalCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
-  returnedCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+  currentPage: annotateSchema(Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)), {
+    description: "반환된 DART 회사별 공시 검색 페이지(1부터 시작).",
+  }),
+  totalPages: nonNegativeInt("DART가 보고한 전체 페이지 수."),
+  totalCount: nonNegativeInt("DART가 보고한 전체 공시 결과 수."),
+  returnedCount: nonNegativeInt("이번 응답의 items 개수."),
 });
 export type SearchCompanyReportsPagination =
   typeof SearchCompanyReportsPaginationSchema.Type;
 
 export const SearchCompanyReportsMetadataSchema = Schema.Struct({
-  fetchedAt: Schema.String,
+  fetchedAt: describedString("DART 회사별 공시 검색 응답을 처리한 ISO timestamp."),
   source: Schema.Struct({
-    system: Schema.Literal("dart"),
-    surface: Schema.Literal("dsab007"),
-    endpoint: Schema.String,
+    system: annotateSchema(Schema.Literal("dart"), { description: "원천 시스템." }),
+    surface: annotateSchema(Schema.Literal("dsab007"), {
+      description: "사용한 DART 통합검색 surface.",
+    }),
+    endpoint: describedString("DART 회사별 공시 검색 endpoint."),
   }),
   sourceBehavior: Schema.Struct({
-    searchMode: Schema.Literal("corp"),
-    sortBy: Schema.Literal("date"),
-    callerControlsPageSize: Schema.Literal(true),
-    pageSizeChoices: Schema.Array(Schema.Literal(15, 30, 50, 100)),
-    finalReportDefault: Schema.Literal(true),
-    observationStatus: Schema.Literal("observed"),
+    searchMode: annotateSchema(Schema.Literal("corp"), {
+      description: "DART 공시통합검색 회사명 모드.",
+    }),
+    sortBy: annotateSchema(Schema.Literal("date"), {
+      description: "현재 capability가 사용하는 고정 정렬 기준.",
+    }),
+    callerControlsPageSize: annotateSchema(Schema.Literal(true), {
+      description: "caller가 pageSize를 제어할 수 있음을 나타냅니다.",
+    }),
+    pageSizeChoices: annotateSchema(Schema.Array(Schema.Literal(15, 30, 50, 100)), {
+      description: "DART 회사별 공시 검색에서 관찰된 pageSize 선택지.",
+    }),
+    finalReportDefault: annotateSchema(Schema.Literal(true), {
+      description: "기본 요청은 DART 최종보고서 필터를 적용합니다.",
+    }),
+    observationStatus: annotateSchema(Schema.Literal("observed"), {
+      description: "source 동작이 live 조사로 확인된 상태.",
+    }),
   }),
-  completeness: Schema.Literal("complete", "partial"),
-  droppedItemCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+  completeness: annotateSchema(Schema.Literal("complete", "partial"), {
+    description: "파싱 결과가 완전한지, 일부 행을 드롭했는지 나타냅니다.",
+  }),
+  droppedItemCount: nonNegativeInt("파싱하지 못해 items에서 제외한 결과 행 수."),
 });
 export type SearchCompanyReportsMetadata =
   typeof SearchCompanyReportsMetadataSchema.Type;
 
 export const SearchCompanyReportsReferencesSchema = Schema.Struct({
-  searchUrl: Schema.String,
+  searchUrl: describedString("DART /dsab007/detailSearch.ax 회사별 공시 검색 endpoint URL."),
 });
 export type SearchCompanyReportsReferences =
   typeof SearchCompanyReportsReferencesSchema.Type;
 
 export const SearchCompanyReportsWarningSchema = Schema.Struct({
-  code: Schema.Literal("partial_rows_dropped"),
-  message: Schema.String,
-  droppedItemCount: Schema.Int.pipe(Schema.greaterThanOrEqualTo(0)),
+  code: annotateSchema(Schema.Literal("partial_rows_dropped"), {
+    description: "복구 가능한 경고 코드. 결과 행 일부가 파싱되지 않았을 때만 반환됩니다.",
+  }),
+  message: describedString("경고 설명."),
+  droppedItemCount: nonNegativeInt("파싱하지 못해 제외한 결과 행 수."),
 });
 export type SearchCompanyReportsWarning =
   typeof SearchCompanyReportsWarningSchema.Type;

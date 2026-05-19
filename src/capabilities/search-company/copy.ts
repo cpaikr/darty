@@ -47,6 +47,7 @@ export const searchCompanyResultCopy = {
 export const searchCompanySchemaCopy = {
   requestDescription:
     "DART 기업개황 `회사별` 모드의 회사명 검색 입력입니다. 필수: companyName.",
+  requestExamples: [{ companyName: "삼성전자", page: 1, pageSize: 15 }],
   resultDescription:
     "성공한 search-company 결과 객체입니다. 회사 검색 결과, 메타데이터, 참조 URL, 경고를 포함합니다.",
 } as const;

@@ -108,6 +108,17 @@ export const searchBodySchemaCopy = {
   dateStringDescription: "YYYYMMDD 형식의 날짜 문자열입니다.",
   requestDescription:
     "DART 공시통합검색 `본문내용` 모드의 의미 기반 검색 입력입니다. 필수: keyword, startDate, endDate.",
+  requestExamples: [
+    {
+      page: 1,
+      sortBy: "date",
+      sortDirection: "desc",
+      keyword: "배당",
+      startDate: "20250331",
+      endDate: "20260331",
+      companyCode: "00126380",
+    },
+  ],
   resultDescription: "성공한 search-body 결과 객체입니다. 검색 결과, 메타데이터, 참조 URL, 경고를 포함합니다.",
 } as const;
 

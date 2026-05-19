@@ -1,38 +1,10 @@
 import { Schema } from "effect";
 
+import {
+  defaultedField,
+  requiredField,
+} from "../../schema-annotations.ts";
 import { searchCompanyFieldCopy, searchCompanySchemaCopy } from "../copy.ts";
-
-type AnnotatableSchema<S> = S & {
-  annotations: (annotations: Record<PropertyKey, unknown>) => S;
-};
-
-const annotateSchema = <S>(
-  schema: S,
-  annotations: Record<PropertyKey, unknown>,
-): S => (schema as AnnotatableSchema<S>).annotations(annotations) as S;
-
-const defaultedField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-  readonly defaultValue: A;
-}) =>
-  annotateSchema(
-    Schema.optionalWith(
-      annotateSchema(spec.schema, {
-        description: spec.description,
-      }),
-      { default: () => spec.defaultValue },
-    ),
-    { default: spec.defaultValue },
-  );
-
-const requiredField = <A, I, R>(spec: {
-  readonly schema: Schema.Schema<A, I, R>;
-  readonly description: string;
-}) =>
-  annotateSchema(spec.schema, {
-    description: spec.description,
-  });
 
 export const searchCompanyFieldSpecs = {
   page: {
@@ -45,6 +17,7 @@ export const searchCompanyFieldSpecs = {
       Schema.lessThanOrEqualTo(100),
     ),
     description: searchCompanyFieldCopy.page.description,
+    examples: [1],
   },
   pageSize: {
     kind: "integer",
@@ -56,12 +29,14 @@ export const searchCompanyFieldSpecs = {
       Schema.lessThanOrEqualTo(45),
     ),
     description: searchCompanyFieldCopy.pageSize.description,
+    examples: [15],
   },
   companyName: {
     kind: "string",
     minimumLength: 2,
     schema: Schema.String.pipe(Schema.minLength(2)),
     description: searchCompanyFieldCopy.companyName.description,
+    examples: ["삼성전자"],
   },
 } as const;
 
@@ -78,6 +53,7 @@ export const SearchCompanyRequestSchema = Schema.Struct(
 ).annotations({
   identifier: "SearchCompanyRequest",
   description: searchCompanySchemaCopy.requestDescription,
+  examples: searchCompanySchemaCopy.requestExamples,
 });
 
 export type SearchCompanyRawInput = typeof SearchCompanyRequestSchema.Encoded;
