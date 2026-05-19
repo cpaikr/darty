@@ -133,7 +133,7 @@ Output envelope:
 - `result.items[]`: filing rows
 - `metadata`: source endpoint, fetched time, observed source behavior, completeness, dropped row count
 - `references.searchUrl`: `https://dart.fss.or.kr/dsab007/detailSearch.ax`
-- `warnings`: partial row drops if parsing failed for individual rows
+- `warnings`: recoverable notices such as partial row drops or unavailable per-row disclosure-type attribution
 
 Result item fields:
 
@@ -144,9 +144,12 @@ Result item fields:
 - `filing.reportTitle`
 - `filing.receiptDate`
 - `filing.presenterName`
+- `matchedDisclosureType` when the request has exactly one effective `disclosureTypes` code. This attribution is request-level evidence from the single `publicType` filter, not a row HTML field. It includes `code`, optional `label`, `category`, `categoryLabel`, and `evidence.source=single_disclosure_type_request`.
 - `references.viewerUrl`
 - `remarks[]` for `비고` badges/text, including raw title text when DART provides it
 - `evidence.rawRowText`
+
+When a request uses multiple distinct `disclosureTypes`, do not infer a row's matched code from the report title. DART's observed result rows do not expose the matched `publicType`, so return rows without `matchedDisclosureType` and include a `matched_disclosure_type_unavailable` warning when rows are returned.
 
 Empty result sets are successful searches, not failures. When DART returns a recognized no-result table, return `items: []`, `currentPage: 1`, `totalPages: 1`, `totalCount: 0`, and `returnedCount: 0` so consumers do not render an awkward page `1/0`.
 

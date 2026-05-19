@@ -93,5 +93,41 @@ describe("search-company-reports capability schemas", () => {
       result.properties.items.items.properties.references.properties.viewerUrl
         .description,
     ).toContain("view-report");
+
+    const matchedDisclosureType =
+      result.properties.items.items.properties.matchedDisclosureType;
+    expect(matchedDisclosureType).toMatchObject({
+      type: "object",
+      additionalProperties: false,
+      required: ["code", "category", "categoryLabel", "evidence"],
+    });
+    expect(matchedDisclosureType.properties.code).toMatchObject({
+      pattern: "^[A-J]\\d{3}$",
+    });
+    expect(matchedDisclosureType.properties.evidence.properties.source).toMatchObject({
+      enum: ["single_disclosure_type_request"],
+    });
+
+    const warnings = jsonSchema.properties.warnings as Record<string, any>;
+    const warningVariants = warnings.items.anyOf;
+    expect(warningVariants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          required: ["code", "message", "droppedItemCount"],
+          properties: expect.objectContaining({
+            code: expect.objectContaining({ enum: ["partial_rows_dropped"] }),
+            droppedItemCount: expect.objectContaining({ minimum: 0 }),
+          }),
+        }),
+        expect.objectContaining({
+          required: ["code", "message"],
+          properties: expect.objectContaining({
+            code: expect.objectContaining({
+              enum: ["matched_disclosure_type_unavailable"],
+            }),
+          }),
+        }),
+      ]),
+    );
   });
 });

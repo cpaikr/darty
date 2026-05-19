@@ -2,7 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { SearchCompanyReportsFailure } from "./contract.ts";
 import { executeSearchCompanyReports } from "./execute.ts";
-import type { SearchCompanyReportsProvider } from "./provider.ts";
+import type {
+  SearchCompanyReportsProvider,
+  SearchCompanyReportsProviderResult,
+} from "./provider.ts";
 
 const unusedProvider: SearchCompanyReportsProvider = {
   search: async () => {
@@ -10,7 +13,100 @@ const unusedProvider: SearchCompanyReportsProvider = {
   },
 };
 
+const successfulProviderResult = {
+  company: { companyCode: "00190321", name: "케이티" },
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 1,
+    returnedCount: 1,
+  },
+  items: [
+    {
+      company: { companyCode: "00190321", name: "케이티" },
+      filing: {
+        receiptNumber: "20260331004166",
+        reportTitle: "사업보고서",
+        receiptDate: "2026-03-31",
+      },
+      references: {
+        viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+      },
+      remarks: [],
+      evidence: { rawRowText: "케이티 사업보고서 2026.03.31" },
+    },
+  ],
+  metadata: {
+    fetchedAt: "2026-05-07T00:00:00.000Z",
+    source: {
+      system: "dart",
+      surface: "dsab007",
+      endpoint: "https://dart.fss.or.kr/dsab007/detailSearch.ax",
+    },
+    sourceBehavior: {
+      searchMode: "corp",
+      sortBy: "date",
+      callerControlsPageSize: true,
+      pageSizeChoices: [15, 30, 50, 100],
+      finalReportDefault: true,
+      observationStatus: "observed",
+    },
+    completeness: "complete",
+    droppedItemCount: 0,
+  },
+  references: {
+    searchUrl: "https://dart.fss.or.kr/dsab007/detailSearch.ax",
+  },
+  warnings: [],
+} satisfies SearchCompanyReportsProviderResult;
+
+const successfulProvider: SearchCompanyReportsProvider = {
+  search: async () => successfulProviderResult,
+};
+
 describe("executeSearchCompanyReports", () => {
+  test("attributes rows to the single requested disclosure type", async () => {
+    const result = await executeSearchCompanyReports(
+      {
+        companyCode: "00190321",
+        startDate: "20250101",
+        endDate: "20251231",
+        disclosureTypes: ["A001"],
+      },
+      successfulProvider,
+    );
+
+    expect(result.result.items[0]?.matchedDisclosureType).toEqual({
+      code: "A001",
+      label: "사업보고서",
+      category: "A",
+      categoryLabel: "정기공시",
+      evidence: { source: "single_disclosure_type_request" },
+    });
+    expect(result.warnings).toEqual([]);
+  });
+
+  test("warns instead of guessing row attribution for multiple disclosure types", async () => {
+    const result = await executeSearchCompanyReports(
+      {
+        companyCode: "00190321",
+        startDate: "20250101",
+        endDate: "20251231",
+        disclosureTypes: ["A001", "I001"],
+      },
+      successfulProvider,
+    );
+
+    expect(result.result.items[0]?.matchedDisclosureType).toBeUndefined();
+    expect(result.warnings).toEqual([
+      {
+        code: "matched_disclosure_type_unavailable",
+        message:
+          "여러 공시유형 코드로 검색했지만 DART 결과 행은 어떤 publicType이 일치했는지 노출하지 않아 matchedDisclosureType을 생략했습니다.",
+      },
+    ]);
+  });
+
   test("adds a recovery hint when companyCode looks like a stock code", async () => {
     try {
       await executeSearchCompanyReports(

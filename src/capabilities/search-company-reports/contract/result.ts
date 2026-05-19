@@ -35,6 +35,37 @@ export const SearchCompanyReportsFilingSchema = Schema.Struct({
 export type SearchCompanyReportsFiling =
   typeof SearchCompanyReportsFilingSchema.Type;
 
+const SearchCompanyReportsDisclosureTypeCodeSchema = annotateSchema(
+  Schema.String.pipe(Schema.pattern(/^[A-J]\d{3}$/)),
+  {
+    description: "검색 결과 행에 귀속된 DART 공시상세유형 코드.",
+    examples: ["A001", "I001"],
+  },
+);
+
+const SearchCompanyReportsDisclosureTypeCategorySchema = annotateSchema(
+  Schema.Literal("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
+  {
+    description: "검색 결과 행에 귀속된 DART 공시상세유형 대분류 코드.",
+    examples: ["A", "I"],
+  },
+);
+
+export const SearchCompanyReportsMatchedDisclosureTypeSchema = Schema.Struct({
+  code: SearchCompanyReportsDisclosureTypeCodeSchema,
+  label: Schema.optional(describedString("공시상세유형 한국어 라벨.")),
+  category: SearchCompanyReportsDisclosureTypeCategorySchema,
+  categoryLabel: describedString("공시상세유형 대분류 한국어 라벨."),
+  evidence: Schema.Struct({
+    source: annotateSchema(Schema.Literal("single_disclosure_type_request"), {
+      description:
+        "DART 요청이 하나의 publicType으로 제한되어 행별 귀속이 가능한 경우임을 나타냅니다.",
+    }),
+  }),
+});
+export type SearchCompanyReportsMatchedDisclosureType =
+  typeof SearchCompanyReportsMatchedDisclosureTypeSchema.Type;
+
 export const SearchCompanyReportsItemReferencesSchema = Schema.Struct({
   viewerUrl: describedString("DART /dsaf001/main.do?rcpNo=... report-viewer URL. 후속 view-report receipt로 사용할 수 있습니다."),
 });
@@ -57,6 +88,9 @@ export type SearchCompanyReportsEvidence =
 export const SearchCompanyReportsItemSchema = Schema.Struct({
   company: SearchCompanyReportsCompanySchema,
   filing: SearchCompanyReportsFilingSchema,
+  matchedDisclosureType: Schema.optional(
+    SearchCompanyReportsMatchedDisclosureTypeSchema,
+  ),
   references: SearchCompanyReportsItemReferencesSchema,
   remarks: Schema.Array(SearchCompanyReportsRemarkSchema),
   evidence: SearchCompanyReportsEvidenceSchema,
@@ -118,13 +152,26 @@ export const SearchCompanyReportsReferencesSchema = Schema.Struct({
 export type SearchCompanyReportsReferences =
   typeof SearchCompanyReportsReferencesSchema.Type;
 
-export const SearchCompanyReportsWarningSchema = Schema.Struct({
+const PartialRowsDroppedWarningSchema = Schema.Struct({
   code: annotateSchema(Schema.Literal("partial_rows_dropped"), {
-    description: "복구 가능한 경고 코드. 결과 행 일부가 파싱되지 않았을 때만 반환됩니다.",
+    description: "결과 행 일부가 파싱되지 않았을 때 반환되는 경고 코드.",
   }),
   message: describedString("경고 설명."),
   droppedItemCount: nonNegativeInt("파싱하지 못해 제외한 결과 행 수."),
 });
+
+const MatchedDisclosureTypeUnavailableWarningSchema = Schema.Struct({
+  code: annotateSchema(Schema.Literal("matched_disclosure_type_unavailable"), {
+    description:
+      "여러 공시상세유형 코드로 검색했지만 행별 매칭 코드를 확인할 수 없을 때 반환되는 경고 코드.",
+  }),
+  message: describedString("경고 설명."),
+});
+
+export const SearchCompanyReportsWarningSchema = Schema.Union(
+  PartialRowsDroppedWarningSchema,
+  MatchedDisclosureTypeUnavailableWarningSchema,
+);
 export type SearchCompanyReportsWarning =
   typeof SearchCompanyReportsWarningSchema.Type;
 
