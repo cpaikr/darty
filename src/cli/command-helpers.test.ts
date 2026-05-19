@@ -31,6 +31,24 @@ describe("renderCliFailureJson", () => {
     });
   });
 
+  test("passes through typed recovery hints when present", () => {
+    const text = renderCliFailureJson(
+      new SearchBodyFailure({
+        code: "invalid_request",
+        message: "bad company code",
+        parameter: "companyCode",
+        retryable: false,
+        recoveryHint: "search-company로 8자리 companyCode를 확인하세요.",
+      }),
+    );
+
+    expect(JSON.parse(text).error).toMatchObject({
+      code: "invalid_request",
+      parameter: "companyCode",
+      recoveryHint: "search-company로 8자리 companyCode를 확인하세요.",
+    });
+  });
+
   test("pretty prints failure envelopes when requested", () => {
     const text = renderCliFailureJson(new Error("boom"), { pretty: true });
 
@@ -56,5 +74,24 @@ describe("renderCliFailureJson", () => {
 
     expect(error.code).toBe("internal_error");
     expect(error.retryable).toBe(false);
+  });
+
+  test("does not pass through non-string typed failure optional fields", () => {
+    const text = renderCliFailureJson({
+      code: "invalid_request",
+      message: "bad recovery hint",
+      retryable: false,
+      recoveryHint: { text: "retry" },
+    });
+
+    const error = JSON.parse(text).error as {
+      readonly code: string;
+      readonly retryable: boolean;
+      readonly recoveryHint?: unknown;
+    };
+
+    expect(error.code).toBe("internal_error");
+    expect(error.retryable).toBe(false);
+    expect(error.recoveryHint).toBeUndefined();
   });
 });

@@ -162,6 +162,8 @@ These appear in the viewer contract, not the first search-result contract.
   stable company, filing, match, reference, and evidence fields derived from parsed DART rows
 - `error cases`
   `invalid_request`, `source_unavailable`, `source_changed`, `source_parse_failure`, `internal_error`
+- `error recovery`
+  typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date and page values
 - `warning cases`
   `partial_rows_dropped` when the parser drops incomplete result rows from an otherwise successful response
 - `safety class`

@@ -195,6 +195,7 @@ export type CliFailureError = {
   readonly retryable: boolean;
   readonly parameter?: string;
   readonly sourceUrl?: string;
+  readonly recoveryHint?: string;
 };
 
 export type CliFailureEnvelope = {
@@ -248,6 +249,9 @@ const toCliFailureError = (
       ...fields,
       ...(error.parameter === undefined ? {} : { parameter: error.parameter }),
       ...(error.sourceUrl === undefined ? {} : { sourceUrl: error.sourceUrl }),
+      ...(error.recoveryHint === undefined
+        ? {}
+        : { recoveryHint: error.recoveryHint }),
     };
   }
 
@@ -291,12 +295,19 @@ const isTypedCliFailure = (
   readonly retryable: boolean;
   readonly parameter?: string | undefined;
   readonly sourceUrl?: string | undefined;
+  readonly recoveryHint?: string | undefined;
 } =>
   isRecord(error) &&
   typeof error.code === "string" &&
   cliFailureCodes.has(error.code) &&
   typeof error.message === "string" &&
-  typeof error.retryable === "boolean";
+  typeof error.retryable === "boolean" &&
+  isOptionalString(error.parameter) &&
+  isOptionalString(error.sourceUrl) &&
+  isOptionalString(error.recoveryHint);
+
+const isOptionalString = (value: unknown): value is string | undefined =>
+  value === undefined || typeof value === "string";
 
 const isCommanderError = (error: unknown): boolean =>
   isRecord(error) &&

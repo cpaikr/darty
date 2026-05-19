@@ -48,3 +48,5 @@ The success envelope contains:
 | `source_changed` | no | detail HTML no longer matches required parser assumptions |
 | `source_parse_failure` | no | response HTML or decoded source model could not be parsed |
 | `internal_error` | no | unexpected provider or implementation failure |
+
+Typed failures may include optional `recoveryHint` with a concise next action. For invalid or unknown `companyCode`, it should point callers to `search-company` to resolve the 8-digit DART company code.

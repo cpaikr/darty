@@ -30,5 +30,6 @@ export class ViewReportFailure extends Schema.TaggedError<ViewReportFailure>()(
     retryable: Schema.Boolean,
     parameter: Schema.optional(Schema.String),
     sourceUrl: Schema.optional(Schema.String),
+    recoveryHint: Schema.optional(Schema.String),
   },
 ) {}

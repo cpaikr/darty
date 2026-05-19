@@ -51,7 +51,8 @@ Failure output uses the same envelope discipline with `result: null` and a typed
     "code": "invalid_request",
     "message": "옵션 \"--company-code\"은(는) 8자리 DART 회사 코드여야 합니다.",
     "retryable": false,
-    "parameter": "companyCode"
+    "parameter": "companyCode",
+    "recoveryHint": "회사명이나 6자리 종목코드만 알고 있다면 먼저 search-company로 8자리 companyCode를 확인한 뒤 다시 호출하세요."
   }
 }
 ```
@@ -66,6 +67,7 @@ Failure `error` fields:
 - `retryable`: whether retrying the same request may help
 - `parameter`: optional semantic request parameter related to the failure
 - `sourceUrl`: optional upstream URL related to source failures
+- `recoveryHint`: optional concise next action for common recoverable failures, such as resolving an 8-digit `companyCode` with `search-company` or refreshing stale `view-report` IDs
 
 ## Stderr
 

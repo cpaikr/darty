@@ -30,5 +30,6 @@ export class SearchCompanyFailure extends Schema.TaggedError<SearchCompanyFailur
     retryable: Schema.Boolean,
     parameter: Schema.optional(Schema.String),
     sourceUrl: Schema.optional(Schema.String),
+    recoveryHint: Schema.optional(Schema.String),
   },
 ) {}

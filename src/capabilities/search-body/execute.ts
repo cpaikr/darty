@@ -1,4 +1,5 @@
 import { toCommonSourceFailure } from "../provider-errors.ts";
+import { getInvalidRequestRecoveryHint } from "../recovery-hints.ts";
 import { searchBodyFailureCopy } from "./copy.ts";
 import {
   SearchBodyFailure,
@@ -20,6 +21,7 @@ const toSearchBodyFailure = (error: unknown): SearchBodyFailure => {
       message: error.message,
       retryable: false,
       parameter: error.parameter,
+      recoveryHint: getInvalidRequestRecoveryHint(error),
     });
   }
 

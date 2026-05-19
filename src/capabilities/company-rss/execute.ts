@@ -1,4 +1,5 @@
 import { toCommonSourceFailure } from "../provider-errors.ts";
+import { getInvalidRequestRecoveryHint } from "../recovery-hints.ts";
 import { companyRssFailureCopy } from "./copy.ts";
 import {
   CompanyRssFailure,
@@ -20,6 +21,7 @@ const toCompanyRssFailure = (error: unknown): CompanyRssFailure => {
       message: error.message,
       retryable: false,
       parameter: error.parameter,
+      recoveryHint: getInvalidRequestRecoveryHint(error),
     });
   }
 

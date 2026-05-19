@@ -160,6 +160,8 @@ Failures:
 | `source_parse_failure` | no | response HTML or decoded source model could not be parsed |
 | `internal_error` | no | unexpected provider or implementation failure |
 
+Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date, page, page-size, and DART code filters.
+
 ## 6. Source Replay Notes
 
 Observed company lookup endpoint used by the browser popup:

@@ -1,4 +1,8 @@
 import { toCommonSourceFailure } from "../provider-errors.ts";
+import {
+  getCompanyNotFoundRecoveryHint,
+  getInvalidRequestRecoveryHint,
+} from "../recovery-hints.ts";
 import { companyDetailFailureCopy } from "./copy.ts";
 import {
   CompanyDetailFailure,
@@ -20,6 +24,7 @@ const toCompanyDetailFailure = (error: unknown): CompanyDetailFailure => {
       message: error.message,
       retryable: false,
       parameter: error.parameter,
+      recoveryHint: getInvalidRequestRecoveryHint(error),
     });
   }
 
@@ -30,6 +35,7 @@ const toCompanyDetailFailure = (error: unknown): CompanyDetailFailure => {
         message: error.message,
         retryable: false,
         sourceUrl: error.sourceUrl,
+        recoveryHint: getCompanyNotFoundRecoveryHint(),
       });
     }
 

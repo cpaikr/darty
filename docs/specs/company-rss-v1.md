@@ -46,3 +46,5 @@ The success envelope contains:
 | `source_changed` | no | RSS structure no longer matches required parser assumptions |
 | `source_parse_failure` | no | response XML or decoded source model could not be parsed |
 | `internal_error` | no | unexpected provider or implementation failure |
+
+Typed failures may include optional `recoveryHint` with a concise next action. For invalid `companyCode`, it should point callers to `search-company` to resolve the 8-digit DART company code.

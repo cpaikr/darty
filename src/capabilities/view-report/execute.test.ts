@@ -44,6 +44,8 @@ describe("executeViewReport", () => {
         "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
       );
       expect(error.message).toContain("toc[].id");
+      expect(error.recoveryHint).toContain("view-report를 다시 호출");
+      expect(error.recoveryHint).toContain("documents[].id/toc[].id");
     }
   });
 });

@@ -1,4 +1,8 @@
 import { toCommonSourceFailure } from "../provider-errors.ts";
+import {
+  getInvalidRequestRecoveryHint,
+  getViewReportNotFoundRecoveryHint,
+} from "../recovery-hints.ts";
 import { viewReportFailureCopy } from "./copy.ts";
 import {
   InvalidViewReportRequest,
@@ -20,6 +24,7 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
       message: error.message,
       retryable: false,
       parameter: error.parameter,
+      recoveryHint: getInvalidRequestRecoveryHint(error),
     });
   }
 
@@ -31,6 +36,7 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
         retryable: false,
         parameter: error.parameter,
         sourceUrl: error.sourceUrl,
+        recoveryHint: getViewReportNotFoundRecoveryHint(error.parameter),
       });
     }
 

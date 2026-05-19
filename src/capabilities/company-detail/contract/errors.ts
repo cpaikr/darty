@@ -31,5 +31,6 @@ export class CompanyDetailFailure extends Schema.TaggedError<CompanyDetailFailur
     retryable: Schema.Boolean,
     parameter: Schema.optional(Schema.String),
     sourceUrl: Schema.optional(Schema.String),
+    recoveryHint: Schema.optional(Schema.String),
   },
 ) {}

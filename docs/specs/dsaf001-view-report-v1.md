@@ -55,6 +55,19 @@ Optional:
   content is returned, `metadata.source.endpoints.content` records the iframe
   content endpoint without exposing raw DART viewer params.
 
+## Failures
+
+| Code | Retryable | Meaning |
+|---|---:|---|
+| `invalid_request` | no | request is missing, malformed, has an unsupported option, uses raw DART viewer parameters, or has an invalid content window |
+| `not_found` | no | the requested `documentId` or `sectionId` is not present in the resolved report context |
+| `source_unavailable` | yes | DART viewer endpoint could not be fetched |
+| `source_changed` | no | viewer HTML no longer matches required parser assumptions |
+| `source_parse_failure` | no | response HTML or decoded source model could not be parsed |
+| `internal_error` | no | unexpected provider or implementation failure |
+
+Typed failures may include optional `recoveryHint` with a concise next action. For stale `documentId` or `sectionId`, it should tell callers to rerun `view-report` for the same receipt and use returned IDs. For continuation windows, it should point to `content.window.nextStartByte` instead of raw DART `offset` or `length` values.
+
 ## Source Basis
 
 Implemented against observed DART viewer behavior in

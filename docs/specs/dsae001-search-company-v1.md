@@ -99,6 +99,8 @@ Failures:
 | `source_parse_failure` | no | response HTML or decoded source model could not be parsed |
 | `internal_error` | no | unexpected provider or implementation failure |
 
+Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as correcting page or page-size values.
+
 ## 6. Source Replay Notes
 
 Observed POST endpoint:
