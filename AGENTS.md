@@ -35,7 +35,8 @@
 ## Release and Publishing
 
 - Read `docs/release.md` before preparing release automation changes or manual fallback tags.
-- Release Please owns normal version bumps and changelog updates.
+- Release Please owns normal version bumps and changelog updates; do not manually edit versions or changelogs unless doing the documented manual fallback.
+- Use Conventional Commit messages. While the package is pre-1.0, normal `feat:` and `fix:` commits become patch releases; breaking commits using `!` or `BREAKING CHANGE:` become minor releases.
 - Manual release tags must match `package.json` exactly: version `x.y.z` uses source tag `vx.y.z`.
 - The release workflow publishes npm and uploads standalone binaries to `open-creo/skills`; do not add a separate manual publishing path unless the docs change.
 

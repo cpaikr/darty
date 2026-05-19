@@ -29,6 +29,8 @@ Ensure this repository can use the native runner labels in `.github/workflows/re
 
 ## Automated release flow
 
+While the package is pre-1.0, Release Please treats normal `feat:` and `fix:` commits as patch releases and reserves minor bumps for breaking changes. This keeps rapid greenfield feature work on `0.0.x` unless a commit uses `!` or a `BREAKING CHANGE:` footer.
+
 1. Land normal work on `main` using Conventional Commits, especially `feat:`, `fix:`, and `docs:`. Use `!` or a `BREAKING CHANGE:` footer for breaking changes.
 2. `.github/workflows/ci.yml` validates pull requests with typecheck, tests, and the npm CLI build.
 3. `.github/workflows/release-please.yml` opens or updates a release PR that bumps `package.json`, updates `.release-please-manifest.json`, and writes `CHANGELOG.md`.
