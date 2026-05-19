@@ -40,6 +40,8 @@ describe("parseDisclosureTypesCommandArgs", () => {
     expect(disclosureTypesUsage).toContain("darty disclosure-types");
     expect(disclosureTypesUsage).toContain("--disclosure-type");
     expect(disclosureTypesUsage).toContain("--report-name");
+    expect(disclosureTypesUsage).toContain("B=주요사항보고");
+    expect(disclosureTypesUsage).toContain("H=자산유동화");
   });
 
   test("passes parsed semantic options to the command runner", async () => {
@@ -74,6 +76,9 @@ describe("parseDisclosureTypesCommandArgs", () => {
             categories: [
               {
                 category: "A",
+                categoryLabel: "정기공시",
+                categoryDescription:
+                  "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
                 items: [{ code: "A001", label: "사업보고서" }],
               },
             ],
@@ -85,8 +90,19 @@ describe("parseDisclosureTypesCommandArgs", () => {
               commit: "85e7a07dee1d24cd810c705c1400c4ac3bbf6add",
               path: "src/docs/pblntf_detail_ty.md",
             },
+            categoryLabelSource: {
+              system: "dart-fss-docs",
+              url: "https://dart-fss.readthedocs.io/en/latest/dart_types.html",
+              codeSet: "pblntf_ty",
+            },
+            categoryDescriptionProvenance: {
+              status: "implementation_authored_guidance",
+              basis:
+                "Human-authored summaries derived from pblntf_ty category labels and pblntf_detail_ty items.",
+            },
             sourceBehavior: {
               codeSet: "pblntf_detail_ty",
+              categoryCodeSet: "pblntf_ty",
               observationStatus: "source_material",
             },
             completeness: "complete",

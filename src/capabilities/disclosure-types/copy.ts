@@ -32,6 +32,8 @@ export const disclosureTypesCliCopy = {
   ],
   notesHeading: "검색 팁",
   notes: [
+    "대분류: A=정기공시, B=주요사항보고, C=발행공시, D=지분공시, E=기타공시, F=외부감사관련, G=펀드공시, H=자산유동화, I=거래소공시, J=공정위공시.",
+    "같은 라벨이 여러 대분류에 있으면 결과의 categoryLabel/categoryDescription을 확인하거나 `--category`로 좁히세요. 예: B001=일반 주요사항보고, H006=자산유동화 주요사항보고서.",
     "search-company-reports의 `--disclosure-type`에는 이 명령이 반환하는 A001, I001 같은 상세 코드를 전달하세요.",
     "보고서 제목 텍스트로 검색하려면 search-company-reports의 `--report-name`을 사용하세요.",
   ],

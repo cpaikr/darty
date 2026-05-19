@@ -75,6 +75,9 @@ describe("disclosure-types capability schemas", () => {
           categories: [
             {
               category: "A",
+              categoryLabel: "정기공시",
+              categoryDescription:
+                "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
               items: [{ code: "A001", label: "사업보고서" }],
             },
           ],
@@ -86,8 +89,19 @@ describe("disclosure-types capability schemas", () => {
             commit: "85e7a07dee1d24cd810c705c1400c4ac3bbf6add",
             path: "src/docs/pblntf_detail_ty.md",
           },
+          categoryLabelSource: {
+            system: "dart-fss-docs",
+            url: "https://dart-fss.readthedocs.io/en/latest/dart_types.html",
+            codeSet: "pblntf_ty",
+          },
+          categoryDescriptionProvenance: {
+            status: "implementation_authored_guidance",
+            basis:
+              "Human-authored summaries derived from pblntf_ty category labels and pblntf_detail_ty items.",
+          },
           sourceBehavior: {
             codeSet: "pblntf_detail_ty",
+            categoryCodeSet: "pblntf_ty",
             observationStatus: "source_material",
           },
           completeness: "complete",
@@ -112,6 +126,9 @@ describe("disclosure-types capability schemas", () => {
     expect(decoded.result.categories).toEqual([
       {
         category: "A",
+        categoryLabel: "정기공시",
+        categoryDescription:
+          "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
         items: [{ code: "A001", label: "사업보고서" }],
       },
     ]);

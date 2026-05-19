@@ -22,6 +22,10 @@ export const DisclosureTypeCategoryGroupSchema = Schema.Struct({
   category: annotateSchema(DisclosureTypeCategorySchema, {
     description: "공시상세유형 대분류 코드.",
   }),
+  categoryLabel: describedString("공시상세유형 대분류 한국어 라벨."),
+  categoryDescription: describedString(
+    "대분류를 선택할 때 참고할 수 있는 구현 작성 안내 설명입니다.",
+  ),
   items: Schema.Array(DisclosureTypeItemSchema),
 });
 export type DisclosureTypeResultCategoryGroup =
@@ -30,18 +34,38 @@ export type DisclosureTypeResultCategoryGroup =
 export const DisclosureTypesMetadataSchema = Schema.Struct({
   source: Schema.Struct({
     system: annotateSchema(Schema.Literal("open-dart-docs"), {
-      description: "코드 목록을 가져온 원천 문서 계열.",
+      description: "상세 코드 목록을 가져온 원천 문서 계열.",
     }),
     repository: describedString("원천 문서 GitHub repository."),
     commit: describedString("원천 문서 commit SHA."),
     path: describedString("원천 repository 안의 문서 경로."),
   }),
+  categoryLabelSource: Schema.Struct({
+    system: annotateSchema(Schema.Literal("dart-fss-docs"), {
+      description: "대분류 라벨을 확인한 원천 문서 계열.",
+    }),
+    url: describedString("대분류 라벨 원천 문서 URL."),
+    codeSet: annotateSchema(Schema.Literal("pblntf_ty"), {
+      description: "DART 공시유형 대분류 코드셋 이름.",
+    }),
+  }),
+  categoryDescriptionProvenance: Schema.Struct({
+    status: annotateSchema(Schema.Literal("implementation_authored_guidance"), {
+      description: "대분류 설명이 외부 원천 필드가 아니라 구현에서 작성한 안내 문구임을 나타냅니다.",
+    }),
+    basis: describedString(
+      "대분류 설명을 작성할 때 참고한 원천 코드셋과 항목 범위.",
+    ),
+  }),
   sourceBehavior: Schema.Struct({
     codeSet: annotateSchema(Schema.Literal("pblntf_detail_ty"), {
       description: "DART 공시상세유형 코드셋 이름.",
     }),
+    categoryCodeSet: annotateSchema(Schema.Literal("pblntf_ty"), {
+      description: "DART 공시유형 대분류 코드셋 이름.",
+    }),
     observationStatus: annotateSchema(Schema.Literal("source_material"), {
-      description: "외부 원천 문서를 고정 commit으로 반영한 정적 코드 목록임을 나타냅니다.",
+      description: "외부 원천 문서를 고정 commit과 문서 URL로 반영한 정적 코드 목록임을 나타냅니다.",
     }),
   }),
   completeness: annotateSchema(Schema.Literal("complete"), {

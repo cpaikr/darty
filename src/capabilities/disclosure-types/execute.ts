@@ -9,6 +9,8 @@ import {
 } from "./contract.ts";
 import {
   disclosureTypeCategories,
+  disclosureTypeCategoryDescriptionProvenance,
+  disclosureTypeCategoryLabelSource,
   disclosureTypesSource,
   type DisclosureTypeCategoryGroup,
 } from "./data.ts";
@@ -35,12 +37,56 @@ const filterDisclosureTypes = (
     )
     .map((group) => ({
       category: group.category,
+      categoryLabel: group.categoryLabel,
+      categoryDescription: group.categoryDescription,
       items:
         request.query === undefined
           ? group.items
           : group.items.filter((item) => matchesQuery(item, request.query!)),
     }))
     .filter((group) => group.items.length > 0);
+
+const buildAmbiguousLabelWarnings = (
+  request: DisclosureTypesRequest,
+  categories: readonly DisclosureTypeCategoryGroup[],
+): DisclosureTypesResult["warnings"] => {
+  if (request.query === undefined) {
+    return [];
+  }
+
+  const groupsByLabel = new Map<
+    string,
+    Array<{
+      readonly code: string;
+      readonly category: string;
+      readonly categoryLabel: string;
+    }>
+  >();
+
+  for (const category of categories) {
+    for (const item of category.items) {
+      const matches = groupsByLabel.get(item.label) ?? [];
+      matches.push({
+        code: item.code,
+        category: category.category,
+        categoryLabel: category.categoryLabel,
+      });
+      groupsByLabel.set(item.label, matches);
+    }
+  }
+
+  return [...groupsByLabel.entries()]
+    .filter(([, matches]) => matches.length > 1)
+    .map(([label, matches]) => ({
+      code: "ambiguous_label_match",
+      message: `검색어 "${request.query}"에 같은 라벨("${label}")을 가진 상세 코드가 여러 대분류에서 반환되었습니다: ${matches
+        .map(
+          (match) =>
+            `${match.code}(${match.category}=${match.categoryLabel})`,
+        )
+        .join(", ")}. 대분류 라벨을 확인하거나 category/--category로 좁히세요.`,
+    }));
+};
 
 const buildDisclosureTypesResult = (
   request: DisclosureTypesRequest,
@@ -64,8 +110,11 @@ const buildDisclosureTypesResult = (
         commit: disclosureTypesSource.commit,
         path: disclosureTypesSource.path,
       },
+      categoryLabelSource: disclosureTypeCategoryLabelSource,
+      categoryDescriptionProvenance: disclosureTypeCategoryDescriptionProvenance,
       sourceBehavior: {
         codeSet: "pblntf_detail_ty",
+        categoryCodeSet: "pblntf_ty",
         observationStatus: "source_material",
       },
       completeness: "complete",
@@ -73,7 +122,7 @@ const buildDisclosureTypesResult = (
     references: {
       sourceUrl: disclosureTypesSource.url,
     },
-    warnings: [],
+    warnings: buildAmbiguousLabelWarnings(request, categories),
   };
 };
 

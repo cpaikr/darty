@@ -12,6 +12,9 @@ describe("executeDisclosureTypes", () => {
     expect(result.result.categories).toHaveLength(10);
     expect(result.result.categories[0]).toEqual({
       category: "A",
+      categoryLabel: "정기공시",
+      categoryDescription:
+        "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
       items: [
         { code: "A001", label: "사업보고서" },
         { code: "A002", label: "반기보고서" },
@@ -43,6 +46,9 @@ describe("executeDisclosureTypes", () => {
     expect(result.result.categories).toEqual([
       {
         category: "A",
+        categoryLabel: "정기공시",
+        categoryDescription:
+          "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
         items: [{ code: "A001", label: "사업보고서" }],
       },
     ]);
@@ -52,16 +58,52 @@ describe("executeDisclosureTypes", () => {
     await expect(executeDisclosureTypes({ query: "I001" })).resolves.toMatchObject({
       result: {
         totalCount: 1,
-        categories: [{ category: "I", items: [{ code: "I001", label: "수시공시" }] }],
+        categories: [
+          {
+            category: "I",
+            categoryLabel: "거래소공시",
+            items: [{ code: "I001", label: "수시공시" }],
+          },
+        ],
       },
     });
 
     await expect(executeDisclosureTypes({ query: "수시" })).resolves.toMatchObject({
       result: {
         totalCount: 1,
-        categories: [{ category: "I", items: [{ code: "I001", label: "수시공시" }] }],
+        categories: [
+          {
+            category: "I",
+            categoryLabel: "거래소공시",
+            items: [{ code: "I001", label: "수시공시" }],
+          },
+        ],
       },
     });
+  });
+
+  test("warns when a query returns duplicate labels across categories", async () => {
+    const result = await executeDisclosureTypes({ query: "주요사항보고서" });
+
+    expect(result.result.categories).toMatchObject([
+      {
+        category: "B",
+        categoryLabel: "주요사항보고",
+        items: [{ code: "B001", label: "주요사항보고서" }],
+      },
+      {
+        category: "H",
+        categoryLabel: "자산유동화",
+        items: [{ code: "H006", label: "주요사항보고서" }],
+      },
+    ]);
+    expect(result.warnings).toEqual([
+      {
+        code: "ambiguous_label_match",
+        message:
+          '검색어 "주요사항보고서"에 같은 라벨("주요사항보고서")을 가진 상세 코드가 여러 대분류에서 반환되었습니다: B001(B=주요사항보고), H006(H=자산유동화). 대분류 라벨을 확인하거나 category/--category로 좁히세요.',
+      },
+    ]);
   });
 
   test("returns an empty successful result when filters match nothing", async () => {
