@@ -13,10 +13,11 @@ and shapes results. The current active transport is CLI, but the core stays
 transport-neutral so future MCP, Pi-native, SDK, or other adapters can bind to
 the same capabilities without duplicating DART logic.
 
-The current core has six public capabilities: `search-body` for DART body
+The current core has seven public capabilities: `search-body` for DART body
 search, `search-company` for DART company overview company-name search,
 `search-company-reports` for company-code based filing search, `company-detail`
-for company overview detail lookup, `company-rss` for company-specific RSS, and
+for company overview detail lookup, `company-rss` for company-specific RSS,
+`disclosure-types` for static DART detailed disclosure-type code discovery, and
 `view-report` for receipt-based report TOC/section retrieval.
 
 For layer diagrams, the schema derivation chain, the runtime pipeline, and the
@@ -121,6 +122,11 @@ argv -> src/cli.ts -> cli/commands/view-report.ts
      -> app/view-report.ts -> capabilities/view-report/execute.ts
      -> sources/dart/dsaf001/report/
      -> /dsaf001/main.do -> /report/viewer.do
+
+argv -> src/cli.ts -> cli/commands/disclosure-types.ts
+     -> executeDisclosureTypesCommand()
+     -> app/disclosure-types.ts -> capabilities/disclosure-types/execute.ts
+     -> static pblntf_detail_ty code table
 ```
 
 See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the full runtime pipeline,

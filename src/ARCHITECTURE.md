@@ -8,9 +8,10 @@ shape and document ownership.
 
 `src/` contains the executable slice of `darty`: public `search-body`,
 `search-company`, `search-company-reports`, `company-detail`, `company-rss`,
-and `view-report` capabilities, a local CLI transport, and internal DART source
-adapters for `dsab007` search, `dsae001` company overview search/detail, DART
-company RSS, and `dsaf001` report viewing.
+`disclosure-types`, and `view-report` capabilities, a local CLI transport, and
+internal DART source adapters for `dsab007` search, `dsae001` company overview
+search/detail, DART company RSS, and `dsaf001` report viewing. The
+`disclosure-types` helper is static and has no live DART adapter.
 
 The design goal is to keep the core reusable across transports. The active
 transport is CLI, but future MCP, Pi-native, SDK, or other adapters should bind
@@ -68,7 +69,9 @@ graph TD
 The diagram shows the established `search-body` path. `search-company`,
 `search-company-reports`, `company-detail`, `company-rss`, and `view-report` use
 the same transport/app/capability shape through their matching `app/`,
-`capabilities/`, `cli/commands/`, and `sources/dart/` modules.
+`capabilities/`, `cli/commands/`, and `sources/dart/` modules. The static
+`disclosure-types` helper uses the same transport/app/capability shape without a
+`src/sources/dart/` provider.
 
 ```mermaid
 graph TD

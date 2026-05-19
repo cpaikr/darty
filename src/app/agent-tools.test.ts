@@ -16,6 +16,7 @@ describe("agent-native darty tool definitions", () => {
       "darty_search_company_reports",
       "darty_get_company_detail",
       "darty_get_company_rss",
+      "darty_list_disclosure_types",
       "darty_view_report",
     ]);
 
@@ -25,6 +26,7 @@ describe("agent-native darty tool definitions", () => {
       "search-company-reports",
       "company-detail",
       "company-rss",
+      "disclosure-types",
       "view-report",
     ]);
   });
@@ -39,6 +41,9 @@ describe("agent-native darty tool definitions", () => {
       "darty_get_company_detail",
     ).definition.function;
     const companyRss = getDartyAgentTool("darty_get_company_rss").definition.function;
+    const disclosureTypes = getDartyAgentTool(
+      "darty_list_disclosure_types",
+    ).definition.function;
     const viewReport = getDartyAgentTool("darty_view_report").definition.function;
 
     expect(searchBody.parameters).toMatchObject({
@@ -66,6 +71,10 @@ describe("agent-native darty tool definitions", () => {
       additionalProperties: false,
       required: ["companyCode"],
     });
+    expect(disclosureTypes.parameters).toMatchObject({
+      type: "object",
+      additionalProperties: false,
+    });
     expect(viewReport.parameters).toMatchObject({
       type: "object",
       additionalProperties: false,
@@ -78,6 +87,7 @@ describe("agent-native darty tool definitions", () => {
       searchCompanyReports,
       companyDetail,
       companyRss,
+      disclosureTypes,
       viewReport,
     ]) {
       expect(
@@ -93,8 +103,9 @@ describe("agent-native darty tool definitions", () => {
   });
 
   test("publishes OpenAI-compatible function tool definitions", () => {
-    expect(dartyAgentToolDefinitions).toHaveLength(6);
+    expect(dartyAgentToolDefinitions).toHaveLength(7);
     expect(dartyAgentToolDefinitions.map((tool) => tool.type)).toEqual([
+      "function",
       "function",
       "function",
       "function",

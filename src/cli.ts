@@ -2,6 +2,7 @@ import { Command } from "commander";
 
 import { defaultCompanyDetailOperation } from "./app/company-detail.ts";
 import { defaultCompanyRssOperation } from "./app/company-rss.ts";
+import { defaultDisclosureTypesOperation } from "./app/disclosure-types.ts";
 import { defaultSearchBodyOperation } from "./app/search-body.ts";
 import { defaultSearchCompanyOperation } from "./app/search-company.ts";
 import { defaultSearchCompanyReportsOperation } from "./app/search-company-reports.ts";
@@ -16,6 +17,11 @@ import {
   executeCompanyRssCommand,
   renderCompanyRssCliErrorMessage,
 } from "./cli/commands/company-rss.ts";
+import {
+  createDisclosureTypesCommandWithRunner,
+  executeDisclosureTypesCommand,
+  renderDisclosureTypesCliErrorMessage,
+} from "./cli/commands/disclosure-types.ts";
 import {
   createSearchBodyCommandWithRunner,
   executeSearchBodyCommand,
@@ -57,6 +63,12 @@ const defaultCompanyDetailExecutor = {
 const defaultCompanyRssExecutor = {
   runOperation: (input: Record<string, unknown>) =>
     defaultCompanyRssOperation.execute(input),
+  writeStdout,
+};
+
+const defaultDisclosureTypesExecutor = {
+  runOperation: (input: Record<string, unknown>) =>
+    defaultDisclosureTypesOperation.execute(input),
   writeStdout,
 };
 
@@ -108,6 +120,11 @@ const program = configureCliTransport(new Command())
     ),
   )
   .addCommand(
+    createDisclosureTypesCommandWithRunner((options) =>
+      executeDisclosureTypesCommand(options, defaultDisclosureTypesExecutor),
+    ),
+  )
+  .addCommand(
     createSearchBodyCommandWithRunner((options) =>
       executeSearchBodyCommand(options, defaultSearchBodyExecutor),
     ),
@@ -138,6 +155,7 @@ if (process.argv.length <= 2) {
     const cliMessage =
       renderCompanyDetailCliErrorMessage(error) ??
       renderCompanyRssCliErrorMessage(error) ??
+      renderDisclosureTypesCliErrorMessage(error) ??
       renderSearchBodyCliErrorMessage(error) ??
       renderSearchCompanyCliErrorMessage(error) ??
       renderSearchCompanyReportsCliErrorMessage(error) ??

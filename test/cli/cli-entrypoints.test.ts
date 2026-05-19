@@ -87,6 +87,7 @@ describe("CLI entrypoints", () => {
       expect(stdout).toContain("Usage: darty [options] [command]");
       expect(stdout).toContain("company-detail [options]");
       expect(stdout).toContain("company-rss [options]");
+      expect(stdout).toContain("disclosure-types [options]");
       expect(stdout).toContain("search-body [options]");
       expect(stdout).toContain("search-company [options]");
       expect(stdout).toContain("search-company-reports [options]");
@@ -178,6 +179,21 @@ describe("CLI entrypoints", () => {
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage: darty company-rss [options]");
     expect(stdout).toContain("--company-code <text>");
+  });
+
+  test("bundled CLI accepts the documented disclosure-types helper", () => {
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "disclosure-types",
+      "--help",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage: darty disclosure-types [options]");
+    expect(stdout).toContain("--category <A-J>");
+    expect(stdout).toContain("--query <text>");
   });
 
   test("bundled CLI accepts the documented search-company command", () => {
