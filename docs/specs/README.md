@@ -14,6 +14,7 @@ Current specs:
 
 - [cli-transport-v1.md](cli-transport-v1.md)
 - [company-rss-v1.md](company-rss-v1.md)
+- [dart-filter-codes.md](dart-filter-codes.md)
 - [dsae001-company-detail-v1.md](dsae001-company-detail-v1.md)
 - [dsae001-search-company-v1.md](dsae001-search-company-v1.md)
 - [dsab007-search-company-reports-v1.md](dsab007-search-company-reports-v1.md)

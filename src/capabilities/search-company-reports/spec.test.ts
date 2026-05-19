@@ -43,6 +43,8 @@ describe("search-company-reports capability schemas", () => {
       type: "array",
       default: [],
     });
+    expect(jsonSchema.properties.disclosureTypes?.description).toContain("A001");
+    expect(jsonSchema.properties.disclosureTypes?.description).toContain("reportName");
     expect(jsonSchema.properties.disclosureTypes?.items).toMatchObject({
       pattern: "^[A-J]\\d{3}$",
     });
@@ -50,10 +52,12 @@ describe("search-company-reports capability schemas", () => {
       pattern: "^(all|ROOT\\d{4}|\\d{2,5})$",
       default: "all",
     });
+    expect(jsonSchema.properties.industryCode?.description).toContain("612");
     expect(jsonSchema.properties.corporationType).toMatchObject({
       enum: ["all", "P", "A", "N", "E"],
       default: "all",
     });
+    expect(jsonSchema.properties.corporationType?.description).toContain("P(유가증권시장)");
     expect(jsonSchema.properties.closingAccountsMonth).toMatchObject({
       enum: ["all", "12", "11", "10", "09", "08", "07", "06", "05", "04", "03", "02", "01"],
       default: "all",

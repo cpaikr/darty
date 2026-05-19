@@ -107,6 +107,39 @@ const getExpectedDescription = (rule: SearchCompanyReportsFieldSpec): string => 
   }
 };
 
+const getPatternFormatMessage = (
+  parameter: SearchCompanyReportsInputKey,
+  expected: string,
+): string => {
+  switch (parameter) {
+    case "companyCode":
+      return searchCompanyReportsValidationCopy.mustUseDartCompanyCode(parameter);
+    case "industryCode":
+      return searchCompanyReportsValidationCopy.mustUseIndustryCode(parameter);
+    default:
+      return searchCompanyReportsValidationCopy.mustUseKnownPattern(
+        parameter,
+        expected,
+      );
+  }
+};
+
+const getEnumChoiceMessage = (
+  parameter: SearchCompanyReportsInputKey,
+  choices: readonly string[],
+): string => {
+  switch (parameter) {
+    case "corporationType":
+      return searchCompanyReportsValidationCopy.mustUseCorporationType(parameter);
+    case "closingAccountsMonth":
+      return searchCompanyReportsValidationCopy.mustUseClosingAccountsMonth(
+        parameter,
+      );
+    default:
+      return searchCompanyReportsValidationCopy.mustBeOneOf(parameter, choices);
+  }
+};
+
 const toInvalidSearchCompanyReportsRequest = (
   input: Record<string, unknown>,
   error: ParseResult.ParseError,
@@ -189,10 +222,7 @@ const toInvalidSearchCompanyReportsRequest = (
       expected: getExpectedToken(rule),
       actual,
       message: Array.isArray(actual)
-        ? searchCompanyReportsValidationCopy.mustUseKnownPattern(
-            parameter,
-            "DART 공시유형 상세 코드(A001 등)",
-          )
+        ? searchCompanyReportsValidationCopy.mustUseDisclosureTypeCodes(parameter)
         : searchCompanyReportsValidationCopy.mustBeStringArray(parameter),
     });
   }
@@ -205,7 +235,7 @@ const toInvalidSearchCompanyReportsRequest = (
       reason: "invalid_choice",
       expected: getExpectedToken(rule),
       actual,
-      message: searchCompanyReportsValidationCopy.mustBeOneOf(parameter, choices),
+      message: getEnumChoiceMessage(parameter, choices),
     });
   }
 
@@ -232,21 +262,18 @@ const toInvalidSearchCompanyReportsRequest = (
   }
 
   if (rule.kind === "date" || rule.kind === "patternString") {
+    const expected = getExpectedToken(rule);
+
     return new InvalidSearchCompanyReportsRequest({
       code: "invalid_parameter",
       parameter,
       reason: "invalid_format",
-      expected: getExpectedToken(rule),
+      expected,
       actual,
       message:
         rule.kind === "date"
           ? searchCompanyReportsValidationCopy.mustUseDateFormat(parameter)
-          : parameter === "companyCode"
-            ? searchCompanyReportsValidationCopy.mustUseDartCompanyCode(parameter)
-            : searchCompanyReportsValidationCopy.mustUseKnownPattern(
-                parameter,
-                getExpectedToken(rule),
-              ),
+          : getPatternFormatMessage(parameter, expected),
     });
   }
 

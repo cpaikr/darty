@@ -75,6 +75,12 @@ export const getInvalidRequestRecoveryHint = (
       return contentWindowHint;
     case "disclosureTypes":
       return "disclosureTypes에는 DART 공시유형 상세 코드(A001, I001 등)를 배열로 넘기세요.";
+    case "industryCode":
+      return 'industryCode에는 "all", DART 업종 코드(예: 612=전기 통신업), 또는 ROOTdddd 형식의 DART 업종 tree root를 넘기세요. 업종을 모르면 "all"을 사용하세요.';
+    case "corporationType":
+      return "corporationType은 all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나를 사용하세요.";
+    case "closingAccountsMonth":
+      return "closingAccountsMonth는 all 또는 01~12 두 자리 결산월 코드를 사용하세요. 예: 1월은 01입니다.";
     default:
       return error.code === "unknown_parameter" &&
         rawDartViewerParameters.has(error.parameter)

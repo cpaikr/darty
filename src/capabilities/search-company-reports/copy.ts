@@ -34,30 +34,32 @@ export const searchCompanyReportsFieldCopy = {
     cliDescription: "제출인명으로 검색 결과를 좁힙니다.",
   },
   reportName: {
-    description: "보고서명 필터입니다. DART의 `보고서명` 입력에 대응합니다.",
-    cliDescription: "보고서명으로 검색 결과를 좁힙니다.",
+    description:
+      "보고서명 필터입니다. DART의 `보고서명` 입력에 대응합니다. 공시유형 코드가 아니라 보고서 제목 텍스트를 넣습니다(예: 사업보고서).",
+    cliDescription:
+      "보고서명으로 검색 결과를 좁힙니다(예: 사업보고서). 공시유형 코드는 --disclosure-type을 사용하세요.",
   },
   disclosureTypes: {
     description:
-      "DART 공시유형 상세 코드 목록입니다. 예: A001(사업보고서), I001(수시공시).",
+      "DART 공시유형 상세 코드 목록입니다. 관찰된 예: A001(사업보고서), I001(수시공시). `사업보고서` 같은 보고서명 텍스트는 reportName에 넣고, 이 필드에는 DART 코드만 넣습니다.",
     cliDescription:
-      "공시유형 상세 코드를 추가합니다. 여러 번 지정할 수 있습니다. 예: A001, I001.",
+      "공시유형 상세 코드를 추가합니다. 여러 번 지정할 수 있습니다. 예: A001(사업보고서), I001(수시공시).",
   },
   industryCode: {
     description:
-      "[기본값: all] DART 업종 코드입니다. 예: 612(전기 통신업). `all`이면 업종 필터를 적용하지 않습니다.",
+      "[기본값: all] DART 업종 코드입니다. `all`이면 업종 필터를 적용하지 않습니다. 관찰된 예: 612(전기 통신업). DART 업종 tree root 값은 ROOTdddd 형식입니다.",
     cliDescription:
-      "DART 업종 코드로 검색 결과를 좁힙니다. 기본값은 all입니다.",
+      "DART 업종 코드로 검색 결과를 좁힙니다. 기본값은 all입니다. 예: 612(전기 통신업).",
   },
   corporationType: {
     description:
-      "[기본값: all] 법인유형 필터입니다. all, P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나입니다.",
+      "[기본값: all] 법인유형 필터입니다. all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나입니다.",
     cliDescription:
-      "법인유형으로 검색 결과를 좁힙니다(all, P=유가증권시장, A=코스닥시장, N=코넥스시장, E=기타법인).",
+      "법인유형으로 검색 결과를 좁힙니다(all=전체, P=유가증권시장, A=코스닥시장, N=코넥스시장, E=기타법인).",
   },
   closingAccountsMonth: {
     description:
-      "[기본값: all] 결산월 필터입니다. all 또는 01부터 12까지의 두 자리 월 코드입니다. 예: 1월은 01입니다.",
+      "[기본값: all] 결산월 필터입니다. all 또는 01부터 12까지의 두 자리 월 코드입니다. 예: 1월은 01, 12월은 12입니다.",
     cliDescription:
       "결산월로 검색 결과를 좁힙니다(all, 1~12 또는 01~12). 1~9는 01~09로 처리됩니다.",
   },
@@ -205,6 +207,14 @@ export const searchCompanyReportsValidationCopy = {
     `매개변수 "${parameter}"은(는) 8자리 DART 회사 코드여야 합니다. 회사명이나 6자리 종목코드는 사용할 수 없습니다. 예: 삼성전자 DART 회사 코드 00126380.`,
   mustUseKnownPattern: (parameter: string, expected: string): string =>
     `매개변수 "${parameter}"은(는) ${expected} 형식이어야 합니다.`,
+  mustUseDisclosureTypeCodes: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) DART 공시유형 상세 코드 배열이어야 합니다. 예: ["A001"](사업보고서), ["I001"](수시공시). "사업보고서" 같은 보고서명 텍스트로 좁히려면 reportName을 사용하세요.`,
+  mustUseIndustryCode: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) "all", DART 업종 코드(예: 612=전기 통신업), 또는 ROOTdddd 형식의 DART 업종 tree root여야 합니다. 업종을 모르면 "all"을 사용하세요.`,
+  mustUseCorporationType: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나여야 합니다.`,
+  mustUseClosingAccountsMonth: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) all 또는 01부터 12까지의 두 자리 결산월 코드여야 합니다. 예: 1월은 "01", 12월은 "12"입니다.`,
   invalidParameter: (parameter: string): string =>
     `매개변수 "${parameter}"이(가) 올바르지 않습니다.`,
   unknownParameter: (parameter: string): string =>

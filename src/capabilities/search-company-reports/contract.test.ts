@@ -153,7 +153,38 @@ describe("resolveSearchCompanyReportsRequest", () => {
       expect(error.parameter).toBe("disclosureTypes");
       expect(error.reason).toBe("invalid_format");
       expect(error.expected).toBe("array_of_disclosure_type_codes");
+      expect(error.message).toContain("A001");
+      expect(error.message).toContain("reportName");
     }
+  });
+
+  test("gives actionable hints for invalid DART code filters", () => {
+    expect(() =>
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        industryCode: "전기 통신업",
+      } as Record<string, unknown>),
+    ).toThrow("612=전기 통신업");
+
+    expect(() =>
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        corporationType: "KOSPI",
+      } as Record<string, unknown>),
+    ).toThrow("P(유가증권시장)");
+
+    expect(() =>
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        closingAccountsMonth: "1",
+      } as Record<string, unknown>),
+    ).toThrow('"01"');
   });
 
   test("rejects unsupported page sizes", () => {

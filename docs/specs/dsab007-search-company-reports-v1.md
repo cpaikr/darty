@@ -162,6 +162,8 @@ Failures:
 
 Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date, page, page-size, and DART code filters.
 
+For caller-facing DART filter code examples and labels, see [`dart-filter-codes.md`](dart-filter-codes.md).
+
 ## 6. Source Replay Notes
 
 Observed company lookup endpoint used by the browser popup:
