@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.0.8](https://github.com/sjunepark/darty/compare/v0.0.7...v0.0.8) (2026-05-20)
+
+
+### Features
+
+* add agent-native workflow evals ([7e3b7b4](https://github.com/sjunepark/darty/commit/7e3b7b4615ba40cbe36cf4ab110c627c69edb0b9))
+* add no-result warnings and limit recovery hints ([27e4c75](https://github.com/sjunepark/darty/commit/27e4c75e85b90d2193be26daf9088a5774f79b44))
+* add response detail controls ([b45f616](https://github.com/sjunepark/darty/commit/b45f616d1be79d9ffb76f6290f0b269b379767a2))
+* add reusable toolset and Pi adapter ([6673fff](https://github.com/sjunepark/darty/commit/6673fff9448310edd73c34604fc8ebd0abbdadf1))
+
+
+### Bug Fixes
+
+* clarify ambiguous disclosure warnings ([adf0cf8](https://github.com/sjunepark/darty/commit/adf0cf83234de19291ca9e9103172b29ba0bd6ac))
+* improve DART disclosure type guidance ([01c3a06](https://github.com/sjunepark/darty/commit/01c3a0603fb9f8340a76c34881926c9f74cad648))
+
 ## [0.0.7](https://github.com/sjunepark/darty/compare/v0.0.6...v0.0.7) (2026-05-20)
 
 
