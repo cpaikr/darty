@@ -1,5 +1,16 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { builtinModules } from "node:module";
 import { basename, join } from "node:path";
 
 const repoRoot = join(import.meta.dir, "..", "..");
@@ -7,6 +18,31 @@ const nodeRuntime = process.env.DART_NODE_RUNTIME ?? "node";
 
 const decode = (value: Uint8Array<ArrayBufferLike>) =>
   new TextDecoder().decode(value);
+
+const packageNameFromSpecifier = (specifier: string): string =>
+  specifier.startsWith("@")
+    ? specifier.split("/").slice(0, 2).join("/")
+    : specifier.split("/")[0]!;
+
+const listJavaScriptFiles = (directory: string): readonly string[] =>
+  readdirSync(directory).flatMap((entry) => {
+    const path = join(directory, entry);
+    const stats = statSync(path);
+
+    if (stats.isDirectory()) {
+      return [...listJavaScriptFiles(path)];
+    }
+
+    return entry.endsWith(".js") ? [path] : [];
+  });
+
+const externalImportsFromJavaScript = (source: string): readonly string[] =>
+  [...source.matchAll(/(?:from\s+|import\s*\(\s*|import\s+)["']([^"']+)["']/g)]
+    .map((match) => match[1])
+    .filter((specifier): specifier is string => specifier !== undefined)
+    .filter(
+      (specifier) => !specifier.startsWith(".") && !specifier.startsWith("/"),
+    );
 
 const run = (cmd: readonly string[], cwd: string) => {
   const result = Bun.spawnSync({
@@ -103,5 +139,33 @@ describe("packed package exports", () => {
     expect(
       readFileSync(join(packageDir, "dist", "pi-extension.js"), "utf8"),
     ).toContain('from "./pi.js"');
+  });
+
+  test("declares every unbundled runtime import as a package dependency", () => {
+    const packageDir = join(consumerDir, "node_modules", "@sjunepark", "darty");
+    const packageJson = JSON.parse(
+      readFileSync(join(packageDir, "package.json"), "utf8"),
+    ) as { readonly dependencies?: Record<string, string> };
+    const dependencyNames = new Set(Object.keys(packageJson.dependencies ?? {}));
+    const nodeBuiltins = new Set([
+      ...builtinModules,
+      ...builtinModules.map((moduleName) => `node:${moduleName}`),
+    ]);
+
+    const undeclaredImports = listJavaScriptFiles(join(packageDir, "dist"))
+      .filter((path) => path !== join(packageDir, "dist", "cli.js"))
+      .flatMap((path) =>
+        externalImportsFromJavaScript(readFileSync(path, "utf8")).map(
+          (specifier) => ({
+            packageName: packageNameFromSpecifier(specifier),
+            path,
+            specifier,
+          }),
+        ),
+      )
+      .filter(({ packageName }) => !nodeBuiltins.has(packageName))
+      .filter(({ packageName }) => !dependencyNames.has(packageName));
+
+    expect(undeclaredImports).toEqual([]);
   });
 });
