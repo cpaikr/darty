@@ -1,6 +1,6 @@
 {
   "name": "@sjunepark/darty",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "packageManager": "bun@1.3.13",
   "repository": {
@@ -21,7 +21,9 @@
     }
   },
   "pi": {
-    "extensions": ["./dist/pi-extension.js"]
+    "extensions": [
+      "./dist/pi-extension.js"
+    ]
   },
   "files": [
     "dist",
