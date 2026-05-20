@@ -1,5 +1,6 @@
 import { Command, InvalidArgumentError } from "commander";
 
+import { responseDetailCliDescriptions } from "../../capabilities/response-detail.ts";
 import {
   viewReportCliCopy,
   viewReportFieldCopy,
@@ -111,7 +112,14 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
       option.argParser((value) => parseContentStartByteOption(value));
     },
   ),
-  createVerboseOption(),
+  createRegisteredOption(
+    "detail",
+    "--detail <concise|detailed|raw>",
+    responseDetailCliDescriptions.viewReport,
+  ),
+  createVerboseOption(
+    "기본 CLI 출력에서 생략하는 locator(documents/toc)와 진단 필드를 포함합니다. --detail을 생략하면 요청 detail=raw로 처리합니다.",
+  ),
   createRegisteredOption(
     "tocDepth",
     "--toc-depth <number>",
@@ -160,12 +168,21 @@ const toViewReportCliCommand = (
     ...(typeof options.tocDepth === "number" ? { tocDepth: options.tocDepth } : {}),
   };
 
+  const requestOptions =
+    options.detail !== undefined
+      ? options
+      : options.verbose === true
+        ? { ...options, detail: "raw" }
+        : typeof options.tocDepth === "number"
+          ? { ...options, detail: "detailed" }
+          : options;
+
   return splitCliCommandOptions<
     ViewReportRawInput,
     CliOptionKey,
     ViewReportCliVerboseOutputOptions
   >(
-    options,
+    requestOptions,
     ["pretty", "verbose", "tocDepth"],
     output,
   );

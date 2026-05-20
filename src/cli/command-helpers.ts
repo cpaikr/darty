@@ -141,12 +141,10 @@ export const createPrettyOption = (): RegisteredOption<"pretty"> =>
     "사람이 읽기 쉬운 들여쓰기 JSON으로 출력합니다.",
   );
 
-export const createVerboseOption = (): RegisteredOption<"verbose"> =>
-  createRegisteredOption(
-    "verbose",
-    "--verbose",
-    "기본 출력에서 생략하는 진단/출처 필드를 포함합니다.",
-  );
+export const createVerboseOption = (
+  description = "기본 출력에서 생략하는 진단/출처 필드를 포함합니다.",
+): RegisteredOption<"verbose"> =>
+  createRegisteredOption("verbose", "--verbose", description);
 
 export const createCliJsonOptions = (
   options: Record<string, unknown>,

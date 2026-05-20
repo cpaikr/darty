@@ -6,6 +6,7 @@ describe("resolveCompanyRssRequest", () => {
   test("accepts an 8-digit DART company code", () => {
     expect(resolveCompanyRssRequest({ companyCode: "00126380" })).toEqual({
       companyCode: "00126380",
+      detail: "concise",
     });
   });
 

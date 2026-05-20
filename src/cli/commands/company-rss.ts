@@ -1,5 +1,6 @@
 import { Command } from "commander";
 
+import { responseDetailCliDescriptions } from "../../capabilities/response-detail.ts";
 import {
   companyRssCliCopy,
   companyRssFieldCopy,
@@ -42,6 +43,11 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     "companyCode",
     "--company-code <text>",
     companyRssFieldCopy.companyCode.cliDescription,
+  ),
+  createRegisteredOption(
+    "detail",
+    "--detail <concise|detailed|raw>",
+    responseDetailCliDescriptions.companyRss,
   ),
   createPrettyOption(),
 ];

@@ -123,6 +123,7 @@ export const searchCompanyReportsCliCopy = {
     "공시유형은 DART 상세 코드(A001, I001 등)를 사용합니다. 코드를 모르면 `darty disclosure-types --query <검색어>`로 조회하고, 여러 코드는 `--disclosure-type`을 반복해서 전달하세요.",
     "결산월은 DART 월 코드(01~12)로 전달됩니다. CLI에서는 `--closing-accounts-month 1`처럼 입력해도 `01`로 정규화됩니다.",
     "결과의 filing.receiptNumber 또는 references.viewerUrl은 `view-report`로 이어서 조회할 수 있습니다.",
+    "DART 행 원문 같은 원문 검증 정보(evidence)가 필요하면 `--detail detailed` 또는 `--detail raw`와 함께 `--verbose`를 사용하세요. raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
   ],
   invalidInteger: (value: string): string =>
     `정수를 입력해야 하지만 "${value}"을(를) 받았습니다.`,
@@ -152,6 +153,7 @@ export const searchCompanyReportsSchemaCopy = {
       page: 1,
       pageSize: 15,
       sortDirection: "desc",
+      detail: "concise",
       reportName: "사업보고서",
       disclosureTypes: [],
       industryCode: "all",

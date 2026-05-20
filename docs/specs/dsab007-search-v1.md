@@ -58,6 +58,7 @@ Implemented input mapping:
 | `회사명/종목코드 입력` after company lookup | `companyCode` | `textCrpCik`, `b_textCrpCik` | implemented only for the hidden company code value, not free-text company name |
 | `제출인명 입력` | `presenterName` | `textPresenterNm`, `b_textPresenterNm` | implemented |
 | `보고서명 입력` | `reportName` | `reportName`, `b_reportName` | implemented |
+| response detail | `detail=concise|detailed|raw` | n/a | implemented; controls output projection, not DART replay |
 
 Implemented output mapping:
 
@@ -155,7 +156,7 @@ These appear in the viewer contract, not the first search-result contract.
 - `purpose`
   Search DART filing contents through a semantic capability backed by an internal `dsab007` replay adapter.
 - `inputs`
-  `page`, `sortBy`, `sortDirection`, `keyword`, `startDate`, `endDate`, and optional stable filters such as `companyCode`, `presenterName`, and `reportName`
+  `page`, `sortBy`, `sortDirection`, `keyword`, `startDate`, `endDate`, optional stable filters such as `companyCode`, `presenterName`, and `reportName`, plus `detail` for response projection
 - `output`
   `result`, `metadata`, `references`, `warnings`
 - `result item`
@@ -228,10 +229,12 @@ Observed `option=contents` restriction:
 
 ## 8. Output Modes
 
-- `structured`
-  capability-owned result envelope with public items, metadata, references, and warnings
+- `concise` (default)
+  capability-owned result envelope with normalized public items, metadata, references, and warnings. Item-level source evidence is omitted while filing references remain available for follow-up calls.
+- `detailed` / `raw`
+  include item `evidence` fields such as preserved source row text/snippet HTML for verification and parser debugging.
 
-`raw` HTML from `/dsab007/search.ax` stays internal for fixtures, debugging, and parser tests. It is not exposed by the current public CLI contract or future adapter contracts unless explicitly added.
+Full `/dsab007/search.ax` response HTML stays internal for fixtures, debugging, and parser tests. Public `raw` means exposed row-level evidence, not a replay of the entire upstream HTML fragment.
 
 ## 9. Observed Upstream Contract
 

@@ -4,6 +4,10 @@ import {
   defaultedField,
   describedNonEmptyString,
 } from "../../schema-annotations.ts";
+import {
+  responseDetailFieldSpec,
+  type ResponseDetail,
+} from "../../response-detail.ts";
 import { viewReportContentWindowLimits } from "../constants.ts";
 import {
   viewReportFieldCopy,
@@ -61,6 +65,7 @@ const viewReportRequestFields = {
     description: viewReportFieldCopy.contentStartByte.description,
     defaultValue: viewReportContentWindowLimits.defaultStartByte,
   }),
+  detail: defaultedField(responseDetailFieldSpec),
 } as const;
 
 export const ViewReportRequestSchema = Schema.Struct(
@@ -72,7 +77,10 @@ export const ViewReportRequestSchema = Schema.Struct(
 });
 
 export type ViewReportRawInput = typeof ViewReportRequestSchema.Encoded;
-export type ViewReportRequest = typeof ViewReportRequestSchema.Type;
+type ViewReportResolvedRequest = typeof ViewReportRequestSchema.Type;
+export type ViewReportRequest = Omit<ViewReportResolvedRequest, "detail"> & {
+  readonly detail?: ResponseDetail;
+};
 
 export const decodeViewReportRequest = Schema.decodeUnknownSync(
   ViewReportRequestSchema,
@@ -108,6 +116,7 @@ const fieldExpected: Record<string, string> = {
   outputFormat: viewReportValidationCopy.expectedOutputFormat,
   maxBytes: viewReportValidationCopy.expectedMaxBytes,
   contentStartByte: viewReportValidationCopy.expectedContentStartByte,
+  detail: viewReportValidationCopy.expectedDetail,
 };
 
 const collectIssuePath = (

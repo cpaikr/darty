@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { normalizeResponseDetail } from "../response-detail.ts";
 import type {
   ViewReportRequest,
   ViewReportResult,
@@ -47,6 +48,9 @@ export type ViewReportProvider = {
   readonly view: (request: ViewReportRequest) => Promise<ViewReportProviderResult>;
 };
 
+const shouldIncludeLocators = (request: ViewReportRequest): boolean =>
+  request.sectionId === undefined || normalizeResponseDetail(request.detail) !== "concise";
+
 export const buildViewReportResult = (
   request: ViewReportRequest,
   providerResult: ViewReportProviderResult,
@@ -55,8 +59,12 @@ export const buildViewReportResult = (
     request,
     receipt: providerResult.receipt,
     document: providerResult.document,
-    documents: providerResult.documents,
-    toc: providerResult.toc,
+    ...(shouldIncludeLocators(request)
+      ? {
+          documents: providerResult.documents,
+          toc: providerResult.toc,
+        }
+      : {}),
     content: providerResult.content,
     navigation: providerResult.navigation,
   },

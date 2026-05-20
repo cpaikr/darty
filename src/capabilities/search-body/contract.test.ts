@@ -17,12 +17,10 @@ describe("resolveSearchBodyRequest", () => {
       page: 1,
       sortBy: "date",
       sortDirection: "desc",
+      detail: "concise",
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
-      companyCode: undefined,
-      presenterName: undefined,
-      reportName: undefined,
     });
   });
 

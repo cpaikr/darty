@@ -253,7 +253,7 @@ describe("view-report capability schemas", () => {
     );
 
     expect(decoded.result.request.receipt).toBe("20260331004166");
-    expect(decoded.result.toc[0]?.children).toEqual([]);
+    expect(decoded.result.toc?.[0]?.children).toEqual([]);
     expect(decoded.result.content?.section?.id).toBe("section:1");
   });
 

@@ -26,13 +26,14 @@ Optional:
 - `outputFormat`: `html` or `markdown`, default `markdown`
 - `maxBytes`: maximum returned content-window bytes, default `50000`, range `1000` to `1000000`. Raising this value can substantially increase CLI output and agent context use for long sections.
 - `contentStartByte`: UTF-8 byte offset into the rendered `content.body` format, default `0`. This is not DART's raw viewer `offset`; use `content.window.nextStartByte` with the same `receipt`, `documentId`, `sectionId`, and `outputFormat` to continue reading.
+- `detail`: `concise`, `detailed`, or `raw`, default `concise`. Section-content calls omit repeated `documents` and `toc` locator payloads in `concise`; use `detailed` or `raw` when those locators are needed alongside content.
 
 ## Response Behavior
 
 - TOC-backed documents return `documents` and `toc` without content unless a
   `sectionId` is supplied.
 - Section calls return `content.format` plus the rendered string in `content.body`,
-  along with parent/previous/next/children navigation when available. Long
+  along with parent/previous/next/children navigation when available. In default `concise` responses, `documents` and `toc` are omitted from section calls because the caller already needed a returned `sectionId`; `detailed` and `raw` keep them. Long
   sections can produce large outputs; callers should fetch the TOC first, request
   only needed sections, and keep `maxBytes` as low as practical.
 - Returned content includes `content.isFullContent` and `content.window` with

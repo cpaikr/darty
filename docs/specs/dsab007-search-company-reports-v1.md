@@ -124,6 +124,7 @@ Inputs:
 | `corporationType` | no | `all`, `P`, `A`, `N`, or `E` | default `all`; maps to 법인유형 |
 | `closingAccountsMonth` | no | `all` or `01` through `12` | default `all`; maps to 결산월; CLI accepts `1` through `9` and normalizes output request values to zero-padded canonical values |
 | `includeAllReports` | no | boolean | default `false`; exposed in the CLI as `--include-all-reports` |
+| `detail` | no | `concise`, `detailed`, or `raw` | default `concise`; controls output projection, not DART replay |
 
 Output envelope:
 
@@ -147,7 +148,7 @@ Result item fields:
 - `matchedDisclosureType` when the request has exactly one effective `disclosureTypes` code. This attribution is request-level evidence from the single `publicType` filter, not a row HTML field. It includes `code`, optional `label`, `category`, `categoryLabel`, and `evidence.source=single_disclosure_type_request`.
 - `references.viewerUrl`
 - `remarks[]` for `비고` badges/text, including raw title text when DART provides it
-- `evidence.rawRowText`
+- `evidence.rawRowText` when `detail` is `detailed` or `raw`; omitted in default `concise` responses
 
 When a request uses multiple distinct `disclosureTypes`, do not infer a row's matched code from the report title. DART's observed result rows do not expose the matched `publicType`, so return rows without `matchedDisclosureType` and include a `matched_disclosure_type_unavailable` warning when rows are returned.
 

@@ -7,6 +7,10 @@ import {
   requiredField,
 } from "../../schema-annotations.ts";
 import {
+  responseDetailFieldSpec,
+  type ResponseDetail,
+} from "../../response-detail.ts";
+import {
   searchCompanyReportsFieldCopy,
   searchCompanyReportsSchemaCopy,
 } from "../copy.ts";
@@ -180,6 +184,7 @@ const inputSpecs = {
       description: searchCompanyReportsFieldCopy.includeAllReports.description,
       examples: [false],
     },
+    detail: responseDetailFieldSpec,
   } as const satisfies Record<string, DefaultedFieldSpecShape>,
   optional: {
     presenterName: {
@@ -244,6 +249,7 @@ const searchCompanyReportsRequestFields = {
     searchCompanyReportsFieldSpecs.closingAccountsMonth,
   ),
   includeAllReports: defaultedField(searchCompanyReportsFieldSpecs.includeAllReports),
+  detail: defaultedField(searchCompanyReportsFieldSpecs.detail),
 } as const;
 
 export const SearchCompanyReportsRequestSchema = Schema.Struct(
@@ -256,8 +262,14 @@ export const SearchCompanyReportsRequestSchema = Schema.Struct(
 
 export type SearchCompanyReportsRawInput =
   typeof SearchCompanyReportsRequestSchema.Encoded;
-export type SearchCompanyReportsRequest =
+type SearchCompanyReportsResolvedRequest =
   typeof SearchCompanyReportsRequestSchema.Type;
+export type SearchCompanyReportsRequest = Omit<
+  SearchCompanyReportsResolvedRequest,
+  "detail"
+> & {
+  readonly detail?: ResponseDetail;
+};
 
 export const decodeSearchCompanyReportsRequest = Schema.decodeUnknownEither(
   SearchCompanyReportsRequestSchema,

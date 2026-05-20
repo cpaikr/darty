@@ -25,7 +25,8 @@ This track validates:
 - the CLI success path works against live DART;
 - stdout is a parseable shared result envelope;
 - populated searches include concrete filing references;
-- no-result searches stay empty and do not include invented filing references.
+- no-result searches stay empty and do not include invented filing references;
+- each passing scenario reports `stdoutUtf8Bytes` and `envelopeJsonCharacters` as an output-size/token-proxy signal for response-shape regressions.
 
 ### Agentic CLI
 

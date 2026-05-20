@@ -5,7 +5,7 @@ export type ViewReportCliVerboseOutputOptions = CliVerboseOutputOptions & {
   readonly tocDepth?: number;
 };
 
-type ViewReportTocNode = ViewReportResult["result"]["toc"][number];
+type ViewReportTocNode = NonNullable<ViewReportResult["result"]["toc"]>[number];
 
 export type ViewReportSectionCompactCliResult = Omit<
   ViewReportResult,
@@ -43,7 +43,7 @@ export const toViewReportCliResult = (
   const resultPayload = {
     ...result.result,
     toc:
-      tocDepth === undefined
+      result.result.toc === undefined || tocDepth === undefined
         ? result.result.toc
         : limitTocDepth(result.result.toc, tocDepth),
   };

@@ -8,6 +8,7 @@ import { searchBodyCliScenarios } from "../shared/cli-scenarios.ts";
 
 const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const decoder = new TextDecoder();
+const encoder = new TextEncoder();
 
 const runCli = (argv: readonly string[]) =>
   Bun.spawnSync({
@@ -17,6 +18,16 @@ const runCli = (argv: readonly string[]) =>
     stderr: "pipe",
     env: process.env,
   });
+
+const formatOutputSizeMetric = (
+  stdout: string,
+  envelope: Record<string, unknown>,
+): string => {
+  const stdoutUtf8Bytes = encoder.encode(stdout).byteLength;
+  const envelopeJsonCharacters = JSON.stringify(envelope).length;
+
+  return `stdoutUtf8Bytes=${stdoutUtf8Bytes}, envelopeJsonCharacters=${envelopeJsonCharacters}`;
+};
 
 let failed = 0;
 
@@ -37,7 +48,12 @@ for (const scenario of searchBodyCliScenarios) {
     const assertion = assertSearchBodyEnvelope(envelope, scenario);
 
     if (assertion.pass) {
-      console.log(`✓ ${scenario.id}: ${scenario.description}`);
+      console.log(
+        `✓ ${scenario.id}: ${scenario.description} (${formatOutputSizeMetric(
+          stdout,
+          envelope,
+        )})`,
+      );
       continue;
     }
 

@@ -6,7 +6,10 @@ import {
   nonNegativeInt,
 } from "../../schema-annotations.ts";
 import { searchCompanyReportsSchemaCopy } from "../copy.ts";
-import { SearchCompanyReportsRequestSchema } from "./request.ts";
+import {
+  SearchCompanyReportsRequestSchema,
+  type SearchCompanyReportsRequest,
+} from "./request.ts";
 
 const DartCompanyCodeSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^\d{8}$/)),
@@ -93,7 +96,7 @@ export const SearchCompanyReportsItemSchema = Schema.Struct({
   ),
   references: SearchCompanyReportsItemReferencesSchema,
   remarks: Schema.Array(SearchCompanyReportsRemarkSchema),
-  evidence: SearchCompanyReportsEvidenceSchema,
+  evidence: Schema.optional(SearchCompanyReportsEvidenceSchema),
 });
 export type SearchCompanyReportsItem =
   typeof SearchCompanyReportsItemSchema.Type;
@@ -189,5 +192,17 @@ export const SearchCompanyReportsResultSchema = Schema.Struct({
   identifier: "SearchCompanyReportsResult",
   description: searchCompanyReportsSchemaCopy.resultDescription,
 });
-export type SearchCompanyReportsResult =
+type SearchCompanyReportsSchemaResult =
   typeof SearchCompanyReportsResultSchema.Type;
+export type SearchCompanyReportsResult = Omit<
+  SearchCompanyReportsSchemaResult,
+  "result"
+> & {
+  readonly result: Omit<
+    SearchCompanyReportsSchemaResult["result"],
+    "request" | "items"
+  > & {
+    readonly request: SearchCompanyReportsRequest;
+    readonly items: readonly SearchCompanyReportsItem[];
+  };
+};

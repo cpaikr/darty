@@ -85,8 +85,51 @@ describe("parseViewReportCommandArgs", () => {
         outputFormat: "markdown",
         maxBytes: 50000,
         contentStartByte: 25000,
+        detail: "raw",
       },
       output: { pretty: true, verbose: true, tocDepth: 2 },
+    });
+  });
+
+  test("requests locator detail when TOC depth is set", () => {
+    expect(
+      parseViewReportCommandArgs([
+        "--receipt",
+        "20260331004166",
+        "--section-id",
+        "section:1",
+        "--toc-depth",
+        "1",
+      ]),
+    ).toEqual({
+      request: {
+        receipt: "20260331004166",
+        sectionId: "section:1",
+        detail: "detailed",
+      },
+      output: { pretty: false, verbose: false, tocDepth: 1 },
+    });
+  });
+
+  test("keeps explicit concise detail authoritative with TOC depth", () => {
+    expect(
+      parseViewReportCommandArgs([
+        "--receipt",
+        "20260331004166",
+        "--section-id",
+        "section:1",
+        "--toc-depth",
+        "1",
+        "--detail",
+        "concise",
+      ]),
+    ).toEqual({
+      request: {
+        receipt: "20260331004166",
+        sectionId: "section:1",
+        detail: "concise",
+      },
+      output: { pretty: false, verbose: false, tocDepth: 1 },
     });
   });
 
@@ -127,6 +170,12 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("--content-start-byte <number>");
     expect(viewReportUsage).toContain("outputFormat으로 이어서 읽으세요");
     expect(viewReportUsage).toContain("--verbose");
+    expect(viewReportUsage).toContain("locator는");
+    expect(viewReportUsage).toContain("이어 조회에 쓰는 documents/toc 식별자 목록입니다");
+    expect(viewReportUsage).toContain("content.body 렌더링/창은 바꾸지 않습니다");
+    expect(viewReportUsage).toContain("concise는 documents/toc를 생략");
+    expect(viewReportUsage).toContain("--detail을 생략하면 요청 detail=raw로");
+    expect(viewReportUsage).toContain("처리합니다.");
     expect(viewReportUsage).toContain("--toc-depth <number>");
     expect(viewReportUsage).toContain("--pretty");
     expect(viewReportUsage).toContain("주의사항");
@@ -139,6 +188,7 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("search-body 결과의 viewerUrl로 목차 보기");
     expect(viewReportUsage).toContain("긴 섹션을 작은 창으로 읽기");
     expect(viewReportUsage).toContain("content.isFullContent");
+    expect(viewReportUsage).toContain("`--detail`은 content.body를 바꾸지 않고");
     expect(viewReportUsage).toContain("PDF는 darty 내부에서 처리하지 않습니다");
     expect(viewReportUsage).not.toContain("--include-toc");
   });

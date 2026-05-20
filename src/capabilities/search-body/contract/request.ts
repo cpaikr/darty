@@ -7,6 +7,10 @@ import {
   requiredField,
 } from "../../schema-annotations.ts";
 import {
+  responseDetailFieldSpec,
+  type ResponseDetail,
+} from "../../response-detail.ts";
+import {
   searchBodyFieldCopy,
   searchBodySchemaCopy,
 } from "../copy.ts";
@@ -110,6 +114,7 @@ const inputSpecs = {
       description: searchBodyFieldCopy.sortDirection.description,
       examples: ["desc"],
     },
+    detail: responseDetailFieldSpec,
   } as const satisfies Record<string, DefaultedFieldSpecShape>,
   required: {
     keyword: {
@@ -172,6 +177,7 @@ const searchBodyRequestFields = {
   page: defaultedField(searchBodyFieldSpecs.page),
   sortBy: defaultedField(searchBodyFieldSpecs.sortBy),
   sortDirection: defaultedField(searchBodyFieldSpecs.sortDirection),
+  detail: defaultedField(searchBodyFieldSpecs.detail),
   keyword: requiredField(searchBodyFieldSpecs.keyword),
   startDate: requiredField(searchBodyFieldSpecs.startDate),
   endDate: requiredField(searchBodyFieldSpecs.endDate),
@@ -189,7 +195,10 @@ export const SearchBodyRequestSchema = Schema.Struct(
 });
 
 export type SearchBodyRawInput = typeof SearchBodyRequestSchema.Encoded;
-export type SearchBodyRequest = typeof SearchBodyRequestSchema.Type;
+type SearchBodyResolvedRequest = typeof SearchBodyRequestSchema.Type;
+export type SearchBodyRequest = Omit<SearchBodyResolvedRequest, "detail"> & {
+  readonly detail?: ResponseDetail;
+};
 
 export const decodeSearchBodyRequest = Schema.decodeUnknownEither(
   SearchBodyRequestSchema,

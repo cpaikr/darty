@@ -96,12 +96,11 @@ describe("executeSearchBody", () => {
       page: 2,
       sortBy: "reportName",
       sortDirection: "desc",
+      detail: "concise",
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
       companyCode: "01368637",
-      presenterName: undefined,
-      reportName: undefined,
     });
     expect(result).toEqual({
       result: {
@@ -109,12 +108,11 @@ describe("executeSearchBody", () => {
           page: 2,
           sortBy: "reportName",
           sortDirection: "desc",
+          detail: "concise",
           keyword: "배당",
           startDate: "20250331",
           endDate: "20260331",
           companyCode: "01368637",
-          presenterName: undefined,
-          reportName: undefined,
         },
         pagination: {
           currentPage: 2,
@@ -147,11 +145,6 @@ describe("executeSearchBody", () => {
             references: {
               viewerUrl:
                 "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331904807",
-            },
-            evidence: {
-              reportNameRaw: "정기주주총회결과",
-              rawInfoText: "[거래소공시] [본문] 제출인 : 유일에너테크",
-              snippetHtml: "<strong>배당</strong>",
             },
           },
         ],

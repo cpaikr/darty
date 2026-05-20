@@ -6,7 +6,10 @@ import {
   nonNegativeInt,
 } from "../../schema-annotations.ts";
 import { searchBodySchemaCopy } from "../copy.ts";
-import { SearchBodyRequestSchema } from "./request.ts";
+import {
+  SearchBodyRequestSchema,
+  type SearchBodyRequest,
+} from "./request.ts";
 
 export const SearchBodyCompanySchema = Schema.Struct({
   name: describedString("DART 결과 행에 표시된 회사명."),
@@ -64,7 +67,7 @@ export const SearchBodyItemSchema = Schema.Struct({
   filing: SearchBodyFilingSchema,
   match: SearchBodyMatchSchema,
   references: SearchBodyItemReferencesSchema,
-  evidence: SearchBodyEvidenceSchema,
+  evidence: Schema.optional(SearchBodyEvidenceSchema),
 });
 export type SearchBodyItem = typeof SearchBodyItemSchema.Type;
 
@@ -136,4 +139,10 @@ export const SearchBodyResultSchema = Schema.Struct({
   identifier: "SearchBodyResult",
   description: searchBodySchemaCopy.resultDescription,
 });
-export type SearchBodyResult = typeof SearchBodyResultSchema.Type;
+type SearchBodySchemaResult = typeof SearchBodyResultSchema.Type;
+export type SearchBodyResult = Omit<SearchBodySchemaResult, "result"> & {
+  readonly result: Omit<SearchBodySchemaResult["result"], "request" | "items"> & {
+    readonly request: SearchBodyRequest;
+    readonly items: readonly SearchBodyItem[];
+  };
+};

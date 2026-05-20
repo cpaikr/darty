@@ -61,6 +61,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         corporationType: "P",
         closingAccountsMonth: "12",
         includeAllReports: true,
+        detail: "raw",
       },
       output: { pretty: false, verbose: true },
     });
@@ -110,6 +111,10 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("--include-all-reports");
     expect(searchCompanyReportsUsage).toContain("--pretty");
     expect(searchCompanyReportsUsage).toContain("--verbose");
+    expect(searchCompanyReportsUsage).toContain("원문 검증 정보(evidence) 포함 수준");
+    expect(searchCompanyReportsUsage).toContain("DART 결과 행 원문, snippet HTML");
+    expect(searchCompanyReportsUsage).toContain("CLI에서 evidence를 보려면 --verbose");
+    expect(searchCompanyReportsUsage).toContain("--detail을 생략하면 요청 detail=raw로 처리합니다.");
     expect(searchCompanyReportsUsage).toContain("최종보고서 필터");
     expect(searchCompanyReportsUsage).toContain("정정 전 보고서까지 포함");
     expect(searchCompanyReportsUsage).toContain("1~9는 01~09로 처리");
@@ -119,6 +124,12 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).not.toContain("--include-evidence");
     expect(searchCompanyReportsUsage).toContain(
       "search-company --company-name <회사명>",
+    );
+    expect(searchCompanyReportsUsage).toContain(
+      "DART 행 원문 같은 원문 검증 정보(evidence)",
+    );
+    expect(searchCompanyReportsUsage).toContain(
+      "raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
     );
     expect(searchCompanyReportsUsage).not.toContain("공시통합검색의 `회사명` 모드");
   });
@@ -142,6 +153,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
       page: 1,
       pageSize: 15,
       sortDirection: "desc",
+      detail: "concise",
       disclosureTypes: [],
       industryCode: "all",
       corporationType: "all",

@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { includesSourceEvidence } from "../response-detail.ts";
 import {
   disclosureTypeCategories,
   type DisclosureTypeCategory,
@@ -132,6 +133,18 @@ const addMatchedDisclosureType = (
   return { ...item, matchedDisclosureType };
 };
 
+const projectSearchCompanyReportsItem = (
+  item: SearchCompanyReportsItem,
+  request: SearchCompanyReportsRequest,
+): SearchCompanyReportsItem => {
+  if (includesSourceEvidence(request.detail)) {
+    return item;
+  }
+
+  const { evidence: _evidence, ...conciseItem } = item;
+  return conciseItem;
+};
+
 const getDisclosureTypeWarnings = (
   request: SearchCompanyReportsRequest,
   items: readonly SearchCompanyReportsItem[],
@@ -157,7 +170,10 @@ export const buildSearchCompanyReportsResult = (
 ): SearchCompanyReportsResult => {
   const matchedDisclosureType = toMatchedDisclosureType(request);
   const items = providerResult.items.map((item) =>
-    addMatchedDisclosureType(item, matchedDisclosureType),
+    projectSearchCompanyReportsItem(
+      addMatchedDisclosureType(item, matchedDisclosureType),
+      request,
+    ),
   );
 
   return {

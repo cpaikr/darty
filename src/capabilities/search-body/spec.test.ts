@@ -57,6 +57,7 @@ describe("search-body capability schemas", () => {
         page: 1,
         sortBy: "date",
         sortDirection: "desc",
+        detail: "concise",
         keyword: "배당",
         startDate: "20250331",
         endDate: "20260331",
@@ -176,7 +177,7 @@ describe("search-body capability schemas", () => {
       }),
     );
 
-    expect(decoded.result.request).toEqual(request);
+    expect(decoded.result.request).toEqual({ ...request, detail: "concise" });
     expect(decoded.result.items).toHaveLength(1);
   });
 });

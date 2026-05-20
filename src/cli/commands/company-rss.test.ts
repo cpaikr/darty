@@ -23,11 +23,14 @@ describe("parseCompanyRssCommandArgs", () => {
       resolveCompanyRssRequest(
         parseCompanyRssCommandArgs(["--company-code", "00126380"]).request,
       ),
-    ).toEqual({ companyCode: "00126380" });
+    ).toEqual({ companyCode: "00126380", detail: "concise" });
   });
 
   test("documents the CLI surface", () => {
     expect(companyRssUsage).toContain("--company-code <text>");
+    expect(companyRssUsage).toContain("--detail <concise|detailed|raw>");
+    expect(companyRssUsage).toContain("RSS 부가 필드 포함 수준");
+    expect(companyRssUsage).toContain("raw도 RSS XML 전체를 반환하지 않습니다");
     expect(companyRssUsage).toContain("RSS");
   });
 

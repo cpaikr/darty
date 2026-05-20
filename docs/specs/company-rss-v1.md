@@ -15,6 +15,7 @@ Fetches the DART company-specific disclosure RSS feed and returns a structured J
 | Field | Required | Constraint | Notes |
 |---|---:|---|---|
 | `companyCode` | yes | 8 digits | DART company code, not a 6-digit stock code |
+| `detail` | no | `concise`, `detailed`, or `raw` | default `concise`; controls output projection |
 
 Unknown request fields are rejected.
 
@@ -29,8 +30,8 @@ Unknown request fields are rejected.
 The success envelope contains:
 
 - `result.request`: normalized request
-- `result.channel`: RSS channel `title`, `link`, optional `description`, optional `language`, optional `publishedAt`
-- `result.items[]`: RSS items with `title`, `link`, optional 14-digit `receiptNumber`, optional `publishedAt`, optional `creator`, optional `guid`
+- `result.channel`: RSS channel `title` and `link`; optional channel description/language/publishedAt are included for `detailed` and `raw`
+- `result.items[]`: RSS items with `title`, `link`, optional 14-digit `receiptNumber`, optional `publishedAt`, optional `creator`; optional RSS `guid` is included for `detailed` and `raw`
 - `metadata.fetchedAt`: fetch timestamp
 - `metadata.source`: `{ system: "dart", surface: "companyRSS", endpoint }`
 - `metadata.completeness`: currently `complete`

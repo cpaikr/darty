@@ -1,5 +1,6 @@
 import { Command } from "commander";
 
+import { responseDetailCliDescriptions } from "../../capabilities/response-detail.ts";
 import {
   searchCompanyReportsCliCopy,
   searchCompanyReportsFieldCopy,
@@ -134,8 +135,15 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     "--include-all-reports",
     searchCompanyReportsFieldCopy.includeAllReports.cliDescription,
   ),
+  createRegisteredOption(
+    "detail",
+    "--detail <concise|detailed|raw>",
+    responseDetailCliDescriptions.sourceEvidence,
+  ),
   createPrettyOption(),
-  createVerboseOption(),
+  createVerboseOption(
+    "기본 CLI 출력에서 생략하는 원문 검증 정보(evidence)와 진단 필드를 포함합니다. --detail을 생략하면 요청 detail=raw로 처리합니다.",
+  ),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -173,16 +181,22 @@ const renderSupplementalHelp = (): string => {
 
 const toSearchCompanyReportsCliCommand = (
   options: CliOptions,
-): SearchCompanyReportsCliCommand =>
-  splitCliCommandOptions<
+): SearchCompanyReportsCliCommand => {
+  const requestOptions =
+    options.verbose === true && options.detail === undefined
+      ? { ...options, detail: "raw" }
+      : options;
+
+  return splitCliCommandOptions<
     SearchCompanyReportsRawInput,
     CliOptionKey,
     CliVerboseOutputOptions
   >(
-    options,
+    requestOptions,
     ["pretty", "verbose"],
     createCliVerboseOutputOptions(options),
   );
+};
 
 const buildSearchCompanyReportsCommand = (
   onRun?: (command: SearchCompanyReportsCliCommand) => Promise<void>,

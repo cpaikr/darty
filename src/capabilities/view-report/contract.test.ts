@@ -12,6 +12,7 @@ describe("resolveViewReportRequest", () => {
       outputFormat: "markdown",
       maxBytes: 50000,
       contentStartByte: 0,
+      detail: "concise",
     });
   });
 

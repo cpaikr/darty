@@ -20,6 +20,7 @@
     - Agents can identify the correct operation and parameters from schema metadata.
     - Schema descriptions match the stable capability contracts.
 - Add explicit response detail controls.
+  - Status: executed. `search-body`, `search-company-reports`, `view-report`, and `company-rss` now accept `detail: concise|detailed|raw`; concise is the default, CLI `--verbose` maps to `detail=raw` when no explicit detail is supplied, and the fixed CLI eval reports output-size/token-proxy metrics.
   - Standardize response/detail options where output can become large:
     - `search-body`.
     - `search-company-reports`.

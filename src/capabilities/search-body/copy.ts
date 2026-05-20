@@ -90,6 +90,7 @@ export const searchBodyCliCopy = {
   notes: [
     "본문내용 검색은 문서 단위 키워드 검색입니다. 공백으로 여러 단어를 넣으면 같은 문서 안에 모두 존재하는지를 찾으며, 같은 문단/표/항목에 함께 있다는 뜻은 아닙니다.",
     "핵심감사사항(KAM)처럼 문맥 확인이 필요한 검색은 search-body로 후보를 좁힌 뒤 결과의 viewerUrl 또는 접수번호를 view-report에 넘겨 실제 보고서 본문을 확인하세요.",
+    "DART 행 원문이나 snippet HTML 같은 원문 검증 정보(evidence)가 필요하면 `--detail detailed` 또는 `--detail raw`와 함께 `--verbose`를 사용하세요. raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
   ],
   invalidInteger: (value: string): string =>
     `정수를 입력해야 하지만 "${value}"을(를) 받았습니다.`,
@@ -113,6 +114,7 @@ export const searchBodySchemaCopy = {
       page: 1,
       sortBy: "date",
       sortDirection: "desc",
+      detail: "concise",
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",

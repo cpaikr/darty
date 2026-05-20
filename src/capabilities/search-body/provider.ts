@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { includesSourceEvidence } from "../response-detail.ts";
 import type {
   SearchBodyItem,
   SearchBodyMetadata,
@@ -44,6 +45,18 @@ export type SearchBodyProvider = {
  * Reattaches the normalized public request to the provider-owned payload so
  * transports receive one capability-owned result envelope.
  */
+const projectSearchBodyItem = (
+  item: SearchBodyItem,
+  request: SearchBodyRequest,
+): SearchBodyItem => {
+  if (includesSourceEvidence(request.detail)) {
+    return item;
+  }
+
+  const { evidence: _evidence, ...conciseItem } = item;
+  return conciseItem;
+};
+
 export const buildSearchBodyResult = (
   request: SearchBodyRequest,
   providerResult: SearchBodyProviderResult,
@@ -51,7 +64,7 @@ export const buildSearchBodyResult = (
   result: {
     request,
     pagination: providerResult.pagination,
-    items: providerResult.items,
+    items: providerResult.items.map((item) => projectSearchBodyItem(item, request)),
   },
   metadata: providerResult.metadata,
   references: providerResult.references,

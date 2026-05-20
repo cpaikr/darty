@@ -1,5 +1,6 @@
 import { Command } from "commander";
 
+import { responseDetailCliDescriptions } from "../../capabilities/response-detail.ts";
 import {
   searchBodyCliCopy,
   searchBodyFieldCopy,
@@ -73,6 +74,11 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     searchBodyFieldCopy.sortDirection.cliDescription,
   ),
   createRegisteredOption(
+    "detail",
+    "--detail <concise|detailed|raw>",
+    responseDetailCliDescriptions.sourceEvidence,
+  ),
+  createRegisteredOption(
     "keyword",
     "--keyword <text>",
     searchBodyFieldCopy.keyword.cliDescription,
@@ -103,7 +109,9 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     searchBodyFieldCopy.reportName.cliDescription,
   ),
   createPrettyOption(),
-  createVerboseOption(),
+  createVerboseOption(
+    "기본 CLI 출력에서 생략하는 원문 검증 정보(evidence)와 진단 필드를 포함합니다. --detail을 생략하면 요청 detail=raw로 처리합니다.",
+  ),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -139,16 +147,22 @@ const renderSupplementalHelp = (): string => {
   return `\n${searchBodyCliCopy.examplesHeading}:\n${examples}${notesSection}\n`;
 };
 
-const toSearchBodyCliCommand = (options: CliOptions): SearchBodyCliCommand =>
-  splitCliCommandOptions<
+const toSearchBodyCliCommand = (options: CliOptions): SearchBodyCliCommand => {
+  const requestOptions =
+    options.verbose === true && options.detail === undefined
+      ? { ...options, detail: "raw" }
+      : options;
+
+  return splitCliCommandOptions<
     SearchBodyRawInput,
     CliOptionKey,
     CliVerboseOutputOptions
   >(
-    options,
+    requestOptions,
     ["pretty", "verbose"],
     createCliVerboseOutputOptions(options),
   );
+};
 
 const buildSearchBodyCommand = (
   onRun?: (command: SearchBodyCliCommand) => Promise<void>,

@@ -22,7 +22,7 @@ export const companyRssFailureCopy = {
 
 export const companyRssSchemaCopy = {
   requestDescription: "DART 회사별 공시 RSS 조회 입력입니다. 필수: companyCode.",
-  requestExamples: [{ companyCode: "00126380" }],
+  requestExamples: [{ companyCode: "00126380", detail: "concise" }],
   resultDescription: "성공한 company-rss 결과 객체입니다. RSS 채널, 공시 항목, 메타데이터, 참조 URL을 포함합니다.",
 } as const;
 
@@ -42,6 +42,9 @@ export const companyRssValidationCopy = {
     `매개변수 "${parameter}"은(는) 문자열이어야 합니다.`,
   invalidCompanyCode: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) 8자리 DART 회사 코드여야 합니다.`,
+  expectedDetail: "concise, detailed, raw 중 하나",
+  invalidDetail: (parameter: string): string =>
+    `매개변수 "${parameter}"은(는) concise, detailed, raw 중 하나여야 합니다.`,
   unknownParameter: (parameter: string): string =>
     `알 수 없는 매개변수입니다: "${parameter}".`,
 } as const;

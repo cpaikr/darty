@@ -4,7 +4,7 @@ import type { SearchCompanyResult } from "../../capabilities/search-company/cont
 import type { CliVerboseOutputOptions } from "../command-helpers.ts";
 
 type SearchEvidenceItem = {
-  readonly evidence: unknown;
+  readonly evidence?: unknown;
 };
 
 type SearchResultWithEvidenceItems = {

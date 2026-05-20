@@ -6,7 +6,10 @@ import {
   nonNegativeInt,
 } from "../../schema-annotations.ts";
 import { companyRssSchemaCopy } from "../copy.ts";
-import { CompanyRssRequestSchema } from "./request.ts";
+import {
+  CompanyRssRequestSchema,
+  type CompanyRssRequest,
+} from "./request.ts";
 
 const receiptNumberSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^\d{14}$/)),
@@ -72,4 +75,9 @@ export const CompanyRssResultSchema = Schema.Struct({
   identifier: "CompanyRssResult",
   description: companyRssSchemaCopy.resultDescription,
 });
-export type CompanyRssResult = typeof CompanyRssResultSchema.Type;
+type CompanyRssSchemaResult = typeof CompanyRssResultSchema.Type;
+export type CompanyRssResult = Omit<CompanyRssSchemaResult, "result"> & {
+  readonly result: Omit<CompanyRssSchemaResult["result"], "request"> & {
+    readonly request: CompanyRssRequest;
+  };
+};

@@ -99,7 +99,7 @@ describe("toViewReportCliResult", () => {
     });
 
     expect("toc" in withToc.result).toBe(true);
-    if (!("toc" in withToc.result)) {
+    if (!("toc" in withToc.result) || withToc.result.toc === undefined) {
       throw new Error("Expected tocDepth result to include TOC.");
     }
     expect(withToc.result.toc[0]?.children[0]?.children).toEqual([]);

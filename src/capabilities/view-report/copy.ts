@@ -57,6 +57,7 @@ export const viewReportSchemaCopy = {
     {
       receipt: "20260331004166",
       outputFormat: "markdown",
+      detail: "concise",
       maxBytes: defaultMaxBytes,
       contentStartByte: defaultStartByte,
     },
@@ -64,6 +65,7 @@ export const viewReportSchemaCopy = {
       receipt: "20260331004166",
       sectionId: "section:3.5",
       outputFormat: "markdown",
+      detail: "concise",
       maxBytes: 2000,
       contentStartByte: defaultStartByte,
     },
@@ -99,6 +101,7 @@ export const viewReportValidationCopy = {
   expectedMaxBytes: formatViewReportExpectedMaxBytes(),
   expectedContentStartByte:
     "0 이상의 정수. DART offset이 아니라 content.window.nextStartByte로 이어 읽는 렌더링 본문 바이트 위치",
+  expectedDetail: "concise, detailed, raw 중 하나",
 } as const;
 
 export const viewReportCliCopy = {
@@ -154,6 +157,7 @@ export const viewReportCliCopy = {
     "`--output-format markdown`은 복잡한 DART 표를 HTML table로 보존할 수 있습니다. rowspan/colspan이 있는 표는 자동 파싱 전 원문 구조를 확인하세요.",
     "긴 감사보고서/사업보고서는 search-body 결과의 viewerUrl 또는 receiptNumber를 view-report에 넘긴 뒤, 목차에서 필요한 섹션만 창 단위로 조회하세요.",
     "content.isFullContent는 반환된 body가 전체 렌더링 본문인지 나타냅니다. 이어서 읽을 내용이 있는지는 content.window.hasMore를 확인하세요.",
+    "`--detail`은 content.body를 바꾸지 않고 함께 반환할 locator 필드만 조정합니다. section 본문에서 documents/toc도 필요하면 `--detail detailed` 또는 `--detail raw`를 사용하세요.",
     "PDF는 darty 내부에서 처리하지 않습니다. PDF 링크는 직접 다운로드하거나 다른 PDF 처리/읽기 도구로 열어 사용하세요.",
   ],
 } as const;

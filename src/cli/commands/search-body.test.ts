@@ -47,6 +47,7 @@ describe("parseSearchBodyCommandArgs", () => {
         page: 2,
         sortBy: "reportName",
         sortDirection: "asc",
+        detail: "raw",
         reportName: "정기주주총회결과",
       },
       output: { pretty: false, verbose: true },
@@ -89,6 +90,11 @@ describe("parseSearchBodyCommandArgs", () => {
     expect(searchBodyUsage).toContain("--report-name <text>");
     expect(searchBodyUsage).toContain("--pretty");
     expect(searchBodyUsage).toContain("--verbose");
+    expect(searchBodyUsage).toContain("원문 검증 정보(evidence) 포함 수준");
+    expect(searchBodyUsage).toContain("DART 결과 행 원문, snippet HTML");
+    expect(searchBodyUsage).toContain("CLI에서");
+    expect(searchBodyUsage).toContain("evidence를 보려면 --verbose");
+    expect(searchBodyUsage).toContain("--detail을 생략하면 요청 detail=raw로 처리합니다.");
     expect(searchBodyUsage).toContain("명령 도움말을 표시합니다.");
     expect(searchBodyUsage).not.toContain("--include-evidence");
     expect(searchBodyUsage).not.toContain("display help for command");
@@ -123,6 +129,12 @@ describe("parseSearchBodyCommandArgs", () => {
       "결과의 viewerUrl 또는 접수번호를 view-report에 넘겨 실제 보고서 본문을 확인하세요.",
     );
     expect(searchBodyUsage).toContain(
+      "DART 행 원문이나 snippet HTML 같은 원문 검증 정보(evidence)",
+    );
+    expect(searchBodyUsage).toContain(
+      "raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
+    );
+    expect(searchBodyUsage).toContain(
       "darty search-body --keyword 배당 --start-date 20250331 --end-date 20260331",
     );
     expect(searchBodyUsage).not.toContain("--limit");
@@ -146,12 +158,10 @@ describe("parseSearchBodyCommandArgs", () => {
       page: 1,
       sortBy: "date",
       sortDirection: "desc",
+      detail: "concise",
       keyword: "배당",
       startDate: "20250331",
       endDate: "20260331",
-      companyCode: undefined,
-      presenterName: undefined,
-      reportName: undefined,
     });
   });
 

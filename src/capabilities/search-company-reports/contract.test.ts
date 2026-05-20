@@ -20,6 +20,7 @@ describe("resolveSearchCompanyReportsRequest", () => {
       page: 1,
       pageSize: 15,
       sortDirection: "desc",
+      detail: "concise",
       disclosureTypes: [],
       industryCode: "all",
       corporationType: "all",

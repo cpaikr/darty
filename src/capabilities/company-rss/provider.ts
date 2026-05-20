@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { normalizeResponseDetail } from "../response-detail.ts";
 import type {
   CompanyRssChannel,
   CompanyRssItem,
@@ -36,14 +37,40 @@ export type CompanyRssProvider = {
   readonly rss: (request: CompanyRssRequest) => Promise<CompanyRssProviderResult>;
 };
 
+const projectCompanyRssChannel = (
+  channel: CompanyRssChannel,
+  request: CompanyRssRequest,
+): CompanyRssChannel => {
+  if (normalizeResponseDetail(request.detail) !== "concise") {
+    return channel;
+  }
+
+  return {
+    title: channel.title,
+    link: channel.link,
+  };
+};
+
+const projectCompanyRssItem = (
+  item: CompanyRssItem,
+  request: CompanyRssRequest,
+): CompanyRssItem => {
+  if (normalizeResponseDetail(request.detail) !== "concise") {
+    return item;
+  }
+
+  const { guid: _guid, ...conciseItem } = item;
+  return conciseItem;
+};
+
 export const buildCompanyRssResult = (
   request: CompanyRssRequest,
   providerResult: CompanyRssProviderResult,
 ): CompanyRssResult => ({
   result: {
     request,
-    channel: providerResult.channel,
-    items: providerResult.items,
+    channel: projectCompanyRssChannel(providerResult.channel, request),
+    items: providerResult.items.map((item) => projectCompanyRssItem(item, request)),
   },
   metadata: providerResult.metadata,
   references: providerResult.references,

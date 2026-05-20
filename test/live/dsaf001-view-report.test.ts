@@ -19,10 +19,10 @@ describe("view-report live DART viewer probes", () => {
       kind: "body",
       selected: true,
     });
-    expect(result.result.documents.length).toBeGreaterThan(0);
-    expect(result.result.toc.length).toBeGreaterThan(0);
-    expect(result.result.toc[0]?.id).toBe("section:1");
-    expect(result.result.toc[0]?.title.replace(/\s+/g, "")).toContain(
+    expect(result.result.documents?.length).toBeGreaterThan(0);
+    expect(result.result.toc?.length).toBeGreaterThan(0);
+    expect(result.result.toc?.[0]?.id).toBe("section:1");
+    expect(result.result.toc?.[0]?.title.replace(/\s+/g, "")).toContain(
       "사업보고서",
     );
     expect(result.result.content).toBeUndefined();

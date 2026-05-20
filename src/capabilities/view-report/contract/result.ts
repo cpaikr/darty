@@ -10,6 +10,7 @@ import { viewReportSchemaCopy } from "../copy.ts";
 import {
   ViewReportOutputFormatSchema,
   ViewReportRequestSchema,
+  type ViewReportRequest,
 } from "./request.ts";
 
 export interface ViewReportTocNode {
@@ -174,8 +175,8 @@ export const ViewReportResultSchema = Schema.Struct({
     request: ViewReportRequestSchema,
     receipt: ViewReportReceiptSchema,
     document: ViewReportDocumentSchema,
-    documents: Schema.Array(ViewReportDocumentSchema),
-    toc: Schema.Array(ViewReportTocNodeSchema),
+    documents: Schema.optional(Schema.Array(ViewReportDocumentSchema)),
+    toc: Schema.optional(Schema.Array(ViewReportTocNodeSchema)),
     content: Schema.optional(ViewReportContentSchema),
     navigation: Schema.optional(ViewReportNavigationSchema),
   }),
@@ -186,4 +187,9 @@ export const ViewReportResultSchema = Schema.Struct({
   identifier: "ViewReportResult",
   description: viewReportSchemaCopy.resultDescription,
 });
-export type ViewReportResult = typeof ViewReportResultSchema.Type;
+type ViewReportSchemaResult = typeof ViewReportResultSchema.Type;
+export type ViewReportResult = Omit<ViewReportSchemaResult, "result"> & {
+  readonly result: Omit<ViewReportSchemaResult["result"], "request"> & {
+    readonly request: ViewReportRequest;
+  };
+};

@@ -1,3 +1,4 @@
+import { responseDetailValues, type ResponseDetail } from "../../response-detail.ts";
 import { companyRssValidationCopy } from "../copy.ts";
 import { InvalidCompanyRssRequest } from "./errors.ts";
 import {
@@ -33,6 +34,21 @@ export const resolveCompanyRssRequest = (
         message: companyRssValidationCopy.unknownParameter(key),
       });
     }
+  }
+
+  const detail = input.detail ?? "concise";
+  if (
+    typeof detail !== "string" ||
+    !responseDetailValues.includes(detail as ResponseDetail)
+  ) {
+    throw new InvalidCompanyRssRequest({
+      code: "invalid_parameter",
+      parameter: "detail",
+      reason: typeof detail === "string" ? "invalid_choice" : "invalid_type",
+      expected: companyRssValidationCopy.expectedDetail,
+      actual: detail,
+      message: companyRssValidationCopy.invalidDetail("detail"),
+    });
   }
 
   const companyCode = input.companyCode;
@@ -72,5 +88,5 @@ export const resolveCompanyRssRequest = (
     });
   }
 
-  return { companyCode: trimmedCompanyCode };
+  return { companyCode: trimmedCompanyCode, detail: detail as ResponseDetail };
 };
