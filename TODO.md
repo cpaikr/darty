@@ -2,38 +2,6 @@
 
 ## Now
 
-- Enrich capability schemas for agent use.
-  - Status: executed. Public capability schemas now include request examples and annotated result identifiers/follow-up fields across the current operation set.
-  - Add concise descriptions and examples to request fields and important result fields.
-  - Explain DART-specific identifiers in schema annotations:
-    - `companyCode`: 8-digit DART company code, e.g. `00126380`.
-    - `receiptNumber`: DART filing receipt number (`rcpNo`).
-    - `documentNumber`: DART document number (`dcmNo`) when exposed as a reference, not as a required caller input.
-    - `viewerUrl`: DART `/dsaf001/main.do?rcpNo=...` report-viewer URL.
-    - `documentId`: darty-returned report document id from `view-report`.
-    - `sectionId`: darty-returned TOC section id from `view-report`, scoped to one receipt/document.
-  - Keep low-level replay fields internal unless a spec explicitly exposes them.
-  - Keep descriptions compact; do not turn schemas into prompt dumps.
-  - Keep schema text aligned with the public specs in `docs/specs/`.
-  - Success criteria:
-    - Exported JSON Schemas are useful without reading CLI help.
-    - Agents can identify the correct operation and parameters from schema metadata.
-    - Schema descriptions match the stable capability contracts.
-- Add explicit response detail controls.
-  - Status: executed. `search-body`, `search-company-reports`, `view-report`, and `company-rss` now accept `detail: concise|detailed|raw`; concise is the default, CLI `--verbose` maps to `detail=raw` when no explicit detail is supplied, and the fixed CLI eval reports output-size/token-proxy metrics.
-  - Standardize response/detail options where output can become large:
-    - `search-body`.
-    - `search-company-reports`.
-    - `view-report`.
-    - `company-rss`.
-  - Consider a simple enum: `concise`, `detailed`, `raw`.
-  - Default to the smallest useful response.
-  - Keep raw HTML/source evidence opt-in.
-  - Preserve references needed for follow-up calls even in concise output.
-  - Success criteria:
-    - Default responses are agent-readable and token-efficient.
-    - Detailed/raw evidence remains available when verification requires it.
-    - Evals track output size or a token proxy metric.
 - Reclassify routine format notes vs real warnings.
   - Review warning codes across all capability envelopes.
   - Move routine notes, expected HTML preservation, and normal formatting behavior into `metadata` or result field descriptions.
