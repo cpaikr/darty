@@ -45,12 +45,7 @@ It only requires the matching structured CLI invocation to exit successfully. De
 
 ### Agent-native typed tools
 
-`agent-native/run-eval.ts` evaluates the same scenarios with typed `darty_*` tools instead of CLI argv. The active exposed tools are:
-
-- `darty_search_body`
-- `darty_search_company`
-- `darty_search_company_reports`
-- `darty_view_report`
+`agent-native/run-eval.ts` evaluates the same scenarios with typed `darty_*` tools instead of CLI argv. The active exposed tools include `darty_search_body`, `darty_search_company`, `darty_search_company_reports`, `darty_get_company_detail`, `darty_get_company_rss`, `darty_list_disclosure_types`, and `darty_view_report`.
 
 This track validates that the model can choose `darty_search_body`, pass semantic parameters directly, and receive the shared capability envelope without CLI syntax reasoning.
 
@@ -66,7 +61,7 @@ Current scenarios stay narrow on purpose:
 - explicit no-result handling should return an empty structured result;
 - filtered live search should echo the company-code filter and return only matching company rows.
 
-The current capability does not support section retrieval yet, so these evals stop at filing-level tool output.
+The search-body scenarios still stop at filing-level output. Multi-step report-viewing and section-window tasks live in `../workflows/`.
 
 ## Running
 

@@ -28,26 +28,6 @@
     - Agents can choose common filters without guessing raw DART codes.
     - Invalid-code errors provide actionable correction hints.
     - Source-shaped fields remain explicit where exact DART behavior matters.
-- Expand evals from single-capability search to multi-step workflows.
-  - Add realistic agent workflows that require chaining tools:
-    - Given a company name, find its DART company code, search recent filings, and return the filing reference.
-    - Find a company's latest annual report and return the viewer reference.
-    - Search body text for a concept, open a matching filing, and cite the relevant report section.
-    - Retrieve a report TOC, fetch a specific section window, and continue if truncated.
-    - Confirm no-result behavior without inventing filing references.
-    - Handle amended reports or multiple similar company names.
-    - Recover from a stale `sectionId` by rerunning `view-report` and selecting a returned section.
-  - Track metrics:
-    - Task success.
-    - Tool-call count.
-    - Invalid calls/retries.
-    - Runtime.
-    - Output size/token proxy.
-    - Reference usability.
-  - Success criteria:
-    - Evals represent real DART research tasks, not only simple command execution.
-    - Failures reveal whether the issue is naming, schema design, output shape, or source behavior.
-    - Held-out scenarios are kept separate from scenarios used to tune descriptions.
 - Review descriptions and schemas after eval failures.
   - Use eval transcripts to refine descriptions and schemas.
   - Look for wrong tool selection.
@@ -62,6 +42,7 @@
 
 ## Later
 
+- Add held-out workflow eval cases for amended reports or multiple similar company names, stale `sectionId` recovery, and truncated section continuation after the baseline multi-step workflow evals produce transcripts.
 - Add a discoverability path for `search-company-reports --industry-code` values. Users should not need to know DART 업종 codes like `612` ahead of time.
 - Support XBRL views.
 - Consider semantic `view-report` content pagination/chunking for very large sections or TOC-less reports. Keep DART raw viewer params hidden; prefer a stable cursor or explicit content window contract.

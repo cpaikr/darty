@@ -29,6 +29,7 @@
     "eval:search-body:cli": "bun run evals/search-body/cli/run-eval.ts",
     "eval:search-body:agent:cli": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
     "eval:search-body:agent:native": "varlock run -- bun run evals/search-body/agent-native/run-eval.ts",
+    "eval:workflows:agent:native": "varlock run -- bun run evals/workflows/agent-native/run-eval.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:live": "LIVE_DART_TESTS=1 bun test",

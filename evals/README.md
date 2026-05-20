@@ -4,8 +4,8 @@ This directory holds model-in-the-loop evals for `darty` tool use.
 
 ## Current stance
 
-- Keep evals capability-scoped.
-- Start with the implemented `search-body` surface.
+- Keep each eval track focused on one behavior boundary: a single capability such as `search-body`, or an explicit multi-step workflow that exercises tool chaining.
+- Treat `search-body` as the current single-capability family and `workflows` as the current multi-step agent-native family.
 - Use evals for agent/tool wiring behavior, not raw source correctness.
 - Keep deterministic source, schema, transport, and CLI contract checks in `test/` and colocated `*.test.ts` files.
 - Use deterministic assertions first. Add LLM judges only for subjective final-answer quality.
@@ -26,7 +26,7 @@ The repo has three verification layers:
 
 3. **Agent tool-use evals**
    - LLM involved.
-   - Prove the configured model can use the structured local CLI runner with appropriate arguments.
+   - Prove the configured model can use structured local tools, either through a CLI runner or typed `darty_*` calls, with appropriate arguments and identifier handoff.
    - These live under `evals/`.
 
 Future MCP, Pi-native, SDK, or other adapter evals should be added only when
@@ -41,6 +41,8 @@ that adapter is active again. The archived MCP evals are preserved at git tag
   Agentic CLI invocation runner where a model receives a structured local darty CLI runner and must call it with arguments that match the user request.
 - `search-body/agent-native/run-eval.ts`
   Agent-native tool-use runner where a model receives typed `darty_*` tools backed directly by `src/app/*` operations.
+- `workflows/agent-native/run-eval.ts`
+  Multi-step agent-native workflow runner where a model must chain typed `darty_*` tools and hand identifiers from one result into the next call.
 
 ## Environment
 
@@ -53,4 +55,5 @@ bun run env:check
 bun run eval:search-body:cli
 bun run eval:search-body:agent:cli
 bun run eval:search-body:agent:native
+bun run eval:workflows:agent:native
 ```
