@@ -145,6 +145,18 @@ const projectSearchCompanyReportsItem = (
   return conciseItem;
 };
 
+const getNoResultsWarnings = (
+  providerResult: SearchCompanyReportsProviderResult,
+): readonly SearchCompanyReportsWarning[] =>
+  providerResult.pagination.totalCount === 0 && providerResult.items.length === 0
+    ? [
+        {
+          code: "no_results",
+          message: searchCompanyReportsResultCopy.noResults,
+        },
+      ]
+    : [];
+
 const getDisclosureTypeWarnings = (
   request: SearchCompanyReportsRequest,
   items: readonly SearchCompanyReportsItem[],
@@ -187,6 +199,7 @@ export const buildSearchCompanyReportsResult = (
     references: providerResult.references,
     warnings: [
       ...providerResult.warnings,
+      ...getNoResultsWarnings(providerResult),
       ...getDisclosureTypeWarnings(request, items),
     ],
   };

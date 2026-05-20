@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { searchCompanyResultCopy } from "./copy.ts";
 import type {
   SearchCompanyItem,
   SearchCompanyMetadata,
@@ -40,6 +41,18 @@ export type SearchCompanyProvider = {
   ) => Promise<SearchCompanyProviderResult>;
 };
 
+const getNoResultsWarnings = (
+  providerResult: SearchCompanyProviderResult,
+): readonly SearchCompanyWarning[] =>
+  providerResult.pagination.totalCount === 0 && providerResult.items.length === 0
+    ? [
+        {
+          code: "no_results",
+          message: searchCompanyResultCopy.noResults,
+        },
+      ]
+    : [];
+
 export const buildSearchCompanyResult = (
   request: SearchCompanyRequest,
   providerResult: SearchCompanyProviderResult,
@@ -51,5 +64,5 @@ export const buildSearchCompanyResult = (
   },
   metadata: providerResult.metadata,
   references: providerResult.references,
-  warnings: providerResult.warnings,
+  warnings: [...providerResult.warnings, ...getNoResultsWarnings(providerResult)],
 });

@@ -107,13 +107,25 @@ export const SearchCompanyReferencesSchema = Schema.Struct({
 export type SearchCompanyReferences =
   typeof SearchCompanyReferencesSchema.Type;
 
-export const SearchCompanyWarningSchema = Schema.Struct({
+const PartialRowsDroppedWarningSchema = Schema.Struct({
   code: annotateSchema(Schema.Literal("partial_rows_dropped"), {
-    description: "복구 가능한 경고 코드. 결과 행 일부가 파싱되지 않았을 때만 반환됩니다.",
+    description: "결과 행 일부가 파싱되지 않았을 때 반환되는 경고 코드.",
   }),
   message: describedString("경고 설명."),
   droppedItemCount: nonNegativeInt("파싱하지 못해 제외한 회사 행 수."),
 });
+
+const NoResultsWarningSchema = Schema.Struct({
+  code: annotateSchema(Schema.Literal("no_results"), {
+    description: "검색 조건에 맞는 DART 회사가 없을 때 반환되는 경고 코드.",
+  }),
+  message: describedString("근거 있는 검색 확장 제안."),
+});
+
+export const SearchCompanyWarningSchema = Schema.Union(
+  PartialRowsDroppedWarningSchema,
+  NoResultsWarningSchema,
+);
 export type SearchCompanyWarning = typeof SearchCompanyWarningSchema.Type;
 
 export const SearchCompanyResultSchema = Schema.Struct({

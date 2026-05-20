@@ -8,6 +8,60 @@ import {
 } from "./provider.ts";
 
 describe("executeViewReport", () => {
+  const unusedProvider: ViewReportProvider = {
+    view: async () => {
+      throw new Error("provider should not be called for invalid requests");
+    },
+  };
+
+  test("adds accepted ranges to content-window validation hints", async () => {
+    for (const [parameter, input, expectedHintParts] of [
+      [
+        "maxBytes",
+        { receipt: "20260331004166", maxBytes: 999 },
+        ["1,000 이상 1,000,000 이하의 정수"],
+      ],
+      [
+        "contentStartByte",
+        { receipt: "20260331004166", contentStartByte: -1 },
+        ["0 이상의 정수", "content.window.nextStartByte"],
+      ],
+      [
+        "limit",
+        { receipt: "20260331004166", limit: 10 },
+        [
+          "limit은 지원하지 않습니다",
+          "public input이 아닙니다",
+          "maxBytes",
+          "contentStartByte",
+        ],
+      ],
+      [
+        "offset",
+        { receipt: "20260331004166", offset: 0 },
+        ["raw DART viewer", "documentId/sectionId", "content.window.nextStartByte"],
+      ],
+    ] as const) {
+      try {
+        await executeViewReport(input, unusedProvider);
+        throw new Error("Expected view-report execution to fail.");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ViewReportFailure);
+
+        if (!(error instanceof ViewReportFailure)) {
+          throw error;
+        }
+
+        expect(error.code).toBe("invalid_request");
+        expect(error.parameter).toBe(parameter);
+
+        for (const expectedHintPart of expectedHintParts) {
+          expect(error.recoveryHint).toContain(expectedHintPart);
+        }
+      }
+    }
+  });
+
   test("preserves parameter context for stale returned IDs", async () => {
     const provider: ViewReportProvider = {
       view: async () => {

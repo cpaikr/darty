@@ -171,9 +171,17 @@ const MatchedDisclosureTypeAmbiguousWarningSchema = Schema.Struct({
   message: describedString("경고 설명과 필요한 후속 조치."),
 });
 
+const NoResultsWarningSchema = Schema.Struct({
+  code: annotateSchema(Schema.Literal("no_results"), {
+    description: "검색 조건에 맞는 DART 회사별 공시가 없을 때 반환되는 경고 코드.",
+  }),
+  message: describedString("근거 있는 검색 확장 또는 필터 완화 제안."),
+});
+
 export const SearchCompanyReportsWarningSchema = Schema.Union(
   PartialRowsDroppedWarningSchema,
   MatchedDisclosureTypeAmbiguousWarningSchema,
+  NoResultsWarningSchema,
 );
 export type SearchCompanyReportsWarning =
   typeof SearchCompanyReportsWarningSchema.Type;

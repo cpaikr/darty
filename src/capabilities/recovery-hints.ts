@@ -1,3 +1,5 @@
+import { formatViewReportExpectedMaxBytes } from "./view-report/constants.ts";
+
 export type InvalidRequestForRecoveryHint = {
   readonly code: string;
   readonly parameter: string;
@@ -15,7 +17,10 @@ const returnedViewReportIdHint =
   "같은 receipt로 view-report를 다시 호출해 최신 documents[].id/toc[].id를 받은 뒤 그 값을 사용하세요.";
 
 const contentWindowHint =
-  "긴 본문을 이어 읽을 때는 이전 응답의 content.window.nextStartByte를 contentStartByte로 넘기세요.";
+  "contentStartByte는 0 이상의 정수입니다. 긴 본문을 이어 읽을 때는 이전 응답의 content.window.nextStartByte 값을 그대로 넘기세요.";
+
+const unsupportedLimitHint =
+  "limit은 지원하지 않습니다. public input이 아닙니다. search-body는 page(1~100)만 지원하고 pageSize는 조절할 수 없습니다. search-company는 page와 pageSize(1~45)를, search-company-reports는 page와 pageSize(15, 30, 50, 100)를 사용하세요. view-report 본문 길이와 이어 읽기는 maxBytes와 contentStartByte를 사용하세요.";
 
 const rawDartViewerParameterHint =
   "raw DART viewer 값(dcmNo, eleId, offset, length 등)을 직접 넘기지 말고 view-report가 반환한 documentId/sectionId와 content.window.nextStartByte를 사용하세요.";
@@ -38,6 +43,18 @@ const describeExpected = (expected: string | undefined): string | undefined => {
   const integerRangeMatch = /^integer_between_(\d+)_and_(\d+)$/.exec(expected);
   if (integerRangeMatch !== null) {
     return `${integerRangeMatch[1]} 이상 ${integerRangeMatch[2]} 이하의 정수`;
+  }
+
+  if (expected === "date_YYYYMMDD") {
+    return "YYYYMMDD 형식의 실제 날짜";
+  }
+
+  if (expected === "date_range_start_lte_end") {
+    return "startDate가 endDate보다 늦지 않은 YYYYMMDD 날짜 범위";
+  }
+
+  if (expected === "integer") {
+    return "정수";
   }
 
   if (expected.startsWith("one_of:")) {
@@ -70,9 +87,11 @@ export const getInvalidRequestRecoveryHint = (
     case "sectionId":
       return returnedViewReportIdHint;
     case "maxBytes":
-      return "maxBytes는 허용 범위 안의 정수로 낮게 시작하고, 필요한 경우에만 키우세요.";
+      return `maxBytes는 ${formatViewReportExpectedMaxBytes()}입니다. 낮게 시작하고 필요한 경우에만 키우세요.`;
     case "contentStartByte":
       return contentWindowHint;
+    case "limit":
+      return unsupportedLimitHint;
     case "disclosureTypes":
       return "disclosureTypes에는 DART 공시유형 상세 코드(A001, I001 등)를 배열로 넘기세요.";
     case "industryCode":

@@ -2,17 +2,6 @@
 
 ## Now
 
-- Improve recovery hints in failures.
-  - For unknown company codes or ambiguous company names, suggest `search-company` before company-specific filing searches.
-  - For stale or wrong `documentId`/`sectionId`, suggest rerunning `view-report` for the receipt and using returned IDs.
-  - For invalid date windows, page numbers, limits, and content-window byte offsets, include accepted formats or ranges.
-  - For unsupported raw DART viewer parameters, say to use returned darty IDs instead of `dcmNo`, `eleId`, `offset`, or `length`.
-  - For no-result searches, suggest broader or source-relevant search terms only when evidence-backed.
-  - Keep failure envelopes parseable and concise.
-  - Success criteria:
-    - Common invalid calls lead agents to the next correct call.
-    - Failure messages identify the bad parameter or source URL when known.
-    - No human-readable diagnostics leak outside the structured envelope.
 - Improve cryptic DART-code inputs.
   - Focus fields:
     - `disclosureTypes`.

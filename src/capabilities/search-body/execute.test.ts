@@ -173,6 +173,57 @@ describe("executeSearchBody", () => {
     });
   });
 
+  test("adds an evidence-backed warning for no-result searches", async () => {
+    const result = await executeSearchBody(
+      {
+        keyword: "없는검색어",
+        startDate: "20250101",
+        endDate: "20251231",
+        reportName: "사업보고서",
+      },
+      {
+        search: async () => ({
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: 0,
+            returnedCount: 0,
+          },
+          items: [],
+          metadata: {
+            fetchedAt: "2026-03-31T00:00:00.000Z",
+            source: {
+              system: "dart",
+              surface: "dsab007",
+              endpoint: "https://dart.fss.or.kr/dsab007/search.ax",
+            },
+            sourceBehavior: {
+              effectivePageSize: 10,
+              effectivePagerWidth: 10,
+              callerControlsPageSize: false,
+              callerControlsPagerWidth: false,
+              observationStatus: "observed",
+            },
+            completeness: "complete",
+            droppedItemCount: 0,
+          },
+          references: {
+            searchUrl: "https://dart.fss.or.kr/dsab007/search.ax",
+          },
+          warnings: [],
+        }),
+      },
+    );
+
+    expect(result.warnings).toEqual([
+      {
+        code: "no_results",
+        message:
+          "DART 본문내용 검색 결과가 없습니다. DART는 문서 단위 키워드와 명시 날짜/회사/보고서명 필터를 적용하므로 날짜 범위를 넓히거나 선택 필터를 줄인 뒤 다시 검색하세요.",
+      },
+    ]);
+  });
+
   test("preserves provider-owned partial-result warnings", async () => {
     const request = resolveSearchBodyRequest({
       keyword: "배당",
@@ -229,6 +280,56 @@ describe("executeSearchBody", () => {
         droppedItemCount: 1,
       },
     ]);
+  });
+
+  test("adds recovery hints for bad date windows and unsupported limit", async () => {
+    for (const [input, parameter, expectedHintParts] of [
+      [
+        {
+          keyword: "배당",
+          startDate: "20250331",
+          endDate: "20250101",
+        },
+        "startDate",
+        ["YYYYMMDD", "startDate는 endDate보다 늦을 수 없습니다"],
+      ],
+      [
+        {
+          keyword: "배당",
+          startDate: "20250331",
+          endDate: "20260331",
+          limit: 20,
+        },
+        "limit",
+        [
+          "limit은 지원하지 않습니다",
+          "pageSize는 조절할 수 없습니다",
+          "pageSize(15, 30, 50, 100)",
+        ],
+      ],
+    ] as const) {
+      try {
+        await executeSearchBody(input, {
+          search: async () => {
+            throw new Error("provider should not be called for invalid requests");
+          },
+        });
+        throw new Error("Expected search-body execution to fail.");
+      } catch (error) {
+        expect(error).toBeInstanceOf(SearchBodyFailure);
+
+        if (!(error instanceof SearchBodyFailure)) {
+          throw error;
+        }
+
+        expect(error.code).toBe("invalid_request");
+        expect(error.parameter).toBe(parameter);
+
+        for (const expectedHintPart of expectedHintParts) {
+          expect(error.recoveryHint).toContain(expectedHintPart);
+        }
+      }
+    }
   });
 
   test("maps source failures into capability-owned structured errors", async () => {

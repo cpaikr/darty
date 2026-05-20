@@ -86,6 +86,37 @@ describe("executeSearchCompanyReports", () => {
     expect(result.warnings).toEqual([]);
   });
 
+  test("adds an evidence-backed warning for no-result filing searches", async () => {
+    const result = await executeSearchCompanyReports(
+      {
+        companyCode: "00190321",
+        startDate: "20250101",
+        endDate: "20251231",
+        reportName: "없는보고서명",
+      },
+      {
+        search: async () => ({
+          ...successfulProviderResult,
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: 0,
+            returnedCount: 0,
+          },
+          items: [],
+        }),
+      },
+    );
+
+    expect(result.warnings).toEqual([
+      {
+        code: "no_results",
+        message:
+          "DART 회사별 공시 검색 결과가 없습니다. 날짜 범위를 넓히거나 reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth 필터를 줄여 다시 검색하세요.",
+      },
+    ]);
+  });
+
   test("warns about ambiguous row attribution for multiple disclosure types", async () => {
     const result = await executeSearchCompanyReports(
       {

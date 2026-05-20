@@ -103,6 +103,8 @@ export const searchBodyFailureCopy = {
 export const searchBodyResultCopy = {
   partialRowsDropped: (droppedItemCount: number): string =>
     `검색 결과 행 ${droppedItemCount}개를 파싱하지 못해 생략했습니다.`,
+  noResults:
+    "DART 본문내용 검색 결과가 없습니다. DART는 문서 단위 키워드와 명시 날짜/회사/보고서명 필터를 적용하므로 날짜 범위를 넓히거나 선택 필터를 줄인 뒤 다시 검색하세요.",
 } as const;
 
 export const searchBodySchemaCopy = {

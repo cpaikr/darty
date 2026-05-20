@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 
 import { includesSourceEvidence } from "../response-detail.ts";
+import { searchBodyResultCopy } from "./copy.ts";
 import type {
   SearchBodyItem,
   SearchBodyMetadata,
@@ -57,6 +58,18 @@ const projectSearchBodyItem = (
   return conciseItem;
 };
 
+const getNoResultsWarnings = (
+  providerResult: SearchBodyProviderResult,
+): readonly SearchBodyWarning[] =>
+  providerResult.pagination.totalCount === 0 && providerResult.items.length === 0
+    ? [
+        {
+          code: "no_results",
+          message: searchBodyResultCopy.noResults,
+        },
+      ]
+    : [];
+
 export const buildSearchBodyResult = (
   request: SearchBodyRequest,
   providerResult: SearchBodyProviderResult,
@@ -68,5 +81,5 @@ export const buildSearchBodyResult = (
   },
   metadata: providerResult.metadata,
   references: providerResult.references,
-  warnings: providerResult.warnings,
+  warnings: [...providerResult.warnings, ...getNoResultsWarnings(providerResult)],
 });

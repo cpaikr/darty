@@ -42,6 +42,8 @@ export const searchCompanyFailureCopy = {
 export const searchCompanyResultCopy = {
   partialRowsDropped: (droppedItemCount: number): string =>
     `검색 결과 행 ${droppedItemCount}개를 파싱하지 못해 생략했습니다.`,
+  noResults:
+    "DART 기업개황 회사명 검색 결과가 없습니다. 더 짧은 회사명 일부로 다시 검색하세요. 사업자등록번호/법인등록번호 검색 모드는 이 도구에서 지원하지 않습니다.",
 } as const;
 
 export const searchCompanySchemaCopy = {
