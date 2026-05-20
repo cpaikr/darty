@@ -10,6 +10,19 @@
   "bin": {
     "darty": "dist/cli.js"
   },
+  "exports": {
+    "./toolset": {
+      "types": "./dist/toolset.d.ts",
+      "import": "./dist/toolset.js"
+    },
+    "./pi": {
+      "types": "./dist/pi.d.ts",
+      "import": "./dist/pi.js"
+    }
+  },
+  "pi": {
+    "extensions": ["./dist/pi-extension.js"]
+  },
   "files": [
     "dist",
     "README.md"

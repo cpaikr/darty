@@ -9,9 +9,11 @@ This repo now has two layers:
 
 The CLI is not the real app. The capability layer is: a semantic request
 contract, a provider interface, and an execution path that normalizes errors
-and shapes results. The current active transport is CLI, but the core stays
-transport-neutral so future MCP, Pi-native, SDK, or other adapters can bind to
-the same capabilities without duplicating DART logic.
+and shapes results. The active public surfaces are the CLI, the neutral
+`@sjunepark/darty/toolset` package API, and the progressive
+`@sjunepark/darty/pi` adapter. The core stays transport-neutral so future MCP,
+SDK, web-chat, or other adapters can bind to the same capabilities without
+duplicating DART logic.
 
 The current core has seven public capabilities: `search-body` for DART body
 search, `search-company` for DART company overview company-name search,
@@ -49,7 +51,7 @@ current supported surface.
 - `evals/`
   Agent task evals where a model uses local tools to complete user-like tasks.
 - `src/`
-  Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
+  Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, the neutral toolset, the Pi adapter, and colocated deterministic tests.
 - `test/`
   Opt-in live or broader integration checks that should stay separate from module-local fixture tests.
   Use `test/live/` for live DART coverage and `test/cli/` for subprocess CLI smoke tests.
@@ -127,6 +129,12 @@ argv -> src/cli.ts -> cli/commands/disclosure-types.ts
      -> executeDisclosureTypesCommand()
      -> app/disclosure-types.ts -> capabilities/disclosure-types/execute.ts
      -> static pblntf_detail_ty code table
+
+agent host -> @sjunepark/darty/toolset -> src/toolset.ts
+           -> app/<operation>.ts -> capabilities/<operation>/execute.ts
+
+Pi -> @sjunepark/darty/pi -> src/pi.ts progressive tools
+   -> @sjunepark/darty/toolset
 ```
 
 See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the full runtime pipeline,

@@ -14,9 +14,10 @@ search/detail, DART company RSS, and `dsaf001` report viewing. The
 `disclosure-types` helper is static and has no live DART adapter.
 
 The design goal is to keep the core reusable across transports. The active
-transport is CLI, but future MCP, Pi-native, SDK, or other adapters should bind
-to the same capability contracts and app composition layer instead of copying
-DART-specific logic.
+transports are the CLI, the neutral `src/toolset.ts` package API, and the
+progressive Pi adapter in `src/pi.ts`; future MCP, SDK, or other adapters should
+bind to the same capability contracts and app composition layer instead of
+copying DART-specific logic.
 
 ## Archived MCP Adapter
 
@@ -35,7 +36,9 @@ and shapes results. CLI is the current transport host over that core.
 graph TD
     subgraph Transport["Transport Adapters"]
         CLI["CLI · src/cli/"]
-        FUTURE["Future adapters\nMCP · Pi-native · SDK"]
+        TOOLSET["Neutral toolset · src/toolset.ts"]
+        PI["Pi adapter · src/pi.ts"]
+        FUTURE["Future adapters\nMCP · SDK"]
     end
 
     subgraph App["Shared Composition · src/app/"]
@@ -51,7 +54,9 @@ graph TD
     end
 
     CLI --> APP
-    FUTURE -.-> APP
+    TOOLSET --> APP
+    PI --> TOOLSET
+    FUTURE -.-> TOOLSET
     APP --> CAP
     CAP --> SRC
     SRC --> DART[("dart.fss.or.kr")]
@@ -59,7 +64,7 @@ graph TD
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Transport** | `src/cli.ts`, `src/cli/` | Parse transport input, own transport UX, call the shared operation, and serialize results |
+| **Transport** | `src/cli.ts`, `src/cli/`, `src/toolset.ts`, `src/pi.ts` | Parse or adapt transport input, own transport UX, call the shared operation, and serialize results |
 | **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
 | **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
 | **Source** | `src/sources/dart/` | DART replay/viewer fields, form POST or viewer GETs, HTML parsing, source models, and error mapping |
@@ -128,6 +133,11 @@ graph TD
 - **`src/app/`** — Shared operation wiring. Exposes internal operation names,
   JSON Schemas, capability executors with the default DART providers already
   attached, and the initial namespaced `darty_*` agent tool definitions.
+- **`src/toolset.ts`** — Runtime-neutral package API. Lists canonical operation
+  IDs, exposes operation schemas, executes operations by name, and preserves
+  capability result envelopes and typed failures.
+- **`src/pi.ts`** — Pi progressive adapter over the neutral toolset. Registers
+  discovery/detail/run tools rather than one Pi tool per Darty operation.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
   flow. Defines semantic inputs, success result shapes, typed failures, and
   execution logic.

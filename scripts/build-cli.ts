@@ -1,4 +1,13 @@
-import { chmodSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join } from "node:path";
 
 const defaultOutfile = "dist/cli.js";
 
@@ -16,39 +25,84 @@ const parseOutfile = (argv: readonly string[]): string => {
   return outfile;
 };
 
+const run = (cmd: string[]): void => {
+  const result = Bun.spawnSync({
+    cmd,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+
+  if (result.exitCode !== 0) {
+    process.exit(result.exitCode);
+  }
+};
+
+const writeNodeCliHeader = (outfile: string): void => {
+  const cli = readFileSync(outfile, "utf8");
+  const executableHeader = "#!/usr/bin/env node\n";
+  const bunBundleHeader = "// @bun\n";
+  const withoutSourceShebang = cli.startsWith("#!")
+    ? cli.slice(cli.indexOf("\n") + 1)
+    : cli;
+  const withoutBunHeader = withoutSourceShebang.startsWith(bunBundleHeader)
+    ? withoutSourceShebang.slice(bunBundleHeader.length)
+    : withoutSourceShebang;
+
+  writeFileSync(outfile, `${executableHeader}${withoutBunHeader}`);
+  chmodSync(outfile, 0o755);
+};
+
+const rewriteDeclarationImports = (path: string): void => {
+  const source = readFileSync(path, "utf8");
+  writeFileSync(path, source.replaceAll(/(from\s+["'].+?)\.ts(["'])/g, "$1.js$2"));
+};
+
 const outfile = parseOutfile(Bun.argv.slice(2));
+const outdir = dirname(outfile);
 
-const buildResult = Bun.spawnSync({
-  cmd: [
-    process.execPath,
-    "build",
-    "src/cli.ts",
-    "--target=node",
-    "--outfile",
-    outfile,
-    "--minify",
-    "--sourcemap=none",
-  ],
-  stdout: "inherit",
-  stderr: "inherit",
-});
+mkdirSync(outdir, { recursive: true });
 
-if (buildResult.exitCode !== 0) {
-  process.exit(buildResult.exitCode);
+run([
+  process.execPath,
+  "build",
+  "src/cli.ts",
+  "--target=node",
+  "--outfile",
+  outfile,
+  "--minify",
+  "--sourcemap=none",
+]);
+writeNodeCliHeader(outfile);
+
+run([
+  process.execPath,
+  "build",
+  "src/toolset.ts",
+  "src/pi.ts",
+  "src/pi-extension.ts",
+  "--target=node",
+  "--outdir",
+  outdir,
+  "--format=esm",
+  "--sourcemap=none",
+]);
+
+rmSync("dist-types", { recursive: true, force: true });
+run(["bun", "run", "tsc", "-p", "tsconfig.build.json"]);
+
+for (const file of ["toolset.d.ts", "pi.d.ts", "pi-extension.d.ts"]) {
+  const source = join("dist-types", file);
+
+  if (!existsSync(source)) {
+    throw new Error(`Missing declaration output: ${source}`);
+  }
+
+  const destination = join(outdir, file);
+  cpSync(source, destination);
+  rewriteDeclarationImports(destination);
 }
 
-const cli = readFileSync(outfile, "utf8");
-const executableHeader = "#!/usr/bin/env node\n";
-const bunBundleHeader = "// @bun\n";
-const withoutSourceShebang = cli.startsWith("#!")
-  ? cli.slice(cli.indexOf("\n") + 1)
-  : cli;
-const withoutBunHeader = withoutSourceShebang.startsWith(bunBundleHeader)
-  ? withoutSourceShebang.slice(bunBundleHeader.length)
-  : withoutSourceShebang;
-
-writeFileSync(outfile, `${executableHeader}${withoutBunHeader}`);
-
-chmodSync(outfile, 0o755);
+rmSync("dist-types", { recursive: true, force: true });
 
 console.log(`Built Node-compatible CLI at ${outfile}`);
+console.log(`Built importable ESM adapters in ${outdir}`);
