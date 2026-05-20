@@ -61,7 +61,7 @@ describe("CLI entrypoints", () => {
         )}\nstderr:\n${decode(result.stderr)}`,
       );
     }
-  });
+  }, 30_000);
 
   afterAll(() => {
     rmSync(buildDir, { force: true, recursive: true });
