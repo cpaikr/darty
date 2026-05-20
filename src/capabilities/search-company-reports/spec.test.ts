@@ -123,7 +123,7 @@ describe("search-company-reports capability schemas", () => {
           required: ["code", "message"],
           properties: expect.objectContaining({
             code: expect.objectContaining({
-              enum: ["matched_disclosure_type_unavailable"],
+              enum: ["matched_disclosure_type_ambiguous"],
             }),
           }),
         }),

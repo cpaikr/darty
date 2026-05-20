@@ -163,17 +163,17 @@ const PartialRowsDroppedWarningSchema = Schema.Struct({
   droppedItemCount: nonNegativeInt("파싱하지 못해 제외한 결과 행 수."),
 });
 
-const MatchedDisclosureTypeUnavailableWarningSchema = Schema.Struct({
-  code: annotateSchema(Schema.Literal("matched_disclosure_type_unavailable"), {
+const MatchedDisclosureTypeAmbiguousWarningSchema = Schema.Struct({
+  code: annotateSchema(Schema.Literal("matched_disclosure_type_ambiguous"), {
     description:
-      "여러 공시상세유형 코드로 검색했지만 행별 매칭 코드를 확인할 수 없을 때 반환되는 경고 코드.",
+      "여러 공시상세유형 코드로 검색해 결과 행의 매칭 코드가 모호할 때 반환되는 경고 코드.",
   }),
-  message: describedString("경고 설명."),
+  message: describedString("경고 설명과 필요한 후속 조치."),
 });
 
 export const SearchCompanyReportsWarningSchema = Schema.Union(
   PartialRowsDroppedWarningSchema,
-  MatchedDisclosureTypeUnavailableWarningSchema,
+  MatchedDisclosureTypeAmbiguousWarningSchema,
 );
 export type SearchCompanyReportsWarning =
   typeof SearchCompanyReportsWarningSchema.Type;

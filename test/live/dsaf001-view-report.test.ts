@@ -79,7 +79,7 @@ describe("view-report live DART viewer probes", () => {
       {
         code: "no_toc_returned_document",
         message:
-          "DART did not provide a table of contents for this document, so the selected document content was returned.",
+          "DART did not return a table of contents for this document; selected document content was returned instead. Use content.window to continue paging the document if needed.",
       },
     ]);
   });

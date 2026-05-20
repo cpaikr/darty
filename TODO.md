@@ -2,15 +2,6 @@
 
 ## Now
 
-- Reclassify routine format notes vs real warnings.
-  - Review warning codes across all capability envelopes.
-  - Move routine notes, expected HTML preservation, and normal formatting behavior into `metadata` or result field descriptions.
-  - Reserve `warnings` for partial parsing, source drift risk, ambiguity, truncation, stale identifiers, no-TOC fallbacks, and other action-worthy states.
-  - Ensure warning names and messages accurately describe what happened.
-  - Success criteria:
-    - Warnings represent recoverable or citation-relevant conditions.
-    - Agents do not need to special-case normal output-format notes as warnings.
-    - Warning semantics are consistent across capabilities.
 - Improve recovery hints in failures.
   - For unknown company codes or ambiguous company names, suggest `search-company` before company-specific filing searches.
   - For stale or wrong `documentId`/`sectionId`, suggest rerunning `view-report` for the receipt and using returned IDs.

@@ -137,8 +137,8 @@ export const searchCompanyReportsFailureCopy = {
 export const searchCompanyReportsResultCopy = {
   partialRowsDropped: (droppedItemCount: number): string =>
     `검색 결과 행 ${droppedItemCount}개를 파싱하지 못해 생략했습니다.`,
-  matchedDisclosureTypeUnavailable:
-    "여러 공시유형 코드로 검색했지만 DART 결과 행은 어떤 publicType이 일치했는지 노출하지 않아 matchedDisclosureType을 생략했습니다.",
+  matchedDisclosureTypeAmbiguous:
+    "여러 공시유형 코드로 검색해 DART 결과 행의 matchedDisclosureType이 모호합니다. 행별 공시유형 귀속이 필요하면 disclosureTypes를 하나만 지정해 다시 검색하세요.",
 } as const;
 
 export const searchCompanyReportsSchemaCopy = {

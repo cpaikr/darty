@@ -111,7 +111,9 @@ export const ViewReportContentSchema = Schema.Struct({
   format: annotateSchema(ViewReportOutputFormatSchema, {
     description: "content.body의 렌더링 형식.",
   }),
-  body: describedString("요청한 형식으로 렌더링된 보고서 본문 창."),
+  body: describedString(
+    "요청한 형식으로 렌더링된 보고서 본문 창. Markdown 요청에서도 복잡한 DART 표는 구조 보존을 위해 HTML table 조각으로 남을 수 있으며, 이는 정상 포맷 동작입니다.",
+  ),
 });
 export type ViewReportContent = typeof ViewReportContentSchema.Type;
 

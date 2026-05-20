@@ -34,7 +34,7 @@ export const buildReportContent = async (input: {
   const warning = windowed.window.hasMore
     ? {
         code: "content_truncated" as const,
-        message: `${formatLabel} content window returned UTF-8 bytes [${windowed.window.startByte}, ${windowed.window.endByte}) of ${windowed.sizeBytes}.`,
+        message: `${formatLabel} content is truncated at UTF-8 byte ${windowed.window.endByte} of ${windowed.sizeBytes}; continue with contentStartByte=${windowed.window.nextStartByte} using the same receipt/documentId/sectionId/outputFormat.`,
       }
     : undefined;
   const content: ViewReportContent = {

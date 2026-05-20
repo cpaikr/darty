@@ -80,8 +80,10 @@ export const DisclosureTypesReferencesSchema = Schema.Struct({
 export type DisclosureTypesReferences = typeof DisclosureTypesReferencesSchema.Type;
 
 export const DisclosureTypesWarningSchema = Schema.Struct({
-  code: describedString("경고 코드."),
-  message: describedString("경고 설명."),
+  code: annotateSchema(Schema.Literal("ambiguous_label_match"), {
+    description: "같은 공시상세유형 라벨이 여러 대분류 코드에서 반환될 때의 경고 코드.",
+  }),
+  message: describedString("경고 설명과 필요한 후속 조치."),
 });
 export type DisclosureTypesWarning = typeof DisclosureTypesWarningSchema.Type;
 

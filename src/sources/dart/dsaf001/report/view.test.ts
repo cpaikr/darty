@@ -327,7 +327,7 @@ describe("createDsaf001ViewReportProvider", () => {
       {
         code: "no_toc_returned_document",
         message:
-          "DART did not provide a table of contents for this document, so the selected document content was returned.",
+          "DART did not return a table of contents for this document; selected document content was returned instead. Use content.window to continue paging the document if needed.",
       },
     ]);
   });
@@ -349,7 +349,7 @@ describe("createDsaf001ViewReportProvider", () => {
     expect(result.warnings).toEqual([
       {
         code: "content_truncated",
-        message: `HTML content window returned UTF-8 bytes [0, ${result.content?.returnedBytes}) of ${result.content?.sizeBytes}.`,
+        message: `HTML content is truncated at UTF-8 byte ${result.content?.returnedBytes} of ${result.content?.sizeBytes}; continue with contentStartByte=${result.content?.returnedBytes} using the same receipt/documentId/sectionId/outputFormat.`,
       },
     ]);
   });

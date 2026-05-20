@@ -158,8 +158,8 @@ const getDisclosureTypeWarnings = (
 
   return [
     {
-      code: "matched_disclosure_type_unavailable",
-      message: searchCompanyReportsResultCopy.matchedDisclosureTypeUnavailable,
+      code: "matched_disclosure_type_ambiguous",
+      message: searchCompanyReportsResultCopy.matchedDisclosureTypeAmbiguous,
     },
   ];
 };

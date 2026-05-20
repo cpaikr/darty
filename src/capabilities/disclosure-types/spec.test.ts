@@ -112,8 +112,8 @@ describe("disclosure-types capability schemas", () => {
         },
         warnings: [
           {
-            code: "example_warning",
-            message: "예시 경고",
+            code: "ambiguous_label_match",
+            message: "같은 라벨이 여러 대분류에서 반환되어 category로 좁힐 수 있습니다.",
           },
         ],
       }),
