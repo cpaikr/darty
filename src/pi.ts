@@ -95,44 +95,37 @@ const toTextResult = (text: string, details: unknown): PiToolResult => ({
   details,
 });
 
+const copyKnownErrorFields = (
+  record: Record<string, unknown>,
+): Omit<SerializedError, "name" | "message"> => ({
+  ...(typeof record.code === "string" ? { code: record.code } : {}),
+  ...(typeof record.retryable === "boolean" ? { retryable: record.retryable } : {}),
+  ...(typeof record.parameter === "string" ? { parameter: record.parameter } : {}),
+  ...(typeof record.operationName === "string"
+    ? { operationName: record.operationName }
+    : {}),
+  ...(typeof record.sourceUrl === "string" ? { sourceUrl: record.sourceUrl } : {}),
+  ...(typeof record.recoveryHint === "string"
+    ? { recoveryHint: record.recoveryHint }
+    : {}),
+});
+
 const serializeError = (error: unknown): SerializedError => {
   if (error instanceof DartyToolsetError) {
-    const serialized: SerializedError = {
+    return {
       name: error.name,
-      code: error.code,
       message: error.message,
-      retryable: error.retryable,
+      ...copyKnownErrorFields(error as unknown as Record<string, unknown>),
     };
-
-    if (error.operationName !== undefined) {
-      return { ...serialized, operationName: error.operationName };
-    }
-
-    return serialized;
   }
 
   if (error instanceof Error) {
     const record = error as Error & Record<string, unknown>;
-    const serialized: SerializedError = {
-      name: error.name,
-      message: error.message,
-    };
 
     return {
-      ...serialized,
-      ...(typeof record.code === "string" ? { code: record.code } : {}),
-      ...(typeof record.retryable === "boolean"
-        ? { retryable: record.retryable }
-        : {}),
-      ...(typeof record.parameter === "string"
-        ? { parameter: record.parameter }
-        : {}),
-      ...(typeof record.sourceUrl === "string"
-        ? { sourceUrl: record.sourceUrl }
-        : {}),
-      ...(typeof record.recoveryHint === "string"
-        ? { recoveryHint: record.recoveryHint }
-        : {}),
+      name: error.name,
+      message: error.message,
+      ...copyKnownErrorFields(record),
     };
   }
 

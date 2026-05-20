@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
-import sanitizeHtml = require("sanitize-html");
 import { isTag, type AnyNode } from "domhandler";
+import sanitizeHtml from "sanitize-html";
 
 const disallowedNonTextTags = [
   "script",
@@ -97,7 +97,7 @@ const allowedAttributes = {
   td: ["colspan", "rowspan"],
   th: ["colspan", "rowspan", "scope"],
   ol: ["start"],
-} satisfies sanitizeHtml.IOptions["allowedAttributes"];
+} satisfies import("sanitize-html").IOptions["allowedAttributes"];
 
 const allowedLinkSchemes = ["http", "https", "ftp", "mailto", "tel"];
 const allowedImageSchemes = ["http", "https"];
@@ -139,10 +139,10 @@ const toAbsoluteUrl = (url: string, baseUrl: string | undefined): string => {
 };
 
 const absolutizeAttribute = (
-  attributes: sanitizeHtml.Attributes,
+  attributes: import("sanitize-html").Attributes,
   attributeName: "href" | "src",
   baseUrl: string | undefined,
-): sanitizeHtml.Attributes => {
+): import("sanitize-html").Attributes => {
   const value = attributes[attributeName]?.trim();
 
   if (value === undefined || value.length === 0) {

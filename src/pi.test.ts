@@ -160,4 +160,50 @@ describe("Darty Pi progressive adapter", () => {
       },
     });
   });
+
+  test("preserves structural error fields without relying on class identity", async () => {
+    const run = createDartyPiTools({
+      includeHelpTool: false,
+      toolset: {
+        id: "darty",
+        label: "Darty",
+        description: "Mock Darty",
+        listOperations: () => [],
+        getOperation: () => undefined,
+        execute: async () => {
+          const error = new Error("Mock operation failed") as Error & {
+            code: string;
+            operationName: string;
+            parameter: string;
+            retryable: boolean;
+            sourceUrl: string;
+            recoveryHint: string;
+          };
+          error.code = "mock_failure";
+          error.operationName = "search-body";
+          error.parameter = "keyword";
+          error.retryable = false;
+          error.sourceUrl = "mock://dart/search";
+          error.recoveryHint = "Use a different keyword.";
+          throw error;
+        },
+      },
+    }).find((tool) => tool.name === "darty_run_operation");
+
+    await expect(
+      run!.execute("call-1", { name: "search-body", input: {} }),
+    ).resolves.toMatchObject({
+      details: {
+        ok: false,
+        error: {
+          code: "mock_failure",
+          operationName: "search-body",
+          parameter: "keyword",
+          retryable: false,
+          sourceUrl: "mock://dart/search",
+          recoveryHint: "Use a different keyword.",
+        },
+      },
+    });
+  });
 });

@@ -25,6 +25,14 @@ const result = await darty.execute("disclosure-types", { query: "사업보고서
 
 The neutral toolset is the canonical integration surface. It owns Darty operation names, JSON-schema input/result contracts, execution, result envelopes, references, warnings, metadata, and typed errors. Canonical operation names are not host-specific names: `search-body`, `search-company`, `search-company-reports`, `company-detail`, `company-rss`, `disclosure-types`, and `view-report`.
 
+Package API stability policy:
+
+- Operation names, input JSON schemas, top-level result envelope fields, and warning/error code meanings are reusable package contracts.
+- Removing or renaming an operation, removing an input/result field, or changing a warning/error code meaning is a breaking package API change.
+- Adding operations, optional input fields, result fields, warnings, or metadata is allowed in compatible releases.
+- The current TypeScript API stays discovery-oriented (`execute(name, input)`). Strong operation-specific overloads are deferred until a TypeScript host needs them enough to justify maintaining public input/result type maps.
+- The Pi adapter is intentionally structurally typed and does not import Pi runtime/dev types yet; package smoke tests cover the generated tool shape and cross-subpath behavior without making Pi a required dependency.
+
 ### Pi package/extension
 
 The package also exposes a Pi adapter:

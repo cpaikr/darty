@@ -1,10 +1,10 @@
 import {
   chmodSync,
-  cpSync,
-  existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -52,13 +52,31 @@ const writeNodeCliHeader = (outfile: string): void => {
   chmodSync(outfile, 0o755);
 };
 
-const rewriteDeclarationImports = (path: string): void => {
-  const source = readFileSync(path, "utf8");
-  writeFileSync(path, source.replaceAll(/(from\s+["'].+?)\.ts(["'])/g, "$1.js$2"));
+const rewriteDeclarationImports = (directory: string): void => {
+  for (const entry of readdirSync(directory)) {
+    const path = join(directory, entry);
+    const stats = statSync(path);
+
+    if (stats.isDirectory()) {
+      rewriteDeclarationImports(path);
+      continue;
+    }
+
+    if (!entry.endsWith(".d.ts")) {
+      continue;
+    }
+
+    const source = readFileSync(path, "utf8");
+    writeFileSync(path, source.replaceAll(/(["']\.[^"']+)\.ts(["'])/g, "$1.js$2"));
+  }
 };
 
 const outfile = parseOutfile(Bun.argv.slice(2));
 const outdir = dirname(outfile);
+
+if (outfile === defaultOutfile) {
+  rmSync(outdir, { recursive: true, force: true });
+}
 
 mkdirSync(outdir, { recursive: true });
 
@@ -74,35 +92,8 @@ run([
 ]);
 writeNodeCliHeader(outfile);
 
-run([
-  process.execPath,
-  "build",
-  "src/toolset.ts",
-  "src/pi.ts",
-  "src/pi-extension.ts",
-  "--target=node",
-  "--outdir",
-  outdir,
-  "--format=esm",
-  "--sourcemap=none",
-]);
-
-rmSync("dist-types", { recursive: true, force: true });
-run(["bun", "run", "tsc", "-p", "tsconfig.build.json"]);
-
-for (const file of ["toolset.d.ts", "pi.d.ts", "pi-extension.d.ts"]) {
-  const source = join("dist-types", file);
-
-  if (!existsSync(source)) {
-    throw new Error(`Missing declaration output: ${source}`);
-  }
-
-  const destination = join(outdir, file);
-  cpSync(source, destination);
-  rewriteDeclarationImports(destination);
-}
-
-rmSync("dist-types", { recursive: true, force: true });
+run(["bun", "run", "tsc", "-p", "tsconfig.build.json", "--outDir", outdir]);
+rewriteDeclarationImports(outdir);
 
 console.log(`Built Node-compatible CLI at ${outfile}`);
-console.log(`Built importable ESM adapters in ${outdir}`);
+console.log(`Built shared ESM library modules in ${outdir}`);
