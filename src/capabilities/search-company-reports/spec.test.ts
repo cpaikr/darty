@@ -44,6 +44,13 @@ describe("search-company-reports capability schemas", () => {
       default: [],
     });
     expect(jsonSchema.properties.disclosureTypes?.description).toContain("A001");
+    expect(jsonSchema.properties.disclosureTypes?.description).toContain("A002");
+    expect(jsonSchema.properties.disclosureTypes?.description).toContain(
+      "darty_list_disclosure_types",
+    );
+    expect(jsonSchema.properties.disclosureTypes?.description).toContain(
+      "darty disclosure-types --query",
+    );
     expect(jsonSchema.properties.disclosureTypes?.description).toContain("reportName");
     expect(jsonSchema.properties.disclosureTypes?.items).toMatchObject({
       pattern: "^[A-J]\\d{3}$",

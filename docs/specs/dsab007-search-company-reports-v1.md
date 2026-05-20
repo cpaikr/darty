@@ -119,7 +119,7 @@ Inputs:
 | `sortDirection` | no | `asc`, `desc` | default `desc`; sort field is fixed internally to receipt date |
 | `presenterName` | no | non-empty text when supplied | DART `제출인명` filter |
 | `reportName` | no | non-empty text when supplied | DART `보고서명` filter |
-| `disclosureTypes` | no | array of DART detailed public type codes like `A001` | repeated `publicType`; exposed in the CLI by repeating `--disclosure-type` |
+| `disclosureTypes` | no | array of known DART detailed public type codes like `A001` | repeated `publicType`; validates against the implemented detailed-code table; exposed in the CLI by repeating `--disclosure-type` |
 | `industryCode` | no | `all`, `ROOTdddd`, or 2-5 digit DART industry code | default `all`; exposed as `--industry-code` |
 | `corporationType` | no | `all`, `P`, `A`, `N`, or `E` | default `all`; maps to 법인유형 |
 | `closingAccountsMonth` | no | `all` or `01` through `12` | default `all`; maps to 결산월; CLI accepts `1` through `9` and normalizes output request values to zero-padded canonical values |
@@ -164,9 +164,9 @@ Failures:
 | `source_parse_failure` | no | response HTML or decoded source model could not be parsed |
 | `internal_error` | no | unexpected provider or implementation failure |
 
-Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date, page, page-size, and DART code filters.
+Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date, page, page-size, and DART code filters. Shape-valid but unknown `disclosureTypes` values such as `A999` are invalid requests; callers should recover by using the agent-native `darty_list_disclosure_types` helper or `darty disclosure-types --query <검색어>` in the CLI.
 
-For caller-facing DART filter code examples and labels, see [`dart-filter-codes.md`](dart-filter-codes.md). For detailed disclosure-type discovery, use `darty disclosure-types` or the agent-native `darty_list_disclosure_types` helper.
+For caller-facing DART filter code examples and labels, see [`dart-filter-codes.md`](dart-filter-codes.md). For detailed disclosure-type discovery, use `darty disclosure-types --query <검색어>` or the agent-native `darty_list_disclosure_types` helper.
 
 ## 6. Source Replay Notes
 

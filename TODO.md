@@ -2,21 +2,6 @@
 
 ## Now
 
-- Improve cryptic DART-code inputs.
-  - Focus fields:
-    - `disclosureTypes`.
-    - `industryCode`.
-    - `corporationType`.
-    - `closingAccountsMonth`.
-    - `reportName`.
-  - Add richer schema descriptions with common examples.
-  - Add docs listing common DART codes and when to use them.
-  - Consider a lookup/list capability if code discovery becomes common.
-  - Consider semantic aliases only when there is a stable, evidence-backed mapping.
-  - Success criteria:
-    - Agents can choose common filters without guessing raw DART codes.
-    - Invalid-code errors provide actionable correction hints.
-    - Source-shaped fields remain explicit where exact DART behavior matters.
 - Review descriptions and schemas after eval failures.
   - Use eval transcripts to refine descriptions and schemas.
   - Look for wrong tool selection.

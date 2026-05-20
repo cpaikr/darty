@@ -93,7 +93,7 @@ export const getInvalidRequestRecoveryHint = (
     case "limit":
       return unsupportedLimitHint;
     case "disclosureTypes":
-      return "disclosureTypes에는 DART 공시유형 상세 코드(A001, I001 등)를 배열로 넘기세요.";
+      return "disclosureTypes에는 알려진 DART 공시유형 상세 코드(A001=사업보고서, A002=반기보고서, A003=분기보고서, I001=수시공시 등)를 배열로 넘기세요. 코드를 모르면 agent에서는 darty_list_disclosure_types, CLI에서는 darty disclosure-types --query <검색어>로 조회하고, 보고서 제목 텍스트는 reportName에 넣으세요.";
     case "industryCode":
       return 'industryCode에는 "all", DART 업종 코드(예: 612=전기 통신업), 또는 ROOTdddd 형식의 DART 업종 tree root를 넘기세요. 업종을 모르면 "all"을 사용하세요.';
     case "corporationType":

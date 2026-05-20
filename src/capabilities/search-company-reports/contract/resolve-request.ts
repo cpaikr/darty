@@ -7,6 +7,7 @@ import {
   getFirstParameterIssues,
   normalizeTextFilterFields,
 } from "../../request-validation.ts";
+import { disclosureTypeItems } from "../../disclosure-types/data.ts";
 import { searchCompanyReportsValidationCopy } from "../copy.ts";
 import { InvalidSearchCompanyReportsRequest } from "./errors.ts";
 import {
@@ -21,8 +22,37 @@ const allowedKeys = new Set<string>(Object.keys(searchCompanyReportsFieldSpecs))
 const orderedInputKeys = Object.keys(
   searchCompanyReportsFieldSpecs,
 ) as readonly SearchCompanyReportsInputKey[];
+const knownDisclosureTypeCodes: ReadonlySet<string> = new Set(
+  disclosureTypeItems.map((item) => item.code),
+);
+
+const assertKnownDisclosureTypes = (
+  disclosureTypes: readonly string[],
+): void => {
+  const unknownCodes = [
+    ...new Set(
+      disclosureTypes.filter((code) => !knownDisclosureTypeCodes.has(code)),
+    ),
+  ];
+
+  if (unknownCodes.length > 0) {
+    throw new InvalidSearchCompanyReportsRequest({
+      code: "invalid_parameter",
+      parameter: "disclosureTypes",
+      reason: "unknown_code",
+      expected: "known_disclosure_type_code",
+      actual: unknownCodes,
+      message: searchCompanyReportsValidationCopy.mustUseKnownDisclosureTypeCodes(
+        "disclosureTypes",
+        unknownCodes,
+      ),
+    });
+  }
+};
 
 const validateResolvedRequest = (request: SearchCompanyReportsRequest): void => {
+  assertKnownDisclosureTypes(request.disclosureTypes);
+
   assertYYYYMMDDDateRange(request, {
     makeInvalidStartDateError: (value) =>
       new InvalidSearchCompanyReportsRequest({

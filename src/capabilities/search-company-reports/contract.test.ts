@@ -157,6 +157,31 @@ describe("resolveSearchCompanyReportsRequest", () => {
       expect(error.message).toContain("A001");
       expect(error.message).toContain("reportName");
     }
+
+    try {
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        disclosureTypes: ["A999"],
+      } as Record<string, unknown>);
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidSearchCompanyReportsRequest);
+
+      if (!(error instanceof InvalidSearchCompanyReportsRequest)) {
+        throw error;
+      }
+
+      expect(error.parameter).toBe("disclosureTypes");
+      expect(error.reason).toBe("unknown_code");
+      expect(error.expected).toBe("known_disclosure_type_code");
+      expect(error.actual).toEqual(["A999"]);
+      expect(error.message).toContain("알려지지 않은");
+      expect(error.message).toContain("darty_list_disclosure_types");
+      expect(error.message).toContain("darty disclosure-types --query");
+      expect(error.message).toContain("reportName");
+    }
   });
 
   test("gives actionable hints for invalid DART code filters", () => {

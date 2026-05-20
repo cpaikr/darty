@@ -41,15 +41,15 @@ export const searchCompanyReportsFieldCopy = {
   },
   disclosureTypes: {
     description:
-      "DART 공시유형 상세 코드 목록입니다. 관찰된 예: A001(사업보고서), I001(수시공시). `사업보고서` 같은 보고서명 텍스트는 reportName에 넣고, 이 필드에는 DART 코드만 넣습니다.",
+      "DART 공시유형 상세 코드 목록입니다. 알려진 상세 코드만 사용할 수 있습니다. 흔한 예: A001(사업보고서), A002(반기보고서), A003(분기보고서), F001(감사보고서), I001(수시공시). `사업보고서` 같은 보고서명 텍스트는 reportName에 넣고, 이 필드에는 DART 코드만 넣습니다. 코드를 모르면 agent에서는 darty_list_disclosure_types, CLI에서는 `darty disclosure-types --query <검색어>`로 조회하세요.",
     cliDescription:
-      "공시유형 상세 코드를 추가합니다. 여러 번 지정할 수 있습니다. 예: A001(사업보고서), I001(수시공시).",
+      "공시유형 상세 코드를 추가합니다. 여러 번 지정할 수 있습니다. 예: A001(사업보고서), A002(반기보고서), A003(분기보고서), I001(수시공시).",
   },
   industryCode: {
     description:
-      "[기본값: all] DART 업종 코드입니다. `all`이면 업종 필터를 적용하지 않습니다. 관찰된 예: 612(전기 통신업). DART 업종 tree root 값은 ROOTdddd 형식입니다.",
+      "[기본값: all] DART 업종 코드입니다. `all`이면 업종 필터를 적용하지 않습니다. 관찰된 예: 612(전기 통신업). DART 업종 tree root 값은 ROOTdddd 형식입니다. 업종 코드를 모르면 추측하지 말고 all을 사용하세요.",
     cliDescription:
-      "DART 업종 코드로 검색 결과를 좁힙니다. 기본값은 all입니다. 예: 612(전기 통신업).",
+      "DART 업종 코드로 검색 결과를 좁힙니다. 기본값은 all입니다. 예: 612(전기 통신업). 모르면 all을 사용하세요.",
   },
   corporationType: {
     description:
@@ -120,7 +120,7 @@ export const searchCompanyReportsCliCopy = {
   notes: [
     "회사명을 알고 회사 코드를 모르면 먼저 `darty search-company --company-name <회사명>`으로 8자리 companyCode를 확인하세요.",
     "기본값은 DART의 최종보고서 필터를 적용합니다. `--include-all-reports`를 지정하면 정정 전 보고서까지 포함할 수 있어 총 건수가 늘어날 수 있습니다.",
-    "공시유형은 DART 상세 코드(A001, I001 등)를 사용합니다. 코드를 모르면 `darty disclosure-types --query <검색어>`로 조회하고, 여러 코드는 `--disclosure-type`을 반복해서 전달하세요.",
+    "공시유형은 DART 상세 코드(A001=사업보고서, A002=반기보고서, A003=분기보고서, I001=수시공시 등)를 사용합니다. 코드를 모르면 `darty disclosure-types --query <검색어>`로 조회하고, 여러 코드는 `--disclosure-type`을 반복해서 전달하세요.",
     "결산월은 DART 월 코드(01~12)로 전달됩니다. CLI에서는 `--closing-accounts-month 1`처럼 입력해도 `01`로 정규화됩니다.",
     "결과의 filing.receiptNumber 또는 references.viewerUrl은 `view-report`로 이어서 조회할 수 있습니다.",
     "DART 행 원문 같은 원문 검증 정보(evidence)가 필요하면 `--detail detailed` 또는 `--detail raw`와 함께 `--verbose`를 사용하세요. raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
@@ -214,7 +214,12 @@ export const searchCompanyReportsValidationCopy = {
   mustUseKnownPattern: (parameter: string, expected: string): string =>
     `매개변수 "${parameter}"은(는) ${expected} 형식이어야 합니다.`,
   mustUseDisclosureTypeCodes: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) DART 공시유형 상세 코드 배열이어야 합니다. 예: ["A001"](사업보고서), ["I001"](수시공시). "사업보고서" 같은 보고서명 텍스트로 좁히려면 reportName을 사용하세요.`,
+    `매개변수 "${parameter}"은(는) DART 공시유형 상세 코드 배열이어야 합니다. 예: ["A001"](사업보고서), ["A002"](반기보고서), ["A003"](분기보고서), ["I001"](수시공시). "사업보고서" 같은 보고서명 텍스트로 좁히려면 reportName을 사용하세요.`,
+  mustUseKnownDisclosureTypeCodes: (
+    parameter: string,
+    unknownCodes: readonly string[],
+  ): string =>
+    `매개변수 "${parameter}"에 알려지지 않은 DART 공시유형 상세 코드가 있습니다: ${unknownCodes.join(", ")}. 흔한 코드는 A001=사업보고서, A002=반기보고서, A003=분기보고서, F001=감사보고서, I001=수시공시입니다. 코드를 모르면 agent에서는 darty_list_disclosure_types, CLI에서는 darty disclosure-types --query로 조회하고, 보고서 제목 텍스트는 reportName을 사용하세요.`,
   mustUseIndustryCode: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) "all", DART 업종 코드(예: 612=전기 통신업), 또는 ROOTdddd 형식의 DART 업종 tree root여야 합니다. 업종을 모르면 "all"을 사용하세요.`,
   mustUseCorporationType: (parameter: string): string =>

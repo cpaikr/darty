@@ -166,6 +166,16 @@ describe("executeSearchCompanyReports", () => {
   test("adds recovery hints for invalid DART code filters", async () => {
     const cases = [
       {
+        input: { disclosureTypes: ["A999"] },
+        parameter: "disclosureTypes",
+        expectedHintParts: [
+          "A001=사업보고서",
+          "darty_list_disclosure_types",
+          "darty disclosure-types --query <검색어>",
+          "reportName",
+        ],
+      },
+      {
         input: { industryCode: "전기 통신업" },
         parameter: "industryCode",
         expectedHintParts: ["612=전기 통신업", '"all"'],
