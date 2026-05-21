@@ -4,10 +4,12 @@ import {
   dartyOperationNames,
   serializeDartyError,
   type DartyCommandHelp,
+  type DartyOperationName,
   type DartySerializedError,
   type DartyToolset,
   type DartyToolsetHelp,
   type DartyValidationFailure,
+  type DartyValidationRecoveryAction,
   type DartyValidationResult,
 } from "./toolset.ts";
 
@@ -138,6 +140,10 @@ const toTextResult = (text: string, details: DartyPiActionResult): PiToolResult 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const isDartyOperationName = (value: unknown): value is DartyOperationName =>
+  typeof value === "string" &&
+  dartyOperationNames.includes(value as DartyOperationName);
+
 const isDartyPiAction = (value: unknown): value is DartyPiToolAction =>
   typeof value === "string" && dartyPiActions.includes(value as DartyPiToolAction);
 
@@ -155,6 +161,7 @@ const createAdapterValidationFailure = (input: {
   actual?: unknown;
   command?: string;
   recoveryHint?: string;
+  recoveryAction?: DartyValidationRecoveryAction;
 }): DartyValidationFailure => ({
   code: input.code,
   message: input.message,
@@ -164,7 +171,29 @@ const createAdapterValidationFailure = (input: {
   ...(input.expected === undefined ? {} : { expected: input.expected }),
   ...("actual" in input ? { actual: input.actual } : {}),
   ...(input.recoveryHint === undefined ? {} : { recoveryHint: input.recoveryHint }),
+  retryable: true,
+  ...(input.recoveryAction === undefined
+    ? {}
+    : { recoveryAction: input.recoveryAction }),
 });
+
+const inspectToolHelpRecoveryAction = {
+  kind: "inspect_tool_help",
+} as const satisfies DartyValidationRecoveryAction;
+
+const inspectCommandHelpRecoveryAction = (
+  operationName: DartyOperationName,
+): DartyValidationRecoveryAction => ({
+  kind: "inspect_command_help",
+  operationName,
+});
+
+const recoveryActionForCommandInput = (
+  command: string,
+): DartyValidationRecoveryAction =>
+  isDartyOperationName(command)
+    ? inspectCommandHelpRecoveryAction(command)
+    : inspectToolHelpRecoveryAction;
 
 const adapterFailureResult = (
   action: DartyPiToolAction | "adapter_validation",
@@ -196,6 +225,7 @@ const requireCommand = (
       expected: dartyOperationNames.join(","),
       actual: command,
       recoveryHint: "Call darty with action=help to see canonical command names.",
+      recoveryAction: inspectToolHelpRecoveryAction,
     }),
   );
 };
@@ -220,6 +250,7 @@ const requireInputJson = (
       actual: inputJson,
       command,
       recoveryHint: "Call darty with action=command_help for the command's input schema and examples.",
+      recoveryAction: recoveryActionForCommandInput(command),
     }),
     command,
   );
@@ -452,6 +483,7 @@ export const createDartyPiTool = (
             expected: dartyPiActions.join(","),
             actual: isRecord(params) ? params.action : params,
             recoveryHint: "Call darty with action=help for the command menu.",
+            recoveryAction: inspectToolHelpRecoveryAction,
           }),
         );
       }

@@ -89,6 +89,11 @@ describe("Darty neutral toolset", () => {
         expected: "string_min_length_2",
         message: expect.stringContaining("companyName"),
         exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+        retryable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-company",
+        },
       },
     });
 
@@ -101,6 +106,11 @@ describe("Darty neutral toolset", () => {
         reason: "invalid_type",
         actual: null,
         exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+        retryable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-company",
+        },
       },
     });
 
@@ -127,6 +137,33 @@ describe("Darty neutral toolset", () => {
         code: "invalid_parameter",
         parameter: "companyCode",
         recoveryHint: expect.stringContaining("search-company"),
+        retryable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-company-reports",
+        },
+      },
+    });
+
+    expect(
+      toolset.validateInput("search-body", {
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        sortBy: "companyName",
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        operationName: "search-body",
+        parameter: "sortBy",
+        reason: "invalid_choice",
+        retryable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-body",
+        },
       },
     });
   });
@@ -166,6 +203,8 @@ describe("Darty neutral toolset", () => {
         parameter: "name",
         reason: "unknown_operation",
         operationName: "not-a-command",
+        retryable: true,
+        recoveryAction: { kind: "inspect_tool_help" },
       },
     });
   });
@@ -216,6 +255,11 @@ describe("Darty neutral toolset", () => {
         reason: "invalid_type",
         expected: "object",
         actual: null,
+        retryable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "disclosure-types",
+        },
       },
     });
 

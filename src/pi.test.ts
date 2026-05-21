@@ -167,6 +167,8 @@ describe("Darty Pi single-tool adapter", () => {
           reason: "unknown_operation",
           operationName: "search-company",
           recoveryHint: expect.stringContaining("canonical"),
+          retryable: true,
+          recoveryAction: { kind: "inspect_tool_help" },
         },
       },
     });
