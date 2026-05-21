@@ -89,43 +89,43 @@ current supported surface.
 The dominant current flows are:
 
 ```
-argv -> src/cli.ts -> cli/commands/search-body.ts
+argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/search-body.ts
      -> executeSearchBodyCommand()
      -> app/search-body.ts -> capabilities/search-body/execute.ts
      -> sources/dart/dsab007/contents/search.ts
      -> /dsab007/search.ax
 
-argv -> src/cli.ts -> cli/commands/search-company.ts
+argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/search-company.ts
      -> executeSearchCompanyCommand()
      -> app/search-company.ts -> capabilities/search-company/execute.ts
      -> sources/dart/dsae001/company/search.ts
      -> /dsae001/search.ax
 
-argv -> src/cli.ts -> cli/commands/search-company-reports.ts
+argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/search-company-reports.ts
      -> executeSearchCompanyReportsCommand()
      -> app/search-company-reports.ts -> capabilities/search-company-reports/execute.ts
      -> sources/dart/dsab007/company-reports/search.ts
      -> /dsab007/detailSearch.ax
 
-argv -> src/cli.ts -> cli/commands/company-detail.ts
+argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/company-detail.ts
      -> executeCompanyDetailCommand()
      -> app/company-detail.ts -> capabilities/company-detail/execute.ts
      -> sources/dart/dsae001/detail/detail.ts
      -> /dsae001/select.ax
 
-argv -> src/cli.ts -> cli/commands/company-rss.ts
+argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/company-rss.ts
      -> executeCompanyRssCommand()
      -> app/company-rss.ts -> capabilities/company-rss/execute.ts
      -> sources/dart/api/company-rss/rss.ts
      -> /api/companyRSS.xml
 
-argv -> src/cli.ts -> cli/commands/view-report.ts
+argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/view-report.ts
      -> executeViewReportCommand()
      -> app/view-report.ts -> capabilities/view-report/execute.ts
      -> sources/dart/dsaf001/report/
      -> /dsaf001/main.do -> /report/viewer.do
 
-argv -> src/cli.ts -> cli/commands/disclosure-types.ts
+argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/disclosure-types.ts
      -> executeDisclosureTypesCommand()
      -> app/disclosure-types.ts -> capabilities/disclosure-types/execute.ts
      -> static pblntf_detail_ty code table

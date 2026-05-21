@@ -64,7 +64,7 @@ graph TD
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Transport** | `src/cli.ts`, `src/cli/`, `src/toolset.ts`, `src/pi.ts` | Parse or adapt transport input, own transport UX, call the shared operation, and serialize results |
+| **Transport** | `src/cli.ts`, `src/cli/program.ts`, `src/cli/`, `src/toolset.ts`, `src/pi.ts` | Parse or adapt transport input, own transport UX, call the shared operation, and serialize results |
 | **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
 | **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
 | **Source** | `src/sources/dart/` | DART replay/viewer fields, form POST or viewer GETs, HTML parsing, source models, and error mapping |
@@ -80,13 +80,14 @@ the same transport/app/capability shape through their matching `app/`,
 
 ```mermaid
 graph TD
-    CLI_TS["src/cli.ts"] --> CMD["src/cli/commands/search-body.ts"]
+    CLI_TS["src/cli.ts\nexecutable entrypoint"] --> CLI_PROGRAM["src/cli/program.ts\nCommander program + runtime"]
+    CLI_PROGRAM --> CMD["src/cli/commands/search-body.ts"]
     CMD --> RUN["executeSearchBodyCommand()"]
-    CLI_TS --> APP["src/app/search-body.ts"]
+    RUN --> APP["src/app/search-body.ts"]
     APP --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
     APP --> EXEC["execute.ts\nvia shared operation"]
-    RUN --> EXEC
-    EXEC --> PROV["provider.ts"]
+    APP -. default provider .-> PROV["provider.ts"]
+    EXEC --> PROV
     PROV --> SEARCH["search.ts"]
     SEARCH --> FETCH["fetch.ts"]
     FETCH --> FORM["build-form.ts"]
@@ -100,9 +101,11 @@ graph TD
 
     FETCH -->|POST| DART[("/dsab007/search.ax")]
 
-    subgraph cli ["src/cli/"]
+    subgraph cli ["CLI transport"]
         CLI_TS
+        CLI_PROGRAM
         CMD
+        RUN
     end
     subgraph app ["src/app/"]
         APP
@@ -112,7 +115,6 @@ graph TD
         SPEC
         EXEC
         PROV
-        RUN
     end
     subgraph source ["src/sources/dart/dsab007/contents/"]
         SEARCH
@@ -124,7 +126,10 @@ graph TD
     end
 ```
 
-- **`src/cli.ts`** — Root Commander program. Registers commands and turns
+- **`src/cli.ts`** — Executable CLI entry point. Imports `runDartyCli()` and
+  starts the CLI without owning command registration.
+- **`src/cli/program.ts`** — Reusable Root Commander program and runtime.
+  Registers commands, exposes `createDartyCliProgram()` for tests, and turns
   failures into the CLI v1 JSON failure envelope plus a process exit code.
 - **`src/cli/commands/`** — CLI transport adapters. Own Commander flags, help
   text, examples, and stdout formatting while delegating semantic validation and
@@ -214,6 +219,8 @@ truncation, and TOC navigation respectively.
 graph TD
     CLI_INPUT["CLI flags"]
     FUTURE_INPUT["Future adapter input"]
+    CLI_ENTRY["src/cli.ts\nexecutable entrypoint"]
+    CLI_PROGRAM["src/cli/program.ts\nCommander runtime"]
     CLI_CMD["executeSearchBodyCommand()\nCLI-only stdout handling"]
     APP["src/app/search-body.ts\nshared operation"]
     RESOLVE["resolveSearchBodyRequest()"]
@@ -231,7 +238,9 @@ graph TD
     CLI_OUTPUT["JSON to stdout"]
     FUTURE_OUTPUT["Future adapter output"]
 
-    CLI_INPUT --> CLI_CMD
+    CLI_INPUT --> CLI_ENTRY
+    CLI_ENTRY --> CLI_PROGRAM
+    CLI_PROGRAM --> CLI_CMD
     CLI_CMD --> APP
     FUTURE_INPUT -.-> APP
     APP --> RESOLVE
@@ -317,7 +326,8 @@ tool contracts.
 ```mermaid
 graph TD
     subgraph CLI["CLI Transport"]
-        CLI_CMD["Commander\nargv parsing"]
+        CLI_PROGRAM["src/cli/program.ts\nCommander runtime"]
+        CLI_COMMAND["src/cli/commands/*\nCLI UX"]
     end
 
     subgraph Future["Future Transport"]
@@ -330,11 +340,12 @@ graph TD
     COMPOSE["src/app/search-body.ts\nshared provider wiring"]
     EXEC["executeSearchBody()"]
 
-    OP_ID --> CLI_CMD
+    OP_ID --> CLI_PROGRAM
+    CLI_PROGRAM --> CLI_COMMAND
+    CLI_COMMAND --> COMPOSE
     OP_ID -.-> ADAPTER
     INPUT_SCHEMA -.-> ADAPTER
     RESULT_SCHEMA -.-> ADAPTER
-    CLI_CMD --> COMPOSE
     ADAPTER -.-> COMPOSE
     COMPOSE --> EXEC
 ```
@@ -352,7 +363,8 @@ host keeps explicit control over adapter wiring.
 
 ## Start Here
 
-- `src/cli.ts` — top-level transport entry point
+- `src/cli.ts` — executable CLI entry point
+- `src/cli/program.ts` — reusable Commander program, command registration, and CLI runtime
 - `src/app/*` — shared transport composition seams
 - `src/cli/commands/*` — explicit CLI surfaces over shared operations
 - `src/cli/command-helpers.ts` — small Commander transport helpers shared by
