@@ -8,7 +8,6 @@ import { disclosureTypeCategoryValues } from "../data.ts";
 import { InvalidDisclosureTypesRequest } from "./errors.ts";
 import {
   disclosureTypesFieldSpecs,
-  type DisclosureTypesRawInput,
   type DisclosureTypesRequest,
 } from "./request.ts";
 
@@ -16,7 +15,7 @@ const allowedKeys = new Set<string>(Object.keys(disclosureTypesFieldSpecs));
 const categorySet = new Set<string>(disclosureTypeCategoryValues);
 
 export const resolveDisclosureTypesRequest = (
-  input: Partial<DisclosureTypesRawInput> & Record<string, unknown>,
+  input: unknown,
 ): DisclosureTypesRequest => {
   assertObjectInput(
     input,

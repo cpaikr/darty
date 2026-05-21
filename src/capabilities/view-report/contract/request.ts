@@ -4,6 +4,7 @@ import {
   defaultedField,
   describedNonEmptyString,
 } from "../../schema-annotations.ts";
+import { assertObjectInput } from "../../request-validation.ts";
 import {
   responseDetailFieldSpec,
   type ResponseDetail,
@@ -143,9 +144,20 @@ const collectIssuePath = (
   return [];
 };
 
-export const resolveViewReportRequest = (
-  input: Partial<ViewReportRawInput> & Record<string, unknown>,
-): ViewReportRequest => {
+export const resolveViewReportRequest = (input: unknown): ViewReportRequest => {
+  assertObjectInput(
+    input,
+    (actual) =>
+      new InvalidViewReportRequest({
+        code: "invalid_parameter",
+        parameter: "input",
+        reason: "invalid_type",
+        expected: viewReportValidationCopy.inputExpected,
+        actual,
+        message: viewReportValidationCopy.inputMustBeObject,
+      }),
+  );
+
   const allowedKeys = new Set<string>(viewReportInputKeys);
   const unknownKey = Object.keys(input).find((key) => !allowedKeys.has(key));
 

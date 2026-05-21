@@ -93,6 +93,8 @@ export const viewReportValidationCopy = {
     `필수 매개변수 "${parameter}"이(가) 없습니다. 필요한 값: ${expected}.`,
   invalidParameter: (parameter: string, expected: string) =>
     `매개변수 "${parameter}"이(가) 올바르지 않습니다. 필요한 값: ${expected}.`,
+  inputExpected: "view_report_parameters_object",
+  inputMustBeObject: "view-report 입력은 매개변수를 담은 객체여야 합니다.",
   expectedReceipt:
     "14자리 DART 접수번호 또는 rcpNo를 포함한 /dsaf001/main.do viewer URL",
   expectedDocumentId: "이전 view-report 응답의 documents[].id",

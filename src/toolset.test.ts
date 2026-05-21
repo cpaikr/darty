@@ -92,6 +92,29 @@ describe("Darty neutral toolset", () => {
       },
     });
 
+    expect(toolset.validateInput("search-company", null)).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        operationName: "search-company",
+        parameter: "input",
+        reason: "invalid_type",
+        actual: null,
+        exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+      },
+    });
+
+    expect(toolset.validateInput("view-report", null)).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        operationName: "view-report",
+        parameter: "input",
+        reason: "invalid_type",
+        actual: null,
+      },
+    });
+
     expect(
       toolset.validateInput("search-company-reports", {
         companyCode: "삼성전자",
@@ -182,6 +205,23 @@ describe("Darty neutral toolset", () => {
           },
         },
       ],
+    });
+
+    expect(toolset.validateInput("disclosure-types", null)).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        operationName: "disclosure-types",
+        parameter: "input",
+        reason: "invalid_type",
+        expected: "object",
+        actual: null,
+      },
+    });
+
+    expect(toolset.validateInput("disclosure-types", { category: "A" })).toEqual({
+      ok: true,
+      input: { category: "A" },
     });
 
     await expect(toolset.execute("disclosure-types", { category: "A" })).resolves.toMatchObject({

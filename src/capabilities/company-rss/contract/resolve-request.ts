@@ -1,9 +1,9 @@
+import { assertObjectInput } from "../../request-validation.ts";
 import { responseDetailValues, type ResponseDetail } from "../../response-detail.ts";
 import { companyRssValidationCopy } from "../copy.ts";
 import { InvalidCompanyRssRequest } from "./errors.ts";
 import {
   companyRssFieldSpecs,
-  type CompanyRssRawInput,
   type CompanyRssRequest,
 } from "./request.ts";
 
@@ -11,18 +11,20 @@ const allowedKeys = new Set<string>(Object.keys(companyRssFieldSpecs));
 const companyCodePattern = /^\d{8}$/;
 
 export const resolveCompanyRssRequest = (
-  input: Partial<CompanyRssRawInput> & Record<string, unknown>,
+  input: unknown,
 ): CompanyRssRequest => {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    throw new InvalidCompanyRssRequest({
-      code: "invalid_parameter",
-      parameter: "input",
-      reason: "invalid_type",
-      expected: companyRssValidationCopy.inputExpected,
-      actual: input,
-      message: companyRssValidationCopy.inputMustBeObject,
-    });
-  }
+  assertObjectInput(
+    input,
+    (actual) =>
+      new InvalidCompanyRssRequest({
+        code: "invalid_parameter",
+        parameter: "input",
+        reason: "invalid_type",
+        expected: companyRssValidationCopy.inputExpected,
+        actual,
+        message: companyRssValidationCopy.inputMustBeObject,
+      }),
+  );
 
   for (const key of Object.keys(input)) {
     if (!allowedKeys.has(key)) {

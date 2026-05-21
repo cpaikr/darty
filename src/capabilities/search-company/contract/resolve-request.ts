@@ -1,8 +1,8 @@
+import { assertObjectInput } from "../../request-validation.ts";
 import { searchCompanyValidationCopy } from "../copy.ts";
 import { InvalidSearchCompanyRequest } from "./errors.ts";
 import {
   searchCompanyFieldSpecs,
-  type SearchCompanyRawInput,
   type SearchCompanyRequest,
 } from "./request.ts";
 
@@ -46,18 +46,20 @@ const validateIntegerField = (
 };
 
 export const resolveSearchCompanyRequest = (
-  input: Partial<SearchCompanyRawInput> & Record<string, unknown>,
+  input: unknown,
 ): SearchCompanyRequest => {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    throw new InvalidSearchCompanyRequest({
-      code: "invalid_parameter",
-      parameter: "input",
-      reason: "invalid_type",
-      expected: searchCompanyValidationCopy.inputExpected,
-      actual: input,
-      message: searchCompanyValidationCopy.inputMustBeObject,
-    });
-  }
+  assertObjectInput(
+    input,
+    (actual) =>
+      new InvalidSearchCompanyRequest({
+        code: "invalid_parameter",
+        parameter: "input",
+        reason: "invalid_type",
+        expected: searchCompanyValidationCopy.inputExpected,
+        actual,
+        message: searchCompanyValidationCopy.inputMustBeObject,
+      }),
+  );
 
   for (const key of Object.keys(input)) {
     if (!allowedKeys.has(key)) {

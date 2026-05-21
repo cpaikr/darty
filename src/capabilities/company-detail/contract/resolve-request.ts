@@ -1,8 +1,8 @@
+import { assertObjectInput } from "../../request-validation.ts";
 import { companyDetailValidationCopy } from "../copy.ts";
 import { InvalidCompanyDetailRequest } from "./errors.ts";
 import {
   companyDetailFieldSpecs,
-  type CompanyDetailRawInput,
   type CompanyDetailRequest,
 } from "./request.ts";
 
@@ -10,18 +10,20 @@ const allowedKeys = new Set<string>(Object.keys(companyDetailFieldSpecs));
 const companyCodePattern = /^\d{8}$/;
 
 export const resolveCompanyDetailRequest = (
-  input: Partial<CompanyDetailRawInput> & Record<string, unknown>,
+  input: unknown,
 ): CompanyDetailRequest => {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    throw new InvalidCompanyDetailRequest({
-      code: "invalid_parameter",
-      parameter: "input",
-      reason: "invalid_type",
-      expected: companyDetailValidationCopy.inputExpected,
-      actual: input,
-      message: companyDetailValidationCopy.inputMustBeObject,
-    });
-  }
+  assertObjectInput(
+    input,
+    (actual) =>
+      new InvalidCompanyDetailRequest({
+        code: "invalid_parameter",
+        parameter: "input",
+        reason: "invalid_type",
+        expected: companyDetailValidationCopy.inputExpected,
+        actual,
+        message: companyDetailValidationCopy.inputMustBeObject,
+      }),
+  );
 
   for (const key of Object.keys(input)) {
     if (!allowedKeys.has(key)) {

@@ -11,6 +11,7 @@ export class InvalidViewReportRequest extends Schema.TaggedError<InvalidViewRepo
     parameter: Schema.String,
     expected: Schema.String,
     actual: Schema.optional(Schema.Unknown),
+    reason: Schema.optional(Schema.String),
     message: Schema.String,
   },
 ) {}

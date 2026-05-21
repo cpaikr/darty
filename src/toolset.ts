@@ -135,7 +135,7 @@ export type DartyToolset = {
   readonly getCommandHelp: (name: string) => DartyOperationSpec | undefined;
   readonly validateInput: (
     name: string,
-    input: Record<string, unknown>,
+    input: unknown,
   ) => DartyValidationResult;
   readonly serializeError: (error: unknown) => DartySerializedError;
   readonly execute: (
@@ -178,7 +178,7 @@ type OperationDefinition = DartyOperationSummary & {
   readonly examples?: readonly Record<string, unknown>[];
   readonly limitations?: readonly string[];
   readonly resultSummary?: string;
-  readonly prepareInput?: (input: Record<string, unknown>) => Record<string, unknown>;
+  readonly prepareInput?: (input: unknown) => Record<string, unknown>;
 };
 
 export type CreateDartyToolsetOptions = {
@@ -360,6 +360,21 @@ const createUnknownOperationValidationFailure = (
   recoveryHint: "Use help() or listOperations() to choose a canonical Darty operation name.",
 });
 
+const createInvalidInputValidationFailure = (
+  operationName: string,
+  actual: unknown,
+  exampleInput: Record<string, unknown> | undefined,
+): DartyValidationFailure => ({
+  code: "invalid_parameter",
+  message: "Darty operation input must be an object.",
+  operationName,
+  parameter: "input",
+  reason: "invalid_type",
+  expected: "object",
+  actual,
+  ...(exampleInput === undefined ? {} : { exampleInput }),
+});
+
 const toValidationFailure = (
   error: unknown,
   operationName: string,
@@ -502,12 +517,22 @@ export const createDartyToolset = (
         return { ok: false, error: createUnknownOperationValidationFailure(name) };
       }
 
-      try {
-        const preparedInput = definition.prepareInput?.(input) ?? input;
-        return { ok: true, input: preparedInput };
-      } catch (error) {
-        const [exampleInput] = definition.examples ?? [];
+      const [exampleInput] = definition.examples ?? [];
 
+      try {
+        if (definition.prepareInput !== undefined) {
+          return { ok: true, input: definition.prepareInput(input) };
+        }
+
+        if (!isRecord(input)) {
+          return {
+            ok: false,
+            error: createInvalidInputValidationFailure(name, input, exampleInput),
+          };
+        }
+
+        return { ok: true, input };
+      } catch (error) {
         return {
           ok: false,
           error: toValidationFailure(error, name, exampleInput),
