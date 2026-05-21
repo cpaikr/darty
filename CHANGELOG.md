@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.9](https://github.com/sjunepark/darty/compare/v0.0.8...v0.0.9) (2026-05-21)
+
+
+### Bug Fixes
+
+* clean up Korean package README ([6f0320a](https://github.com/sjunepark/darty/commit/6f0320a4175f229220f4c00eae0514c5aa31b614))
+* declare domhandler runtime dependency ([9cc6fba](https://github.com/sjunepark/darty/commit/9cc6fbaad59aa505a911eee8df1af6ca15b46244))
+* emit shared ESM package subpaths ([276614f](https://github.com/sjunepark/darty/commit/276614f6ff5e4534ed44ea8de9a4a41d5e83293f))
+
 ## [0.0.8](https://github.com/sjunepark/darty/compare/v0.0.7...v0.0.8) (2026-05-20)
 
 
