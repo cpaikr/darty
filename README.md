@@ -127,3 +127,7 @@ await createAgentSession({
 - DART의 공식 OpenDART API를 사용하는 패키지가 아닙니다.
 - 투자, 회계, 법률 판단을 제공하지 않습니다.
 - 결과를 중요한 의사결정에 사용할 때는 원문 DART 링크와 참조 정보를 직접 확인하세요.
+
+## 라이선스
+
+Darty는 오픈소스가 아닌 독점 소프트웨어입니다. npm 패키지 메타데이터는 `UNLICENSED`이며, 사용 조건은 [`LICENSE.md`](./LICENSE.md)와 [`TERMS.md`](./TERMS.md)를 따릅니다.
