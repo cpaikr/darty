@@ -161,7 +161,7 @@ const createAdapterValidationFailure = (input: {
   actual?: unknown;
   command?: string;
   recoveryHint?: string;
-  recoveryAction?: DartyValidationRecoveryAction;
+  recoveryAction: DartyValidationRecoveryAction;
 }): DartyValidationFailure => ({
   code: input.code,
   message: input.message,
@@ -172,9 +172,7 @@ const createAdapterValidationFailure = (input: {
   ...("actual" in input ? { actual: input.actual } : {}),
   ...(input.recoveryHint === undefined ? {} : { recoveryHint: input.recoveryHint }),
   retryable: true,
-  ...(input.recoveryAction === undefined
-    ? {}
-    : { recoveryAction: input.recoveryAction }),
+  recoveryAction: input.recoveryAction,
 });
 
 const inspectToolHelpRecoveryAction = {

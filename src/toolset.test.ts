@@ -4,6 +4,7 @@ import {
   createDartyToolset,
   DartyToolsetError,
   type DartyOperationName,
+  type DartyValidationFailure,
 } from "./toolset.ts";
 
 const expectedOperationNames: readonly DartyOperationName[] = [
@@ -15,6 +16,18 @@ const expectedOperationNames: readonly DartyOperationName[] = [
   "disclosure-types",
   "view-report",
 ];
+
+type AssertFalse<T extends false> = T;
+type RetryableValidationFailureWithoutRecoveryAction = {
+  readonly code: "invalid_request";
+  readonly message: "Missing recovery action";
+  readonly retryable: true;
+};
+type RetryableValidationFailureRequiresRecoveryAction = AssertFalse<
+  RetryableValidationFailureWithoutRecoveryAction extends DartyValidationFailure
+    ? true
+    : false
+>;
 
 describe("Darty neutral toolset", () => {
   test("lists stable canonical operation names", () => {

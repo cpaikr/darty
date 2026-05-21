@@ -110,7 +110,7 @@ export type DartyValidationRecoveryAction =
       readonly kind: "inspect_tool_help";
     };
 
-export type DartyValidationFailure = {
+type DartyValidationFailureBase = {
   readonly code: DartyValidationFailureCode;
   readonly message: string;
   readonly operationName?: string;
@@ -120,9 +120,19 @@ export type DartyValidationFailure = {
   readonly actual?: unknown;
   readonly recoveryHint?: string;
   readonly exampleInput?: Record<string, unknown>;
-  readonly retryable: boolean;
-  readonly recoveryAction?: DartyValidationRecoveryAction;
 };
+
+export type DartyValidationFailure = DartyValidationFailureBase &
+  (
+    | {
+        readonly retryable: true;
+        readonly recoveryAction: DartyValidationRecoveryAction;
+      }
+    | {
+        readonly retryable: false;
+        readonly recoveryAction?: never;
+      }
+  );
 
 export type DartyValidationResult =
   | { readonly ok: true; readonly input: Record<string, unknown> }
