@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.0](https://github.com/sjunepark/darty/compare/v0.0.10...v0.1.0) (2026-05-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* @sjunepark/darty/pi now exports a single darty tool via createDartyPiTool/registerDartyPiTool. The previous plural progressive Pi tool exports and multi-tool adapter surface are removed.
+
+### Features
+
+* expose a single Pi SDK darty tool ([8529bd2](https://github.com/sjunepark/darty/commit/8529bd25065d767bef101de259e891c07477fdcd))
+
 ## [0.0.10](https://github.com/sjunepark/darty/compare/v0.0.9...v0.0.10) (2026-05-21)
 
 
