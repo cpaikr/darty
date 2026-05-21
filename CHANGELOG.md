@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/sjunepark/darty/compare/v0.1.1...v0.1.2) (2026-05-21)
+
+
+### Bug Fixes
+
+* add proprietary license terms ([b8bf1e8](https://github.com/sjunepark/darty/commit/b8bf1e8fb9e099c98e9e50496366a9bbd110e25b))
+
 ## [0.1.1](https://github.com/sjunepark/darty/compare/v0.1.0...v0.1.1) (2026-05-21)
 
 
