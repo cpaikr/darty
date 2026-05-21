@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.10](https://github.com/sjunepark/darty/compare/v0.0.9...v0.0.10) (2026-05-21)
+
+
+### Features
+
+* add SDK-owned toolset help and validation ([68194e9](https://github.com/sjunepark/darty/commit/68194e9eb4f584abc33dfde3fbb929e14cbd3e6b))
+* add SDK-owned toolset help and validation ([3186d1e](https://github.com/sjunepark/darty/commit/3186d1e195b5624b23e1ff0d7236d804c997d1ed))
+
 ## [0.0.9](https://github.com/sjunepark/darty/compare/v0.0.8...v0.0.9) (2026-05-21)
 
 
