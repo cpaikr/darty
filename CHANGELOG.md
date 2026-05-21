@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.1](https://github.com/sjunepark/darty/compare/v0.1.0...v0.1.1) (2026-05-21)
+
+
+### Features
+
+* add validation recovery metadata to toolset ([40096bd](https://github.com/sjunepark/darty/commit/40096bd02ed19b4eb4261f2bd42c8a82969390c2))
+* add validation recovery metadata to toolset ([f6b3a7c](https://github.com/sjunepark/darty/commit/f6b3a7c6fc4649881cd4029a379489cd7fe8f560))
+
+
+### Bug Fixes
+
+* defer unused retry input recovery action ([ba567c5](https://github.com/sjunepark/darty/commit/ba567c582d219421b3b517f41c8d9f2c6a6dfa89))
+
 ## [0.1.0](https://github.com/sjunepark/darty/compare/v0.0.10...v0.1.0) (2026-05-21)
 
 
