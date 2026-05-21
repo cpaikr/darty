@@ -139,8 +139,10 @@ graph TD
   JSON Schemas, capability executors with the default DART providers already
   attached, and the initial namespaced `darty_*` agent tool definitions.
 - **`src/toolset.ts`** — Runtime-neutral package API. Lists canonical operation
-  IDs, exposes operation schemas, executes operations by name, and preserves
-  capability result envelopes and typed failures.
+  IDs, exposes source/command help, operation schemas, schema-owned examples,
+  network-free input validation/normalization, structural error serialization,
+  executes operations by name, and preserves capability result envelopes and
+  typed failures.
 - **`src/pi.ts`** — Pi progressive adapter over the neutral toolset. Registers
   discovery/detail/run tools rather than one Pi tool per Darty operation.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
@@ -202,7 +204,7 @@ One source of truth gives you:
 
 What is intentionally *not* centralized:
 
-- CLI flags, help text, and examples
+- CLI flags and CLI-specific flag wording
 - protocol-specific titles, annotations, prompts, or rendering
 
 ## Runtime Flow

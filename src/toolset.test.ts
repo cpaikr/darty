@@ -33,7 +33,7 @@ describe("Darty neutral toolset", () => {
     ).toBe(true);
   });
 
-  test("returns operation details with input and result schemas", () => {
+  test("returns operation details with help, schemas, examples, and required keys", () => {
     const toolset = createDartyToolset();
     const searchCompany = toolset.getOperation("search-company");
 
@@ -48,9 +48,103 @@ describe("Darty neutral toolset", () => {
         type: "object",
         required: ["result", "metadata", "references", "warnings"],
       },
+      requiredInputKeys: ["companyName"],
+      examples: [{ companyName: "삼성전자", page: 1, pageSize: 15 }],
+      resultSummary: expect.stringContaining("search-company"),
     });
     expect(searchCompany?.description).toContain("DART");
+    expect(toolset.getCommandHelp("search-company")).toEqual(searchCompany);
     expect(toolset.getOperation("darty_search_company")).toBeUndefined();
+  });
+
+  test("returns source-level help without host-owned command copy", () => {
+    const toolset = createDartyToolset();
+    const help = toolset.help();
+
+    expect(help.id).toBe("darty");
+    expect(help.label).toBe("Darty");
+    expect(help.operations.map((operation) => operation.name)).toContain("search-body");
+    expect(help.limitations.join("\n")).toContain("OpenDART");
+    expect(help.citationGuidance.join("\n")).toContain("references");
+    expect(help.usage).toContain("validateInput");
+  });
+
+  test("validates and prepares input without executing DART lookups", () => {
+    const toolset = createDartyToolset();
+
+    expect(
+      toolset.validateInput("search-company", { companyName: " 삼성전자 " }),
+    ).toEqual({
+      ok: true,
+      input: { companyName: "삼성전자", page: 1, pageSize: 15 },
+    });
+
+    expect(toolset.validateInput("search-company", {})).toMatchObject({
+      ok: false,
+      error: {
+        code: "missing_parameter",
+        operationName: "search-company",
+        parameter: "companyName",
+        reason: "required",
+        expected: "string_min_length_2",
+        message: expect.stringContaining("companyName"),
+        exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+      },
+    });
+
+    expect(
+      toolset.validateInput("search-company-reports", {
+        companyCode: "삼성전자",
+        startDate: "20260501",
+        endDate: "20260531",
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        parameter: "companyCode",
+        recoveryHint: expect.stringContaining("search-company"),
+      },
+    });
+  });
+
+  test("serializes errors structurally across class boundaries", () => {
+    const toolset = createDartyToolset();
+    const error = new Error("Mock source failure") as Error & {
+      code: string;
+      retryable: boolean;
+      parameter: string;
+      sourceUrl: string;
+      recoveryHint: string;
+      operationName: string;
+    };
+    error.code = "source_unavailable";
+    error.retryable = true;
+    error.parameter = "keyword";
+    error.sourceUrl = "mock://dart/search";
+    error.recoveryHint = "Try again later.";
+    error.operationName = "search-body";
+
+    expect(toolset.serializeError(error)).toEqual({
+      name: "Error",
+      message: "Mock source failure",
+      code: "source_unavailable",
+      retryable: true,
+      parameter: "keyword",
+      sourceUrl: "mock://dart/search",
+      recoveryHint: "Try again later.",
+      operationName: "search-body",
+    });
+
+    expect(toolset.validateInput("not-a-command", {})).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_request",
+        parameter: "name",
+        reason: "unknown_operation",
+        operationName: "not-a-command",
+      },
+    });
   });
 
   test("executes through the operation and preserves result envelope fields", async () => {

@@ -54,12 +54,18 @@ import { createDartyToolset } from "@sjunepark/darty/toolset";
 
 const darty = createDartyToolset();
 
+const help = darty.help();
 const operations = darty.listOperations();
-const searchCompany = darty.getOperation("search-company");
-const result = await darty.execute("disclosure-types", { query: "사업보고서" });
+const searchCompany = darty.getCommandHelp("search-company");
+const prepared = darty.validateInput("disclosure-types", { query: "사업보고서" });
+const result = prepared.ok
+  ? await darty.execute("disclosure-types", prepared.input)
+  : prepared.error;
 ```
 
-이 API가 Darty의 표준 통합 지점입니다. 작업 이름, JSON Schema 기반 입력/결과 계약, 실행, 응답 객체, 참조 정보, 경고, 메타데이터, 타입화된 오류를 이 계층에서 관리합니다.
+이 API가 Darty의 표준 통합 지점입니다. 작업 이름, 소스/명령 도움말, JSON Schema 기반 입력/결과 계약, 네트워크 없는 입력 검증/정규화, 실행, 응답 객체, 참조 정보, 경고, 메타데이터, 타입화된 오류를 이 계층에서 관리합니다.
+
+호스트 앱이 `darty(action, command?, inputJson?)` 같은 CLI형 단일 도구를 만들 때는 Darty의 `help()`, `getCommandHelp(name)`, `validateInput(name, input)`, `execute(name, input)`, `serializeError(error)`를 사용하세요. 검증 실패는 `code`, `parameter`, `reason`, `expected`, `actual`, `message`, `recoveryHint`, `exampleInput`을 보존합니다. 실행 오류를 호스트/번들러 경계 밖으로 넘길 때는 `serializeDartyError(error)` 또는 `toolset.serializeError(error)`로 `code`, `retryable`, `parameter`, `sourceUrl`, `recoveryHint`, `operationName`, `message`를 구조적으로 보존할 수 있습니다.
 
 표준 작업 이름은 특정 호스트나 어댑터에 종속되지 않습니다.
 
@@ -76,7 +82,9 @@ const result = await darty.execute("disclosure-types", { query: "사업보고서
 재사용 가능한 패키지 계약으로 보는 범위는 다음과 같습니다.
 
 - 작업 이름
+- 소스/명령 도움말 필드
 - 입력 JSON Schema
+- 검증 실패 필드와 오류 코드의 의미
 - 최상위 응답 객체 필드
 - 경고와 오류 코드의 의미
 

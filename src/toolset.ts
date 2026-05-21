@@ -5,13 +5,47 @@ import { defaultSearchBodyOperation } from "./app/search-body.ts";
 import { defaultSearchCompanyOperation } from "./app/search-company.ts";
 import { defaultSearchCompanyReportsOperation } from "./app/search-company-reports.ts";
 import { defaultViewReportOperation } from "./app/view-report.ts";
-import { companyDetailToolCopy } from "./capabilities/company-detail/copy.ts";
-import { companyRssToolCopy } from "./capabilities/company-rss/copy.ts";
-import { disclosureTypesToolCopy } from "./capabilities/disclosure-types/copy.ts";
-import { searchBodyToolCopy } from "./capabilities/search-body/copy.ts";
-import { searchCompanyReportsToolCopy } from "./capabilities/search-company-reports/copy.ts";
-import { searchCompanyToolCopy } from "./capabilities/search-company/copy.ts";
-import { viewReportToolCopy } from "./capabilities/view-report/copy.ts";
+import {
+  companyDetailSchemaCopy,
+  companyDetailToolCopy,
+} from "./capabilities/company-detail/copy.ts";
+import { resolveCompanyDetailRequest } from "./capabilities/company-detail/contract.ts";
+import {
+  companyRssSchemaCopy,
+  companyRssToolCopy,
+} from "./capabilities/company-rss/copy.ts";
+import { resolveCompanyRssRequest } from "./capabilities/company-rss/contract.ts";
+import {
+  disclosureTypesCliCopy,
+  disclosureTypesSchemaCopy,
+  disclosureTypesToolCopy,
+} from "./capabilities/disclosure-types/copy.ts";
+import { resolveDisclosureTypesRequest } from "./capabilities/disclosure-types/contract.ts";
+import { getInvalidRequestRecoveryHint } from "./capabilities/recovery-hints.ts";
+import {
+  searchBodyCliCopy,
+  searchBodySchemaCopy,
+  searchBodyToolCopy,
+} from "./capabilities/search-body/copy.ts";
+import { resolveSearchBodyRequest } from "./capabilities/search-body/contract.ts";
+import {
+  searchCompanyReportsCliCopy,
+  searchCompanyReportsSchemaCopy,
+  searchCompanyReportsToolCopy,
+} from "./capabilities/search-company-reports/copy.ts";
+import { resolveSearchCompanyReportsRequest } from "./capabilities/search-company-reports/contract.ts";
+import {
+  searchCompanyCliCopy,
+  searchCompanySchemaCopy,
+  searchCompanyToolCopy,
+} from "./capabilities/search-company/copy.ts";
+import { resolveSearchCompanyRequest } from "./capabilities/search-company/contract.ts";
+import {
+  viewReportCliCopy,
+  viewReportSchemaCopy,
+  viewReportToolCopy,
+} from "./capabilities/view-report/copy.ts";
+import { resolveViewReportRequest } from "./capabilities/view-report/contract.ts";
 
 export const dartyOperationNames = [
   "search-body",
@@ -38,6 +72,55 @@ export type DartyOperationSummary = {
 export type DartyOperationSpec = DartyOperationSummary & {
   readonly inputJsonSchema: unknown;
   readonly resultJsonSchema: unknown;
+  readonly requiredInputKeys: readonly string[];
+  readonly examples: readonly Record<string, unknown>[];
+  readonly limitations: readonly string[];
+  readonly resultSummary: string;
+};
+
+export type DartyCommandHelp = DartyOperationSpec;
+
+export type DartyToolsetHelp = {
+  readonly id: "darty";
+  readonly label: string;
+  readonly description: string;
+  readonly usage: string;
+  readonly operations: readonly DartyOperationSummary[];
+  readonly limitations: readonly string[];
+  readonly citationGuidance: readonly string[];
+};
+
+export type DartyValidationFailureCode =
+  | "missing_parameter"
+  | "invalid_parameter"
+  | "unknown_parameter"
+  | "invalid_request";
+
+export type DartyValidationFailure = {
+  readonly code: DartyValidationFailureCode;
+  readonly message: string;
+  readonly operationName?: string;
+  readonly parameter?: string;
+  readonly reason?: string;
+  readonly expected?: string;
+  readonly actual?: unknown;
+  readonly recoveryHint?: string;
+  readonly exampleInput?: Record<string, unknown>;
+};
+
+export type DartyValidationResult =
+  | { readonly ok: true; readonly input: Record<string, unknown> }
+  | { readonly ok: false; readonly error: DartyValidationFailure };
+
+export type DartySerializedError = {
+  readonly name: string;
+  readonly message: string;
+  readonly code?: string;
+  readonly retryable?: boolean;
+  readonly parameter?: string;
+  readonly sourceUrl?: string;
+  readonly recoveryHint?: string;
+  readonly operationName?: string;
 };
 
 export type DartyToolRunResult = unknown;
@@ -46,8 +129,15 @@ export type DartyToolset = {
   readonly id: "darty";
   readonly label: string;
   readonly description: string;
+  readonly help: () => DartyToolsetHelp;
   readonly listOperations: () => readonly DartyOperationSummary[];
   readonly getOperation: (name: string) => DartyOperationSpec | undefined;
+  readonly getCommandHelp: (name: string) => DartyOperationSpec | undefined;
+  readonly validateInput: (
+    name: string,
+    input: Record<string, unknown>,
+  ) => DartyValidationResult;
+  readonly serializeError: (error: unknown) => DartySerializedError;
   readonly execute: (
     name: string,
     input: Record<string, unknown>,
@@ -85,6 +175,10 @@ type AppOperation = {
 
 type OperationDefinition = DartyOperationSummary & {
   readonly operation: AppOperation;
+  readonly examples?: readonly Record<string, unknown>[];
+  readonly limitations?: readonly string[];
+  readonly resultSummary?: string;
+  readonly prepareInput?: (input: Record<string, unknown>) => Record<string, unknown>;
 };
 
 export type CreateDartyToolsetOptions = {
@@ -95,53 +189,99 @@ export type CreateDartyToolsetOptions = {
   readonly operations?: readonly OperationDefinition[];
 };
 
+const sourceLimitations = [
+  "Darty reads DART public web pages and static DART code material in read-only mode; it is not the official OpenDART API.",
+  "DART web behavior can change, so important results should be checked against the returned source references.",
+  "Darty does not provide investment, accounting, or legal judgment.",
+] as const;
+
+const citationGuidance = [
+  "Use result.references, result.metadata, warnings, and original DART viewer/source URLs when presenting findings.",
+  "For context-sensitive conclusions, use search operations to find candidates, then view-report to inspect the actual filing body or section.",
+] as const;
+
 const defaultOperationDefinitions = [
   {
     name: "search-body",
     label: searchBodyToolCopy.title,
     description: searchBodyToolCopy.description,
     operation: defaultSearchBodyOperation,
+    prepareInput: (input) => resolveSearchBodyRequest(input),
+    examples: searchBodySchemaCopy.requestExamples,
+    limitations: searchBodyCliCopy.notes,
+    resultSummary: searchBodySchemaCopy.resultDescription,
   },
   {
     name: "search-company",
     label: searchCompanyToolCopy.title,
     description: searchCompanyToolCopy.description,
     operation: defaultSearchCompanyOperation,
+    prepareInput: (input) => resolveSearchCompanyRequest(input),
+    examples: searchCompanySchemaCopy.requestExamples,
+    limitations: searchCompanyCliCopy.notes,
+    resultSummary: searchCompanySchemaCopy.resultDescription,
   },
   {
     name: "search-company-reports",
     label: searchCompanyReportsToolCopy.title,
     description: searchCompanyReportsToolCopy.description,
     operation: defaultSearchCompanyReportsOperation,
+    prepareInput: (input) => resolveSearchCompanyReportsRequest(input),
+    examples: searchCompanyReportsSchemaCopy.requestExamples,
+    limitations: searchCompanyReportsCliCopy.notes,
+    resultSummary: searchCompanyReportsSchemaCopy.resultDescription,
   },
   {
     name: "company-detail",
     label: companyDetailToolCopy.title,
     description: companyDetailToolCopy.description,
     operation: defaultCompanyDetailOperation,
+    prepareInput: (input) => resolveCompanyDetailRequest(input),
+    examples: companyDetailSchemaCopy.requestExamples,
+    resultSummary: companyDetailSchemaCopy.resultDescription,
   },
   {
     name: "company-rss",
     label: companyRssToolCopy.title,
     description: companyRssToolCopy.description,
     operation: defaultCompanyRssOperation,
+    prepareInput: (input) => resolveCompanyRssRequest(input),
+    examples: companyRssSchemaCopy.requestExamples,
+    resultSummary: companyRssSchemaCopy.resultDescription,
   },
   {
     name: "disclosure-types",
     label: disclosureTypesToolCopy.title,
     description: disclosureTypesToolCopy.description,
     operation: defaultDisclosureTypesOperation,
+    prepareInput: (input) => resolveDisclosureTypesRequest(input),
+    examples: disclosureTypesSchemaCopy.requestExamples,
+    limitations: disclosureTypesCliCopy.notes,
+    resultSummary: disclosureTypesSchemaCopy.resultDescription,
   },
   {
     name: "view-report",
     label: viewReportToolCopy.title,
     description: viewReportToolCopy.description,
     operation: defaultViewReportOperation,
+    prepareInput: (input) => resolveViewReportRequest(input),
+    examples: viewReportSchemaCopy.requestExamples,
+    limitations: viewReportCliCopy.notes,
+    resultSummary: viewReportSchemaCopy.resultDescription,
   },
 ] as const satisfies readonly OperationDefinition[];
 
 const isAbortSignalAborted = (signal: AbortSignal | undefined): boolean =>
   signal?.aborted === true;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const hasString = <Key extends string>(
+  record: Record<string, unknown>,
+  key: Key,
+): record is Record<Key, string> & Record<string, unknown> =>
+  typeof record[key] === "string";
 
 const createAbortError = (operationName?: string): DartyToolsetError =>
   new DartyToolsetError({
@@ -183,6 +323,140 @@ const raceWithAbort = async <T>(
   });
 };
 
+const extractRequiredInputKeys = (inputJsonSchema: unknown): readonly string[] => {
+  if (!isRecord(inputJsonSchema) || !Array.isArray(inputJsonSchema.required)) {
+    return [];
+  }
+
+  return inputJsonSchema.required.filter(
+    (key): key is string => typeof key === "string",
+  );
+};
+
+const createCommandHelp = (
+  definition: OperationDefinition,
+): DartyOperationSpec => ({
+  name: definition.name,
+  label: definition.label,
+  description: definition.description,
+  inputJsonSchema: definition.operation.inputJsonSchema,
+  resultJsonSchema: definition.operation.resultJsonSchema,
+  requiredInputKeys: extractRequiredInputKeys(definition.operation.inputJsonSchema),
+  examples: definition.examples ?? [],
+  limitations: definition.limitations ?? [],
+  resultSummary: definition.resultSummary ?? "Darty result envelope for this operation.",
+});
+
+const createUnknownOperationValidationFailure = (
+  name: string,
+): DartyValidationFailure => ({
+  code: "invalid_request",
+  message: `Unknown Darty operation: ${name}`,
+  operationName: name,
+  parameter: "name",
+  reason: "unknown_operation",
+  expected: dartyOperationNames.join(","),
+  actual: name,
+  recoveryHint: "Use help() or listOperations() to choose a canonical Darty operation name.",
+});
+
+const toValidationFailure = (
+  error: unknown,
+  operationName: string,
+  exampleInput: Record<string, unknown> | undefined,
+): DartyValidationFailure => {
+  if (isRecord(error)) {
+    const code = hasString(error, "code")
+      ? toValidationFailureCode(error.code)
+      : "invalid_request";
+    const parameter = hasString(error, "parameter") ? error.parameter : undefined;
+    const reason = hasString(error, "reason") ? error.reason : undefined;
+    const expected = hasString(error, "expected") ? error.expected : undefined;
+    const recoveryHint = hasString(error, "recoveryHint")
+      ? error.recoveryHint
+      : parameter === undefined
+        ? undefined
+        : getInvalidRequestRecoveryHint({
+            code,
+            parameter,
+            ...(reason === undefined ? {} : { reason }),
+            ...(expected === undefined ? {} : { expected }),
+          });
+
+    return {
+      code,
+      message: hasString(error, "message")
+        ? error.message
+        : "Darty input validation failed.",
+      operationName,
+      ...(parameter === undefined ? {} : { parameter }),
+      ...(reason === undefined ? {} : { reason }),
+      ...(expected === undefined ? {} : { expected }),
+      ...("actual" in error ? { actual: error.actual } : {}),
+      ...(recoveryHint === undefined ? {} : { recoveryHint }),
+      ...(exampleInput === undefined ? {} : { exampleInput }),
+    };
+  }
+
+  return {
+    code: "invalid_request",
+    message: "Darty input validation failed.",
+    operationName,
+    ...(exampleInput === undefined ? {} : { exampleInput }),
+  };
+};
+
+const toValidationFailureCode = (code: string): DartyValidationFailureCode => {
+  switch (code) {
+    case "missing_parameter":
+    case "invalid_parameter":
+    case "unknown_parameter":
+      return code;
+    default:
+      return "invalid_request";
+  }
+};
+
+const copyKnownErrorFields = (
+  record: Record<string, unknown>,
+): Omit<DartySerializedError, "name" | "message"> => ({
+  ...(typeof record.code === "string" ? { code: record.code } : {}),
+  ...(typeof record.retryable === "boolean" ? { retryable: record.retryable } : {}),
+  ...(typeof record.parameter === "string" ? { parameter: record.parameter } : {}),
+  ...(typeof record.operationName === "string"
+    ? { operationName: record.operationName }
+    : {}),
+  ...(typeof record.sourceUrl === "string" ? { sourceUrl: record.sourceUrl } : {}),
+  ...(typeof record.recoveryHint === "string"
+    ? { recoveryHint: record.recoveryHint }
+    : {}),
+});
+
+export const serializeDartyError = (error: unknown): DartySerializedError => {
+  if (error instanceof Error) {
+    const record = error as Error & Record<string, unknown>;
+
+    return {
+      name: error.name,
+      message: error.message,
+      ...copyKnownErrorFields(record),
+    };
+  }
+
+  if (isRecord(error)) {
+    return {
+      name: hasString(error, "name") ? error.name : "UnknownError",
+      message: hasString(error, "message") ? error.message : String(error),
+      ...copyKnownErrorFields(error),
+    };
+  }
+
+  return {
+    name: "UnknownError",
+    message: String(error),
+  };
+};
+
 export const createDartyToolset = (
   options: CreateDartyToolsetOptions = {},
 ): DartyToolset => {
@@ -190,33 +464,57 @@ export const createDartyToolset = (
   const operationByName = new Map(
     definitions.map((definition) => [definition.name, definition]),
   );
+  const summaries = () =>
+    definitions.map(({ name, label, description }) => ({
+      name,
+      label,
+      description,
+    }));
+  const getCommandHelp = (name: string): DartyOperationSpec | undefined => {
+    const definition = operationByName.get(name as DartyOperationName);
+
+    return definition === undefined ? undefined : createCommandHelp(definition);
+  };
 
   return {
     id: "darty",
     label: "Darty",
     description:
       "Read-only Korean DART disclosure search and report-viewing operations with source references, warnings, and typed capability errors.",
-    listOperations: () =>
-      definitions.map(({ name, label, description }) => ({
-        name,
-        label,
-        description,
-      })),
-    getOperation: (name) => {
+    help: () => ({
+      id: "darty",
+      label: "Darty",
+      description:
+        "Read-only Korean DART disclosure search and report-viewing operations with source references, warnings, and typed capability errors.",
+      usage:
+        "Inspect operations with listOperations()/getCommandHelp(name), validate input with validateInput(name, input), then run execute(name, input).",
+      operations: summaries(),
+      limitations: sourceLimitations,
+      citationGuidance,
+    }),
+    listOperations: summaries,
+    getOperation: getCommandHelp,
+    getCommandHelp,
+    validateInput: (name, input) => {
       const definition = operationByName.get(name as DartyOperationName);
 
       if (definition === undefined) {
-        return undefined;
+        return { ok: false, error: createUnknownOperationValidationFailure(name) };
       }
 
-      return {
-        name: definition.name,
-        label: definition.label,
-        description: definition.description,
-        inputJsonSchema: definition.operation.inputJsonSchema,
-        resultJsonSchema: definition.operation.resultJsonSchema,
-      };
+      try {
+        const preparedInput = definition.prepareInput?.(input) ?? input;
+        return { ok: true, input: preparedInput };
+      } catch (error) {
+        const [exampleInput] = definition.examples ?? [];
+
+        return {
+          ok: false,
+          error: toValidationFailure(error, name, exampleInput),
+        };
+      }
     },
+    serializeError: serializeDartyError,
     execute: async (name, input, context) => {
       const definition = operationByName.get(name as DartyOperationName);
 

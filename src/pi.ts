@@ -2,6 +2,7 @@ import {
   createDartyToolset,
   dartyOperationNames,
   DartyToolsetError,
+  serializeDartyError,
   type DartyToolset,
 } from "./toolset.ts";
 
@@ -29,19 +30,15 @@ export type DartyPiToolDefinition = {
   ) => Promise<PiToolResult>;
 };
 
-export type DartyPiExtensionAPI = {
-  readonly registerTool: (tool: DartyPiToolDefinition) => void;
+type DartyPiToolset = Pick<
+  DartyToolset,
+  "id" | "label" | "description" | "listOperations" | "getOperation" | "execute"
+> & {
+  readonly serializeError?: typeof serializeDartyError;
 };
 
-type SerializedError = {
-  readonly name: string;
-  readonly code?: string;
-  readonly message: string;
-  readonly retryable?: boolean;
-  readonly parameter?: string;
-  readonly operationName?: string;
-  readonly sourceUrl?: string;
-  readonly recoveryHint?: string;
+export type DartyPiExtensionAPI = {
+  readonly registerTool: (tool: DartyPiToolDefinition) => void;
 };
 
 const stringSchema = (description: string, extra: Record<string, unknown> = {}) => ({
@@ -95,46 +92,6 @@ const toTextResult = (text: string, details: unknown): PiToolResult => ({
   details,
 });
 
-const copyKnownErrorFields = (
-  record: Record<string, unknown>,
-): Omit<SerializedError, "name" | "message"> => ({
-  ...(typeof record.code === "string" ? { code: record.code } : {}),
-  ...(typeof record.retryable === "boolean" ? { retryable: record.retryable } : {}),
-  ...(typeof record.parameter === "string" ? { parameter: record.parameter } : {}),
-  ...(typeof record.operationName === "string"
-    ? { operationName: record.operationName }
-    : {}),
-  ...(typeof record.sourceUrl === "string" ? { sourceUrl: record.sourceUrl } : {}),
-  ...(typeof record.recoveryHint === "string"
-    ? { recoveryHint: record.recoveryHint }
-    : {}),
-});
-
-const serializeError = (error: unknown): SerializedError => {
-  if (error instanceof DartyToolsetError) {
-    return {
-      name: error.name,
-      message: error.message,
-      ...copyKnownErrorFields(error as unknown as Record<string, unknown>),
-    };
-  }
-
-  if (error instanceof Error) {
-    const record = error as Error & Record<string, unknown>;
-
-    return {
-      name: error.name,
-      message: error.message,
-      ...copyKnownErrorFields(record),
-    };
-  }
-
-  return {
-    name: "UnknownError",
-    message: String(error),
-  };
-};
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -182,7 +139,7 @@ const summarizeResultPayload = (operationName: string, result: unknown): string 
     : `Darty ${operationName} completed. ${warningSummary}`;
 };
 
-const createListOperationsTool = (toolset: DartyToolset): DartyPiToolDefinition => ({
+const createListOperationsTool = (toolset: DartyPiToolset): DartyPiToolDefinition => ({
   name: "darty_list_operations",
   label: "Darty List Operations",
   description: "List canonical Darty operations available through the progressive Darty adapter.",
@@ -207,7 +164,7 @@ const createListOperationsTool = (toolset: DartyToolset): DartyPiToolDefinition 
 });
 
 const createGetOperationDetailsTool = (
-  toolset: DartyToolset,
+  toolset: DartyPiToolset,
 ): DartyPiToolDefinition => ({
   name: "darty_get_operation_details",
   label: "Darty Get Operation Details",
@@ -238,7 +195,7 @@ const createGetOperationDetailsTool = (
     const operation = toolset.getOperation(name);
 
     if (operation === undefined) {
-      const error = serializeError(
+      const error = serializeDartyError(
         new DartyToolsetError({
           code: "unknown_operation",
           message: `Unknown Darty operation: ${name}`,
@@ -263,7 +220,7 @@ const createGetOperationDetailsTool = (
   },
 });
 
-const createRunOperationTool = (toolset: DartyToolset): DartyPiToolDefinition => ({
+const createRunOperationTool = (toolset: DartyPiToolset): DartyPiToolDefinition => ({
   name: "darty_run_operation",
   label: "Darty Run Operation",
   description:
@@ -304,7 +261,7 @@ const createRunOperationTool = (toolset: DartyToolset): DartyPiToolDefinition =>
         result,
       });
     } catch (error) {
-      const serialized = serializeError(error);
+      const serialized = toolset.serializeError?.(error) ?? serializeDartyError(error);
 
       return toTextResult(`Darty ${name} failed: ${serialized.message}`, {
         ok: false,
@@ -315,7 +272,7 @@ const createRunOperationTool = (toolset: DartyToolset): DartyPiToolDefinition =>
   },
 });
 
-const createGetHelpTool = (toolset: DartyToolset): DartyPiToolDefinition => ({
+const createGetHelpTool = (toolset: DartyPiToolset): DartyPiToolDefinition => ({
   name: "darty_get_help",
   label: "Darty Help",
   description: "Explain the progressive Darty Pi tools and how to use them.",
@@ -343,7 +300,7 @@ const createGetHelpTool = (toolset: DartyToolset): DartyPiToolDefinition => ({
 });
 
 export type CreateDartyPiToolsOptions = {
-  readonly toolset?: DartyToolset;
+  readonly toolset?: DartyPiToolset;
   readonly includeHelpTool?: boolean;
 };
 
