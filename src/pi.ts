@@ -1,93 +1,136 @@
 import {
   createDartyToolset,
-  dartyOperationNames,
   DartyToolsetError,
+  dartyOperationNames,
   serializeDartyError,
+  type DartyCommandHelp,
+  type DartySerializedError,
   type DartyToolset,
+  type DartyToolsetHelp,
+  type DartyValidationFailure,
+  type DartyValidationResult,
 } from "./toolset.ts";
 
+export type DartyPiToolAction = "help" | "command_help" | "validate" | "run";
+
+export type DartyPiToolInput = {
+  action: DartyPiToolAction;
+  command?: string;
+  inputJson?: Record<string, unknown>;
+};
+
 export type PiToolContent = {
-  readonly type: "text";
-  readonly text: string;
+  type: "text";
+  text: string;
 };
 
 export type PiToolResult = {
-  readonly content: readonly PiToolContent[];
-  readonly details: unknown;
+  content: PiToolContent[];
+  details: unknown;
 };
 
 export type DartyPiToolDefinition = {
-  readonly name: string;
-  readonly label: string;
-  readonly description: string;
-  readonly promptSnippet: string;
-  readonly promptGuidelines: readonly string[];
-  readonly parameters: unknown;
-  readonly execute: (
+  name: "darty";
+  label: string;
+  description: string;
+  promptSnippet: string;
+  promptGuidelines: string[];
+  parameters: typeof dartyPiToolParameters;
+  execute: (
     toolCallId: string,
-    params: Record<string, unknown>,
+    params: DartyPiToolInput,
     signal?: AbortSignal,
+    onUpdate?: unknown,
+    ctx?: unknown,
   ) => Promise<PiToolResult>;
+};
+
+export type DartyPiExtensionAPI = {
+  registerTool: (tool: DartyPiToolDefinition) => void;
 };
 
 type DartyPiToolset = Pick<
   DartyToolset,
-  "id" | "label" | "description" | "listOperations" | "getOperation" | "execute"
+  | "id"
+  | "label"
+  | "description"
+  | "help"
+  | "listOperations"
+  | "getCommandHelp"
+  | "validateInput"
+  | "execute"
 > & {
-  readonly serializeError?: typeof serializeDartyError;
+  serializeError?: typeof serializeDartyError;
 };
 
-export type DartyPiExtensionAPI = {
-  readonly registerTool: (tool: DartyPiToolDefinition) => void;
-};
+type DartyPiActionResult =
+  | {
+      ok: true;
+      action: "help";
+      help: DartyToolsetHelp;
+    }
+  | {
+      ok: true;
+      action: "command_help";
+      command: string;
+      commandHelp: DartyCommandHelp;
+    }
+  | {
+      ok: true;
+      action: "validate";
+      command: string;
+      validation: Extract<DartyValidationResult, { ok: true }>;
+    }
+  | {
+      ok: true;
+      action: "run";
+      command: string;
+      normalizedInput: Record<string, unknown>;
+      result: unknown;
+    }
+  | {
+      ok: false;
+      action: DartyPiToolAction | "adapter_validation";
+      command?: string;
+      error: DartyValidationFailure | DartySerializedError;
+    };
 
-const stringSchema = (description: string, extra: Record<string, unknown> = {}) => ({
+const dartyPiActions = ["help", "command_help", "validate", "run"] as const;
+
+const actionSchema = {
   type: "string",
-  description,
-  ...extra,
-});
+  enum: [...dartyPiActions],
+  description:
+    "Darty tool action: help, command_help, validate, or run.",
+};
 
-const objectSchema = (
-  properties: Record<string, unknown>,
-  required: readonly string[],
-  description?: string,
-) => ({
+const commandSchema = {
+  type: "string",
+  enum: [...dartyOperationNames],
+  description: "Canonical Darty operation name, such as search-company or view-report.",
+};
+
+export const dartyPiToolParameters = {
   type: "object",
-  ...(description === undefined ? {} : { description }),
   additionalProperties: false,
-  properties,
-  required: [...required],
-});
-
-export const dartyListOperationsParameters = objectSchema({}, []);
-
-export const dartyGetOperationDetailsParameters = objectSchema(
-  {
-    name: stringSchema("Canonical Darty operation name to inspect.", {
-      enum: [...dartyOperationNames],
-    }),
-  },
-  ["name"],
-);
-
-export const dartyRunOperationParameters = objectSchema(
-  {
-    name: stringSchema("Canonical Darty operation name to execute.", {
-      enum: [...dartyOperationNames],
-    }),
-    input: {
+  properties: {
+    action: actionSchema,
+    command: commandSchema,
+    inputJson: {
       type: "object",
-      description:
-        "Operation input object matching the selected operation's inputJsonSchema from darty_get_operation_details.",
       additionalProperties: true,
+      description:
+        "Command input object using the selected Darty operation's JSON input contract.",
     },
   },
-  ["name", "input"],
-);
+  required: ["action"],
+};
 
-export const dartyGetHelpParameters = objectSchema({}, []);
+export type CreateDartyPiToolOptions = {
+  toolset?: DartyPiToolset;
+};
 
-const toTextResult = (text: string, details: unknown): PiToolResult => ({
+const toTextResult = (text: string, details: DartyPiActionResult): PiToolResult => ({
   content: [{ type: "text", text }],
   details,
 });
@@ -95,239 +138,367 @@ const toTextResult = (text: string, details: unknown): PiToolResult => ({
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const formatWarningSummary = (warnings: unknown): string => {
-  if (!Array.isArray(warnings) || warnings.length === 0) {
-    return "No warnings.";
-  }
+const isDartyPiAction = (value: unknown): value is DartyPiToolAction =>
+  typeof value === "string" && dartyPiActions.includes(value as DartyPiToolAction);
 
-  const codes = warnings
-    .map((warning) => (isRecord(warning) ? warning.code : undefined))
-    .filter((code): code is string => typeof code === "string");
+const json = (value: unknown): string => JSON.stringify(value, null, 2);
 
-  return codes.length > 0
-    ? `Warnings (${warnings.length}): ${codes.join(", ")}.`
-    : `Warnings: ${warnings.length}.`;
-};
+const bulletList = (items: readonly string[]): string =>
+  items.length === 0 ? "- None." : items.map((item) => `- ${item}`).join("\n");
 
-const countArrayField = (value: unknown, field: string): number | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  const fieldValue = value[field];
-  return Array.isArray(fieldValue) ? fieldValue.length : undefined;
-};
-
-const summarizeResultPayload = (operationName: string, result: unknown): string => {
-  if (!isRecord(result)) {
-    return `Darty ${operationName} completed.`;
-  }
-
-  const resultObject = isRecord(result.result) ? result.result : undefined;
-  const itemCount = countArrayField(resultObject, "items");
-  const documentCount = countArrayField(resultObject, "documents");
-  const tocCount = countArrayField(resultObject, "toc");
-  const warningSummary = formatWarningSummary(result.warnings);
-  const counts = [
-    itemCount === undefined ? undefined : `${itemCount} item(s)`,
-    documentCount === undefined ? undefined : `${documentCount} document(s)`,
-    tocCount === undefined ? undefined : `${tocCount} toc item(s)`,
-  ].filter((value): value is string => value !== undefined);
-
-  return counts.length > 0
-    ? `Darty ${operationName} completed: ${counts.join(", ")}. ${warningSummary}`
-    : `Darty ${operationName} completed. ${warningSummary}`;
-};
-
-const createListOperationsTool = (toolset: DartyPiToolset): DartyPiToolDefinition => ({
-  name: "darty_list_operations",
-  label: "Darty List Operations",
-  description: "List canonical Darty operations available through the progressive Darty adapter.",
-  promptSnippet:
-    "Use darty_list_operations to discover available Darty disclosure-search operations before choosing one.",
-  promptGuidelines: [
-    "Use darty_list_operations when you need to discover what Darty can do.",
-    "Use canonical operation names from this tool with darty_get_operation_details and darty_run_operation.",
-  ],
-  parameters: dartyListOperationsParameters,
-  async execute() {
-    const operations = toolset.listOperations();
-    const lines = operations.map(
-      (operation) => `- ${operation.name}: ${operation.description}`,
-    );
-
-    return toTextResult(`Darty operations:\n${lines.join("\n")}`, {
-      toolset: toolset.id,
-      operations,
-    });
-  },
+const createAdapterValidationFailure = (input: {
+  code: DartyValidationFailure["code"];
+  message: string;
+  parameter: string;
+  reason: string;
+  expected?: string;
+  actual?: unknown;
+  command?: string;
+  recoveryHint?: string;
+}): DartyValidationFailure => ({
+  code: input.code,
+  message: input.message,
+  ...(input.command === undefined ? {} : { operationName: input.command }),
+  parameter: input.parameter,
+  reason: input.reason,
+  ...(input.expected === undefined ? {} : { expected: input.expected }),
+  ...("actual" in input ? { actual: input.actual } : {}),
+  ...(input.recoveryHint === undefined ? {} : { recoveryHint: input.recoveryHint }),
 });
 
-const createGetOperationDetailsTool = (
+const adapterFailureResult = (
+  action: DartyPiToolAction | "adapter_validation",
+  error: DartyValidationFailure,
+  command?: string,
+): PiToolResult =>
+  toTextResult(`Darty tool input is invalid.\n${json(error)}`, {
+    ok: false,
+    action,
+    ...(command === undefined ? {} : { command }),
+    error,
+  });
+
+const requireCommand = (
+  action: DartyPiToolAction,
+  command: unknown,
+): string | PiToolResult => {
+  if (typeof command === "string" && command.length > 0) {
+    return command;
+  }
+
+  return adapterFailureResult(
+    action,
+    createAdapterValidationFailure({
+      code: command === undefined ? "missing_parameter" : "invalid_parameter",
+      message: `Darty action ${action} requires command to be a canonical operation name.`,
+      parameter: "command",
+      reason: command === undefined ? "required" : "invalid_type",
+      expected: dartyOperationNames.join(","),
+      actual: command,
+      recoveryHint: "Call darty with action=help to see canonical command names.",
+    }),
+  );
+};
+
+const requireInputJson = (
+  action: "validate" | "run",
+  command: string,
+  inputJson: unknown,
+): Record<string, unknown> | PiToolResult => {
+  if (isRecord(inputJson)) {
+    return inputJson;
+  }
+
+  return adapterFailureResult(
+    action,
+    createAdapterValidationFailure({
+      code: inputJson === undefined ? "missing_parameter" : "invalid_parameter",
+      message: `Darty action ${action} requires inputJson to be an object.`,
+      parameter: "inputJson",
+      reason: inputJson === undefined ? "required" : "invalid_type",
+      expected: "object",
+      actual: inputJson,
+      command,
+      recoveryHint: "Call darty with action=command_help for the command's input schema and examples.",
+    }),
+    command,
+  );
+};
+
+const contentForHelp = (help: DartyToolsetHelp): string => {
+  const operations = help.operations.map(
+    (operation) => `- ${operation.name}: ${operation.description}`,
+  );
+
+  return [
+    `${help.label}: ${help.description}`,
+    "",
+    "Use as: darty(action, command?, inputJson?)",
+    "Actions:",
+    "- help: source-level help and command menu.",
+    "- command_help: one command's schema, examples, limitations, and result summary.",
+    "- validate: validate and normalize one command input without live DART access.",
+    "- run: validate, then execute one command.",
+    "",
+    "Commands:",
+    ...operations,
+    "",
+    "Limitations:",
+    bulletList(help.limitations),
+    "",
+    "Citation guidance:",
+    bulletList(help.citationGuidance),
+  ].join("\n");
+};
+
+const contentForCommandHelp = (commandHelp: DartyCommandHelp): string =>
+  [
+    `Darty command ${commandHelp.name}: ${commandHelp.description}`,
+    `Required input keys: ${commandHelp.requiredInputKeys.join(", ") || "none"}`,
+    "",
+    "Input JSON Schema:",
+    json(commandHelp.inputJsonSchema),
+    "",
+    "Examples:",
+    json(commandHelp.examples),
+    "",
+    "Limitations:",
+    bulletList(commandHelp.limitations),
+    "",
+    "Result summary:",
+    commandHelp.resultSummary,
+  ].join("\n");
+
+const contentForValidationSuccess = (
+  command: string,
+  validation: Extract<DartyValidationResult, { ok: true }>,
+): string =>
+  [
+    `Darty validation succeeded for ${command}.`,
+    "Normalized input:",
+    json(validation.input),
+  ].join("\n");
+
+const contentForValidationFailure = (
+  action: "validate" | "run",
+  command: string,
+  error: DartyValidationFailure,
+): string =>
+  [
+    `Darty ${action} input validation failed for ${command}.`,
+    "Repair feedback:",
+    json(error),
+  ].join("\n");
+
+const contentForRunSuccess = (command: string, result: unknown): string =>
+  [
+    `Darty run succeeded for ${command}.`,
+    "Use the returned references, warnings, metadata, and source URLs for citations and follow-up commands.",
+    "Result envelope:",
+    json(result),
+  ].join("\n");
+
+const contentForRunFailure = (command: string, error: DartySerializedError): string =>
+  [
+    `Darty run failed for ${command}.`,
+    "Error:",
+    json(error),
+  ].join("\n");
+
+const unknownCommandResult = (
+  action: "command_help",
+  command: string,
+): PiToolResult => {
+  const error = serializeDartyError(
+    new DartyToolsetError({
+      code: "unknown_operation",
+      message: `Unknown Darty operation: ${command}`,
+      retryable: false,
+      operationName: command,
+    }),
+  );
+
+  return toTextResult(`Unknown Darty command: ${command}\n${json(error)}`, {
+    ok: false,
+    action,
+    command,
+    error,
+  });
+};
+
+const handleHelp = (toolset: DartyPiToolset): PiToolResult => {
+  const help = toolset.help();
+
+  return toTextResult(contentForHelp(help), {
+    ok: true,
+    action: "help",
+    help,
+  });
+};
+
+const handleCommandHelp = (
   toolset: DartyPiToolset,
-): DartyPiToolDefinition => ({
-  name: "darty_get_operation_details",
-  label: "Darty Get Operation Details",
-  description:
-    "Return a Darty operation's description and JSON-schema input/result contracts.",
-  promptSnippet:
-    "Use darty_get_operation_details with a canonical Darty operation name before darty_run_operation when you need the input schema.",
-  promptGuidelines: [
-    "Call darty_get_operation_details before darty_run_operation when you are unsure about required fields or allowed values.",
-    "Pass the exact name field returned by darty_list_operations.",
-  ],
-  parameters: dartyGetOperationDetailsParameters,
-  async execute(_toolCallId, params) {
-    const name = params.name;
+  command: string,
+): PiToolResult => {
+  const commandHelp = toolset.getCommandHelp(command);
 
-    if (typeof name !== "string") {
-      return toTextResult("Darty operation name must be a string.", {
-        ok: false,
-        error: {
-          name: "DartyPiAdapterError",
-          code: "invalid_parameter",
-          message: "Darty operation name must be a string.",
-          parameter: "name",
-        },
-      });
-    }
-
-    const operation = toolset.getOperation(name);
-
-    if (operation === undefined) {
-      const error = serializeDartyError(
-        new DartyToolsetError({
-          code: "unknown_operation",
-          message: `Unknown Darty operation: ${name}`,
-          retryable: false,
-          operationName: name,
-        }),
-      );
-
-      return toTextResult(`Unknown Darty operation: ${name}`, {
-        ok: false,
-        error,
-      });
-    }
-
-    return toTextResult(
-      `Darty operation ${operation.name}: ${operation.description}\nInput schema and result schema are available in details.`,
-      {
-        ok: true,
-        operation,
-      },
-    );
-  },
-});
-
-const createRunOperationTool = (toolset: DartyPiToolset): DartyPiToolDefinition => ({
-  name: "darty_run_operation",
-  label: "Darty Run Operation",
-  description:
-    "Execute one canonical Darty operation and return concise text plus the full structured result in details.",
-  promptSnippet:
-    "Use darty_run_operation to execute a Darty operation after choosing the canonical operation name and forming valid input.",
-  promptGuidelines: [
-    "Use darty_run_operation only with canonical operation names from darty_list_operations.",
-    "Inspect schemas with darty_get_operation_details when required fields or allowed values are unclear.",
-    "Read full DART references, warnings, metadata, and typed errors from details; normal text is intentionally concise.",
-  ],
-  parameters: dartyRunOperationParameters,
-  async execute(_toolCallId, params, signal) {
-    const name = params.name;
-    const input = params.input;
-
-    if (typeof name !== "string" || !isRecord(input)) {
-      return toTextResult("Darty run requires string name and object input.", {
-        ok: false,
-        error: {
-          name: "DartyPiAdapterError",
-          code: "invalid_parameter",
-          message: "Darty run requires string name and object input.",
-        },
-      });
-    }
-
-    try {
-      const result = await toolset.execute(
-        name,
-        input,
-        signal === undefined ? undefined : { signal },
-      );
-
-      return toTextResult(summarizeResultPayload(name, result), {
-        ok: true,
-        operationName: name,
-        result,
-      });
-    } catch (error) {
-      const serialized = toolset.serializeError?.(error) ?? serializeDartyError(error);
-
-      return toTextResult(`Darty ${name} failed: ${serialized.message}`, {
-        ok: false,
-        operationName: name,
-        error: serialized,
-      });
-    }
-  },
-});
-
-const createGetHelpTool = (toolset: DartyPiToolset): DartyPiToolDefinition => ({
-  name: "darty_get_help",
-  label: "Darty Help",
-  description: "Explain the progressive Darty Pi tools and how to use them.",
-  promptSnippet:
-    "Use darty_get_help when you need guidance on the progressive Darty Pi tools.",
-  promptGuidelines: [
-    "Use darty_get_help for adapter usage help, not for running DART searches.",
-  ],
-  parameters: dartyGetHelpParameters,
-  async execute() {
-    return toTextResult(
-      [
-        "Darty exposes DART capabilities progressively:",
-        "1. darty_list_operations — discover canonical operations.",
-        "2. darty_get_operation_details — inspect a chosen operation's schemas.",
-        "3. darty_run_operation — execute the operation with schema-valid input.",
-        "Normal text is concise; full result envelopes, references, warnings, metadata, and typed errors are in details.",
-      ].join("\n"),
-      {
-        toolset: toolset.id,
-        operations: toolset.listOperations(),
-      },
-    );
-  },
-});
-
-export type CreateDartyPiToolsOptions = {
-  readonly toolset?: DartyPiToolset;
-  readonly includeHelpTool?: boolean;
-};
-
-export const createDartyPiTools = (
-  options: CreateDartyPiToolsOptions = {},
-): readonly DartyPiToolDefinition[] => {
-  const toolset = options.toolset ?? createDartyToolset();
-  const tools = [
-    createListOperationsTool(toolset),
-    createGetOperationDetailsTool(toolset),
-    createRunOperationTool(toolset),
-  ];
-
-  return options.includeHelpTool === false
-    ? tools
-    : [...tools, createGetHelpTool(toolset)];
-};
-
-export const registerDartyPiTools = (
-  pi: DartyPiExtensionAPI,
-  options: CreateDartyPiToolsOptions = {},
-): void => {
-  for (const tool of createDartyPiTools(options)) {
-    pi.registerTool(tool);
+  if (commandHelp === undefined) {
+    return unknownCommandResult("command_help", command);
   }
+
+  return toTextResult(contentForCommandHelp(commandHelp), {
+    ok: true,
+    action: "command_help",
+    command,
+    commandHelp,
+  });
+};
+
+const handleValidate = (
+  toolset: DartyPiToolset,
+  command: string,
+  inputJson: Record<string, unknown>,
+): PiToolResult => {
+  const validation = toolset.validateInput(command, inputJson);
+
+  if (!validation.ok) {
+    return toTextResult(contentForValidationFailure("validate", command, validation.error), {
+      ok: false,
+      action: "validate",
+      command,
+      error: validation.error,
+    });
+  }
+
+  return toTextResult(contentForValidationSuccess(command, validation), {
+    ok: true,
+    action: "validate",
+    command,
+    validation,
+  });
+};
+
+const handleRun = async (
+  toolset: DartyPiToolset,
+  command: string,
+  inputJson: Record<string, unknown>,
+  signal: AbortSignal | undefined,
+): Promise<PiToolResult> => {
+  const validation = toolset.validateInput(command, inputJson);
+
+  if (!validation.ok) {
+    return toTextResult(contentForValidationFailure("run", command, validation.error), {
+      ok: false,
+      action: "run",
+      command,
+      error: validation.error,
+    });
+  }
+
+  try {
+    const result = await toolset.execute(
+      command,
+      validation.input,
+      signal === undefined ? undefined : { signal },
+    );
+
+    return toTextResult(contentForRunSuccess(command, result), {
+      ok: true,
+      action: "run",
+      command,
+      normalizedInput: validation.input,
+      result,
+    });
+  } catch (error) {
+    const serialized = toolset.serializeError?.(error) ?? serializeDartyError(error);
+
+    return toTextResult(contentForRunFailure(command, serialized), {
+      ok: false,
+      action: "run",
+      command,
+      error: serialized,
+    });
+  }
+};
+
+export const createDartyPiTool = (
+  options: CreateDartyPiToolOptions = {},
+): DartyPiToolDefinition => {
+  const toolset = options.toolset ?? createDartyToolset();
+
+  return {
+    name: "darty",
+    label: "Darty",
+    description:
+      "One read-only DART disclosure source tool. Use help or command_help to inspect commands, validate to normalize input, and run to execute with references, warnings, and metadata.",
+    promptSnippet:
+      "Use darty(action, command?, inputJson?) for Korean DART disclosure search, company lookup, filing lists, disclosure type lookup, RSS, and report viewing.",
+    promptGuidelines: [
+      "Use darty with action=help to discover available DART commands before guessing command names.",
+      "Use darty with action=command_help when required keys, allowed values, examples, or result shape are unclear.",
+      "Use darty with action=validate to repair or normalize command input without live DART access.",
+      "Use darty with action=run only after forming command input; Darty validates before execution and returns references, warnings, metadata, and source URLs for citations.",
+    ],
+    parameters: dartyPiToolParameters,
+    async execute(_toolCallId, params, signal) {
+      if (!isRecord(params) || !isDartyPiAction(params.action)) {
+        return adapterFailureResult(
+          "adapter_validation",
+          createAdapterValidationFailure({
+            code: "invalid_parameter",
+            message: "Darty action must be one of help, command_help, validate, or run.",
+            parameter: "action",
+            reason: !isRecord(params) ? "invalid_type" : "invalid_enum",
+            expected: dartyPiActions.join(","),
+            actual: isRecord(params) ? params.action : params,
+            recoveryHint: "Call darty with action=help for the command menu.",
+          }),
+        );
+      }
+
+      switch (params.action) {
+        case "help":
+          return handleHelp(toolset);
+        case "command_help": {
+          const command = requireCommand(params.action, params.command);
+          return typeof command === "string"
+            ? handleCommandHelp(toolset, command)
+            : command;
+        }
+        case "validate": {
+          const command = requireCommand(params.action, params.command);
+          if (typeof command !== "string") {
+            return command;
+          }
+
+          const inputJson = requireInputJson(params.action, command, params.inputJson);
+          return isRecord(inputJson)
+            ? handleValidate(toolset, command, inputJson)
+            : inputJson;
+        }
+        case "run": {
+          const command = requireCommand(params.action, params.command);
+          if (typeof command !== "string") {
+            return command;
+          }
+
+          const inputJson = requireInputJson(params.action, command, params.inputJson);
+          return isRecord(inputJson)
+            ? handleRun(toolset, command, inputJson, signal)
+            : inputJson;
+        }
+      }
+    },
+  };
+};
+
+export const registerDartyPiTool = (
+  pi: DartyPiExtensionAPI,
+  options: CreateDartyPiToolOptions = {},
+): void => {
+  pi.registerTool(createDartyPiTool(options));
 };
 
 export default function dartyPiExtension(pi: DartyPiExtensionAPI): void {
-  registerDartyPiTools(pi);
+  registerDartyPiTool(pi);
 }

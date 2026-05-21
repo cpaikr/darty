@@ -15,7 +15,7 @@ search/detail, DART company RSS, and `dsaf001` report viewing. The
 
 The design goal is to keep the core reusable across transports. The active
 transports are the CLI, the neutral `src/toolset.ts` package API, and the
-progressive Pi adapter in `src/pi.ts`; future MCP, SDK, or other adapters should
+single-tool Pi adapter in `src/pi.ts`; future MCP, SDK, or other adapters should
 bind to the same capability contracts and app composition layer instead of
 copying DART-specific logic.
 
@@ -143,8 +143,9 @@ graph TD
   network-free input validation/normalization, structural error serialization,
   executes operations by name, and preserves capability result envelopes and
   typed failures.
-- **`src/pi.ts`** — Pi progressive adapter over the neutral toolset. Registers
-  discovery/detail/run tools rather than one Pi tool per Darty operation.
+- **`src/pi.ts`** — Pi adapter over the neutral toolset. Registers one
+  `darty(action, command?, inputJson?)` tool that exposes help, command help,
+  validation, and execution actions.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
   flow. Defines semantic inputs, success result shapes, typed failures, and
   execution logic.

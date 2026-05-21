@@ -1,2 +1,2 @@
 export { default } from "./pi.ts";
-export { registerDartyPiTools } from "./pi.ts";
+export { createDartyPiTool, registerDartyPiTool } from "./pi.ts";

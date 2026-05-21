@@ -102,16 +102,24 @@ Pi에서는 다음처럼 설치할 수 있습니다.
 pi install npm:@sjunepark/darty
 ```
 
-Pi 어댑터는 Darty 작업마다 도구를 모두 펼쳐 노출하지 않고, 점진적으로 탐색하고 실행하는 도구를 제공합니다.
+Pi 어댑터는 하나의 도구만 노출합니다.
 
-- `darty_list_operations`
-- `darty_get_operation_details`
-- `darty_run_operation`
-- `darty_get_help`
+```ts
+import { createDartyPiTool } from "@sjunepark/darty/pi";
 
-이 어댑터는 내부에서 `createDartyToolset()`을 감싸며, 일반 도구 응답은 간결하게 유지합니다. 전체 DART 응답 객체, 참조 정보, 경고, 메타데이터, 타입화된 오류는 도구 세부 정보에 보존합니다.
+const dartyTool = createDartyPiTool();
+```
 
-Pi 어댑터는 아직 Pi 런타임/개발 타입을 직접 가져오지 않는 구조적 타입 방식입니다. 패키지 기본 동작 테스트는 Pi를 필수 의존성으로 만들지 않고 생성된 도구 형태와 하위 경로 내보내기 동작을 확인합니다.
+Pi SDK 호스트는 이 도구를 그대로 전달할 수 있습니다.
+
+```ts
+await createAgentSession({
+  customTools: [dartyTool],
+  tools: ["darty"],
+});
+```
+
+모델이 보는 호출 형태는 `darty(action, command?, inputJson?)`입니다. 지원 action은 `help`, `command_help`, `validate`, `run`이며, command는 표준 Darty 작업 이름을 사용합니다. 이 어댑터는 내부에서 `createDartyToolset()`을 감싸며, 모델용 content에 도움말, 검증 피드백, 실행 결과, 참조, 경고, 메타데이터를 포함하고 전체 구조화 결과는 details에 보존합니다.
 
 ## 주의사항
 

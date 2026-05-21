@@ -2,6 +2,7 @@
 
 ## Now
 
+- Add license for npm
 - Review descriptions and schemas after eval failures.
   - Use eval transcripts to refine descriptions and schemas.
   - Look for wrong tool selection.

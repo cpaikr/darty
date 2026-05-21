@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createDartyPiTools, registerDartyPiTools } from "./pi.ts";
+import { createDartyPiTool, registerDartyPiTool } from "./pi.ts";
 import { createDartyToolset, type DartyOperationName } from "./toolset.ts";
 
 const createMockToolset = () =>
@@ -29,81 +29,170 @@ const createMockToolset = () =>
     ],
   });
 
-describe("Darty Pi progressive adapter", () => {
-  test("registers progressive tools with expected names and schemas", () => {
+describe("Darty Pi single-tool adapter", () => {
+  test("registers only the single darty tool by default", () => {
     const registered: unknown[] = [];
 
-    registerDartyPiTools(
+    registerDartyPiTool(
       { registerTool: (tool) => registered.push(tool) },
       { toolset: createMockToolset() },
     );
 
-    expect(
-      registered.map((tool) => (tool as { name: string }).name),
-    ).toEqual([
-      "darty_list_operations",
-      "darty_get_operation_details",
-      "darty_run_operation",
-      "darty_get_help",
+    expect(registered.map((tool) => (tool as { name: string }).name)).toEqual([
+      "darty",
     ]);
 
-    const detailTool = registered.find(
-      (tool) => (tool as { name: string }).name === "darty_get_operation_details",
-    ) as { parameters: unknown; promptSnippet: string; promptGuidelines: readonly string[] };
-    const runTool = registered.find(
-      (tool) => (tool as { name: string }).name === "darty_run_operation",
-    ) as { parameters: unknown; promptSnippet: string; promptGuidelines: readonly string[] };
-
-    expect(detailTool.parameters).toMatchObject({
+    const [tool] = registered as ReturnType<typeof createDartyPiTool>[];
+    expect(tool).toBeDefined();
+    expect(tool!.parameters).toMatchObject({
       type: "object",
       additionalProperties: false,
-      required: ["name"],
-      properties: { name: { enum: expect.arrayContaining(["disclosure-types"]) } },
+      required: ["action"],
+      properties: {
+        action: { enum: ["help", "command_help", "validate", "run"] },
+        command: { enum: expect.arrayContaining(["disclosure-types"]) },
+        inputJson: { type: "object" },
+      },
     });
-    expect(runTool.parameters).toMatchObject({
-      type: "object",
-      additionalProperties: false,
-      required: ["name", "input"],
-    });
-    expect(detailTool.promptSnippet).toContain("darty_get_operation_details");
-    expect(runTool.promptGuidelines.join("\n")).toContain("darty_run_operation");
+    expect(tool!.promptGuidelines.join("\n")).toContain("action=run");
   });
 
-  test("lists, describes, and runs one operation", async () => {
-    const tools = createDartyPiTools({ toolset: createMockToolset(), includeHelpTool: false });
-    const list = tools.find((tool) => tool.name === "darty_list_operations");
-    const details = tools.find((tool) => tool.name === "darty_get_operation_details");
-    const run = tools.find((tool) => tool.name === "darty_run_operation");
+  test("returns source-level help and command names in model-facing content", async () => {
+    const tool = createDartyPiTool({ toolset: createMockToolset() });
 
-    expect(list).toBeDefined();
-    expect(details).toBeDefined();
-    expect(run).toBeDefined();
-
-    await expect(list!.execute("call-1", {})).resolves.toMatchObject({
-      content: [{ type: "text", text: expect.stringContaining("disclosure-types") }],
-      details: { operations: [{ name: "disclosure-types" }] },
-    });
-
-    await expect(
-      details!.execute("call-2", { name: "disclosure-types" }),
-    ).resolves.toMatchObject({
-      content: [{ type: "text", text: expect.stringContaining("Input schema") }],
+    await expect(tool.execute("call-1", { action: "help" })).resolves.toMatchObject({
+      content: [
+        {
+          type: "text",
+          text: expect.stringContaining("disclosure-types"),
+        },
+      ],
       details: {
         ok: true,
-        operation: {
-          name: "disclosure-types",
+        action: "help",
+        help: { operations: [{ name: "disclosure-types" }] },
+      },
+    });
+  });
+
+  test("returns command help with schema, examples, limitations, and result summary", async () => {
+    const tool = createDartyPiTool({ toolset: createMockToolset() });
+
+    await expect(
+      tool.execute("call-1", { action: "command_help", command: "disclosure-types" }),
+    ).resolves.toMatchObject({
+      content: [
+        {
+          type: "text",
+          text: expect.stringContaining("Input JSON Schema"),
+        },
+      ],
+      details: {
+        ok: true,
+        action: "command_help",
+        command: "disclosure-types",
+        commandHelp: {
           inputJsonSchema: { properties: { query: { type: "string" } } },
+          examples: expect.any(Array),
+          resultSummary: expect.any(String),
         },
       },
     });
+  });
+
+  test("validates and normalizes without live DART execution", async () => {
+    let executed = false;
+    const tool = createDartyPiTool({
+      toolset: createDartyToolset({
+        operations: [
+          {
+            name: "disclosure-types" as DartyOperationName,
+            label: "Mock disclosure types",
+            description: "Mock disclosure type lookup.",
+            operation: {
+              name: "disclosure-types",
+              inputJsonSchema: { type: "object" },
+              resultJsonSchema: { type: "object" },
+              execute: async () => {
+                executed = true;
+                return {};
+              },
+            },
+          },
+        ],
+      }),
+    });
 
     await expect(
-      run!.execute("call-3", { name: "disclosure-types", input: { query: "사업보고서" } }),
+      tool.execute("call-1", {
+        action: "validate",
+        command: "disclosure-types",
+        inputJson: { query: "사업보고서" },
+      }),
     ).resolves.toMatchObject({
-      content: [{ type: "text", text: expect.stringContaining("1 item") }],
+      content: [{ type: "text", text: expect.stringContaining("Normalized input") }],
       details: {
         ok: true,
-        operationName: "disclosure-types",
+        action: "validate",
+        command: "disclosure-types",
+        validation: { input: { query: "사업보고서" } },
+      },
+    });
+    expect(executed).toBe(false);
+  });
+
+  test("returns Darty-owned validation failure fields", async () => {
+    const tool = createDartyPiTool({ toolset: createMockToolset() });
+
+    await expect(
+      tool.execute("call-1", {
+        action: "validate",
+        command: "search-company",
+        inputJson: {},
+      }),
+    ).resolves.toMatchObject({
+      content: [
+        {
+          type: "text",
+          text: expect.stringContaining("Repair feedback"),
+        },
+      ],
+      details: {
+        ok: false,
+        action: "validate",
+        command: "search-company",
+        error: {
+          code: "invalid_request",
+          parameter: "name",
+          reason: "unknown_operation",
+          operationName: "search-company",
+          recoveryHint: expect.stringContaining("canonical"),
+        },
+      },
+    });
+  });
+
+  test("validates before run, executes normalized input, and returns full envelope in content and details", async () => {
+    const tool = createDartyPiTool({ toolset: createMockToolset() });
+
+    const result = await tool.execute("call-1", {
+      action: "run",
+      command: "disclosure-types",
+      inputJson: { query: "사업보고서" },
+    });
+
+    expect(result).toMatchObject({
+      content: [
+        {
+          type: "text",
+          text: expect.stringContaining("mock://dart/disclosure-types"),
+        },
+      ],
+      details: {
+        ok: true,
+        action: "run",
+        command: "disclosure-types",
+        normalizedInput: { query: "사업보고서" },
         result: {
           result: { request: { query: "사업보고서" } },
           references: { sourceUrl: "mock://dart/disclosure-types" },
@@ -116,60 +205,57 @@ describe("Darty Pi progressive adapter", () => {
   test("passes Pi abort signals into toolset execution", async () => {
     const controller = new AbortController();
     let receivedSignal: AbortSignal | undefined;
-    const [run] = createDartyPiTools({
-      includeHelpTool: false,
+    const tool = createDartyPiTool({
       toolset: {
         id: "darty",
         label: "Darty",
         description: "Mock Darty",
+        help: () => ({
+          id: "darty",
+          label: "Darty",
+          description: "Mock Darty",
+          usage: "mock",
+          operations: [],
+          limitations: [],
+          citationGuidance: [],
+        }),
         listOperations: () => [],
-        getOperation: () => undefined,
+        getCommandHelp: () => undefined,
+        validateInput: (_name, input) => ({ ok: true, input: input as Record<string, unknown> }),
         execute: async (_name, _input, context) => {
           receivedSignal = context?.signal;
           return { result: {}, metadata: {}, references: {}, warnings: [] };
         },
       },
-    }).filter((tool) => tool.name === "darty_run_operation");
+    });
 
-    await run!.execute(
+    await tool.execute(
       "call-1",
-      { name: "disclosure-types", input: {} },
+      { action: "run", command: "disclosure-types", inputJson: {} },
       controller.signal,
     );
 
     expect(receivedSignal).toBe(controller.signal);
   });
 
-  test("returns typed error details from the progressive run tool", async () => {
-    const run = createDartyPiTools({ toolset: createMockToolset(), includeHelpTool: false }).find(
-      (tool) => tool.name === "darty_run_operation",
-    );
-
-    await expect(
-      run!.execute("call-1", { name: "search-body", input: {} }),
-    ).resolves.toMatchObject({
-      details: {
-        ok: false,
-        operationName: "search-body",
-        error: {
-          name: "DartyToolsetError",
-          code: "unknown_operation",
-          retryable: false,
-          operationName: "search-body",
-        },
-      },
-    });
-  });
-
-  test("preserves structural error fields without relying on class identity", async () => {
-    const run = createDartyPiTools({
-      includeHelpTool: false,
+  test("preserves structural execution error fields", async () => {
+    const tool = createDartyPiTool({
       toolset: {
         id: "darty",
         label: "Darty",
         description: "Mock Darty",
+        help: () => ({
+          id: "darty",
+          label: "Darty",
+          description: "Mock Darty",
+          usage: "mock",
+          operations: [],
+          limitations: [],
+          citationGuidance: [],
+        }),
         listOperations: () => [],
-        getOperation: () => undefined,
+        getCommandHelp: () => undefined,
+        validateInput: (_name, input) => ({ ok: true, input: input as Record<string, unknown> }),
         execute: async () => {
           const error = new Error("Mock operation failed") as Error & {
             code: string;
@@ -188,13 +274,14 @@ describe("Darty Pi progressive adapter", () => {
           throw error;
         },
       },
-    }).find((tool) => tool.name === "darty_run_operation");
+    });
 
     await expect(
-      run!.execute("call-1", { name: "search-body", input: {} }),
+      tool.execute("call-1", { action: "run", command: "search-body", inputJson: {} }),
     ).resolves.toMatchObject({
       details: {
         ok: false,
+        action: "run",
         error: {
           code: "mock_failure",
           operationName: "search-body",

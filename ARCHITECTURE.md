@@ -10,7 +10,7 @@ This repo now has two layers:
 The CLI is not the real app. The capability layer is: a semantic request
 contract, a provider interface, and an execution path that normalizes errors
 and shapes results. The active public surfaces are the CLI, the neutral
-`@sjunepark/darty/toolset` package API, and the progressive
+`@sjunepark/darty/toolset` package API, and the single-tool
 `@sjunepark/darty/pi` adapter. The core stays transport-neutral so future MCP,
 SDK, web-chat, or other adapters can bind to the same capabilities without
 duplicating DART logic.
@@ -133,7 +133,7 @@ argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/disclosure-types.ts
 agent host -> @sjunepark/darty/toolset -> src/toolset.ts
            -> app/<operation>.ts -> capabilities/<operation>/execute.ts
 
-Pi -> @sjunepark/darty/pi -> src/pi.ts progressive tools
+Pi -> @sjunepark/darty/pi -> src/pi.ts single darty(action, command?, inputJson?) tool
    -> @sjunepark/darty/toolset
 ```
 

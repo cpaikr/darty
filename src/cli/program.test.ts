@@ -1,23 +1,23 @@
 import { describe, expect, test } from "bun:test";
 
-import { createDartyPiTools } from "../pi.ts";
+import { createDartyPiTool } from "../pi.ts";
 import { createDartyToolset, dartyOperationNames } from "../toolset.ts";
 import { createDartyCliProgram } from "./program.ts";
 
 const sorted = (values: readonly string[]): string[] => [...values].sort();
 
 const getPiOperationNames = async (): Promise<readonly string[]> => {
-  const listTool = createDartyPiTools().find(
-    (tool) => tool.name === "darty_list_operations",
-  );
+  const dartyTool = createDartyPiTool();
 
-  const result = await listTool?.execute("operation-registry-test", {});
+  const result = await dartyTool.execute("operation-registry-test", {
+    action: "help",
+  });
   const details = result?.details as
-    | { readonly operations?: readonly { readonly name?: unknown }[] }
+    | { readonly help?: { readonly operations?: readonly { readonly name?: unknown }[] } }
     | undefined;
 
   return (
-    details?.operations
+    details?.help?.operations
       ?.map((operation) => operation.name)
       .filter((name): name is string => typeof name === "string") ?? []
   );

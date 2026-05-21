@@ -104,7 +104,7 @@ describe("packed package exports", () => {
       `import assert from "node:assert/strict";\n` +
         `import { spawnSync } from "node:child_process";\n` +
         `import { createDartyToolset, DartyToolsetError } from "@sjunepark/darty/toolset";\n` +
-        `import { createDartyPiTools } from "@sjunepark/darty/pi";\n` +
+        `import { createDartyPiTool } from "@sjunepark/darty/pi";\n` +
         `const toolset = createDartyToolset();\n` +
         `try {\n` +
         `  await toolset.execute("not-a-darty-operation", {});\n` +
@@ -112,9 +112,9 @@ describe("packed package exports", () => {
         `} catch (error) {\n` +
         `  assert(error instanceof DartyToolsetError);\n` +
         `}\n` +
-        `const run = createDartyPiTools({ toolset, includeHelpTool: false }).find((tool) => tool.name === "darty_run_operation");\n` +
-        `assert(run);\n` +
-        `const result = await run.execute("call-1", { name: "not-a-darty-operation", input: {} });\n` +
+        `const darty = createDartyPiTool({ toolset });\n` +
+        `assert.equal(darty.name, "darty");\n` +
+        `const result = await darty.execute("call-1", { action: "run", command: "not-a-darty-operation", inputJson: {} });\n` +
         `assert.equal(result.details.error.operationName, "not-a-darty-operation");\n` +
         `const help = spawnSync("./node_modules/.bin/darty", ["--help"], { cwd: process.cwd(), encoding: "utf8" });\n` +
         `assert.equal(help.status, 0, help.stderr);\n` +
