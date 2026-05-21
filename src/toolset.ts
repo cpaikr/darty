@@ -102,11 +102,6 @@ export type DartyValidationRecoveryAction =
       readonly operationName: DartyOperationName;
     }
   | {
-      readonly kind: "retry_with_input";
-      readonly operationName: DartyOperationName;
-      readonly inputPatch?: Record<string, unknown>;
-    }
-  | {
       readonly kind: "inspect_tool_help";
     };
 
