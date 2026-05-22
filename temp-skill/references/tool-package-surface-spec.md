@@ -8,13 +8,13 @@ This spec defines a project-neutral shape for packages that expose deterministic
 2. a runtime-neutral TypeScript toolset SDK,
 3. a Pi tool adapter/extension.
 
-The package should feel usable by humans, scripts, Pi agents, web-agent hosts, and future adapters without copying capability logic.
+The package should feel usable by humans, scripts, Pi agents, web-agent hosts, and future adapters without copying capability logic. Compatibility is defined at the package surface and outer output-envelope level; each package still defines its own domain operations and `result` payload schemas.
 
 ## Non-goals
 
 - This is not an MCP spec. Add MCP only when a target runtime needs it.
 - This is not a marketplace/plugin system.
-- This does not prescribe one domain result payload for every tool family.
+- This does not prescribe one domain `result` payload for every tool family.
 - This does not require every host adapter to expose the exact same parameter encoding.
 
 ## Required package surfaces
@@ -60,6 +60,26 @@ source/domain adapters -> capability contracts -> neutral toolset -> host adapte
 
 The neutral toolset is the public contract. Adapters parse, render, and translate, but should not own domain behavior, domain validation copy, reusable agent guidance, or source-specific recovery guidance.
 
+## Compatibility boundary
+
+The compatibility contract is the shared shell that hosts and agents can rely on across unrelated packages:
+
+- `package.json` public surfaces,
+- toolset identity, help, operation discovery, operation specs, validation, execution, and error serialization methods,
+- validation result and serialized error shapes,
+- operation spec fields, including each operation's own input and result schemas,
+- single-tool action input shape for Pi and similar hosts,
+- host-facing action output shape: model-readable `content` plus structured `details`.
+
+The domain contract is intentionally project-specific:
+
+- the specific set of canonical operation names,
+- operation input fields,
+- operation result payloads under `result`,
+- references, metadata, warnings, and source-specific fields inside those operation results.
+
+A greenfield project is compatible when it implements the shared shell and documents its own payloads through operation schemas. It does not need to copy another package's operations or payload fields.
+
 ## Neutral toolset contract
 
 The `./toolset` export should provide a factory, normally named `create<Name>Toolset()`.
@@ -95,8 +115,10 @@ Required behavior:
 - `listOperations()` is network-free and returns canonical operation summaries.
 - `getCommandHelp(name)` is network-free and returns the operation contract.
 - `validateInput(name, input)` is network-free and normalizes valid input when possible.
-- `execute(name, input, context)` runs one operation and respects `context.signal`.
+- `execute(name, input, context)` runs one operation, respects `context.signal`, and returns the operation's domain payload as described by that operation's `resultJsonSchema`.
 - `serializeError(error)` preserves structured error fields across package/host boundaries.
+
+`execute()` intentionally returns `unknown` at the common interface because operation payloads differ by project and command. Cross-project compatibility comes from operation discovery, schemas, validation, serialized errors, and host action envelopes, not from forcing one global domain payload.
 
 ## Operation spec contract
 
@@ -170,6 +192,65 @@ export type SerializedError = {
 ```
 
 Hosts should preserve these fields instead of rephrasing them into unstructured prose.
+
+## Host-facing action output contract
+
+Pi and similar single-tool host adapters should expose a stable outer result shape even though the domain payload varies by operation:
+
+```ts
+type TextContent = {
+  readonly type: "text";
+  readonly text: string;
+};
+
+type HostToolResult = {
+  readonly content: readonly TextContent[];
+  readonly details: SingleToolActionResult;
+};
+
+type SingleToolActionResult =
+  | {
+      readonly ok: true;
+      readonly action: "help";
+      readonly help: ToolsetHelp;
+    }
+  | {
+      readonly ok: true;
+      readonly action: "command_help";
+      readonly command: string;
+      readonly commandHelp: OperationSpec;
+    }
+  | {
+      readonly ok: true;
+      readonly action: "validate";
+      readonly command: string;
+      readonly validation: Extract<ValidationResult, { ok: true }>;
+    }
+  | {
+      readonly ok: true;
+      readonly action: "run";
+      readonly command: string;
+      readonly normalizedInput: Record<string, unknown>;
+      readonly result: unknown;
+    }
+  | {
+      readonly ok: false;
+      readonly action: "help" | "command_help" | "validate" | "run" | "adapter_validation";
+      readonly command?: string;
+      readonly error: ValidationFailure | SerializedError;
+    };
+```
+
+Rules:
+
+- `content` is the model-readable presentation for the host.
+- `details` is the machine-readable compatibility envelope.
+- `details.ok`, `details.action`, `details.command`, and `details.error` have stable meaning across packages.
+- `details.result` is the only operation-specific field in the shared `run` success envelope; its schema is the selected operation's `resultJsonSchema`.
+- `details.normalizedInput` should contain the validated/normalized input actually sent to `execute()`.
+- Adapter or protocol failures that happen before the neutral toolset can validate input should use `action: "adapter_validation"` and a `ValidationFailure`-compatible error.
+
+This contract is what lets greenfield packages expose compatible outputs without sharing another package's domain model.
 
 ## Message ownership
 
@@ -263,12 +344,12 @@ The Pi adapter should expose one package-level tool for the toolset unless there
 
 Required behavior:
 
-- `help` returns toolset-level guidance and operation summaries.
-- `command_help` returns one operation spec.
-- `validate` runs neutral validation without executing the operation.
-- `run` validates, executes, and preserves the full structured result.
+- `help` returns toolset-level guidance and operation summaries in the standard action output envelope.
+- `command_help` returns one operation spec in the standard action output envelope.
+- `validate` runs neutral validation without executing the operation and returns the standard action output envelope.
+- `run` validates, executes, and returns the standard action output envelope with the operation payload under `details.result`.
 - Result content should be model-readable text, preferably formatted by reusable neutral helpers when another host can share it.
-- Full structured details should be preserved in a `details` field or equivalent host-specific structured channel.
+- Full structured details must be preserved in `details` or an equivalent host-specific structured channel that keeps the same action-result fields.
 - Parameters should include an action enum, a command enum using canonical operation names, and an `inputJson` object.
 
 Package-level Pi extension metadata should point to a built extension file that registers the Pi tool.
@@ -310,7 +391,8 @@ Good automated checks:
 - Example inputs pass `validateInput()`.
 - The Pi factory imports and returns one valid tool definition.
 - Pi parameters expose `help`, `command_help`, `validate`, and `run` actions.
-- Pi `help` and `command_help` calls return text content plus structured details.
+- Pi `help`, `command_help`, and `validate` calls return text content plus structured action details.
+- Pi action details use stable `ok`, `action`, `command`, `error`, `validation`, and `result` fields as applicable.
 - CLI help runs, and invalid CLI usage returns a JSON failure envelope.
 
 Human review is still required for:

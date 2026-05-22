@@ -203,6 +203,57 @@ const expectValidationFailureShape = (reporter, value, label) => {
   }
 };
 
+const expectPiToolResultShape = (reporter, value, label) => {
+  reporter.check(isRecord(value), `${label} returns object`);
+  if (!isRecord(value)) return undefined;
+
+  reporter.check(Array.isArray(value.content), `${label} has content array`);
+  if (Array.isArray(value.content)) {
+    reporter.check(
+      value.content.every(
+        (item) =>
+          isRecord(item) && item.type === "text" && typeof item.text === "string",
+      ),
+      `${label} content entries are text blocks`,
+    );
+  }
+
+  reporter.check(isRecord(value.details), `${label} preserves details object`);
+  return isRecord(value.details) ? value.details : undefined;
+};
+
+const expectPiActionDetailsShape = (reporter, details, label, expected) => {
+  reporter.check(isRecord(details), `${label} is object`);
+  if (!isRecord(details)) return;
+
+  reporter.check(details.ok === expected.ok, `${label} has ok:${expected.ok}`);
+  reporter.check(
+    details.action === expected.action,
+    `${label} action is ${expected.action}`,
+  );
+
+  if (expected.command !== undefined) {
+    reporter.check(
+      details.command === expected.command,
+      `${label} command is ${expected.command}`,
+    );
+  }
+
+  if (expected.field !== undefined) {
+    reporter.check(expected.field in details, `${label} includes ${expected.field}`);
+  }
+
+  if (expected.ok === false) {
+    reporter.check(isRecord(details.error), `${label} includes error object`);
+    if (isRecord(details.error)) {
+      reporter.check(
+        typeof details.error.message === "string",
+        `${label} error has message`,
+      );
+    }
+  }
+};
+
 const validateOperationSpec = (reporter, spec, name) => {
   reporter.check(isRecord(spec), `operation ${name} help returns an object`);
   if (!isRecord(spec)) return;
@@ -469,12 +520,16 @@ const validatePi = async (reporter, piModule, args, toolset) => {
     const helpResult = await piTool.execute("validate-tool-surface", {
       action: "help",
     });
-    reporter.check(isRecord(helpResult), "Pi help action returns object");
-    reporter.check(
-      Array.isArray(helpResult?.content),
-      "Pi help action returns content array",
+    const helpDetails = expectPiToolResultShape(
+      reporter,
+      helpResult,
+      "Pi help action",
     );
-    reporter.check("details" in helpResult, "Pi help action preserves details");
+    expectPiActionDetailsShape(reporter, helpDetails, "Pi help details", {
+      ok: true,
+      action: "help",
+      field: "help",
+    });
 
     if (toolset !== undefined && hasFunction(toolset, "listOperations")) {
       const [firstOperation] = toolset.listOperations();
@@ -483,20 +538,87 @@ const validatePi = async (reporter, piModule, args, toolset) => {
           action: "command_help",
           command: firstOperation.name,
         });
-        reporter.check(
-          isRecord(commandHelp),
-          "Pi command_help action returns object",
+        const commandHelpDetails = expectPiToolResultShape(
+          reporter,
+          commandHelp,
+          "Pi command_help action",
         );
-        reporter.check(
-          Array.isArray(commandHelp?.content),
-          "Pi command_help action returns content array",
+        expectPiActionDetailsShape(
+          reporter,
+          commandHelpDetails,
+          "Pi command_help details",
+          {
+            ok: true,
+            action: "command_help",
+            command: firstOperation.name,
+            field: "commandHelp",
+          },
         );
-        reporter.check(
-          "details" in commandHelp,
-          "Pi command_help action preserves details",
-        );
+
+        const spec = hasFunction(toolset, "getCommandHelp")
+          ? toolset.getCommandHelp(firstOperation.name)
+          : undefined;
+        const [example] = isRecord(spec) && Array.isArray(spec.examples)
+          ? spec.examples
+          : [];
+
+        if (isRecord(example)) {
+          const validateResult = await piTool.execute("validate-tool-surface", {
+            action: "validate",
+            command: firstOperation.name,
+            inputJson: example,
+          });
+          const validateDetails = expectPiToolResultShape(
+            reporter,
+            validateResult,
+            "Pi validate action",
+          );
+          expectPiActionDetailsShape(
+            reporter,
+            validateDetails,
+            "Pi validate details",
+            {
+              ok: true,
+              action: "validate",
+              command: firstOperation.name,
+              field: "validation",
+            },
+          );
+
+          if (isRecord(validateDetails?.validation)) {
+            reporter.check(
+              validateDetails.validation.ok === true,
+              "Pi validate details include successful validation",
+            );
+            reporter.check(
+              isRecord(validateDetails.validation.input),
+              "Pi validate details include normalized input",
+            );
+          }
+        }
       }
     }
+
+    const invalidValidate = await piTool.execute("validate-tool-surface", {
+      action: "validate",
+      command: "__validate_tool_surface_unknown__",
+      inputJson: {},
+    });
+    const invalidValidateDetails = expectPiToolResultShape(
+      reporter,
+      invalidValidate,
+      "Pi invalid validate action",
+    );
+    expectPiActionDetailsShape(
+      reporter,
+      invalidValidateDetails,
+      "Pi invalid validate details",
+      {
+        ok: false,
+        action: "validate",
+        command: "__validate_tool_surface_unknown__",
+      },
+    );
   }
 };
 

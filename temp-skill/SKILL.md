@@ -11,7 +11,7 @@ Help projects expose deterministic capabilities through three thin public surfac
 2. a runtime-neutral TypeScript toolset SDK,
 3. a Pi adapter/extension wrapping the neutral toolset.
 
-The core idea is **one capability contract, many adapters**. Do not let CLI, Pi, MCP, OpenAI, or web-chat glue own domain behavior.
+The core idea is **one capability contract, many adapters**. Compatibility means the package surfaces, action envelopes, validation results, error objects, help shapes, and operation metadata are stable across projects; each project still owns its domain-specific operations and `result` payloads. Do not let CLI, Pi, MCP, OpenAI, or web-chat glue own domain behavior.
 
 ## Workflow
 
@@ -28,6 +28,8 @@ The core idea is **one capability contract, many adapters**. Do not let CLI, Pi,
 3. Apply the surface spec.
    - Read `references/tool-package-surface-spec.md`.
    - Keep the neutral toolset as the canonical contract: operation discovery, help, JSON Schemas, validation, execution, reusable agent guidance, source-owned result summaries, recovery guidance, and error serialization.
+   - Keep host-facing compatibility in the outer shells: single-tool action input, `content` text blocks, `details.ok/action/command/error`, validation results, serialized errors, and operation specs.
+   - Keep domain variance inside operation definitions and the `result` payload. Do not require greenfield projects to mimic another package's domain fields.
    - Keep CLI and Pi adapters thin. They may own final protocol rendering, argument parsing, transport envelopes, and host-specific parameter shapes, but not domain logic or duplicate domain messages.
 
 4. Decide what can be automated.
@@ -45,7 +47,7 @@ The core idea is **one capability contract, many adapters**. Do not let CLI, Pi,
 - Do not duplicate domain logic, operation descriptions, validation copy, recovery hints, result summaries, or reusable single-tool prompt/action copy across adapters.
 - If Pi, web, or another host share the same single-tool action protocol, keep that shared copy and formatting in the neutral toolset and let adapters only wrap it in their host result shape.
 - Do not require agents to infer retry policy from JSON Schema alone; preserve validation/error recovery metadata.
-- Do not force one domain payload shape across all tools. Require stable metadata, references, warnings, and typed errors where relevant.
+- Do not force one domain payload shape across all tools. Require compatible outer envelopes and typed errors; put project-specific data under the operation `result` payload and describe it with that operation's result schema.
 - Forward `AbortSignal` through adapters into neutral execution.
 - Treat host parameter quirks as adapter details. For example, Pi can pass `inputJson` as an object, while strict OpenAI tool schemas may need a JSON string.
 - Separate tool availability from activation in host apps.
