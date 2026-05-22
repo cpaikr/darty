@@ -130,4 +130,4 @@ await createAgentSession({
 
 ## 라이선스
 
-Darty는 오픈소스가 아닌 독점 소프트웨어입니다. npm 패키지 메타데이터는 `UNLICENSED`이며, 사용 조건은 [`LICENSE.md`](./LICENSE.md)와 [`TERMS.md`](./TERMS.md)를 따릅니다.
+Elastic License 2.0. 자세한 내용은 [`LICENSE.md`](./LICENSE.md)를 참조하세요.
