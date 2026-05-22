@@ -3,6 +3,9 @@ import { describe, expect, test } from "bun:test";
 import {
   createDartyToolset,
   DartyToolsetError,
+  dartySingleToolActions,
+  dartySingleToolCopy,
+  formatDartyToolsetHelp,
   type DartyOperationName,
   type DartyValidationFailure,
 } from "./toolset.ts";
@@ -70,7 +73,7 @@ describe("Darty neutral toolset", () => {
     expect(toolset.getOperation("darty_search_company")).toBeUndefined();
   });
 
-  test("returns source-level help without host-owned command copy", () => {
+  test("returns source-level help and reusable single-tool copy", () => {
     const toolset = createDartyToolset();
     const help = toolset.help();
 
@@ -80,6 +83,14 @@ describe("Darty neutral toolset", () => {
     expect(help.limitations.join("\n")).toContain("OpenDART");
     expect(help.citationGuidance.join("\n")).toContain("references");
     expect(help.usage).toContain("validateInput");
+    expect(dartySingleToolActions).toEqual([
+      "help",
+      "command_help",
+      "validate",
+      "run",
+    ]);
+    expect(dartySingleToolCopy.promptGuidelines.join("\n")).toContain("action=run");
+    expect(formatDartyToolsetHelp(help)).toContain("Use as: darty(action");
   });
 
   test("validates and prepares input without executing DART lookups", () => {

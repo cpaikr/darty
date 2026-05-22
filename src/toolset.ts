@@ -59,6 +59,20 @@ export const dartyOperationNames = [
 
 export type DartyOperationName = (typeof dartyOperationNames)[number];
 
+export const dartySingleToolActions = [
+  "help",
+  "command_help",
+  "validate",
+  "run",
+] as const;
+
+export type DartySingleToolAction = (typeof dartySingleToolActions)[number];
+
+export type DartySingleToolRunAction = Extract<
+  DartySingleToolAction,
+  "validate" | "run"
+>;
+
 export type DartyToolRunContext = {
   readonly signal?: AbortSignal;
 };
@@ -166,6 +180,18 @@ export type DartyToolset = {
   ) => Promise<DartyToolRunResult>;
 };
 
+export type DartySingleToolCopy = {
+  readonly description: string;
+  readonly promptSnippet: string;
+  readonly promptGuidelines: readonly string[];
+  readonly parameterDescriptions: {
+    readonly action: string;
+    readonly command: string;
+    readonly inputJson: string;
+  };
+  readonly actionSummaries: Record<DartySingleToolAction, string>;
+};
+
 export type DartyToolsetErrorCode = "unknown_operation" | "aborted";
 
 export class DartyToolsetError extends Error {
@@ -186,6 +212,16 @@ export class DartyToolsetError extends Error {
     this.operationName = input.operationName;
   }
 }
+
+export const createDartyUnknownOperationError = (
+  operationName: string,
+): DartyToolsetError =>
+  new DartyToolsetError({
+    code: "unknown_operation",
+    message: `Unknown Darty operation: ${operationName}`,
+    retryable: false,
+    operationName,
+  });
 
 type AppOperation = {
   readonly name: DartyOperationName;
@@ -220,6 +256,123 @@ const citationGuidance = [
   "Use result.references, result.metadata, warnings, and original DART viewer/source URLs when presenting findings.",
   "For context-sensitive conclusions, use search operations to find candidates, then view-report to inspect the actual filing body or section.",
 ] as const;
+
+export const dartySingleToolCopy = {
+  description:
+    "One read-only DART disclosure source tool. Use help or command_help to inspect commands, validate to normalize input, and run to execute with references, warnings, and metadata.",
+  promptSnippet:
+    "Use darty(action, command?, inputJson?) for Korean DART disclosure search, company lookup, filing lists, disclosure type lookup, RSS, and report viewing.",
+  promptGuidelines: [
+    "Use darty with action=help to discover available DART commands before guessing command names.",
+    "Use darty with action=command_help when required keys, allowed values, examples, or result shape are unclear.",
+    "Use darty with action=validate to repair or normalize command input without live DART access.",
+    "Use darty with action=run only after forming command input; Darty validates before execution and returns references, warnings, metadata, and source URLs for citations.",
+  ],
+  parameterDescriptions: {
+    action: "Darty tool action: help, command_help, validate, or run.",
+    command: "Canonical Darty operation name, such as search-company or view-report.",
+    inputJson:
+      "Command input object using the selected Darty operation's JSON input contract.",
+  },
+  actionSummaries: {
+    help: "source-level help and command menu.",
+    command_help: "one command's schema, examples, limitations, and result summary.",
+    validate: "validate and normalize one command input without live DART access.",
+    run: "validate, then execute one command.",
+  },
+} as const satisfies DartySingleToolCopy;
+
+const json = (value: unknown): string => JSON.stringify(value, null, 2);
+
+const bulletList = (items: readonly string[]): string =>
+  items.length === 0 ? "- None." : items.map((item) => `- ${item}`).join("\n");
+
+export const formatDartyToolsetHelp = (help: DartyToolsetHelp): string => {
+  const operations = help.operations.map(
+    (operation) => `- ${operation.name}: ${operation.description}`,
+  );
+
+  return [
+    `${help.label}: ${help.description}`,
+    "",
+    "Use as: darty(action, command?, inputJson?)",
+    "Actions:",
+    ...dartySingleToolActions.map(
+      (action) => `- ${action}: ${dartySingleToolCopy.actionSummaries[action]}`,
+    ),
+    "",
+    "Commands:",
+    ...operations,
+    "",
+    "Limitations:",
+    bulletList(help.limitations),
+    "",
+    "Citation guidance:",
+    bulletList(help.citationGuidance),
+  ].join("\n");
+};
+
+export const formatDartyCommandHelp = (commandHelp: DartyCommandHelp): string =>
+  [
+    `Darty command ${commandHelp.name}: ${commandHelp.description}`,
+    `Required input keys: ${commandHelp.requiredInputKeys.join(", ") || "none"}`,
+    "",
+    "Input JSON Schema:",
+    json(commandHelp.inputJsonSchema),
+    "",
+    "Examples:",
+    json(commandHelp.examples),
+    "",
+    "Limitations:",
+    bulletList(commandHelp.limitations),
+    "",
+    "Result summary:",
+    commandHelp.resultSummary,
+  ].join("\n");
+
+export const formatDartyValidationSuccess = (
+  command: string,
+  validation: Extract<DartyValidationResult, { ok: true }>,
+): string =>
+  [
+    `Darty validation succeeded for ${command}.`,
+    "Normalized input:",
+    json(validation.input),
+  ].join("\n");
+
+export const formatDartyValidationFailure = (
+  action: DartySingleToolRunAction,
+  command: string,
+  error: DartyValidationFailure,
+): string =>
+  [
+    `Darty ${action} input validation failed for ${command}.`,
+    "Repair feedback:",
+    json(error),
+  ].join("\n");
+
+export const formatDartyRunSuccess = (command: string, result: unknown): string =>
+  [
+    `Darty run succeeded for ${command}.`,
+    "Use the returned references, warnings, metadata, and source URLs for citations and follow-up commands.",
+    "Result envelope:",
+    json(result),
+  ].join("\n");
+
+export const formatDartyRunFailure = (
+  command: string,
+  error: DartySerializedError,
+): string =>
+  [`Darty run failed for ${command}.`, "Error:", json(error)].join("\n");
+
+export const formatDartyInvalidToolInput = (
+  error: DartyValidationFailure,
+): string => `Darty tool input is invalid.\n${json(error)}`;
+
+export const formatDartyUnknownCommand = (
+  command: string,
+  error: DartySerializedError,
+): string => `Unknown Darty command: ${command}\n${json(error)}`;
 
 const defaultOperationDefinitions = [
   {
@@ -378,6 +531,87 @@ const inspectCommandHelpRecoveryAction = (
   kind: "inspect_command_help",
   operationName,
 });
+
+const isDartyOperationName = (value: unknown): value is DartyOperationName =>
+  typeof value === "string" &&
+  dartyOperationNames.includes(value as DartyOperationName);
+
+const recoveryActionForCommandInput = (
+  command: string,
+): DartyValidationRecoveryAction =>
+  isDartyOperationName(command)
+    ? inspectCommandHelpRecoveryAction(command)
+    : inspectToolHelpRecoveryAction;
+
+const createSingleToolValidationFailure = (input: {
+  code: DartyValidationFailure["code"];
+  message: string;
+  parameter: string;
+  reason: string;
+  expected?: string;
+  actual?: unknown;
+  command?: string;
+  recoveryHint?: string;
+  recoveryAction: DartyValidationRecoveryAction;
+}): DartyValidationFailure => ({
+  code: input.code,
+  message: input.message,
+  ...(input.command === undefined ? {} : { operationName: input.command }),
+  parameter: input.parameter,
+  reason: input.reason,
+  ...(input.expected === undefined ? {} : { expected: input.expected }),
+  ...("actual" in input ? { actual: input.actual } : {}),
+  ...(input.recoveryHint === undefined ? {} : { recoveryHint: input.recoveryHint }),
+  retryable: true,
+  recoveryAction: input.recoveryAction,
+});
+
+export const createDartySingleToolActionFailure = (
+  actual: unknown,
+): DartyValidationFailure =>
+  createSingleToolValidationFailure({
+    code: "invalid_parameter",
+    message: "Darty action must be one of help, command_help, validate, or run.",
+    parameter: "action",
+    reason: !isRecord(actual) ? "invalid_type" : "invalid_enum",
+    expected: dartySingleToolActions.join(","),
+    actual: isRecord(actual) ? actual.action : actual,
+    recoveryHint: "Call darty with action=help for the command menu.",
+    recoveryAction: inspectToolHelpRecoveryAction,
+  });
+
+export const createDartySingleToolCommandFailure = (
+  action: DartySingleToolAction,
+  command: unknown,
+): DartyValidationFailure =>
+  createSingleToolValidationFailure({
+    code: command === undefined ? "missing_parameter" : "invalid_parameter",
+    message: `Darty action ${action} requires command to be a canonical operation name.`,
+    parameter: "command",
+    reason: command === undefined ? "required" : "invalid_type",
+    expected: dartyOperationNames.join(","),
+    actual: command,
+    recoveryHint: "Call darty with action=help to see canonical command names.",
+    recoveryAction: inspectToolHelpRecoveryAction,
+  });
+
+export const createDartySingleToolInputJsonFailure = (
+  action: DartySingleToolRunAction,
+  command: string,
+  inputJson: unknown,
+): DartyValidationFailure =>
+  createSingleToolValidationFailure({
+    code: inputJson === undefined ? "missing_parameter" : "invalid_parameter",
+    message: `Darty action ${action} requires inputJson to be an object.`,
+    parameter: "inputJson",
+    reason: inputJson === undefined ? "required" : "invalid_type",
+    expected: "object",
+    actual: inputJson,
+    command,
+    recoveryHint:
+      "Call darty with action=command_help for the command's input schema and examples.",
+    recoveryAction: recoveryActionForCommandInput(command),
+  });
 
 const createUnknownOperationValidationFailure = (
   name: string,
@@ -588,12 +822,7 @@ export const createDartyToolset = (
       const definition = operationByName.get(name as DartyOperationName);
 
       if (definition === undefined) {
-        throw new DartyToolsetError({
-          code: "unknown_operation",
-          message: `Unknown Darty operation: ${name}`,
-          retryable: false,
-          operationName: name,
-        });
+        throw createDartyUnknownOperationError(name);
       }
 
       if (isAbortSignalAborted(context?.signal)) {

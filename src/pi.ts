@@ -1,19 +1,32 @@
 import {
+  createDartySingleToolActionFailure,
+  createDartySingleToolCommandFailure,
+  createDartySingleToolInputJsonFailure,
   createDartyToolset,
-  DartyToolsetError,
+  createDartyUnknownOperationError,
   dartyOperationNames,
+  dartySingleToolActions,
+  dartySingleToolCopy,
+  formatDartyCommandHelp,
+  formatDartyInvalidToolInput,
+  formatDartyRunFailure,
+  formatDartyRunSuccess,
+  formatDartyToolsetHelp,
+  formatDartyUnknownCommand,
+  formatDartyValidationFailure,
+  formatDartyValidationSuccess,
   serializeDartyError,
   type DartyCommandHelp,
-  type DartyOperationName,
   type DartySerializedError,
+  type DartySingleToolAction,
+  type DartySingleToolRunAction,
   type DartyToolset,
   type DartyToolsetHelp,
   type DartyValidationFailure,
-  type DartyValidationRecoveryAction,
   type DartyValidationResult,
 } from "./toolset.ts";
 
-export type DartyPiToolAction = "help" | "command_help" | "validate" | "run";
+export type DartyPiToolAction = DartySingleToolAction;
 
 export type DartyPiToolInput = {
   action: DartyPiToolAction;
@@ -97,19 +110,16 @@ type DartyPiActionResult =
       error: DartyValidationFailure | DartySerializedError;
     };
 
-const dartyPiActions = ["help", "command_help", "validate", "run"] as const;
-
 const actionSchema = {
   type: "string",
-  enum: [...dartyPiActions],
-  description:
-    "Darty tool action: help, command_help, validate, or run.",
+  enum: [...dartySingleToolActions],
+  description: dartySingleToolCopy.parameterDescriptions.action,
 };
 
 const commandSchema = {
   type: "string",
   enum: [...dartyOperationNames],
-  description: "Canonical Darty operation name, such as search-company or view-report.",
+  description: dartySingleToolCopy.parameterDescriptions.command,
 };
 
 export const dartyPiToolParameters = {
@@ -121,8 +131,7 @@ export const dartyPiToolParameters = {
     inputJson: {
       type: "object",
       additionalProperties: true,
-      description:
-        "Command input object using the selected Darty operation's JSON input contract.",
+      description: dartySingleToolCopy.parameterDescriptions.inputJson,
     },
   },
   required: ["action"],
@@ -140,65 +149,16 @@ const toTextResult = (text: string, details: DartyPiActionResult): PiToolResult 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const isDartyOperationName = (value: unknown): value is DartyOperationName =>
-  typeof value === "string" &&
-  dartyOperationNames.includes(value as DartyOperationName);
-
 const isDartyPiAction = (value: unknown): value is DartyPiToolAction =>
-  typeof value === "string" && dartyPiActions.includes(value as DartyPiToolAction);
-
-const json = (value: unknown): string => JSON.stringify(value, null, 2);
-
-const bulletList = (items: readonly string[]): string =>
-  items.length === 0 ? "- None." : items.map((item) => `- ${item}`).join("\n");
-
-const createAdapterValidationFailure = (input: {
-  code: DartyValidationFailure["code"];
-  message: string;
-  parameter: string;
-  reason: string;
-  expected?: string;
-  actual?: unknown;
-  command?: string;
-  recoveryHint?: string;
-  recoveryAction: DartyValidationRecoveryAction;
-}): DartyValidationFailure => ({
-  code: input.code,
-  message: input.message,
-  ...(input.command === undefined ? {} : { operationName: input.command }),
-  parameter: input.parameter,
-  reason: input.reason,
-  ...(input.expected === undefined ? {} : { expected: input.expected }),
-  ...("actual" in input ? { actual: input.actual } : {}),
-  ...(input.recoveryHint === undefined ? {} : { recoveryHint: input.recoveryHint }),
-  retryable: true,
-  recoveryAction: input.recoveryAction,
-});
-
-const inspectToolHelpRecoveryAction = {
-  kind: "inspect_tool_help",
-} as const satisfies DartyValidationRecoveryAction;
-
-const inspectCommandHelpRecoveryAction = (
-  operationName: DartyOperationName,
-): DartyValidationRecoveryAction => ({
-  kind: "inspect_command_help",
-  operationName,
-});
-
-const recoveryActionForCommandInput = (
-  command: string,
-): DartyValidationRecoveryAction =>
-  isDartyOperationName(command)
-    ? inspectCommandHelpRecoveryAction(command)
-    : inspectToolHelpRecoveryAction;
+  typeof value === "string" &&
+  dartySingleToolActions.includes(value as DartyPiToolAction);
 
 const adapterFailureResult = (
   action: DartyPiToolAction | "adapter_validation",
   error: DartyValidationFailure,
   command?: string,
 ): PiToolResult =>
-  toTextResult(`Darty tool input is invalid.\n${json(error)}`, {
+  toTextResult(formatDartyInvalidToolInput(error), {
     ok: false,
     action,
     ...(command === undefined ? {} : { command }),
@@ -215,21 +175,12 @@ const requireCommand = (
 
   return adapterFailureResult(
     action,
-    createAdapterValidationFailure({
-      code: command === undefined ? "missing_parameter" : "invalid_parameter",
-      message: `Darty action ${action} requires command to be a canonical operation name.`,
-      parameter: "command",
-      reason: command === undefined ? "required" : "invalid_type",
-      expected: dartyOperationNames.join(","),
-      actual: command,
-      recoveryHint: "Call darty with action=help to see canonical command names.",
-      recoveryAction: inspectToolHelpRecoveryAction,
-    }),
+    createDartySingleToolCommandFailure(action, command),
   );
 };
 
 const requireInputJson = (
-  action: "validate" | "run",
+  action: DartySingleToolRunAction,
   command: string,
   inputJson: unknown,
 ): Record<string, unknown> | PiToolResult => {
@@ -239,115 +190,18 @@ const requireInputJson = (
 
   return adapterFailureResult(
     action,
-    createAdapterValidationFailure({
-      code: inputJson === undefined ? "missing_parameter" : "invalid_parameter",
-      message: `Darty action ${action} requires inputJson to be an object.`,
-      parameter: "inputJson",
-      reason: inputJson === undefined ? "required" : "invalid_type",
-      expected: "object",
-      actual: inputJson,
-      command,
-      recoveryHint: "Call darty with action=command_help for the command's input schema and examples.",
-      recoveryAction: recoveryActionForCommandInput(command),
-    }),
+    createDartySingleToolInputJsonFailure(action, command, inputJson),
     command,
   );
 };
-
-const contentForHelp = (help: DartyToolsetHelp): string => {
-  const operations = help.operations.map(
-    (operation) => `- ${operation.name}: ${operation.description}`,
-  );
-
-  return [
-    `${help.label}: ${help.description}`,
-    "",
-    "Use as: darty(action, command?, inputJson?)",
-    "Actions:",
-    "- help: source-level help and command menu.",
-    "- command_help: one command's schema, examples, limitations, and result summary.",
-    "- validate: validate and normalize one command input without live DART access.",
-    "- run: validate, then execute one command.",
-    "",
-    "Commands:",
-    ...operations,
-    "",
-    "Limitations:",
-    bulletList(help.limitations),
-    "",
-    "Citation guidance:",
-    bulletList(help.citationGuidance),
-  ].join("\n");
-};
-
-const contentForCommandHelp = (commandHelp: DartyCommandHelp): string =>
-  [
-    `Darty command ${commandHelp.name}: ${commandHelp.description}`,
-    `Required input keys: ${commandHelp.requiredInputKeys.join(", ") || "none"}`,
-    "",
-    "Input JSON Schema:",
-    json(commandHelp.inputJsonSchema),
-    "",
-    "Examples:",
-    json(commandHelp.examples),
-    "",
-    "Limitations:",
-    bulletList(commandHelp.limitations),
-    "",
-    "Result summary:",
-    commandHelp.resultSummary,
-  ].join("\n");
-
-const contentForValidationSuccess = (
-  command: string,
-  validation: Extract<DartyValidationResult, { ok: true }>,
-): string =>
-  [
-    `Darty validation succeeded for ${command}.`,
-    "Normalized input:",
-    json(validation.input),
-  ].join("\n");
-
-const contentForValidationFailure = (
-  action: "validate" | "run",
-  command: string,
-  error: DartyValidationFailure,
-): string =>
-  [
-    `Darty ${action} input validation failed for ${command}.`,
-    "Repair feedback:",
-    json(error),
-  ].join("\n");
-
-const contentForRunSuccess = (command: string, result: unknown): string =>
-  [
-    `Darty run succeeded for ${command}.`,
-    "Use the returned references, warnings, metadata, and source URLs for citations and follow-up commands.",
-    "Result envelope:",
-    json(result),
-  ].join("\n");
-
-const contentForRunFailure = (command: string, error: DartySerializedError): string =>
-  [
-    `Darty run failed for ${command}.`,
-    "Error:",
-    json(error),
-  ].join("\n");
 
 const unknownCommandResult = (
   action: "command_help",
   command: string,
 ): PiToolResult => {
-  const error = serializeDartyError(
-    new DartyToolsetError({
-      code: "unknown_operation",
-      message: `Unknown Darty operation: ${command}`,
-      retryable: false,
-      operationName: command,
-    }),
-  );
+  const error = serializeDartyError(createDartyUnknownOperationError(command));
 
-  return toTextResult(`Unknown Darty command: ${command}\n${json(error)}`, {
+  return toTextResult(formatDartyUnknownCommand(command, error), {
     ok: false,
     action,
     command,
@@ -358,7 +212,7 @@ const unknownCommandResult = (
 const handleHelp = (toolset: DartyPiToolset): PiToolResult => {
   const help = toolset.help();
 
-  return toTextResult(contentForHelp(help), {
+  return toTextResult(formatDartyToolsetHelp(help), {
     ok: true,
     action: "help",
     help,
@@ -375,7 +229,7 @@ const handleCommandHelp = (
     return unknownCommandResult("command_help", command);
   }
 
-  return toTextResult(contentForCommandHelp(commandHelp), {
+  return toTextResult(formatDartyCommandHelp(commandHelp), {
     ok: true,
     action: "command_help",
     command,
@@ -391,7 +245,7 @@ const handleValidate = (
   const validation = toolset.validateInput(command, inputJson);
 
   if (!validation.ok) {
-    return toTextResult(contentForValidationFailure("validate", command, validation.error), {
+    return toTextResult(formatDartyValidationFailure("validate", command, validation.error), {
       ok: false,
       action: "validate",
       command,
@@ -399,7 +253,7 @@ const handleValidate = (
     });
   }
 
-  return toTextResult(contentForValidationSuccess(command, validation), {
+  return toTextResult(formatDartyValidationSuccess(command, validation), {
     ok: true,
     action: "validate",
     command,
@@ -416,7 +270,7 @@ const handleRun = async (
   const validation = toolset.validateInput(command, inputJson);
 
   if (!validation.ok) {
-    return toTextResult(contentForValidationFailure("run", command, validation.error), {
+    return toTextResult(formatDartyValidationFailure("run", command, validation.error), {
       ok: false,
       action: "run",
       command,
@@ -431,7 +285,7 @@ const handleRun = async (
       signal === undefined ? undefined : { signal },
     );
 
-    return toTextResult(contentForRunSuccess(command, result), {
+    return toTextResult(formatDartyRunSuccess(command, result), {
       ok: true,
       action: "run",
       command,
@@ -441,7 +295,7 @@ const handleRun = async (
   } catch (error) {
     const serialized = toolset.serializeError?.(error) ?? serializeDartyError(error);
 
-    return toTextResult(contentForRunFailure(command, serialized), {
+    return toTextResult(formatDartyRunFailure(command, serialized), {
       ok: false,
       action: "run",
       command,
@@ -457,32 +311,16 @@ export const createDartyPiTool = (
 
   return {
     name: "darty",
-    label: "Darty",
-    description:
-      "One read-only DART disclosure source tool. Use help or command_help to inspect commands, validate to normalize input, and run to execute with references, warnings, and metadata.",
-    promptSnippet:
-      "Use darty(action, command?, inputJson?) for Korean DART disclosure search, company lookup, filing lists, disclosure type lookup, RSS, and report viewing.",
-    promptGuidelines: [
-      "Use darty with action=help to discover available DART commands before guessing command names.",
-      "Use darty with action=command_help when required keys, allowed values, examples, or result shape are unclear.",
-      "Use darty with action=validate to repair or normalize command input without live DART access.",
-      "Use darty with action=run only after forming command input; Darty validates before execution and returns references, warnings, metadata, and source URLs for citations.",
-    ],
+    label: toolset.label,
+    description: dartySingleToolCopy.description,
+    promptSnippet: dartySingleToolCopy.promptSnippet,
+    promptGuidelines: [...dartySingleToolCopy.promptGuidelines],
     parameters: dartyPiToolParameters,
     async execute(_toolCallId, params, signal) {
       if (!isRecord(params) || !isDartyPiAction(params.action)) {
         return adapterFailureResult(
           "adapter_validation",
-          createAdapterValidationFailure({
-            code: "invalid_parameter",
-            message: "Darty action must be one of help, command_help, validate, or run.",
-            parameter: "action",
-            reason: !isRecord(params) ? "invalid_type" : "invalid_enum",
-            expected: dartyPiActions.join(","),
-            actual: isRecord(params) ? params.action : params,
-            recoveryHint: "Call darty with action=help for the command menu.",
-            recoveryAction: inspectToolHelpRecoveryAction,
-          }),
+          createDartySingleToolActionFailure(params),
         );
       }
 

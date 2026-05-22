@@ -141,11 +141,11 @@ graph TD
 - **`src/toolset.ts`** — Runtime-neutral package API. Lists canonical operation
   IDs, exposes source/command help, operation schemas, schema-owned examples,
   network-free input validation/normalization, structural error serialization,
-  executes operations by name, and preserves capability result envelopes and
-  typed failures.
+  reusable single-tool agent copy/formatting, executes operations by name, and
+  preserves capability result envelopes and typed failures.
 - **`src/pi.ts`** — Pi adapter over the neutral toolset. Registers one
   `darty(action, command?, inputJson?)` tool that exposes help, command help,
-  validation, and execution actions.
+  validation, and execution actions while reusing toolset-owned Darty copy.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
   flow. Defines semantic inputs, success result shapes, typed failures, and
   execution logic.
@@ -161,8 +161,9 @@ graph TD
 ## Behavior-First Core
 
 The biggest design choice is **behavior-first core, transport-local UX**. The
-shared layer owns semantic schemas and execution behavior. Each transport owns
-its own presentation and protocol details.
+shared layer owns semantic schemas, execution behavior, and reusable Darty
+agent guidance. Each transport owns its own protocol details and final
+presentation shape.
 
 ```mermaid
 graph LR
@@ -206,7 +207,8 @@ One source of truth gives you:
 What is intentionally *not* centralized:
 
 - CLI flags and CLI-specific flag wording
-- protocol-specific titles, annotations, prompts, or rendering
+- protocol-specific titles, annotations, and result envelope shapes
+- host-only rendering that is not reusable by another Darty tool adapter
 
 ## Runtime Flow
 
