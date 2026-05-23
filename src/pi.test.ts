@@ -8,8 +8,8 @@ const createMockToolset = () =>
     operations: [
       {
         name: "disclosure-types" as DartyOperationName,
-        label: "Mock disclosure types",
-        description: "Mock disclosure type lookup.",
+        label: "공시유형 목업",
+        description: "공시유형 목업 조회입니다.",
         operation: {
           name: "disclosure-types",
           inputJsonSchema: {
@@ -84,7 +84,7 @@ describe("Darty Pi single-tool adapter", () => {
       content: [
         {
           type: "text",
-          text: expect.stringContaining("Input JSON Schema"),
+          text: expect.stringContaining("입력 JSON Schema"),
         },
       ],
       details: {
@@ -107,8 +107,8 @@ describe("Darty Pi single-tool adapter", () => {
         operations: [
           {
             name: "disclosure-types" as DartyOperationName,
-            label: "Mock disclosure types",
-            description: "Mock disclosure type lookup.",
+            label: "공시유형 목업",
+            description: "공시유형 목업 조회입니다.",
             operation: {
               name: "disclosure-types",
               inputJsonSchema: { type: "object" },
@@ -130,7 +130,7 @@ describe("Darty Pi single-tool adapter", () => {
         inputJson: { query: "사업보고서" },
       }),
     ).resolves.toMatchObject({
-      content: [{ type: "text", text: expect.stringContaining("Normalized input") }],
+      content: [{ type: "text", text: expect.stringContaining("정규화된 입력") }],
       details: {
         ok: true,
         action: "validate",
@@ -154,7 +154,7 @@ describe("Darty Pi single-tool adapter", () => {
       content: [
         {
           type: "text",
-          text: expect.stringContaining("Repair feedback"),
+          text: expect.stringContaining("수정 참고 정보"),
         },
       ],
       details: {
@@ -166,7 +166,7 @@ describe("Darty Pi single-tool adapter", () => {
           parameter: "name",
           reason: "unknown_operation",
           operationName: "search-company",
-          recoveryHint: expect.stringContaining("canonical"),
+          recoveryHint: expect.stringContaining("표준"),
           retryable: true,
           recoveryAction: { kind: "inspect_tool_help" },
         },
@@ -211,12 +211,12 @@ describe("Darty Pi single-tool adapter", () => {
       toolset: {
         id: "darty",
         label: "Darty",
-        description: "Mock Darty",
+        description: "Darty 목업",
         help: () => ({
           id: "darty",
           label: "Darty",
-          description: "Mock Darty",
-          usage: "mock",
+          description: "Darty 목업",
+          usage: "목업",
           operations: [],
           limitations: [],
           citationGuidance: [],
@@ -245,12 +245,12 @@ describe("Darty Pi single-tool adapter", () => {
       toolset: {
         id: "darty",
         label: "Darty",
-        description: "Mock Darty",
+        description: "Darty 목업",
         help: () => ({
           id: "darty",
           label: "Darty",
-          description: "Mock Darty",
-          usage: "mock",
+          description: "Darty 목업",
+          usage: "목업",
           operations: [],
           limitations: [],
           citationGuidance: [],

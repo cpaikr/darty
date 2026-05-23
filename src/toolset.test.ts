@@ -81,7 +81,7 @@ describe("Darty neutral toolset", () => {
     expect(help.label).toBe("Darty");
     expect(help.operations.map((operation) => operation.name)).toContain("search-body");
     expect(help.limitations.join("\n")).toContain("OpenDART");
-    expect(help.citationGuidance.join("\n")).toContain("references");
+    expect(help.citationGuidance.join("\n")).toContain("result.references");
     expect(help.usage).toContain("validateInput");
     expect(dartySingleToolActions).toEqual([
       "help",
@@ -90,7 +90,7 @@ describe("Darty neutral toolset", () => {
       "run",
     ]);
     expect(dartySingleToolCopy.promptGuidelines.join("\n")).toContain("action=run");
-    expect(formatDartyToolsetHelp(help)).toContain("Use as: darty(action");
+    expect(formatDartyToolsetHelp(help)).toContain("사용 형식: darty(action");
   });
 
   test("validates and prepares input without executing DART lookups", () => {
@@ -253,8 +253,8 @@ describe("Darty neutral toolset", () => {
       operations: [
         {
           name: "disclosure-types" as DartyOperationName,
-          label: "Mock disclosure types",
-          description: "Mock operation",
+          label: "공시유형 목업",
+          description: "목업 작업입니다.",
           operation: {
             name: "disclosure-types",
             inputJsonSchema: { type: "object" },
