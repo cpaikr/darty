@@ -259,7 +259,7 @@ const citationGuidance = [
 
 export const dartySingleToolCopy = {
   description:
-    "One read-only DART disclosure source tool. Use help or command_help to inspect commands, validate to normalize input, and run to execute with references, warnings, and metadata.",
+    "Read-only Korean DART disclosure search and report inspection tool with source references, warnings, and metadata.",
   promptSnippet:
     "Use darty(action, command?, inputJson?) for Korean DART disclosure search, company lookup, filing lists, disclosure type lookup, RSS, and report viewing.",
   promptGuidelines: [
