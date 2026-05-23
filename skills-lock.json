@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "tool-surface-spec": {
+      "source": "open-creo/skills",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/tool-surface-spec/SKILL.md",
+      "computedHash": "f91494dfb3da6e4d1e52730184946bd2ecd1bc1b0a27ece6cccea18c6a28d6b1"
+    }
+  }
+}
