@@ -91,9 +91,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         "--page-size",
         "nope",
       ]),
-    ).toThrow(
-      "option '--page-size <number>' argument 'nope' is invalid. 정수를 입력해야 하지만 \"nope\"을(를) 받았습니다.",
-    );
+    ).toThrow('Expected an integer but received "nope"');
   });
 
   test("documents the explicit CLI surface locally", () => {
@@ -111,26 +109,26 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("--include-all-reports");
     expect(searchCompanyReportsUsage).toContain("--pretty");
     expect(searchCompanyReportsUsage).toContain("--verbose");
-    expect(searchCompanyReportsUsage).toContain("원문 검증 정보(evidence) 포함 수준");
-    expect(searchCompanyReportsUsage).toContain("DART 결과 행 원문, snippet HTML");
-    expect(searchCompanyReportsUsage).toContain("CLI에서 evidence를 보려면 --verbose");
-    expect(searchCompanyReportsUsage).toContain("--detail을 생략하면 요청 detail=raw로 처리합니다.");
-    expect(searchCompanyReportsUsage).toContain("검색기간은 최대 10년");
-    expect(searchCompanyReportsUsage).toContain("최종보고서 필터");
-    expect(searchCompanyReportsUsage).toContain("정정 전 보고서까지 포함");
-    expect(searchCompanyReportsUsage).toContain("1~9는 01~09로 처리");
+    expect(searchCompanyReportsUsage).toContain("Source evidence");
+    expect(searchCompanyReportsUsage).toContain("raw DART row text or snippet HTML");
+    expect(searchCompanyReportsUsage).toContain("Use --verbose with the CLI to see evidence");
+    expect(searchCompanyReportsUsage).toContain("If --detail is omitted, request detail=raw.");
+    expect(searchCompanyReportsUsage).toContain("search period is limited to 10 years");
+    expect(searchCompanyReportsUsage).toContain("final-report filter");
+    expect(searchCompanyReportsUsage).toContain("pre-correction filings");
+    expect(searchCompanyReportsUsage).toContain("Values 1-9 normalize to 01-09");
     expect(searchCompanyReportsUsage).toContain("P=유가증권시장");
     expect(searchCompanyReportsUsage).toContain("E=기타법인");
     expect(searchCompanyReportsUsage).not.toContain("--sort-by");
     expect(searchCompanyReportsUsage).not.toContain("--include-evidence");
     expect(searchCompanyReportsUsage).toContain(
-      "search-company --company-name <회사명>",
+      "search-company --company-name <company name>",
     );
     expect(searchCompanyReportsUsage).toContain(
-      "DART 행 원문 같은 원문 검증 정보(evidence)",
+      "source evidence such as raw DART row text",
     );
     expect(searchCompanyReportsUsage).toContain(
-      "raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
+      "raw adds row-level evidence fields, not the full DART search HTML.",
     );
     expect(searchCompanyReportsUsage).not.toContain("공시통합검색의 `회사명` 모드");
   });

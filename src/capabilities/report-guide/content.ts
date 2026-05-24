@@ -1,142 +1,103 @@
-export const reportGuideTitle = "DART 보고서별 정보 안내";
+export const reportGuideTitle = "DART report information guide";
 
-export const reportGuideMarkdown = `# DART 보고서별 정보 안내
+export const reportGuideMarkdown = `# DART report information guide
 
-이 문서는 주요 DART 보고서군에 어떤 정보가 담기는지 빠르게 찾기 위한 실무용 지도입니다. 공식 DART 기업공시 길라잡이와 \`사업보고서 - 사업의 내용\` 작성요령 HWP를 바탕으로 정리했습니다. 법률·회계 자문이 아니라 탐색 가이드로 사용하세요.
+This guide helps agents choose which DART report family to inspect before retrieving filings. It summarizes DART's public filing guide and the \`사업보고서 - 사업의 내용\` drafting guidance. Use it as a search guide, not as legal, accounting, or investment advice.
 
-확인한 출처:
+Verified source pages:
 
-- 정기보고서: <https://dart.fss.or.kr/info/main.do?menu=210>
+- Periodic reports: <https://dart.fss.or.kr/info/main.do?menu=210>
 - 주요사항보고서: <https://dart.fss.or.kr/info/main.do?menu=220>
-- 발행공시: <https://dart.fss.or.kr/info/main.do?menu=230>
-- 합병: <https://dart.fss.or.kr/info/main.do?menu=240>
-- 대량 보유상황 보고: <https://dart.fss.or.kr/info/main.do?menu=310>
-- 임원 소유상황 보고: <https://dart.fss.or.kr/info/main.do?menu=320>
-- 단기매매차익 반환: <https://dart.fss.or.kr/info/main.do?menu=330>
-- 임원 등의 특정증권등 거래계획 보고: <https://dart.fss.or.kr/info/main.do?menu=340>
+- Issuance disclosures: <https://dart.fss.or.kr/info/main.do?menu=230>
+- Mergers and reorganizations: <https://dart.fss.or.kr/info/main.do?menu=240>
+- Large shareholding reports: <https://dart.fss.or.kr/info/main.do?menu=310>
+- Officer ownership reports: <https://dart.fss.or.kr/info/main.do?menu=320>
+- Short-swing profit return: <https://dart.fss.or.kr/info/main.do?menu=330>
+- Officer/major shareholder trading plans: <https://dart.fss.or.kr/info/main.do?menu=340>
 
-## 빠른 찾기
+## Quick map
 
-| 알고 싶은 내용 | 먼저 볼 보고서 | 들어 있는 정보 |
+| Need | Start with | What it usually contains |
 | --- | --- | --- |
-| 회사의 정기적인 사업, 재무, 지배구조, 주주, 임원, 감사 현황 | \`사업보고서\`, 중간 업데이트는 \`반기보고서\` / \`분기보고서\` | 회사 전반과 정기 영업·재무 공시. |
-| 회사가 실제로 무엇을 하고, 어떻게 돈을 벌며, 제품·고객·설비·위험·R&D·계약·IP·규제·신규사업이 무엇인지 | \`사업보고서\` → \`사업의 내용\` | 사업 설명에서 가장 유용한 핵심 섹션. 아래 별도 설명 참고. |
-| 정기보고서 사이에 발생한 중요한 사건 | \`주요사항보고서\` | 자기주식, 자본 변동, CB/BW/EB 발행, 구조조정, 중요한 자산·영업 양수도, 합병·분할·주식교환 등 사건 중심 공시. |
-| 자금조달 또는 공모·매출 | \`증권신고서\`, \`투자설명서\`, \`증권발행실적보고서\`, 소액공모 공시서류 | 발행·매출 증권의 조건, 일정, 청약 구조, 발행회사 정보. |
-| 합병, 분할, 주식교환·이전, 거래 완료 여부 | \`주요사항보고서\`, 공모 성격이면 \`증권신고서\`, 완료 후 \`합병등 종료보고서\` | 거래 구조, 가치평가 방식, 외부평가, 완료 현황. |
-| 상장회사 주식등을 5% 이상 누가 보유·지배하는지 | \`주식등의 대량보유상황보고서\` / \`5% 보고서\` | 보유자 집단, 보유목적, 보유비율, 주요계약, 취득자금, 변동내역. |
-| 상장회사 임원·주요주주가 개인적으로 무엇을 보유하거나 거래했는지 | \`임원ㆍ주요주주의 특정증권등 소유상황보고서\` | 개인별 주식, CB/BW/EB, DR 등 특정증권등 보유 및 변동. |
-| 내부자가 6개월 이내 매매로 반환해야 할 이익이 있는지 | \`단기매매차익 발생사실\` 및 관련 단기매매차익 자료 | 대상자, 대응 매매, 반환대상 이익 산정. |
-| 임원·주요주주의 큰 규모 예정 거래 | \`임원 등의 특정증권등 거래계획 보고서\` | 거래목적, 예상 거래가격과 산정근거, 거래수량, 거래기간. |
+| Regular business, financial, governance, shareholder, officer, and audit information | \`사업보고서\`; interim updates in \`반기보고서\` / \`분기보고서\` | Broad company, operating, financial, and governance disclosure. |
+| What the company does, how it earns money, products, customers, facilities, risks, R&D, contracts, IP, regulation, or new businesses | \`사업보고서\` → \`사업의 내용\` | The core business-description section. |
+| Material events between periodic reports | \`주요사항보고서\` | Treasury shares, capital changes, CB/BW/EB issuance, restructurings, major asset/business transfers, mergers, spin-offs, and share exchanges. |
+| Financing, public offerings, or secondary offerings | \`증권신고서\`, \`투자설명서\`, \`증권발행실적보고서\`, or small-offering documents | Securities terms, schedule, subscription structure, and issuer information. |
+| Merger, split-off, share exchange/transfer, or transaction completion | \`주요사항보고서\`; \`증권신고서\` if offering-like; \`합병등 종료보고서\` after completion | Transaction structure, valuation method, external appraisal, and completion status. |
+| Who owns or controls at least 5% of a listed company | \`주식등의 대량보유상황보고서\` / 5% report | Reporting persons, group holdings, holding purpose, ownership ratio, key contracts, funding source, and changes. |
+| What officers or major shareholders personally hold or trade | \`임원ㆍ주요주주의 특정증권등 소유상황보고서\` | Individual holdings and changes for shares, CB/BW/EB, DR, and other covered securities. |
+| Whether insiders have short-swing profit subject to return | \`단기매매차익 발생사실\` and related materials | Covered person, matched buy/sell trades, exceptions, and profit calculation. |
+| Large planned trades by officers or major shareholders | \`임원 등의 특정증권등 거래계획 보고서\` | Trade purpose, expected price and basis, quantity, and trading period. |
 
-## 정기보고서: \`사업보고서\`, \`반기보고서\`, \`분기보고서\`
+## Periodic reports: \`사업보고서\`, \`반기보고서\`, \`분기보고서\`
 
-\`사업보고서\`는 연간 기준이 되는 정기보고서입니다. 회사의 개요, 사업의 내용, 재무에 관한 사항과 부속명세, 이사의 경영진단 및 분석의견, 감사인의 감사의견, 이사회 등 회사기관, 계열회사, 주주, 임원·직원, 이해관계자와의 거래내용 등이 담깁니다. 감사보고서, 영업보고서, 정관, 내부회계관리제도 운영보고서 등 첨부서류도 함께 제출될 수 있습니다.
+\`사업보고서\` is the annual baseline report. It can include company overview, business description, financial matters and schedules, management discussion and analysis, auditor opinion, board and governance information, affiliates, shareholders, officers/employees, and related-party transactions. Attachments can include 감사보고서, business report, articles of incorporation, and internal accounting control reports.
 
-\`반기보고서\`와 \`분기보고서\`는 기본적으로 사업보고서와 같은 구조를 따르지만 일부 항목은 생략되거나 축약될 수 있습니다. DART 길라잡이는 중간보고서에서 감사인의 감사의견을 검토의견으로 갈음할 수 있고, 이사의 경영진단 및 분석의견과 부속명세를 생략할 수 있으며, 분기보고서는 일부 회사를 제외하면 검토의견도 생략 가능하다고 설명합니다.
+\`반기보고서\` and \`분기보고서\` generally follow the same structure with some omitted or abbreviated items. DART guidance says interim reports may use review opinions instead of audit opinions and may omit some management discussion or schedules; quarterly reports can omit review opinions for some companies.
 
 ### \`사업보고서\` → \`사업의 내용\`
 
-\`사업의 내용\`은 제목보다 훨씬 중요한 섹션입니다. 다운로드한 작성요령에 따르면 회사가 영위 중이거나 새로 추진하려는 사업을 주요 사업부문별로 기재하는 것이 원칙입니다. K-IFRS 연결재무제표를 작성하는 주권상장법인은 연결실체 전체 관점에서 작성하고 주요종속회사 내용도 반드시 포함해야 합니다.
+\`사업의 내용\` is often the most useful section for understanding the business. The drafting guidance says companies should describe current and newly pursued businesses by major business segment. Listed companies preparing K-IFRS consolidated statements should write from the consolidated group perspective and include material subsidiaries.
 
-제조·서비스업 회사의 \`사업의 내용\`에는 다음 정보가 들어갈 수 있습니다.
+For manufacturing and service companies, this section may include:
 
-- 사업의 개요: 핵심 사업을 이해할 수 있는 서술식 요약;
-- 주요 제품·서비스: 명칭, 용도, 기능, 특징, 매출 비중;
-- 주요 원재료: 가격 변동, 주요 매입처, 특수관계 여부, 공급시장 독과점 정도, 공급 안정성;
-- 생산 및 설비: 생산능력, 생산실적, 가동률, 주요 시설·설비·부동산·전산시스템, 진행 중이거나 예정된 투자, 소요자금, 기대효과;
-- 매출: 상품·제품·용역 등 매출유형과 품목별 매출, 수출·내수 구분, 판매경로, 판매방법, 판매전략, 주요 매출처;
-- 수주상황: 수주일자, 납기, 수주총액, 기납품액, 수주잔고, 계절성 등 수주 관련 중요사항;
-- 시장위험과 위험관리: 금리위험, 가격위험, 환위험 등 주요 시장위험, 손익 영향, 위험관리 방식과 조직;
-- 파생상품 및 풋백옵션 등 거래: 계약명, 거래상대방, 계약일, 만기일, 목적, 조건, 금액, 결제방법, 중도상환 조건, 공정가액, 손익, 손익구조;
-- 경영상의 주요계약: 재무상태에 중요한 영향을 미치는 비경상적 계약의 상대방, 목적·내용, 체결시기·기간, 계약금액, 대금수수방법;
-- 연구개발활동: R&D 개요, 담당조직, 비용, 실적;
-- 그 밖의 투자판단 정보: 브랜드·고객관리 정책, 지식재산권, 규제, 환경 규제와 설비투자, 산업 특성, 성장성, 경기변동, 계절성, 시장 안정성, 경쟁상황, 시장점유율, 경쟁력의 강점·단점, 사업부문별 자산·매출·영업손익, 중요한 신규사업.
+- business overview and narrative summary;
+- major products/services, uses, features, and revenue mix;
+- major raw materials, purchase sources, pricing, related-party status, market concentration, and supply stability;
+- production, facilities, capacity, utilization, major real estate/equipment/systems, planned investment, funding need, and expected effects;
+- sales by product/service, export/domestic split, sales channels, methods, strategy, and major customers;
+- order backlog, delivery periods, seasonal patterns, and order-related material items;
+- market risks and risk management, including interest-rate, price, and foreign-exchange risks;
+- derivatives, put-back options, major contracts, R&D, IP, regulation, environmental matters, industry conditions, competition, market share, strengths/weaknesses, segment assets/revenue/profit, and new businesses.
 
-금융회사는 금융업 전용 구조를 따릅니다. 사업의 개요, 영업의 현황, 영업 종류별 규모·실적, 영업부문별 자금조달·운용, 주요 상품·서비스, 파생상품거래, 지점·영업설비, BIS비율·유동성비율·영업용순자본비율·지급여력비율 등 자본적정성·재무건전성 지표, 산업 현황, 경쟁상 지위, 신규사업 등이 포함될 수 있습니다.
+Financial companies use a finance-specific structure, including business overview, operating status, business-line size/performance, funding and asset management by segment, products/services, derivatives, branches/facilities, capital adequacy and soundness metrics such as BIS ratio, industry conditions, competitive position, and new businesses.
 
 ## 주요사항보고서
 
-\`주요사항보고서\`는 경영이나 재산에 중대한 영향을 미치는 사건을 정기보고서 사이에 공시하는 보고서입니다. DART 길라잡이는 주요 제출사유로 다음을 제시합니다.
+\`주요사항보고서\` reports material management or property events between periodic reports. Common triggers include payment default, suspension of important operations, rehabilitation proceedings, capital increase/decrease, capital-like securities issuance, creditor-bank management proceedings, overseas listing/delisting or trading halt, CB/BW/EB issuance, contingent capital events, treasury share decisions, mergers, splits, share exchanges/transfers, material business or asset transfers, and put-back option contracts tied to material asset transfers.
 
-- 어음·수표 부도 또는 은행 당좌거래 정지;
-- 영업활동의 전부 또는 중요한 일부 정지;
-- 회생절차 또는 간이회생절차 개시 신청;
-- 자본 증가·감소 또는 일정한 자본성 채무증권 발행에 관한 이사회 결의;
-- 주채권은행 관리절차 개시 또는 공동관리절차 중단;
-- 해외 증권시장 상장·상장폐지 결정, 매매거래정지 조치;
-- 전환사채, 신주인수권부사채, 교환사채 발행 결정;
-- 조건부자본증권의 전환·상환·이자지급 관련 사유 발생;
-- 자기주식 취득·처분 또는 신탁계약 체결·해지 결의;
-- 합병, 분할, 분할합병, 주식의 포괄적 교환·이전 결정;
-- 중요한 영업 또는 자산의 양수도 결정;
-- 중요한 자산양수도를 권리행사 내용으로 하는 풋백옵션 등 계약 체결.
+Frequently useful detailed reports include:
 
-자주 보는 세부 보고는 다음과 같습니다.
+- \`자기주식 취득ㆍ처분\` and related result reports for treasury share acquisition/disposal and trust contracts;
+- \`중요한 자산의 양수도 결정\` for major asset/business transfer terms, threshold analysis, external appraisal, and completion reporting;
+- \`유상증자결정\` for new share classes/count, par value, pre-issuance share count, funding purpose, issuance method, legal basis, price, discount/premium, subscription/payment schedule, board decision, redemption/conversion terms, and information about participants who may become controlling shareholders.
 
-- \`자기주식 취득ㆍ처분\` 및 관련 결과보고서: 자기주식 취득·처분 또는 신탁계약 결정, 방법, 기간, 기간 종료 후 결과.
-- \`중요한 자산의 양수도 결정\`: 중요한 자산·영업 양수도 조건, 기준 충족 여부, 상장회사 외부평가, 완료보고.
-- \`유상증자결정\`: 신주의 종류와 수, 액면가액, 증자 전 발행주식총수, 자금조달 목적, 증자방식, 정관근거, 발행가액, 할인·할증률, 청약·납입 일정, 이사회 결의, 상환·전환 조건, 최대주주 변경이 예상되는 참여 법인·단체의 주요정보.
+## Issuance disclosures
 
-## 발행공시
+\`발행공시\` covers securities offerings and sales. The representative document is \`증권신고서\`; small offerings use small-offering documents, and post-issuance filings may follow.
 
-\`발행공시\`는 증권의 모집·매출을 위한 공시입니다. 대표 문서는 \`증권신고서\`이며, 소액공모의 경우 소액공모 공시서류가 사용될 수 있고, 발행 후에는 발행실적 관련 보고가 제출될 수 있습니다.
+A \`증권신고서\` usually has two broad parts:
 
-증권신고서는 크게 다음 두 부분으로 구성됩니다.
+- \`제1부 모집 또는 매출에 관한 사항\`: securities offered/sold, method, schedule, terms, and offering information for investors;
+- \`제2부 발행인에 관한 사항\`: issuer information. DART guidance says this part follows the periodic-report item structure, but its reference date is the day before the securities registration statement filing date.
 
-- \`제1부 모집 또는 매출에 관한 사항\`: 모집·매출 대상 증권, 방식, 일정, 조건, 투자자에게 제공되는 발행 관련 정보;
-- \`제2부 발행인에 관한 사항\`: 발행회사 정보. DART 길라잡이는 이 부분이 정기보고서와 같은 기재항목 구조를 가지지만, 공시서류 작성기준일은 증권신고서 제출일 전일이라고 설명합니다.
+Start here for financing transactions, public/private offering analysis, issuance terms, investor materials, or issuer context at the time of issuance.
 
-자금조달 거래, 공모·사모 판단, 발행 조건, 투자설명 자료, 발행 시점의 회사 설명을 확인할 때 이 보고서군을 먼저 봅니다.
+## Mergers and reorganizations
 
-## 합병 및 조직재편 공시
+For mergers, splits, split-mergers, comprehensive share exchanges, and share transfers, companies subject to 사업보고서 filing generally submit \`주요사항보고서\`. Listed companies also submit \`합병등 종료보고서\` after completion. If the transaction has offering characteristics, it may follow the \`증권신고서\` / issuance-result path instead.
 
-합병, 분할, 분할합병, 주식의 포괄적 교환·이전의 경우 사업보고서 제출대상 법인은 일반적으로 \`주요사항보고서\`를 제출합니다. 주권상장법인은 합병·분할 등기 또는 주식교환·이전 완료 후 \`합병등 종료보고서\`도 제출합니다. 다만 해당 거래가 공모 성격으로 증권신고서·증권발행실적보고서 경로를 따르는 경우에는 종료보고서 제출 방식이 달라질 수 있습니다.
+These filings can contain transaction structure, parties, board resolution or contract information, merger price/exchange ratio and valuation method, external appraisal requirement and attachment status, valuation basis for listed/listed or listed/unlisted combinations, and completion status.
 
-이 보고서군에서는 다음을 확인할 수 있습니다.
+## Ownership and insider reports
 
-- 거래 구조와 당사자;
-- 이사회 결의 또는 계약 정보;
-- 합병가액·교환비율과 산정 방식;
-- 외부평가 필요 여부와 첨부 여부;
-- 상장회사 간 합병의 기준주가 방식 또는 상장·비상장 합병의 본질가치 방식 등 가치평가 기준;
-- 거래 완료 현황.
+### \`주식등의 대량보유상황보고서\` / 5% report
 
-## 지분 및 내부자 보고
+This report shows large holdings of voting-related securities in listed companies. It is filed when a person and related parties reach 5% or more, when the holding ratio later changes by at least 1%, or when material items such as purpose, holding form, or key contracts change.
 
-### \`주식등의 대량보유상황보고서\` / 5% 보고서
-
-이 보고서는 상장회사 의결권 관련 주식등의 대량보유 현황을 보여줍니다. 본인과 특별관계자의 합산 보유비율이 5% 이상이 되거나, 이후 보유비율이 1% 이상 변동되거나, 보유목적·보유형태·주요계약 등 중요한 사항이 변경될 때 제출됩니다.
-
-보고서에는 다음이 포함될 수 있습니다.
-
-- 발행회사 정보;
-- 보고자와 특별관계자;
-- 보유상황과 보유비율;
-- 보유목적: 단순투자, 일반투자, 경영권 영향;
-- 변동 또는 변경 사유;
-- 보유형태: 소유와 소유에 준하는 보유;
-- 신탁, 담보, 대차, 장외매매, 옵션 등 보유주식등에 관한 주요계약;
-- 취득자금 원천과 조성내역: 자기자금, 차입금, 기타자금;
-- 세부 변동내역과 증빙서류.
+It may include issuer information, reporting persons and related parties, holding status and ratios, purpose (passive investment, general investment, management influence), change reasons, holding form, key contracts such as trust/collateral/loan/OTC/options, funding sources, and detailed change records.
 
 ### \`임원ㆍ주요주주의 특정증권등 소유상황보고서\`
 
-이 보고서는 상장회사 임원과 주요주주의 개인별 특정증권등 소유상황을 보여줍니다. 5% 보고서와 별도입니다. DART 길라잡이는 5% 보고서가 경영권 이전 가능성과 공정한 경영권 시장을 위한 제도인 반면, 임원·주요주주 소유상황보고는 내부정보 이용 거래를 감시하고 예방하기 위한 제도라고 설명합니다.
+This report covers individual holdings of officers and major shareholders. It is separate from the 5% report. Covered securities can include shares, CB, BW, EB, DR, and changes. Unlike the 5% report, it is individual rather than group-aggregated, and a report can be triggered by changes in securities type as well as quantity.
 
-보고대상에는 보고자 본인이 소유한 주식, CB, BW, EB, DR 등 특정증권등과 그 변동이 포함됩니다. 5% 보고서와 달리 개별 보고 방식이고, 특별관계자 지분을 같은 방식으로 합산하지 않으며, 수량 변동뿐 아니라 증권 종류가 바뀌는 경우에도 보고사유가 될 수 있습니다.
+### \`단기매매차익\` disclosures
 
-### \`단기매매차익\` 관련 공시
-
-단기매매차익 반환제도는 상장회사 임원, 주요주주, 그리고 주요 내부정보에 접근할 수 있는 일부 직원에게 적용됩니다. 관련 공시와 안내자료에서는 대상자, 6개월 이내 매수 후 매도 또는 매도 후 매수의 대응, 예외거래, 반환대상 이익 산정 방식을 확인할 수 있습니다.
-
-단순히 “내부자가 무엇을 보유했는가”가 아니라 “내부자가 짧은 기간 거래하여 반환해야 할 이익이 생겼는가”를 확인할 때 이 영역을 봅니다.
+The short-swing profit return system applies to listed-company officers, major shareholders, and some employees with access to important inside information. Related disclosures and guidance show the covered person, matched buy/sell trades within six months, exceptions, and returnable profit calculation.
 
 ### \`임원 등의 특정증권등 거래계획 보고서\`
 
-이 보고서는 상장회사 임원 또는 주요주주의 큰 규모 예정 거래를 사전에 공시하는 보고서입니다. 거래계획과 거래계획 개시일 기준 과거 6개월간 거래를 합산하여 특정증권등 총수의 1% 이상이거나 거래금액이 50억원 이상이면 보고대상이 됩니다.
-
-보고서에는 거래목적, 예상 거래가격과 산정근거, 거래수량, 거래기간이 들어갑니다. DART 길라잡이는 거래기간이 30일 이내여야 하고, 원칙적으로 거래기간 개시일 30일 전까지 보고해야 하며, 실제 거래는 보고한 거래금액의 허용범위 안에서만 달라질 수 있다고 설명합니다.
+This report pre-discloses large planned trades by listed-company officers or major shareholders. It can apply when planned trades plus trades over the prior six months reach at least 1% of covered securities or KRW 5 billion. It includes trade purpose, expected price and basis, quantity, and trading period. DART guidance says the trading period should be within 30 days, generally filed at least 30 days before the start date, and actual trades may vary only within the reported allowed range.
 `;
 export const reportGuideSourcePath = "docs/research/dart-report-guide.md";
 

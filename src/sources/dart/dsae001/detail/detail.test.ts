@@ -8,7 +8,7 @@ describe("toDsae001CompanyDetailProviderError", () => {
     const error = toDsae001CompanyDetailProviderError(
       new SourceNotFound({
         message:
-          "DART 기업개황 상세에서 회사 코드 99999999에 해당하는 회사를 찾지 못했습니다.",
+          "Could not find a company for DART company code 99999999 in DART 기업개황 details.",
         sourceUrl: "https://dart.fss.or.kr/dsae001/select.ax?selectKey=99999999",
       }),
     );

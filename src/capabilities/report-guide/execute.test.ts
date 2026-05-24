@@ -8,7 +8,7 @@ describe("executeReportGuide", () => {
     await expect(executeReportGuide({})).resolves.toMatchObject({
       result: {
         request: {},
-        title: "DART 보고서별 정보 안내",
+        title: "DART report information guide",
         contentMarkdown: reportGuideMarkdown,
       },
       metadata: {

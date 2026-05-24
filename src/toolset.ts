@@ -226,7 +226,7 @@ export const createDartyUnknownOperationError = (
 ): DartyToolsetError =>
   new DartyToolsetError({
     code: "unknown_operation",
-    message: `알 수 없는 Darty 작업입니다: ${operationName}`,
+    message: `Unknown Darty operation: ${operationName}`,
     retryable: false,
     operationName,
   });
@@ -255,44 +255,44 @@ export type CreateDartyToolsetOptions = {
 };
 
 const sourceLimitations = [
-  "Darty는 DART 공개 웹 페이지와 정적 DART 코드 자료를 읽기 전용으로 조회합니다. 공식 OpenDART API가 아닙니다.",
-  "DART 웹 동작은 변경될 수 있으므로 중요한 결과는 반환된 출처 참조로 확인하세요.",
-  "Darty는 투자, 회계, 법률 판단을 제공하지 않습니다.",
+  "Darty reads public DART web pages and static DART code material in read-only mode. It is not the official OpenDART API.",
+  "DART web behavior can change; verify important results with the returned source references.",
+  "Darty does not provide investment, accounting, or legal judgment.",
 ] as const;
 
 const citationGuidance = [
-  "결과를 제시할 때 result.references, result.metadata, warnings, 원본 DART viewer/source URL을 인용 근거로 사용하세요.",
-  "맥락 판단이 필요한 경우 검색 명령으로 후보를 찾은 뒤 view-report로 실제 공시 본문 또는 섹션을 확인하세요.",
+  "When presenting results, cite result.references, result.metadata, warnings, and original DART viewer/source URLs.",
+  "When context matters, use search operations to find candidates, then inspect the actual filing body or section with view-report.",
 ] as const;
 
 export const dartySingleToolCopy = {
   description:
-    "한국 DART 공시를 검색하고 보고서 본문을 조회하는 읽기 전용 도구입니다. 출처, 경고, 메타데이터를 함께 반환합니다.",
+    "Read-only tool for searching Korean DART disclosures and retrieving report bodies with source references, warnings, and metadata.",
   promptSnippet:
-    "한국 DART 공시 검색, 회사 조회, 공시 목록, 공시유형 조회, RSS, 보고서 본문 조회, 보고서별 정보 안내가 필요하면 darty(action, command?, inputJson?)를 사용하세요.",
+    "Use darty(action, command?, inputJson?) when you need Korean DART disclosure search, company lookup, company filing lists, disclosure type lookup, RSS, report body retrieval, or a report information guide.",
   promptGuidelines: [
-    "명령 이름을 추측하지 말고 먼저 action=help로 사용할 수 있는 DART 명령을 확인하세요.",
-    "필수 입력값, 허용값, 예시, 결과 형태가 불명확하면 action=command_help를 사용하세요.",
-    "실시간 DART 조회 없이 입력을 고치거나 정규화하려면 action=validate를 사용하세요.",
-    "명령 입력을 만든 뒤 action=run을 사용하세요. Darty는 실행 전 검증을 거치고 인용에 필요한 references, warnings, metadata, 원본 URL을 반환합니다.",
+    "Do not guess command names; first call action=help to inspect available DART commands.",
+    "Use action=command_help when required inputs, accepted values, examples, or result shape are unclear.",
+    "Use action=validate to repair or normalize input without a live DART request.",
+    "After constructing command input, use action=run. Darty validates before execution and returns references, warnings, metadata, and original URLs needed for citation.",
   ],
   parameterDescriptions: {
-    action: "Darty 도구 동작입니다. help, command_help, validate, run 중 하나입니다.",
-    command: "search-company, view-report 같은 표준 Darty 명령 이름입니다.",
-    inputJson: "선택한 Darty 명령의 JSON 입력 계약을 따르는 명령 입력 객체입니다.",
+    action: "Darty tool action. Must be one of help, command_help, validate, or run.",
+    command: "Canonical Darty command name, such as search-company or view-report.",
+    inputJson: "Command input object matching the selected Darty command's JSON contract.",
   },
   actionSummaries: {
-    help: "출처 수준 도움말과 명령 메뉴를 확인합니다.",
-    command_help: "한 명령의 스키마, 예시, 제한사항, 결과 요약을 확인합니다.",
-    validate: "실시간 DART 조회 없이 한 명령 입력을 검증하고 정규화합니다.",
-    run: "입력을 검증한 뒤 한 명령을 실행합니다.",
+    help: "Inspect tool-level help and the command menu.",
+    command_help: "Inspect one command's schema, examples, limitations, and result summary.",
+    validate: "Validate and normalize one command input without a live DART request.",
+    run: "Validate input, then execute one command.",
   },
 } as const satisfies DartySingleToolCopy;
 
 const json = (value: unknown): string => JSON.stringify(value, null, 2);
 
 const bulletList = (items: readonly string[]): string =>
-  items.length === 0 ? "- 없음." : items.map((item) => `- ${item}`).join("\n");
+  items.length === 0 ? "- None." : items.map((item) => `- ${item}`).join("\n");
 
 export const formatDartyToolsetHelp = (help: DartyToolsetHelp): string => {
   const operations = help.operations.map(
@@ -302,38 +302,38 @@ export const formatDartyToolsetHelp = (help: DartyToolsetHelp): string => {
   return [
     `${help.label}: ${help.description}`,
     "",
-    "사용 형식: darty(action, command?, inputJson?)",
-    "동작:",
+    "Usage: darty(action, command?, inputJson?)",
+    "Actions:",
     ...dartySingleToolActions.map(
       (action) => `- ${action}: ${dartySingleToolCopy.actionSummaries[action]}`,
     ),
     "",
-    "명령:",
+    "Commands:",
     ...operations,
     "",
-    "제한사항:",
+    "Limitations:",
     bulletList(help.limitations),
     "",
-    "인용 지침:",
+    "Citation guidance:",
     bulletList(help.citationGuidance),
   ].join("\n");
 };
 
 export const formatDartyCommandHelp = (commandHelp: DartyCommandHelp): string =>
   [
-    `Darty 명령 ${commandHelp.name}: ${commandHelp.description}`,
-    `필수 입력 키: ${commandHelp.requiredInputKeys.join(", ") || "없음"}`,
+    `Darty command ${commandHelp.name}: ${commandHelp.description}`,
+    `Required input keys: ${commandHelp.requiredInputKeys.join(", ") || "none"}`,
     "",
-    "입력 JSON Schema:",
+    "Input JSON Schema:",
     json(commandHelp.inputJsonSchema),
     "",
-    "예시:",
+    "Examples:",
     json(commandHelp.examples),
     "",
-    "제한사항:",
+    "Limitations:",
     bulletList(commandHelp.limitations),
     "",
-    "결과 요약:",
+    "Result summary:",
     commandHelp.resultSummary,
   ].join("\n");
 
@@ -342,8 +342,8 @@ export const formatDartyValidationSuccess = (
   validation: Extract<DartyValidationResult, { ok: true }>,
 ): string =>
   [
-    `Darty ${command} 입력 검증이 성공했습니다.`,
-    "정규화된 입력:",
+    `Darty ${command} input validation succeeded.`,
+    "Normalized input:",
     json(validation.input),
   ].join("\n");
 
@@ -353,16 +353,16 @@ export const formatDartyValidationFailure = (
   error: DartyValidationFailure,
 ): string =>
   [
-    `Darty ${action} 입력 검증이 ${command}에서 실패했습니다.`,
-    "수정 참고 정보:",
+    `Darty ${action} input validation failed for ${command}.`,
+    "Repair details:",
     json(error),
   ].join("\n");
 
 export const formatDartyRunSuccess = (command: string, result: unknown): string =>
   [
-    `Darty ${command} 실행이 성공했습니다.`,
-    "인용과 후속 명령에는 반환된 references, warnings, metadata, 원본 URL을 사용하세요.",
-    "결과 envelope:",
+    `Darty ${command} run succeeded.`,
+    "Use returned references, warnings, metadata, and original URLs for citation and follow-up commands.",
+    "Result envelope:",
     json(result),
   ].join("\n");
 
@@ -370,16 +370,16 @@ export const formatDartyRunFailure = (
   command: string,
   error: DartySerializedError,
 ): string =>
-  [`Darty ${command} 실행이 실패했습니다.`, "오류:", json(error)].join("\n");
+  [`Darty ${command} run failed.`, "Error:", json(error)].join("\n");
 
 export const formatDartyInvalidToolInput = (
   error: DartyValidationFailure,
-): string => `Darty 도구 입력이 올바르지 않습니다.\n${json(error)}`;
+): string => `Invalid Darty tool input.\n${json(error)}`;
 
 export const formatDartyUnknownCommand = (
   command: string,
   error: DartySerializedError,
-): string => `알 수 없는 Darty 명령입니다: ${command}\n${json(error)}`;
+): string => `Unknown Darty command: ${command}\n${json(error)}`;
 
 const defaultOperationDefinitions = [
   {
@@ -478,8 +478,8 @@ const createAbortError = (operationName?: string): DartyToolsetError =>
   new DartyToolsetError({
     code: "aborted",
     message: operationName
-      ? `Darty 작업이 중단되었습니다: ${operationName}`
-      : "Darty 작업이 중단되었습니다.",
+      ? `Darty operation was aborted: ${operationName}`
+      : "Darty operation was aborted.",
     retryable: true,
     ...(operationName === undefined ? {} : { operationName }),
   });
@@ -535,7 +535,7 @@ const createCommandHelp = (
   requiredInputKeys: extractRequiredInputKeys(definition.operation.inputJsonSchema),
   examples: definition.examples ?? [],
   limitations: definition.limitations ?? [],
-  resultSummary: definition.resultSummary ?? "이 작업의 Darty 결과 envelope입니다.",
+  resultSummary: definition.resultSummary ?? "Darty result envelope for this operation.",
 });
 
 const inspectToolHelpRecoveryAction = {
@@ -588,12 +588,12 @@ export const createDartySingleToolActionFailure = (
 ): DartyValidationFailure =>
   createSingleToolValidationFailure({
     code: "invalid_parameter",
-    message: "Darty action은 help, command_help, validate, run 중 하나여야 합니다.",
+    message: "Darty action must be one of help, command_help, validate, or run.",
     parameter: "action",
     reason: !isRecord(actual) ? "invalid_type" : "invalid_enum",
     expected: dartySingleToolActions.join(","),
     actual: isRecord(actual) ? actual.action : actual,
-    recoveryHint: "명령 메뉴를 보려면 action=help로 darty를 호출하세요.",
+    recoveryHint: "Call darty with action=help to inspect the command menu.",
     recoveryAction: inspectToolHelpRecoveryAction,
   });
 
@@ -603,12 +603,12 @@ export const createDartySingleToolCommandFailure = (
 ): DartyValidationFailure =>
   createSingleToolValidationFailure({
     code: command === undefined ? "missing_parameter" : "invalid_parameter",
-    message: `Darty action ${action}에는 표준 작업 이름인 command가 필요합니다.`,
+    message: `Darty action ${action} requires command with a canonical operation name.`,
     parameter: "command",
     reason: command === undefined ? "required" : "invalid_type",
     expected: dartyOperationNames.join(","),
     actual: command,
-    recoveryHint: "표준 명령 이름을 보려면 action=help로 darty를 호출하세요.",
+    recoveryHint: "Call darty with action=help to inspect canonical command names.",
     recoveryAction: inspectToolHelpRecoveryAction,
   });
 
@@ -619,14 +619,14 @@ export const createDartySingleToolInputJsonFailure = (
 ): DartyValidationFailure =>
   createSingleToolValidationFailure({
     code: inputJson === undefined ? "missing_parameter" : "invalid_parameter",
-    message: `Darty action ${action}에는 객체 형태의 inputJson이 필요합니다.`,
+    message: `Darty action ${action} requires inputJson as an object.`,
     parameter: "inputJson",
     reason: inputJson === undefined ? "required" : "invalid_type",
     expected: "object",
     actual: inputJson,
     command,
     recoveryHint:
-      "명령의 입력 스키마와 예시를 보려면 action=command_help로 darty를 호출하세요.",
+      "Call darty with action=command_help to inspect the command input schema and examples.",
     recoveryAction: recoveryActionForCommandInput(command),
   });
 
@@ -634,13 +634,13 @@ const createUnknownOperationValidationFailure = (
   name: string,
 ): DartyValidationFailure => ({
   code: "invalid_request",
-  message: `알 수 없는 Darty 작업입니다: ${name}`,
+  message: `Unknown Darty operation: ${name}`,
   operationName: name,
   parameter: "name",
   reason: "unknown_operation",
   expected: dartyOperationNames.join(","),
   actual: name,
-  recoveryHint: "표준 Darty 작업 이름은 help() 또는 listOperations()로 확인하세요.",
+  recoveryHint: "Inspect canonical Darty operation names with help() or listOperations().",
   retryable: true,
   recoveryAction: inspectToolHelpRecoveryAction,
 });
@@ -651,7 +651,7 @@ const createInvalidInputValidationFailure = (
   exampleInput: Record<string, unknown> | undefined,
 ): DartyValidationFailure => ({
   code: "invalid_parameter",
-  message: "Darty 작업 입력은 객체여야 합니다.",
+  message: "Darty operation input must be an object.",
   operationName,
   parameter: "input",
   reason: "invalid_type",
@@ -689,7 +689,7 @@ const toValidationFailure = (
       code,
       message: hasString(error, "message")
         ? error.message
-        : "Darty 입력 검증이 실패했습니다.",
+        : "Darty input validation failed.",
       operationName,
       ...(parameter === undefined ? {} : { parameter }),
       ...(reason === undefined ? {} : { reason }),
@@ -704,7 +704,7 @@ const toValidationFailure = (
 
   return {
     code: "invalid_request",
-    message: "Darty 입력 검증이 실패했습니다.",
+    message: "Darty input validation failed.",
     operationName,
     ...(exampleInput === undefined ? {} : { exampleInput }),
     retryable: true,
@@ -784,16 +784,16 @@ export const createDartyToolset = (
 
   return {
     id: "darty",
-    label: "Dart 검색",
+    label: "DART search",
     description:
-      "한국 DART 공시 검색과 보고서 본문 조회를 위한 읽기 전용 작업입니다. 출처, 경고, 타입화된 기능 오류를 보존합니다.",
+      "Read-only operations for Korean DART disclosure search and report body retrieval, preserving source references, warnings, and typed capability errors.",
     help: () => ({
       id: "darty",
-      label: "Dart 검색",
+      label: "DART search",
       description:
-        "한국 DART 공시 검색과 보고서 본문 조회를 위한 읽기 전용 작업입니다. 출처, 경고, 타입화된 기능 오류를 보존합니다.",
+        "Read-only operations for Korean DART disclosure search and report body retrieval, preserving source references, warnings, and typed capability errors.",
       usage:
-        "작업은 listOperations()/getCommandHelp(name)으로 확인하고, validateInput(name, input)으로 입력을 검증한 뒤 execute(name, input)으로 실행하세요.",
+        "Discover operations with listOperations()/getCommandHelp(name), validate input with validateInput(name, input), then execute with execute(name, input).",
       operations: summaries(),
       limitations: sourceLimitations,
       citationGuidance,

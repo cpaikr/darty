@@ -253,7 +253,7 @@ describe("createDsaf001ViewReportProvider", () => {
       if (!(error instanceof ViewReportProviderError)) throw error;
       expect(error.code).toBe("not_found");
       expect(error.parameter).toBe("sectionId");
-      expect(error.message).toContain("같은 receipt/documentId");
+      expect(error.message).toContain("same receipt/documentId");
       expect(error.message).toContain("toc[].id");
     }
   });

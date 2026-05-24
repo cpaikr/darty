@@ -78,7 +78,7 @@ describe("parseDisclosureTypesCommandArgs", () => {
                 category: "A",
                 categoryLabel: "정기공시",
                 categoryDescription:
-                  "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
+                  "Periodic filing family, including 사업보고서, 반기보고서, and 분기보고서.",
                 items: [{ code: "A001", label: "사업보고서" }],
               },
             ],

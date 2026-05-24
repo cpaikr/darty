@@ -30,13 +30,13 @@ describe("disclosure-types capability schemas", () => {
       enum: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
       examples: ["A", "I"],
     });
-    expect(String(category.description)).toContain("A부터 J까지");
+    expect(String(category.description)).toContain("A through J");
     expect(query).toMatchObject({
       type: "string",
       minLength: 1,
       examples: ["사업보고서", "A001"],
     });
-    expect(String(query.description)).toContain("코드 또는 한국어 라벨");
+    expect(String(query.description)).toContain("code or Korean label");
     expect(jsonSchema.examples).toEqual([
       { category: "A" },
       { query: "사업보고서" },
@@ -77,7 +77,7 @@ describe("disclosure-types capability schemas", () => {
               category: "A",
               categoryLabel: "정기공시",
               categoryDescription:
-                "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
+                "Periodic filing family, including 사업보고서, 반기보고서, and 분기보고서.",
               items: [{ code: "A001", label: "사업보고서" }],
             },
           ],
@@ -128,7 +128,7 @@ describe("disclosure-types capability schemas", () => {
         category: "A",
         categoryLabel: "정기공시",
         categoryDescription:
-          "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
+          "Periodic filing family, including 사업보고서, 반기보고서, and 분기보고서.",
         items: [{ code: "A001", label: "사업보고서" }],
       },
     ]);

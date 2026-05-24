@@ -1,10 +1,10 @@
 export const companyRssMessages = {
-  sourceUnavailable: "DART 회사별 공시 RSS를 가져오지 못했습니다.",
-  xmlDecodeFailure: "DART 회사별 공시 RSS XML을 읽지 못했습니다.",
-  missingChannel: "DART 회사별 공시 RSS에서 채널을 찾지 못했습니다.",
-  missingChannelTitle: "DART 회사별 공시 RSS에서 채널 제목을 찾지 못했습니다.",
-  missingChannelLink: "DART 회사별 공시 RSS에서 채널 링크를 찾지 못했습니다.",
-  missingItemField: "DART 회사별 공시 RSS 항목에서 필수 필드를 찾지 못했습니다.",
-  sourceSchemaMismatch: "DART 회사별 공시 RSS가 예상한 스키마와 다릅니다.",
-  internalProvider: "DART 회사별 공시 RSS 처리 중 내부 오류가 발생했습니다.",
+  sourceUnavailable: "Could not fetch DART company disclosure RSS.",
+  xmlDecodeFailure: "Could not read DART company disclosure RSS XML.",
+  missingChannel: "Could not find the channel in DART company disclosure RSS.",
+  missingChannelTitle: "Could not find the channel title in DART company disclosure RSS.",
+  missingChannelLink: "Could not find the channel link in DART company disclosure RSS.",
+  missingItemField: "Could not find a required field in a DART company disclosure RSS item.",
+  sourceSchemaMismatch: "DART company disclosure RSS did not match the expected schema.",
+  internalProvider: "Unexpected internal error while processing DART company disclosure RSS.",
 } as const;

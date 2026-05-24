@@ -157,7 +157,7 @@ describe("toDsab007ContentsProviderResult", () => {
       warnings: [
         {
           code: "partial_rows_dropped",
-          message: "검색 결과 행 1개를 파싱하지 못해 생략했습니다.",
+          message: "Dropped 1 search result row(s) because they could not be parsed.",
           droppedItemCount: 1,
         },
       ],

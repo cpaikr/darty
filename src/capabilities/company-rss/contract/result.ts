@@ -14,47 +14,47 @@ import {
 const receiptNumberSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^\d{14}$/)),
   {
-    description: "14자리 DART 접수번호(rcpNo). 후속 view-report receipt로 사용할 수 있습니다.",
+    description: "14-digit DART receipt number (rcpNo). Can be used as view-report receipt.",
     examples: ["20260331004166"],
   },
 );
 
 export const CompanyRssChannelSchema = Schema.Struct({
-  title: describedString("DART companyRSS 채널 제목."),
-  link: describedString("DART companyRSS 채널 링크."),
-  description: Schema.optional(describedString("DART companyRSS 채널 설명.")),
-  language: Schema.optional(describedString("RSS 언어 코드.")),
-  publishedAt: Schema.optional(describedString("RSS 채널 발행 시각.")),
+  title: describedString("DART companyRSS channel title."),
+  link: describedString("DART companyRSS channel link."),
+  description: Schema.optional(describedString("DART companyRSS channel description.")),
+  language: Schema.optional(describedString("RSS language code.")),
+  publishedAt: Schema.optional(describedString("RSS channel publication time.")),
 });
 export type CompanyRssChannel = typeof CompanyRssChannelSchema.Type;
 
 export const CompanyRssItemSchema = Schema.Struct({
   title: annotateSchema(Schema.NonEmptyString, {
-    description: "RSS 항목 제목. 보통 DART 공시 보고서명입니다.",
+    description: "RSS item title, usually a DART disclosure report name.",
   }),
   link: annotateSchema(Schema.NonEmptyString, {
-    description: "DART /dsaf001/main.do?rcpNo=... report-viewer URL. 후속 view-report receipt로 사용할 수 있습니다.",
+    description: "DART /dsaf001/main.do?rcpNo=... report-viewer URL. Can be used as view-report receipt.",
   }),
   receiptNumber: Schema.optional(receiptNumberSchema),
-  publishedAt: Schema.optional(describedString("RSS 항목 발행 시각.")),
-  creator: Schema.optional(describedString("RSS dc:creator 값. 보통 제출인명입니다.")),
-  guid: Schema.optional(describedString("RSS guid 값.")),
+  publishedAt: Schema.optional(describedString("RSS item publication time.")),
+  creator: Schema.optional(describedString("RSS dc:creator value, usually 제출인명.")),
+  guid: Schema.optional(describedString("RSS guid value.")),
 });
 export type CompanyRssItem = typeof CompanyRssItemSchema.Type;
 
 export const CompanyRssMetadataSchema = Schema.Struct({
-  fetchedAt: describedString("DART companyRSS 응답을 처리한 ISO timestamp."),
+  fetchedAt: describedString("ISO timestamp when the DART companyRSS response was processed."),
   source: Schema.Struct({
-    system: annotateSchema(Schema.Literal("dart"), { description: "원천 시스템." }),
+    system: annotateSchema(Schema.Literal("dart"), { description: "Source system." }),
     surface: annotateSchema(Schema.Literal("companyRSS"), {
-      description: "사용한 DART companyRSS surface.",
+      description: "DART companyRSS surface used.",
     }),
     endpoint: describedString("DART companyRSS endpoint."),
   }),
   completeness: annotateSchema(Schema.Literal("complete"), {
-    description: "company-rss는 현재 성공 시 완전 결과만 반환합니다.",
+    description: "company-rss currently returns only complete successful results.",
   }),
-  itemCount: nonNegativeInt("이번 RSS 응답의 items 개수."),
+  itemCount: nonNegativeInt("Number of items in this RSS response."),
 });
 export type CompanyRssMetadata = typeof CompanyRssMetadataSchema.Type;
 

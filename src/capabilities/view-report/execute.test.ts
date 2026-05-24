@@ -19,19 +19,19 @@ describe("executeViewReport", () => {
       [
         "maxBytes",
         { receipt: "20260331004166", maxBytes: 999 },
-        ["1,000 이상 1,000,000 이하의 정수"],
+        ["integer between 1,000 and 1,000,000"],
       ],
       [
         "contentStartByte",
         { receipt: "20260331004166", contentStartByte: -1 },
-        ["0 이상의 정수", "content.window.nextStartByte"],
+        ["integer greater than or equal to 0", "content.window.nextStartByte"],
       ],
       [
         "limit",
         { receipt: "20260331004166", limit: 10 },
         [
-          "limit은 지원하지 않습니다",
-          "public input이 아닙니다",
+          "limit is not supported",
+          "not a public input",
           "maxBytes",
           "contentStartByte",
         ],
@@ -68,7 +68,7 @@ describe("executeViewReport", () => {
         throw new ViewReportProviderError({
           code: "not_found",
           message:
-            "섹션 ID \"section:old\"을(를) 이 문서 목차에서 찾을 수 없습니다. 같은 receipt/documentId로 view-report를 다시 호출하고 반환된 toc[].id를 사용하세요.",
+            "섹션 ID \"section:old\"을(를) 이 문서 목차에서 찾을 수 없습니다. same receipt/documentId로 Call view-report again하고 반환된 toc[].id를 사용하세요.",
           retryable: false,
           providerId: "test",
           parameter: "sectionId",
@@ -98,7 +98,7 @@ describe("executeViewReport", () => {
         "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
       );
       expect(error.message).toContain("toc[].id");
-      expect(error.recoveryHint).toContain("view-report를 다시 호출");
+      expect(error.recoveryHint).toContain("Call view-report again");
       expect(error.recoveryHint).toContain("documents[].id/toc[].id");
     }
   });

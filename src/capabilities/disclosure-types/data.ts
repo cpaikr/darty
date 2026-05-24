@@ -36,7 +36,7 @@ export const disclosureTypeCategories = [
   {
     category: "A",
     categoryLabel: "정기공시",
-    categoryDescription: "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
+    categoryDescription: "Periodic filing family, including 사업보고서, 반기보고서, and 분기보고서.",
     items: [
       { code: "A001", label: "사업보고서" },
       { code: "A002", label: "반기보고서" },
@@ -48,7 +48,7 @@ export const disclosureTypeCategories = [
   {
     category: "B",
     categoryLabel: "주요사항보고",
-    categoryDescription: "일반 주요사항보고서와 자본시장법 이전 주요경영사항 신고 계열입니다.",
+    categoryDescription: "Material event report family, including general 주요사항보고서 and pre-Capital Markets Act major management reports.",
     items: [
       { code: "B001", label: "주요사항보고서" },
       { code: "B002", label: "주요경영사항신고(자본시장법 이전)" },
@@ -58,7 +58,7 @@ export const disclosureTypeCategories = [
   {
     category: "C",
     categoryLabel: "발행공시",
-    categoryDescription: "증권신고서와 소액공모 등 증권 발행 관련 공시 계열입니다.",
+    categoryDescription: "Securities issuance disclosure family, including 증권신고서 and small-offering filings.",
     items: [
       { code: "C001", label: "증권신고(지분증권)" },
       { code: "C002", label: "증권신고(채무증권)" },
@@ -76,7 +76,7 @@ export const disclosureTypeCategories = [
   {
     category: "D",
     categoryLabel: "지분공시",
-    categoryDescription: "대량보유, 임원·주요주주 소유, 의결권대리행사, 공개매수 등 지분 관련 공시 계열입니다.",
+    categoryDescription: "Ownership disclosure family, including large shareholding, officer/major shareholder ownership, proxy solicitation, and tender offer filings.",
     items: [
       { code: "D001", label: "주식등의대량보유상황보고서" },
       { code: "D002", label: "임원ㆍ주요주주특정증권등소유상황보고서" },
@@ -88,7 +88,7 @@ export const disclosureTypeCategories = [
   {
     category: "E",
     categoryLabel: "기타공시",
-    categoryDescription: "자기주식, 신탁계약, 합병 종료, 주식매수선택권, 주주총회 등 기타 신고 계열입니다.",
+    categoryDescription: "Other filing family, including treasury shares, trust contracts, merger completion, stock options, and shareholder meeting filings.",
     items: [
       { code: "E001", label: "자기주식취득/처분" },
       { code: "E002", label: "신탁계약체결/해지" },
@@ -104,7 +104,7 @@ export const disclosureTypeCategories = [
   {
     category: "F",
     categoryLabel: "외부감사관련",
-    categoryDescription: "감사보고서, 연결감사보고서, 회계법인 사업보고서 등 외부감사 관련 공시 계열입니다.",
+    categoryDescription: "External audit disclosure family, including 감사보고서, 연결감사보고서, and accounting-firm 사업보고서.",
     items: [
       { code: "F001", label: "감사보고서" },
       { code: "F002", label: "연결감사보고서" },
@@ -116,7 +116,7 @@ export const disclosureTypeCategories = [
   {
     category: "G",
     categoryLabel: "펀드공시",
-    categoryDescription: "집합투자증권과 펀드 관련 증권신고서 계열입니다.",
+    categoryDescription: "Fund disclosure family for collective investment securities and fund-related securities registration statements.",
     items: [
       { code: "G001", label: "증권신고(집합투자증권-신탁형)" },
       { code: "G002", label: "증권신고(집합투자증권-회사형)" },
@@ -126,7 +126,7 @@ export const disclosureTypeCategories = [
   {
     category: "H",
     categoryLabel: "자산유동화",
-    categoryDescription: "자산유동화계획, 유동화증권, 채권유동화 등 자산유동화 관련 공시 계열입니다.",
+    categoryDescription: "Asset securitization disclosure family, including securitization plans, securitized securities, and bond securitization filings.",
     items: [
       { code: "H001", label: "자산유동화계획/양도등록" },
       { code: "H002", label: "사업/반기/분기보고서" },
@@ -139,7 +139,7 @@ export const disclosureTypeCategories = [
   {
     category: "I",
     categoryLabel: "거래소공시",
-    categoryDescription: "거래소 수시공시, 공정공시, 시장조치 안내, 채권공시 계열입니다.",
+    categoryDescription: "Exchange disclosure family, including 수시공시, 공정공시, market-measure notices, and bond disclosures.",
     items: [
       { code: "I001", label: "수시공시" },
       { code: "I002", label: "공정공시" },
@@ -152,7 +152,7 @@ export const disclosureTypeCategories = [
   {
     category: "J",
     categoryLabel: "공정위공시",
-    categoryDescription: "공정거래위원회와 기업집단 관련 공시 계열입니다.",
+    categoryDescription: "Fair Trade Commission and business-group disclosure family.",
     items: [
       { code: "J001", label: "대규모내부거래관련" },
       { code: "J002", label: "대규모내부거래관련(구)" },

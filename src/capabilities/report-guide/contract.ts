@@ -92,28 +92,28 @@ export const resolveReportGuideRequest = (input: unknown): ReportGuideRequest =>
 export const ReportGuideMetadataSchema = Schema.Struct({
   source: Schema.Struct({
     status: Schema.Literal("bundled_project_document"),
-    path: describedString("패키지에 포함된 원천 안내문 경로."),
+    path: describedString("Source guide path bundled in the package."),
   }),
 });
 export type ReportGuideMetadata = typeof ReportGuideMetadataSchema.Type;
 
 export const ReportGuideReferencesSchema = Schema.Struct({
-  guidePath: describedString("저장소 안의 안내문 경로."),
-  sourceUrls: Schema.Array(describedString("안내문 작성에 참고한 DART 기업공시 길라잡이 URL.")),
+  guidePath: describedString("Guide path inside the repository."),
+  sourceUrls: Schema.Array(describedString("DART public filing guide URL used to write the guide.")),
 });
 export type ReportGuideReferences = typeof ReportGuideReferencesSchema.Type;
 
 export const ReportGuideWarningSchema = Schema.Struct({
-  code: describedString("경고 코드."),
-  message: describedString("경고 설명."),
+  code: describedString("Warning code."),
+  message: describedString("Warning explanation."),
 });
 export type ReportGuideWarning = typeof ReportGuideWarningSchema.Type;
 
 export const ReportGuideResultSchema = Schema.Struct({
   result: Schema.Struct({
     request: ReportGuideRequestSchema,
-    title: describedString("안내문 제목."),
-    contentMarkdown: describedString("DART 보고서별 정보 안내 Markdown 본문."),
+    title: describedString("Guide title."),
+    contentMarkdown: describedString("Markdown body of the DART report information guide."),
   }),
   metadata: ReportGuideMetadataSchema,
   references: ReportGuideReferencesSchema,

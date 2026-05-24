@@ -1,10 +1,5 @@
 # TODO
 
-## Now
-
-- Cosndier exposing both Korean and English versions(or maybe only English?)
-  - read ../creo/docs/research/korean-prompt-language-strategy.md
-
 ## Later
 
 - Add held-out workflow eval cases for amended reports or multiple similar company names, stale `sectionId` recovery, and truncated section continuation after the baseline multi-step workflow evals produce transcripts.

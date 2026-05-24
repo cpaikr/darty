@@ -105,18 +105,18 @@ const defaultViewReportExecutor = {
 };
 
 const rootHelpNotes = `
-주의사항:
-  - 이 도구는 Yahoo Finance처럼 브라우저 상호작용 중 발생하는 API 호출을 모방해 동작합니다.
-  - DART의 공식 OpenDART API를 사용하지 않습니다.
-  - 정확성을 보장하지 않습니다. 정보 사용 책임은 사용자에게 있으며, 이 도구는 어떤 보증도 제공하지 않습니다.
+Cautions:
+  - This tool behaves like Yahoo Finance-style replay of API calls observed during browser interaction.
+  - It does not use DART's official OpenDART API.
+  - It does not guarantee accuracy. You are responsible for how you use the information, and this tool provides no warranty.
 `;
 
 export const createDartyCliProgram = (): Command =>
   configureCliTransport(new Command())
     .name("darty")
-    .description("DART 검색 및 조회 기능을 도구 친화적으로 제공합니다.")
-    .helpOption("-h, --help", "도움말을 표시합니다.")
-    .addHelpCommand("help [command]", "명령 도움말을 표시합니다.")
+    .description("Tool-friendly DART search and retrieval commands.")
+    .helpOption("-h, --help", "Display help.")
+    .addHelpCommand("help [command]", "Display help for a command.")
     .addHelpText("after", rootHelpNotes)
     .addCommand(
       createCompanyDetailCommandWithRunner((options) =>

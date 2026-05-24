@@ -1,44 +1,44 @@
 export const reportGuideCliCopy = {
-  summary: "DART 보고서별 정보 안내를 출력합니다.",
+  summary: "Print a guide to information by DART report family.",
   description:
-    "어떤 DART 보고서에 어떤 정보가 들어 있는지 사람이 읽기 쉬운 Markdown 안내문으로 보여줍니다.",
-  examplesHeading: "예시",
+    "Show a human-readable Markdown guide to which information usually appears in which DART report family.",
+  examplesHeading: "Examples",
   examples: [
     {
-      description: "DART 보고서별 정보 안내문을 출력합니다.",
+      description: "Print the DART report information guide.",
       argv: [],
     },
   ],
-  notesHeading: "사용 팁",
+  notesHeading: "Usage tips",
   notes: [
-    "보고서 종류를 고르기 전에 어느 보고서에 필요한 정보가 있는지 확인할 때 사용하세요.",
-    "이 명령은 네트워크를 사용하지 않고 패키지에 포함된 안내문을 출력합니다.",
+    "Use this before choosing a report type when you need to know where DART usually places the information.",
+    "This command is network-free and prints a guide bundled with the package.",
   ],
 } as const;
 
 export const reportGuideFailureCopy = {
   unexpectedReportGuide:
-    "DART 보고서별 정보 안내를 불러오는 중 예상하지 못한 내부 오류가 발생했습니다.",
+    "Unexpected internal error while loading the DART report information guide.",
 } as const;
 
 export const reportGuideSchemaCopy = {
   requestDescription:
-    "입력값이 없는 DART 보고서별 정보 안내 조회 요청입니다.",
+    "DART report information guide request. This operation takes no input fields.",
   requestExamples: [{}],
   resultDescription:
-    "어떤 DART 보고서에 어떤 정보가 들어 있는지 설명하는 Markdown 안내문입니다.",
+    "Markdown guide explaining which information usually appears in which DART report family.",
 } as const;
 
 export const reportGuideToolCopy = {
-  title: "DART 보고서별 정보 안내",
+  title: "DART report information guide",
   description:
-    "필요한 정보가 사업보고서, 주요사항보고서, 발행공시, 합병 공시, 지분공시 중 어디에 있는지 안내하는 정적 가이드입니다.",
+    "Static guide for deciding whether needed information is usually in 사업보고서, 주요사항보고서, 발행공시, merger filings, or ownership filings.",
 } as const;
 
 export const reportGuideValidationCopy = {
   inputExpected: "empty_report_guide_parameters_object",
   inputMustBeObject:
-    "report-guide 입력은 빈 객체여야 합니다. 이 명령은 매개변수를 받지 않습니다.",
+    "report-guide input must be an empty object. This command does not accept parameters.",
   unknownParameter: (parameter: string): string =>
-    `report-guide는 매개변수를 받지 않습니다. 알 수 없는 매개변수입니다: "${parameter}".`,
+    `report-guide does not accept parameters. Unknown parameter: "${parameter}".`,
 } as const;

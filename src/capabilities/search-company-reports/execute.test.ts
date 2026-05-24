@@ -112,7 +112,7 @@ describe("executeSearchCompanyReports", () => {
       {
         code: "no_results",
         message:
-          "DART 회사별 공시 검색 결과가 없습니다. 검색기간이 10년 이하인지 확인하고, 필요한 경우 날짜 창을 조정하거나 reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth 필터를 줄여 다시 검색하세요.",
+          "No DART company filing results. Check that the search period is 10 years or less, then adjust the date window or remove reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth filters and search again.",
       },
     ]);
   });
@@ -133,7 +133,7 @@ describe("executeSearchCompanyReports", () => {
       {
         code: "matched_disclosure_type_ambiguous",
         message:
-          "여러 공시유형 코드로 검색해 DART 결과 행의 matchedDisclosureType이 모호합니다. 행별 공시유형 귀속이 필요하면 disclosureTypes를 하나만 지정해 다시 검색하세요.",
+          "matchedDisclosureType is ambiguous because the search used multiple disclosure type codes. Search again with exactly one disclosureTypes value when you need row-level attribution.",
       },
     ]);
   });
@@ -159,7 +159,7 @@ describe("executeSearchCompanyReports", () => {
       expect(error.code).toBe("invalid_request");
       expect(error.parameter).toBe("companyCode");
       expect(error.recoveryHint).toContain("search-company");
-      expect(error.recoveryHint).toContain("8자리 companyCode");
+      expect(error.recoveryHint).toContain("8-digit companyCode");
     }
   });
 
@@ -183,9 +183,9 @@ describe("executeSearchCompanyReports", () => {
 
       expect(error.code).toBe("invalid_request");
       expect(error.parameter).toBe("startDate");
-      expect(error.message).toContain("최대 10년");
+      expect(error.message).toContain("10 years");
       expect(error.recoveryHint).toBe(
-        "search-company-reports는 DART 동작상 검색기간을 10년 이하로 나누어 호출하세요.",
+        "Because of DART behavior, call search-company-reports with date windows of 10 years or less.",
       );
     }
   });
@@ -197,8 +197,8 @@ describe("executeSearchCompanyReports", () => {
         parameter: "disclosureTypes",
         expectedHintParts: [
           "A001=사업보고서",
-          "darty_list_disclosure_types",
-          "darty disclosure-types --query <검색어>",
+          "disclosure-types",
+          "darty disclosure-types --query <term>",
           "reportName",
         ],
       },
@@ -215,7 +215,7 @@ describe("executeSearchCompanyReports", () => {
       {
         input: { closingAccountsMonth: "1" },
         parameter: "closingAccountsMonth",
-        expectedHintParts: ["01~12", "1월은 01"],
+        expectedHintParts: ["01 through 12", "January is 01"],
       },
     ] as const;
 

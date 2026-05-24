@@ -87,7 +87,7 @@ const buildCompanyDetailCommand = (
   const command = configureCliTransport(new Command(companyDetailOperationName))
     .summary(companyDetailCliCopy.summary)
     .description(companyDetailToolCopy.description)
-    .helpOption("-h, --help", "명령 도움말을 표시합니다.")
+    .helpOption("-h, --help", "Display command help.")
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {

@@ -29,8 +29,8 @@ describe("parseCompanyRssCommandArgs", () => {
   test("documents the CLI surface", () => {
     expect(companyRssUsage).toContain("--company-code <text>");
     expect(companyRssUsage).toContain("--detail <concise|detailed|raw>");
-    expect(companyRssUsage).toContain("RSS 부가 필드 포함 수준");
-    expect(companyRssUsage).toContain("raw도 RSS XML 전체를 반환하지 않습니다");
+    expect(companyRssUsage).toContain("Supplemental RSS field");
+    expect(companyRssUsage).toContain("raw still does not return full RSS XML");
     expect(companyRssUsage).toContain("RSS");
   });
 

@@ -14,7 +14,7 @@ describe("executeDisclosureTypes", () => {
       category: "A",
       categoryLabel: "정기공시",
       categoryDescription:
-        "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
+        "Periodic filing family, including 사업보고서, 반기보고서, and 분기보고서.",
       items: [
         { code: "A001", label: "사업보고서" },
         { code: "A002", label: "반기보고서" },
@@ -48,7 +48,7 @@ describe("executeDisclosureTypes", () => {
         category: "A",
         categoryLabel: "정기공시",
         categoryDescription:
-          "사업보고서, 반기보고서, 분기보고서 등 정기 제출 보고서 계열입니다.",
+          "Periodic filing family, including 사업보고서, 반기보고서, and 분기보고서.",
         items: [{ code: "A001", label: "사업보고서" }],
       },
     ]);
@@ -101,7 +101,7 @@ describe("executeDisclosureTypes", () => {
       {
         code: "ambiguous_label_match",
         message:
-          '검색어 "주요사항보고서"에 같은 라벨("주요사항보고서")을 가진 상세 코드가 여러 대분류에서 반환되었습니다: B001(B=주요사항보고), H006(H=자산유동화). 대분류 라벨을 확인하거나 category/--category로 좁히세요.',
+          'Query "주요사항보고서" returned detailed codes with the same label ("주요사항보고서") in multiple categories: B001(B=주요사항보고), H006(H=자산유동화). Inspect categoryLabel or narrow with category/--category.',
       },
     ]);
   });

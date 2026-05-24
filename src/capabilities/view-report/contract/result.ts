@@ -22,65 +22,65 @@ export interface ViewReportTocNode {
 export const ViewReportTocNodeSchema: Schema.Schema<ViewReportTocNode> =
   Schema.Struct({
     id: describedString(
-      "darty가 반환한 목차 섹션 ID. 같은 receipt/documentId의 후속 view-report sectionId로만 사용하세요.",
+      "TOC section ID returned by darty. Use only as a follow-up view-report sectionId for the same receipt/documentId.",
     ),
-    title: describedString("DART viewer 목차에 표시된 섹션 제목."),
+    title: describedString("Section title shown in the DART viewer TOC."),
     children: annotateSchema(
       Schema.Array(
         Schema.suspend(
           (): Schema.Schema<ViewReportTocNode> => ViewReportTocNodeSchema,
         ).annotations({ identifier: "ViewReportTocNode" }),
       ),
-      { description: "하위 목차 섹션." },
+      { description: "Child TOC sections." },
     ),
   }).annotations({ identifier: "ViewReportTocNode" });
 
 export const ViewReportDocumentSchema = Schema.Struct({
   id: describedString(
-    "darty가 반환한 문서 ID. 후속 view-report documentId로 사용하며 DART dcmNo가 아닙니다.",
+    "Document ID returned by darty. Use as follow-up view-report documentId; this is not DART dcmNo.",
   ),
-  title: describedString("DART viewer 문서 선택 목록의 문서 제목."),
+  title: describedString("Document title shown in the DART viewer document selector."),
   kind: annotateSchema(Schema.Literal("body", "attachment"), {
-    description: "본문 문서인지 첨부 문서인지 나타냅니다.",
+    description: "Indicates whether the document is the body document or an attachment.",
   }),
-  selected: describedBoolean("현재 요청에서 선택된 문서이면 true."),
+  selected: describedBoolean("true when this document is selected for the current request."),
 });
 export type ViewReportDocument = typeof ViewReportDocumentSchema.Type;
 
 export const ViewReportReceiptSchema = Schema.Struct({
-  receiptNumber: describedString("14자리 DART 접수번호(rcpNo)."),
+  receiptNumber: describedString("14-digit DART receipt number (rcpNo)."),
 });
 export type ViewReportReceipt = typeof ViewReportReceiptSchema.Type;
 
 const ViewReportContentSectionSchema = Schema.Struct({
-  id: describedString("현재 content.body가 나타내는 toc[].id 섹션 ID."),
-  title: describedString("현재 content.body가 나타내는 섹션 제목."),
+  id: describedString("toc[].id section ID represented by the current content.body."),
+  title: describedString("Section title represented by the current content.body."),
 });
 
 const ViewReportContentWindowBaseFields = {
   unit: annotateSchema(Schema.Literal("utf8-bytes"), {
-    description: "window offset 단위. 항상 렌더링된 content.body의 UTF-8 바이트입니다.",
+    description: "Window offset unit. Always UTF-8 bytes of rendered content.body.",
   }),
   startByte: nonNegativeInt(
-    "반환된 창의 실제 시작 바이트. DART viewer offset이 아닙니다.",
+    "Actual start byte of the returned window. This is not a DART viewer offset.",
   ),
-  endByte: nonNegativeInt("반환된 창의 exclusive 끝 바이트."),
+  endByte: nonNegativeInt("Exclusive end byte of the returned window."),
 } as const;
 
 const ViewReportContinuableContentWindowSchema = Schema.Struct({
   ...ViewReportContentWindowBaseFields,
   hasMore: annotateSchema(Schema.Literal(true), {
-    description: "이어 읽을 content가 남아 있으면 true.",
+    description: "true when more content remains to read.",
   }),
   nextStartByte: nonNegativeInt(
-    "같은 receipt/documentId/sectionId/outputFormat 요청의 contentStartByte로 넘길 다음 시작 바이트.",
+    "Next start byte to pass as contentStartByte for the same receipt/documentId/sectionId/outputFormat request.",
   ),
 });
 
 const ViewReportFinalContentWindowSchema = Schema.Struct({
   ...ViewReportContentWindowBaseFields,
   hasMore: annotateSchema(Schema.Literal(false), {
-    description: "이어 읽을 content가 없으면 false.",
+    description: "false when no more content remains to read.",
   }),
 });
 
@@ -93,15 +93,15 @@ export type ViewReportContentWindow =
 
 const ViewReportContentBaseFields = {
   scope: annotateSchema(Schema.Literal("document", "section"), {
-    description: "content.body가 전체 문서인지 선택 섹션인지 나타냅니다.",
+    description: "Indicates whether content.body represents the whole document or a selected section.",
   }),
-  sizeBytes: nonNegativeInt("렌더링된 전체 content.body의 UTF-8 바이트 크기."),
-  returnedBytes: nonNegativeInt("이번 응답에 반환된 content.body UTF-8 바이트 수."),
+  sizeBytes: nonNegativeInt("UTF-8 byte size of the full rendered content.body."),
+  returnedBytes: nonNegativeInt("UTF-8 byte count returned in this response's content.body."),
   isFullContent: describedBoolean(
-    "반환된 content.body가 전체 렌더링 본문이면 true. 이어 읽을 내용은 window.hasMore로 판단하세요.",
+    "true when returned content.body is the full rendered body. Use window.hasMore to determine whether more content remains.",
   ),
   window: annotateSchema(ViewReportContentWindowSchema, {
-    description: "렌더링된 content.body 기준 응답 창. DART viewer offset/length가 아닙니다.",
+    description: "Response window over rendered content.body. This is not DART viewer offset/length.",
   }),
   section: Schema.optional(ViewReportContentSectionSchema),
 } as const;
@@ -109,17 +109,17 @@ const ViewReportContentBaseFields = {
 export const ViewReportContentSchema = Schema.Struct({
   ...ViewReportContentBaseFields,
   format: annotateSchema(ViewReportOutputFormatSchema, {
-    description: "content.body의 렌더링 형식.",
+    description: "Rendering format for content.body.",
   }),
   body: describedString(
-    "요청한 형식으로 렌더링된 보고서 본문 창. Markdown 요청에서도 복잡한 DART 표는 구조 보존을 위해 HTML table 조각으로 남을 수 있으며, 이는 정상 포맷 동작입니다.",
+    "Report body window rendered in the requested format. Even for Markdown requests, complex DART tables may remain as HTML table fragments to preserve structure; this is normal formatting behavior.",
   ),
 });
 export type ViewReportContent = typeof ViewReportContentSchema.Type;
 
 export const ViewReportNavigationEntrySchema = Schema.Struct({
-  id: describedString("이동 가능한 toc[].id 섹션 ID."),
-  title: describedString("이동 가능한 섹션 제목."),
+  id: describedString("Navigable toc[].id section ID."),
+  title: describedString("Navigable section title."),
 });
 export type ViewReportNavigationEntry =
   typeof ViewReportNavigationEntrySchema.Type;
@@ -133,32 +133,32 @@ export const ViewReportNavigationSchema = Schema.Struct({
 export type ViewReportNavigation = typeof ViewReportNavigationSchema.Type;
 
 export const ViewReportMetadataSchema = Schema.Struct({
-  fetchedAt: describedString("보고서 viewer를 조회한 ISO timestamp."),
+  fetchedAt: describedString("ISO timestamp when the report viewer was fetched."),
   source: Schema.Struct({
     system: annotateSchema(Schema.Literal("dart"), {
-      description: "원천 시스템.",
+      description: "Source system.",
     }),
     surface: annotateSchema(Schema.Literal("dsaf001"), {
-      description: "사용한 DART viewer surface.",
+      description: "DART viewer surface used.",
     }),
     endpoints: Schema.Struct({
       shell: describedString("DART viewer shell endpoint."),
       content: Schema.optional(
         describedString(
-          "본문 iframe endpoint. raw DART viewer query parameters는 공개하지 않습니다.",
+          "Body iframe endpoint. Raw DART viewer query parameters are not exposed.",
         ),
       ),
     }),
   }),
   tocSource: annotateSchema(Schema.Literal("dart", "none"), {
-    description: "목차가 DART에서 반환되었는지 여부.",
+    description: "Whether the TOC was returned by DART.",
   }),
 });
 export type ViewReportMetadata = typeof ViewReportMetadataSchema.Type;
 
 export const ViewReportReferencesSchema = Schema.Struct({
   viewerUrl: describedString(
-    "DART /dsaf001/main.do?rcpNo=... viewer URL. 후속 view-report receipt로 사용할 수 있습니다.",
+    "DART /dsaf001/main.do?rcpNo=... viewer URL. Can be used as view-report receipt.",
   ),
 });
 export type ViewReportReferences = typeof ViewReportReferencesSchema.Type;
@@ -166,9 +166,9 @@ export type ViewReportReferences = typeof ViewReportReferencesSchema.Type;
 export const ViewReportWarningSchema = Schema.Struct({
   code: annotateSchema(
     Schema.Literal("no_toc_returned_document", "content_truncated"),
-    { description: "주의가 필요한 recoverable 상태 코드." },
+    { description: "Recoverable state code that requires attention." },
   ),
-  message: describedString("경고 설명과 필요한 후속 조치."),
+  message: describedString("Warning explanation and required follow-up."),
 });
 export type ViewReportWarning = typeof ViewReportWarningSchema.Type;
 

@@ -79,7 +79,7 @@ describe("Darty neutral toolset", () => {
     const help = toolset.help();
 
     expect(help.id).toBe("darty");
-    expect(help.label).toBe("Dart 검색");
+    expect(help.label).toBe("DART search");
     expect(help.operations.map((operation) => operation.name)).toContain("search-body");
     expect(help.limitations.join("\n")).toContain("OpenDART");
     expect(help.citationGuidance.join("\n")).toContain("result.references");
@@ -91,7 +91,7 @@ describe("Darty neutral toolset", () => {
       "run",
     ]);
     expect(dartySingleToolCopy.promptGuidelines.join("\n")).toContain("action=run");
-    expect(formatDartyToolsetHelp(help)).toContain("사용 형식: darty(action");
+    expect(formatDartyToolsetHelp(help)).toContain("Usage: darty(action");
   });
 
   test("validates and prepares input without executing DART lookups", () => {

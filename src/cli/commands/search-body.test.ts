@@ -73,9 +73,7 @@ describe("parseSearchBodyCommandArgs", () => {
         "--page",
         "nope",
       ]),
-    ).toThrow(
-      "option '--page <number>' argument 'nope' is invalid. 정수를 입력해야 하지만 \"nope\"을(를) 받았습니다.",
-    );
+    ).toThrow('Expected an integer but received "nope"');
   });
 
   test("documents the explicit CLI surface locally", () => {
@@ -90,24 +88,24 @@ describe("parseSearchBodyCommandArgs", () => {
     expect(searchBodyUsage).toContain("--report-name <text>");
     expect(searchBodyUsage).toContain("--pretty");
     expect(searchBodyUsage).toContain("--verbose");
-    expect(searchBodyUsage).toContain("원문 검증 정보(evidence) 포함 수준");
-    expect(searchBodyUsage).toContain("DART 결과 행 원문, snippet HTML");
-    expect(searchBodyUsage).toContain("CLI에서");
-    expect(searchBodyUsage).toContain("evidence를 보려면 --verbose");
-    expect(searchBodyUsage).toContain("--detail을 생략하면 요청 detail=raw로 처리합니다.");
-    expect(searchBodyUsage).toContain("명령 도움말을 표시합니다.");
+    expect(searchBodyUsage).toContain("Source evidence");
+    expect(searchBodyUsage).toContain("raw DART row text or snippet HTML");
+    expect(searchBodyUsage).toContain("Use --verbose with the CLI to see");
+    expect(searchBodyUsage).toContain("If");
+    expect(searchBodyUsage).toContain("--detail is omitted, request detail=raw.");
+    expect(searchBodyUsage).toContain("Display command help.");
     expect(searchBodyUsage).not.toContain("--include-evidence");
     expect(searchBodyUsage).not.toContain("display help for command");
   });
 
   test("renders CLI-owned descriptions, notes, and examples in usage", () => {
     expect(searchBodyUsage).toContain(
-      "DART 공시통합검색의 `본문내용` 모드로 제출 공시문서 내용을 검색합니다.",
+      "Search submitted filing text through DART 공시통합검색 `본문내용` mode.",
     );
-    expect(searchBodyUsage).toContain("DART 공통 검색 문법");
+    expect(searchBodyUsage).toContain("DART shared search syntax");
     expect(searchBodyUsage).toContain("`사과|포도`=OR");
     expect(searchBodyUsage).toContain(
-      "DART 회사 코드(8자리 숫자). 자유 입력 회사명은 지원하지 않습니다.",
+      "8-digit DART company code. Free-text company",
     );
     expect(searchBodyUsage).not.toContain("사과포도");
     expect(searchBodyUsage).not.toContain(
@@ -118,21 +116,21 @@ describe("parseSearchBodyCommandArgs", () => {
     );
     expect(searchBodyUsage).not.toContain("[확인됨]");
     expect(searchBodyUsage).not.toContain("참고:");
-    expect(searchBodyUsage).toContain("검색 팁:");
+    expect(searchBodyUsage).toContain("Search tips:");
     expect(searchBodyUsage).toContain(
-      "본문내용 검색은 문서 단위 키워드 검색입니다.",
+      "본문내용 search is document-level keyword search.",
     );
     expect(searchBodyUsage).toContain(
-      "같은 문단/표/항목에 함께 있다는 뜻은 아닙니다.",
+      "not necessarily in the same paragraph, table, or item.",
     );
     expect(searchBodyUsage).toContain(
-      "결과의 viewerUrl 또는 접수번호를 view-report에 넘겨 실제 보고서 본문을 확인하세요.",
+      "pass a result viewerUrl or receipt number to view-report",
     );
     expect(searchBodyUsage).toContain(
-      "DART 행 원문이나 snippet HTML 같은 원문 검증 정보(evidence)",
+      "source evidence such as raw DART row text or snippet HTML",
     );
     expect(searchBodyUsage).toContain(
-      "raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
+      "raw adds row-level evidence fields, not the full DART search HTML.",
     );
     expect(searchBodyUsage).toContain(
       "darty search-body --keyword 배당 --start-date 20250331 --end-date 20260331",
@@ -211,13 +209,13 @@ describe("parseSearchBodyCommandArgs", () => {
     const error = new SearchBodyFailure({
       code: "invalid_request",
       message:
-        '필수 매개변수 "startDate"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+        'Missing required parameter "startDate". Expected date string in YYYYMMDD format.',
       parameter: "startDate",
       retryable: false,
     });
 
     expect(renderSearchBodyCliErrorMessage(error)).toBe(
-      '필수 옵션 "--start-date"이(가) 없습니다. 필요한 값: YYYYMMDD 형식의 날짜 문자열.',
+      'Missing required option "--start-date". Expected date string in YYYYMMDD format.',
     );
   });
 
@@ -252,7 +250,7 @@ describe("parseSearchBodyCommandArgs", () => {
       expect(error.code).toBe("invalid_request");
       expect(error.parameter).toBe("keyword");
       expect(error.message).toBe(
-        '필수 매개변수 "keyword"이(가) 없습니다. 필요한 값: 비어 있지 않은 문자열.',
+        'Missing required parameter "keyword". Expected non-empty string.',
       );
     }
   });

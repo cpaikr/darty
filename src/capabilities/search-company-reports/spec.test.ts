@@ -23,8 +23,8 @@ describe("search-company-reports capability schemas", () => {
     });
     expect(jsonSchema.properties.companyCode?.pattern).toBe("^\\d{8}$");
     expect(jsonSchema.properties.companyCode?.examples).toEqual(["00126380"]);
-    expect(jsonSchema.properties.startDate?.description).toContain("최대 10년");
-    expect(jsonSchema.properties.endDate?.description).toContain("최대 10년");
+    expect(jsonSchema.properties.startDate?.description).toContain("10-year");
+    expect(jsonSchema.properties.endDate?.description).toContain("10-year");
     expect(jsonSchema.examples).toMatchObject([
       {
         companyCode: "00126380",
@@ -48,7 +48,7 @@ describe("search-company-reports capability schemas", () => {
     expect(jsonSchema.properties.disclosureTypes?.description).toContain("A001");
     expect(jsonSchema.properties.disclosureTypes?.description).toContain("A002");
     expect(jsonSchema.properties.disclosureTypes?.description).toContain(
-      "darty_list_disclosure_types",
+      "disclosure-types",
     );
     expect(jsonSchema.properties.disclosureTypes?.description).toContain(
       "darty disclosure-types --query",

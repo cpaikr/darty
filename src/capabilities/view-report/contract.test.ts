@@ -71,7 +71,7 @@ describe("resolveViewReportRequest", () => {
     }
   });
 
-  test("rejects raw DART viewer fields before provider execution", () => {
+  test("rejects Raw DART viewer fields before provider execution", () => {
     try {
       resolveViewReportRequest({
         receipt: "20260331004166",
@@ -82,7 +82,7 @@ describe("resolveViewReportRequest", () => {
       expect(error).toBeInstanceOf(InvalidViewReportRequest);
       if (!(error instanceof InvalidViewReportRequest)) throw error;
       expect(error.parameter).toBe("dcmNo");
-      expect(error.message).toContain("raw DART viewer");
+      expect(error.message).toContain("Raw DART viewer");
       expect(error.message).toContain("documentId/sectionId");
     }
   });

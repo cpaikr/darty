@@ -86,17 +86,17 @@ describe("view-report capability schemas", () => {
     expect(receipt).toMatchObject({
       type: "string",
       description:
-        "14자리 DART 접수번호 또는 rcpNo가 포함된 /dsaf001/main.do viewer URL. URL의 dcmNo는 내부 문서 선택에만 사용되며 별도 입력으로 받지 않습니다.",
+        "14-digit DART receipt number or /dsaf001/main.do viewer URL containing rcpNo. URL dcmNo is used only for internal document selection and is not accepted as a separate input.",
     });
     expect(documentId).toMatchObject({
       type: "string",
       description:
-        "이전 view-report 응답의 documents[].id 값. DART dcmNo가 아니며, 생략하면 선택된 기본 본문 문서를 사용합니다.",
+        "documents[].id from a previous view-report response. This is not DART dcmNo; omit it to use the selected default body document.",
     });
     expect(sectionId).toMatchObject({
       type: "string",
       description:
-        "같은 receipt/documentId의 이전 view-report 응답에서 받은 toc[].id 값. DART eleId/offset이 아니며, 연도·정정·다른 접수번호에 재사용하지 마세요.",
+        "toc[].id from a previous view-report response for the same receipt/documentId. This is not DART eleId/offset; do not reuse it across years, corrections, or other receipt numbers.",
     });
     expect(outputFormat).toMatchObject({
       type: "string",
@@ -152,15 +152,15 @@ describe("view-report capability schemas", () => {
     };
 
     expect(receiptSchema.properties.receiptNumber).toMatchObject({
-      description: "14자리 DART 접수번호(rcpNo).",
+      description: "14-digit DART receipt number (rcpNo).",
     });
     expect(documentSchema.properties.id).toMatchObject({
       description:
-        "darty가 반환한 문서 ID. 후속 view-report documentId로 사용하며 DART dcmNo가 아닙니다.",
+        "Document ID returned by darty. Use as follow-up view-report documentId; this is not DART dcmNo.",
     });
     expect(referencesSchema.properties.viewerUrl).toMatchObject({
       description:
-        "DART /dsaf001/main.do?rcpNo=... viewer URL. 후속 view-report receipt로 사용할 수 있습니다.",
+        "DART /dsaf001/main.do?rcpNo=... viewer URL. Can be used as view-report receipt.",
     });
     expect(tocDefinition).toMatchObject({
       type: "object",
@@ -168,7 +168,7 @@ describe("view-report capability schemas", () => {
     });
     expect(tocDefinition.properties.id).toMatchObject({
       description:
-        "darty가 반환한 목차 섹션 ID. 같은 receipt/documentId의 후속 view-report sectionId로만 사용하세요.",
+        "TOC section ID returned by darty. Use only as a follow-up view-report sectionId for the same receipt/documentId.",
     });
   });
 

@@ -137,7 +137,7 @@ describe("parseViewReportCommandArgs", () => {
     expect(() =>
       parseViewReportCommandArgs(["--receipt", "20260331004166", "--toc-depth", "0"]),
     ).toThrow(
-      "option '--toc-depth <number>' argument '0' is invalid. 1 이상의 정수를 입력해야 합니다.",
+      "option '--toc-depth <number>' argument '0' is invalid. Expected an integer greater than or equal to 1.",
     );
   });
 
@@ -150,7 +150,7 @@ describe("parseViewReportCommandArgs", () => {
         "-1",
       ]),
     ).toThrow(
-      "option '--content-start-byte <number>' argument '-1' is invalid. 0 이상의 정수를 입력해야 합니다.",
+      "option '--content-start-byte <number>' argument '-1' is invalid. Expected an integer greater than or equal to 0.",
     );
   });
 
@@ -158,38 +158,40 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("--receipt <receipt-or-url>");
     expect(viewReportUsage).toContain("--document-id <id>");
     expect(viewReportUsage).toContain("--section-id <id>");
-    expect(viewReportUsage).toContain("보고서별 값");
+    expect(viewReportUsage).toContain("report-specific");
     expect(viewReportUsage).toContain("--output-format <html|markdown>");
-    expect(viewReportUsage).toContain("[기본값: markdown]");
-    expect(viewReportUsage).toContain("JSON 결과의 본문 형식(html 또는");
-    expect(viewReportUsage).toContain("markdown)");
+    expect(viewReportUsage).toContain("[default: markdown]");
+    expect(viewReportUsage).toContain("Body format in the JSON");
+    expect(viewReportUsage).toContain("result (html or markdown)");
     expect(viewReportUsage).toContain("--max-bytes <number>");
-    expect(viewReportUsage).toContain("[기본값: 50000, 범위: 1000~1000000]");
-    expect(viewReportUsage).toContain("반환할 본문 최대 바이트");
-    expect(viewReportUsage).toContain("출력/context가 커질 수 있습니다");
+    expect(viewReportUsage).toContain("[default: 50000, range: 1000~1000000]");
+    expect(viewReportUsage).toContain("body bytes to return");
+    expect(viewReportUsage).toContain("increase output/context size");
     expect(viewReportUsage).toContain("--content-start-byte <number>");
-    expect(viewReportUsage).toContain("outputFormat으로 이어서 읽으세요");
+    expect(viewReportUsage).toContain("Continue with the same outputFormat");
     expect(viewReportUsage).toContain("--verbose");
-    expect(viewReportUsage).toContain("locator는");
-    expect(viewReportUsage).toContain("이어 조회에 쓰는 documents/toc 식별자 목록입니다");
-    expect(viewReportUsage).toContain("content.body 렌더링/창은 바꾸지 않습니다");
-    expect(viewReportUsage).toContain("concise는 documents/toc를 생략");
-    expect(viewReportUsage).toContain("--detail을 생략하면 요청 detail=raw로");
-    expect(viewReportUsage).toContain("처리합니다.");
+    expect(viewReportUsage).toContain("Locators are documents/toc");
+    expect(viewReportUsage).toContain("follow-up");
+    expect(viewReportUsage).toContain("retrieval");
+    expect(viewReportUsage).toContain("does not change content.body");
+    expect(viewReportUsage).toContain("rendering or windows");
+    expect(viewReportUsage).toContain("concise omits documents/toc");
+    expect(viewReportUsage).toContain("If --detail is omitted, request");
+    expect(viewReportUsage).toContain("detail=raw");
     expect(viewReportUsage).toContain("--toc-depth <number>");
     expect(viewReportUsage).toContain("--pretty");
-    expect(viewReportUsage).toContain("주의사항");
-    expect(viewReportUsage).toContain("연도, 정정, 다른 접수번호");
-    expect(viewReportUsage).toContain("content.body가 반환됩니다");
+    expect(viewReportUsage).toContain("Cautions");
+    expect(viewReportUsage).toContain("years, corrections, or other receipt numbers");
+    expect(viewReportUsage).toContain("content.body is returned");
     expect(viewReportUsage).toContain("content.window.nextStartByte");
     expect(viewReportUsage).toContain(
       "--content-start-byte <content.window.nextStartByte>",
     );
-    expect(viewReportUsage).toContain("search-body 결과의 viewerUrl로 목차 보기");
-    expect(viewReportUsage).toContain("긴 섹션을 작은 창으로 읽기");
+    expect(viewReportUsage).toContain("View TOC from a search-body viewerUrl");
+    expect(viewReportUsage).toContain("Read a long section in a small window");
     expect(viewReportUsage).toContain("content.isFullContent");
-    expect(viewReportUsage).toContain("`--detail`은 content.body를 바꾸지 않고");
-    expect(viewReportUsage).toContain("PDF는 darty 내부에서 처리하지 않습니다");
+    expect(viewReportUsage).toContain("`--detail` changes only supplemental locator fields");
+    expect(viewReportUsage).toContain("Darty does not process PDFs internally");
     expect(viewReportUsage).not.toContain("--include-toc");
   });
 

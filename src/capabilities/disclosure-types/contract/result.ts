@@ -7,24 +7,24 @@ import { DisclosureTypeCategorySchema, DisclosureTypesRequestSchema } from "./re
 const DisclosureTypeCodeSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^[A-J]\d{3}$/)),
   {
-    description: "DART 공시상세유형 상세 코드. search-company-reports disclosureTypes 또는 CLI --disclosure-type에 전달합니다.",
+    description: "DART 공시상세유형 detailed code. Pass it to search-company-reports disclosureTypes or CLI --disclosure-type.",
     examples: ["A001", "I001"],
   },
 );
 
 export const DisclosureTypeItemSchema = Schema.Struct({
   code: DisclosureTypeCodeSchema,
-  label: describedString("공시상세유형 한국어 라벨."),
+  label: describedString("Korean 공시상세유형 label."),
 });
 export type DisclosureTypeResultItem = typeof DisclosureTypeItemSchema.Type;
 
 export const DisclosureTypeCategoryGroupSchema = Schema.Struct({
   category: annotateSchema(DisclosureTypeCategorySchema, {
-    description: "공시상세유형 대분류 코드.",
+    description: "공시상세유형 category code.",
   }),
-  categoryLabel: describedString("공시상세유형 대분류 한국어 라벨."),
+  categoryLabel: describedString("Korean 공시상세유형 category label."),
   categoryDescription: describedString(
-    "대분류를 선택할 때 참고할 수 있는 구현 작성 안내 설명입니다.",
+    "Implementation-authored guidance to help choose the category.",
   ),
   items: Schema.Array(DisclosureTypeItemSchema),
 });
@@ -34,63 +34,63 @@ export type DisclosureTypeResultCategoryGroup =
 export const DisclosureTypesMetadataSchema = Schema.Struct({
   source: Schema.Struct({
     system: annotateSchema(Schema.Literal("open-dart-docs"), {
-      description: "상세 코드 목록을 가져온 원천 문서 계열.",
+      description: "Source document family for the detailed code list.",
     }),
-    repository: describedString("원천 문서 GitHub repository."),
-    commit: describedString("원천 문서 commit SHA."),
-    path: describedString("원천 repository 안의 문서 경로."),
+    repository: describedString("Source document GitHub repository."),
+    commit: describedString("Source document commit SHA."),
+    path: describedString("Document path inside the source repository."),
   }),
   categoryLabelSource: Schema.Struct({
     system: annotateSchema(Schema.Literal("dart-fss-docs"), {
-      description: "대분류 라벨을 확인한 원천 문서 계열.",
+      description: "Source document family used to verify category labels.",
     }),
-    url: describedString("대분류 라벨 원천 문서 URL."),
+    url: describedString("Source document URL for category labels."),
     codeSet: annotateSchema(Schema.Literal("pblntf_ty"), {
-      description: "DART 공시유형 대분류 코드셋 이름.",
+      description: "DART disclosure type category code-set name.",
     }),
   }),
   categoryDescriptionProvenance: Schema.Struct({
     status: annotateSchema(Schema.Literal("implementation_authored_guidance"), {
-      description: "대분류 설명이 외부 원천 필드가 아니라 구현에서 작성한 안내 문구임을 나타냅니다.",
+      description: "Indicates that category descriptions are implementation-authored guidance, not external source fields.",
     }),
     basis: describedString(
-      "대분류 설명을 작성할 때 참고한 원천 코드셋과 항목 범위.",
+      "Source code set and item range used when writing category descriptions.",
     ),
   }),
   sourceBehavior: Schema.Struct({
     codeSet: annotateSchema(Schema.Literal("pblntf_detail_ty"), {
-      description: "DART 공시상세유형 코드셋 이름.",
+      description: "DART 공시상세유형 code-set name.",
     }),
     categoryCodeSet: annotateSchema(Schema.Literal("pblntf_ty"), {
-      description: "DART 공시유형 대분류 코드셋 이름.",
+      description: "DART disclosure type category code-set name.",
     }),
     observationStatus: annotateSchema(Schema.Literal("source_material"), {
-      description: "외부 원천 문서를 고정 commit과 문서 URL로 반영한 정적 코드 목록임을 나타냅니다.",
+      description: "Indicates a static code list reflected from external source material pinned by commit and document URL.",
     }),
   }),
   completeness: annotateSchema(Schema.Literal("complete"), {
-    description: "정적 코드 목록 반영 상태.",
+    description: "Static code list reflection status.",
   }),
 });
 export type DisclosureTypesMetadata = typeof DisclosureTypesMetadataSchema.Type;
 
 export const DisclosureTypesReferencesSchema = Schema.Struct({
-  sourceUrl: describedString("코드 목록 원천 문서 URL."),
+  sourceUrl: describedString("Source document URL for the code list."),
 });
 export type DisclosureTypesReferences = typeof DisclosureTypesReferencesSchema.Type;
 
 export const DisclosureTypesWarningSchema = Schema.Struct({
   code: annotateSchema(Schema.Literal("ambiguous_label_match"), {
-    description: "같은 공시상세유형 라벨이 여러 대분류 코드에서 반환될 때의 경고 코드.",
+    description: "Warning code returned when the same 공시상세유형 label appears in multiple category codes.",
   }),
-  message: describedString("경고 설명과 필요한 후속 조치."),
+  message: describedString("Warning explanation and required follow-up."),
 });
 export type DisclosureTypesWarning = typeof DisclosureTypesWarningSchema.Type;
 
 export const DisclosureTypesResultSchema = Schema.Struct({
   result: Schema.Struct({
     request: DisclosureTypesRequestSchema,
-    totalCount: nonNegativeInt("반환된 공시상세유형 코드 수."),
+    totalCount: nonNegativeInt("Number of 공시상세유형 codes returned."),
     categories: Schema.Array(DisclosureTypeCategoryGroupSchema),
   }),
   metadata: DisclosureTypesMetadataSchema,

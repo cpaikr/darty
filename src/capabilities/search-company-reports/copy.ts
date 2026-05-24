@@ -1,86 +1,86 @@
 export const searchCompanyReportsFieldCopy = {
   companyCode: {
     description:
-      "[필수] DART 회사 코드(8자리 숫자)입니다. 회사명이나 6자리 종목코드는 사용할 수 없습니다.",
+      "[required] 8-digit DART company code. Company names and 6-digit stock codes are not accepted.",
     cliDescription:
-      "[필수] DART 회사 코드(8자리 숫자)입니다. 회사명이나 종목코드는 search-company로 먼저 확인하세요.",
+      "[required] 8-digit DART company code. Use search-company first if you only know a company name or stock code.",
   },
   startDate: {
     description:
-      "[필수] DART 검색기간 시작일입니다(YYYYMMDD). search-company-reports의 검색기간은 최대 10년입니다.",
+      "[required] DART search period start date (YYYYMMDD). search-company-reports supports at most a 10-year date window.",
     cliDescription:
-      "[필수] DART 검색기간 시작일입니다(YYYYMMDD). 검색기간은 최대 10년입니다.",
+      "[required] DART search period start date (YYYYMMDD). The search period is limited to 10 years.",
   },
   endDate: {
     description:
-      "[필수] DART 검색기간 종료일입니다(YYYYMMDD). search-company-reports의 검색기간은 최대 10년입니다.",
+      "[required] DART search period end date (YYYYMMDD). search-company-reports supports at most a 10-year date window.",
     cliDescription:
-      "[필수] DART 검색기간 종료일입니다(YYYYMMDD). 검색기간은 최대 10년입니다.",
+      "[required] DART search period end date (YYYYMMDD). The search period is limited to 10 years.",
   },
   page: {
-    description: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작).",
-    cliDescription: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작).",
+    description: "[default: 1] DART search result page, starting at 1.",
+    cliDescription: "[default: 1] DART search result page, starting at 1.",
   },
   pageSize: {
     description:
-      "[기본값: 15] 한 페이지에 요청할 공시 수입니다. DART에서 관찰된 값은 15, 30, 50, 100이며, 에이전트가 자주 시도하는 5와 10은 가장 작은 DART 값인 15로 정규화됩니다.",
+      "[default: 15] Number of filings to request per page. Observed DART values are 15, 30, 50, and 100; agent-friendly values 5 and 10 are normalized to the smallest DART value, 15.",
     cliDescription:
-      "[기본값: 15] 한 페이지에 요청할 공시 수입니다(15, 30, 50, 100; 5/10은 15로 정규화).",
+      "[default: 15] Number of filings to request per page (15, 30, 50, 100; 5/10 normalize to 15).",
   },
   sortDirection: {
     description:
-      "[기본값: desc] 접수일자 정렬 방향입니다. 정렬 기준은 내부적으로 접수일자로 고정됩니다.",
+      "[default: desc] Receipt-date sort direction. The sort key is fixed internally to receipt date.",
     cliDescription:
-      "[기본값: desc] 접수일자 정렬 방향입니다(asc 또는 desc).",
+      "[default: desc] Receipt-date sort direction (asc or desc).",
   },
   presenterName: {
-    description: "제출인명 필터입니다. DART의 `제출인명` 입력에 대응합니다.",
-    cliDescription: "제출인명으로 검색 결과를 좁힙니다.",
+    description: "제출인명 (presenter name) filter. Maps to DART's `제출인명` field.",
+    cliDescription: "Narrow results by 제출인명 (presenter name).",
   },
   reportName: {
     description:
-      "보고서명 필터입니다. DART의 `보고서명` 입력에 대응합니다. 공시유형 코드가 아니라 보고서 제목 텍스트를 넣습니다(예: 사업보고서).",
+      "보고서명 (report title) filter. Maps to DART's `보고서명` field. Provide report-title text, not a disclosure type code (for example, 사업보고서).",
     cliDescription:
-      "보고서명으로 검색 결과를 좁힙니다(예: 사업보고서). 공시유형 코드는 --disclosure-type을 사용하세요.",
+      "Narrow results by 보고서명 (report title), for example 사업보고서. Use --disclosure-type for disclosure type codes.",
   },
   disclosureTypes: {
     description:
-      "DART 공시유형 상세 코드 목록입니다. 알려진 상세 코드만 사용할 수 있습니다. 흔한 예: A001(사업보고서), A002(반기보고서), A003(분기보고서), F001(감사보고서), I001(수시공시). `사업보고서` 같은 보고서명 텍스트는 reportName에 넣고, 이 필드에는 DART 코드만 넣습니다. 코드를 모르면 agent에서는 darty_list_disclosure_types, CLI에서는 `darty disclosure-types --query <검색어>`로 조회하세요.",
+      "List of DART 공시상세유형 detailed codes. Only known detailed codes are accepted. Common examples: A001(사업보고서), A002(반기보고서), A003(분기보고서), F001(감사보고서), I001(수시공시). Put report-title text such as `사업보고서` in reportName, not in this field. If you do not know the code, use darty disclosure-types --query <term> or the disclosure-types operation.",
     cliDescription:
-      "공시유형 상세 코드를 추가합니다. 여러 번 지정할 수 있습니다. 예: A001(사업보고서), A002(반기보고서), A003(분기보고서), I001(수시공시).",
+      "Add a 공시상세유형 detailed code. Repeat for multiple codes. Examples: A001(사업보고서), A002(반기보고서), A003(분기보고서), I001(수시공시).",
   },
   industryCode: {
     description:
-      "[기본값: all] DART 업종 코드입니다. `all`이면 업종 필터를 적용하지 않습니다. 관찰된 예: 612(전기 통신업). DART 업종 tree root 값은 ROOTdddd 형식입니다. 업종 코드를 모르면 추측하지 말고 all을 사용하세요.",
+      "[default: all] DART industry code. `all` applies no industry filter. Observed example: 612(전기 통신업). DART industry tree root values use ROOTdddd format. If you do not know the industry code, use all.",
     cliDescription:
-      "DART 업종 코드로 검색 결과를 좁힙니다. 기본값은 all입니다. 예: 612(전기 통신업). 모르면 all을 사용하세요.",
+      "Narrow results by DART industry code. Default is all. Example: 612(전기 통신업). Use all if unknown.",
   },
   corporationType: {
     description:
-      "[기본값: all] 법인유형 필터입니다. all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나입니다.",
+      "[default: all] Corporation type filter: all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), or E(기타법인).",
     cliDescription:
-      "법인유형으로 검색 결과를 좁힙니다(all=전체, P=유가증권시장, A=코스닥시장, N=코넥스시장, E=기타법인).",
+      "Narrow results by corporation type (all=전체, P=유가증권시장, A=코스닥시장, N=코넥스시장, E=기타법인).",
   },
   closingAccountsMonth: {
     description:
-      "[기본값: all] 결산월 필터입니다. all 또는 01부터 12까지의 두 자리 월 코드입니다. 예: 1월은 01, 12월은 12입니다.",
+      "[default: all] Fiscal closing month filter. Use all or a two-digit month code from 01 through 12. Example: January is 01, December is 12.",
     cliDescription:
-      "결산월로 검색 결과를 좁힙니다(all, 1~12 또는 01~12). 1~9는 01~09로 처리됩니다.",
+      "Narrow results by fiscal closing month (all, 1-12, or 01-12). Values 1-9 normalize to 01-09.",
   },
   includeAllReports: {
     description:
-      "[기본값: false] true이면 DART의 최종보고서 필터를 해제하고 정정 전 보고서까지 포함해 검색합니다.",
+      "[default: false] When true, disables DART's final-report filter and includes pre-correction filings.",
     cliDescription:
-      "정정 전 보고서까지 포함합니다. 기본 동작은 DART의 최종보고서 필터를 적용하는 것입니다.",
+      "Include pre-correction filings. Default behavior applies DART's final-report filter.",
   },
 } as const;
 
 export const searchCompanyReportsCliCopy = {
-  summary: "DART 회사 코드로 회사별 공시 목록을 검색합니다.",
-  examplesHeading: "예시",
+  summary: "Search company-specific DART filings by DART company code.",
+  examplesHeading: "Examples",
   examples: [
     {
-      description: "확인된 DART 회사 코드로 최근 회사별 공시를 검색합니다.",
+      description: "Search recent company-specific filings with a verified DART company code.",
       argv: [
         "--company-code",
         "00190321",
@@ -91,7 +91,7 @@ export const searchCompanyReportsCliCopy = {
       ],
     },
     {
-      description: "정정 전 보고서까지 포함하고 한 페이지에 30건을 요청합니다.",
+      description: "Include pre-correction filings and request 30 results per page.",
       argv: [
         "--company-code",
         "00190321",
@@ -105,7 +105,7 @@ export const searchCompanyReportsCliCopy = {
       ],
     },
     {
-      description: "공시유형과 보고서명으로 회사별 공시를 좁혀 검색합니다.",
+      description: "Narrow company filings by disclosure type and report title.",
       argv: [
         "--company-code",
         "00190321",
@@ -120,38 +120,38 @@ export const searchCompanyReportsCliCopy = {
       ],
     },
   ],
-  notesHeading: "검색 팁",
+  notesHeading: "Search tips",
   notes: [
-    "회사명을 알고 회사 코드를 모르면 먼저 `darty search-company --company-name <회사명>`으로 8자리 companyCode를 확인하세요.",
-    "검색기간은 최대 10년입니다. 더 긴 기간은 DART가 결과 없음처럼 응답할 수 있으므로 10년 이하 창으로 나누어 검색하세요.",
-    "기본값은 DART의 최종보고서 필터를 적용합니다. `--include-all-reports`를 지정하면 정정 전 보고서까지 포함할 수 있어 총 건수가 늘어날 수 있습니다.",
-    "공시유형은 DART 상세 코드(A001=사업보고서, A002=반기보고서, A003=분기보고서, I001=수시공시 등)를 사용합니다. 코드를 모르면 `darty disclosure-types --query <검색어>`로 조회하고, 여러 코드는 `--disclosure-type`을 반복해서 전달하세요.",
-    "결산월은 DART 월 코드(01~12)로 전달됩니다. CLI에서는 `--closing-accounts-month 1`처럼 입력해도 `01`로 정규화됩니다.",
-    "결과의 filing.receiptNumber 또는 references.viewerUrl은 `view-report`로 이어서 조회할 수 있습니다.",
-    "DART 행 원문 같은 원문 검증 정보(evidence)가 필요하면 `--detail detailed` 또는 `--detail raw`와 함께 `--verbose`를 사용하세요. raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
+    "If you know the company name but not the company code, first run `darty search-company --company-name <company name>` to find the 8-digit companyCode.",
+    "The search period is limited to 10 years. Split longer ranges into windows of 10 years or less because DART can respond as if there are no results.",
+    "By default, DART's final-report filter is applied. `--include-all-reports` includes pre-correction filings and may increase the total count.",
+    "Use DART detailed disclosure type codes (A001=사업보고서, A002=반기보고서, A003=분기보고서, I001=수시공시, etc.). If you do not know a code, run `darty disclosure-types --query <term>`, and repeat `--disclosure-type` for multiple codes.",
+    "Fiscal closing month is sent as a DART month code (01-12). CLI input such as `--closing-accounts-month 1` is normalized to `01`.",
+    "Pass a result filing.receiptNumber or references.viewerUrl to `view-report` for follow-up retrieval.",
+    "Use `--detail detailed` or `--detail raw` with `--verbose` when you need source evidence such as raw DART row text. raw adds row-level evidence fields, not the full DART search HTML.",
   ],
   invalidInteger: (value: string): string =>
-    `정수를 입력해야 하지만 "${value}"을(를) 받았습니다.`,
+    `Expected an integer but received "${value}".`,
 } as const;
 
 export const searchCompanyReportsFailureCopy = {
   unexpectedSearchCompanyReports:
-    "회사별 공시 검색 중 예상하지 못한 내부 오류가 발생했습니다.",
+    "Unexpected internal error while searching company filings.",
 } as const;
 
 export const searchCompanyReportsResultCopy = {
   partialRowsDropped: (droppedItemCount: number): string =>
-    `검색 결과 행 ${droppedItemCount}개를 파싱하지 못해 생략했습니다.`,
+    `Dropped ${droppedItemCount} search result row(s) because they could not be parsed.`,
   matchedDisclosureTypeAmbiguous:
-    "여러 공시유형 코드로 검색해 DART 결과 행의 matchedDisclosureType이 모호합니다. 행별 공시유형 귀속이 필요하면 disclosureTypes를 하나만 지정해 다시 검색하세요.",
+    "matchedDisclosureType is ambiguous because the search used multiple disclosure type codes. Search again with exactly one disclosureTypes value when you need row-level attribution.",
   noResults:
-    "DART 회사별 공시 검색 결과가 없습니다. 검색기간이 10년 이하인지 확인하고, 필요한 경우 날짜 창을 조정하거나 reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth 필터를 줄여 다시 검색하세요.",
+    "No DART company filing results. Check that the search period is 10 years or less, then adjust the date window or remove reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth filters and search again.",
 } as const;
 
 export const searchCompanyReportsSchemaCopy = {
-  dateStringDescription: "YYYYMMDD 형식의 날짜 문자열입니다.",
+  dateStringDescription: "Date string in YYYYMMDD format.",
   requestDescription:
-    "DART 공시통합검색 `회사명` 모드를 8자리 DART 회사 코드로 실행하는 의미 기반 검색 입력입니다. 필수: companyCode, startDate, endDate.",
+    "Semantic search input that runs DART 공시통합검색 `회사명` mode with an 8-digit DART company code. Required: companyCode, startDate, endDate.",
   requestExamples: [
     {
       companyCode: "00126380",
@@ -170,75 +170,75 @@ export const searchCompanyReportsSchemaCopy = {
     },
   ],
   resultDescription:
-    "성공한 search-company-reports 결과 객체입니다. 회사별 공시 결과, 메타데이터, 참조 URL, 경고를 포함합니다.",
+    "Successful search-company-reports result envelope with company filing results, metadata, source references, and warnings.",
 } as const;
 
 export const searchCompanyReportsToolCopy = {
-  title: "DART 회사별 공시 검색",
+  title: "DART company filing search",
   description:
-    "8자리 DART 회사 코드로 DART 회사별 공시 목록을 반환합니다. 회사명 해석은 하지 않으므로 필요한 경우 search-company로 companyCode를 먼저 확인하세요.",
+    "Return company-specific DART filings for an 8-digit DART company code. This operation does not resolve company names; use search-company first when you need companyCode lookup.",
 } as const;
 
 export const searchCompanyReportsValidationCopy = {
   inputExpected: "search_company_reports_parameters_object",
   inputMustBeObject:
-    "search-company-reports 입력은 의미 기반 매개변수를 담은 객체여야 합니다.",
-  expectedDateYYYYMMDD: "YYYYMMDD 형식의 날짜 문자열",
+    "search-company-reports input must be an object containing semantic parameters.",
+  expectedDateYYYYMMDD: "date string in YYYYMMDD format",
   expectedIntegerBetween: (minimum: number, maximum: number): string =>
-    `${minimum} 이상 ${maximum} 이하의 정수`,
-  expectedOneOf: (choices: readonly string[]): string => choices.join(" 또는 "),
+    `integer between ${minimum} and ${maximum}`,
+  expectedOneOf: (choices: readonly string[]): string => choices.join(" or "),
   expectedBoolean: "boolean",
-  expectedNonEmptyString: "비어 있지 않은 문자열",
-  expectedStringArray: "문자열 배열",
+  expectedNonEmptyString: "non-empty string",
+  expectedStringArray: "string array",
   missingRequired: (parameter: string, expectedDescription: string): string =>
-    `필수 매개변수 "${parameter}"이(가) 없습니다. 필요한 값: ${expectedDescription}${
+    `Missing required parameter "${parameter}". Expected ${expectedDescription}${
       expectedDescription.endsWith(".") ? "" : "."
     }`,
   mustBeString: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 문자열이어야 합니다.`,
+    `Parameter "${parameter}" must be a string.`,
   mustNotBeEmpty: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 비워 둘 수 없습니다.`,
+    `Parameter "${parameter}" cannot be empty.`,
   mustBeInteger: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 정수여야 합니다.`,
+    `Parameter "${parameter}" must be an integer.`,
   mustBeBoolean: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) boolean이어야 합니다.`,
+    `Parameter "${parameter}" must be a boolean.`,
   mustBeStringArray: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 문자열 배열이어야 합니다.`,
+    `Parameter "${parameter}" must be a string array.`,
   mustBeInRange: (parameter: string, minimum: number, maximum: number): string =>
-    `매개변수 "${parameter}"은(는) ${minimum} 이상 ${maximum} 이하여야 합니다.`,
+    `Parameter "${parameter}" must be between ${minimum} and ${maximum}.`,
   mustBeOneOf: (parameter: string, choices: readonly string[]): string =>
-    `매개변수 "${parameter}"은(는) 다음 중 하나여야 합니다: ${choices.join(", ")}.`,
+    `Parameter "${parameter}" must be one of: ${choices.join(", ")}.`,
   mustUseDateFormat: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) YYYYMMDD 형식이어야 합니다.`,
+    `Parameter "${parameter}" must use YYYYMMDD format.`,
   mustBeRealDate: (parameter: string, actual: string): string =>
-    `매개변수 "${parameter}"은(는) YYYYMMDD 형식의 실제 날짜여야 합니다. "${actual}"은(는) 유효한 날짜가 아닙니다.`,
+    `Parameter "${parameter}" must be a real date in YYYYMMDD format. "${actual}" is not a valid date.`,
   startDateMustNotBeAfterEndDate: (startDate: string, endDate: string): string =>
-    `검색 시작일은 종료일보다 늦을 수 없습니다. startDate=${startDate}, endDate=${endDate}.`,
+    `startDate cannot be after endDate. startDate=${startDate}, endDate=${endDate}.`,
   dateRangeMustBeAtMostTenYears: (
     startDate: string,
     endDate: string,
     minimumStartDate: string,
   ): string =>
-    `search-company-reports 검색기간은 최대 10년입니다. startDate=${startDate}, endDate=${endDate}; 이 endDate에서 허용되는 가장 이른 startDate는 ${minimumStartDate}입니다. 더 긴 기간은 10년 이하 창으로 나누어 검색하세요.`,
+    `search-company-reports search period is limited to 10 years. startDate=${startDate}, endDate=${endDate}; the earliest allowed startDate for this endDate is ${minimumStartDate}. Split longer periods into windows of 10 years or less.`,
   mustUseDartCompanyCode: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 8자리 DART 회사 코드여야 합니다. 회사명이나 6자리 종목코드는 사용할 수 없습니다. 예: 삼성전자 DART 회사 코드 00126380.`,
+    `Parameter "${parameter}" must be an 8-digit DART company code. Company names and 6-digit stock codes are not accepted. Example: Samsung Electronics DART company code 00126380.`,
   mustUseKnownPattern: (parameter: string, expected: string): string =>
-    `매개변수 "${parameter}"은(는) ${expected} 형식이어야 합니다.`,
+    `Parameter "${parameter}" must match ${expected}.`,
   mustUseDisclosureTypeCodes: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) DART 공시유형 상세 코드 배열이어야 합니다. 예: ["A001"](사업보고서), ["A002"](반기보고서), ["A003"](분기보고서), ["I001"](수시공시). "사업보고서" 같은 보고서명 텍스트로 좁히려면 reportName을 사용하세요.`,
+    `Parameter "${parameter}" must be an array of DART 공시상세유형 detailed codes, for example ["A001"](사업보고서), ["A002"](반기보고서), ["A003"](분기보고서), or ["I001"](수시공시). Use reportName for report-title text such as "사업보고서".`,
   mustUseKnownDisclosureTypeCodes: (
     parameter: string,
     unknownCodes: readonly string[],
   ): string =>
-    `매개변수 "${parameter}"에 알려지지 않은 DART 공시유형 상세 코드가 있습니다: ${unknownCodes.join(", ")}. 흔한 코드는 A001=사업보고서, A002=반기보고서, A003=분기보고서, F001=감사보고서, I001=수시공시입니다. 코드를 모르면 agent에서는 darty_list_disclosure_types, CLI에서는 darty disclosure-types --query로 조회하고, 보고서 제목 텍스트는 reportName을 사용하세요.`,
+    `Parameter "${parameter}" contains unknown DART 공시상세유형 detailed code(s): ${unknownCodes.join(", ")}. Common codes include A001=사업보고서, A002=반기보고서, A003=분기보고서, F001=감사보고서, and I001=수시공시. If you do not know the code, use the disclosure-types operation or darty disclosure-types --query, and put report-title text in reportName.`,
   mustUseIndustryCode: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) "all", DART 업종 코드(예: 612=전기 통신업), 또는 ROOTdddd 형식의 DART 업종 tree root여야 합니다. 업종을 모르면 "all"을 사용하세요.`,
+    `Parameter "${parameter}" must be "all", a DART industry code such as 612=전기 통신업, or a ROOTdddd DART industry tree root. Use "all" if the industry is unknown.`,
   mustUseCorporationType: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), E(기타법인) 중 하나여야 합니다.`,
+    `Parameter "${parameter}" must be one of all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), or E(기타법인).`,
   mustUseClosingAccountsMonth: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) all 또는 01부터 12까지의 두 자리 결산월 코드여야 합니다. 예: 1월은 "01", 12월은 "12"입니다.`,
+    `Parameter "${parameter}" must be all or a two-digit fiscal closing month code from 01 through 12. Example: January is "01", December is "12".`,
   invalidParameter: (parameter: string): string =>
-    `매개변수 "${parameter}"이(가) 올바르지 않습니다.`,
+    `Parameter "${parameter}" is invalid.`,
   unknownParameter: (parameter: string): string =>
-    `알 수 없는 매개변수입니다: "${parameter}".`,
+    `Unknown parameter: "${parameter}".`,
 } as const;

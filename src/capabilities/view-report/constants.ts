@@ -9,4 +9,4 @@ export const formatViewReportByteRange = (): string =>
   `${viewReportContentWindowLimits.minMaxBytes}~${viewReportContentWindowLimits.maxMaxBytes}`;
 
 export const formatViewReportExpectedMaxBytes = (): string =>
-  `${viewReportContentWindowLimits.minMaxBytes.toLocaleString("en-US")} 이상 ${viewReportContentWindowLimits.maxMaxBytes.toLocaleString("en-US")} 이하의 정수`;
+  `integer between ${viewReportContentWindowLimits.minMaxBytes.toLocaleString("en-US")} and ${viewReportContentWindowLimits.maxMaxBytes.toLocaleString("en-US")}`;

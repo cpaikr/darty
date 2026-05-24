@@ -1,64 +1,64 @@
 const dartSearchSyntaxSummary =
-  'DART 공통 검색 문법: `사과 포도`=AND, `사과|포도`=OR, `사과!포도`=NOT, `"사과 포도"`=정확한 구문.';
+  'DART shared search syntax: `사과 포도`=AND, `사과|포도`=OR, `사과!포도`=NOT, `"사과 포도"`=exact phrase.';
 
 const dartSearchSyntaxDetails =
-  'DART 공통 검색 문법: `사과 포도`는 사과와 포도가 모두 존재하는 문서, `사과|포도`는 둘 중 하나가 존재하는 문서, `사과!포도`는 사과 검색 결과 중 포도가 있는 문서를 제외, `"사과 포도"`는 사과/포도 순서가 정확한 `사과포도` 또는 `사과 포도` 단어를 검색하며 중간에 다른 단어나 구절이 포함될 수 없습니다.';
+  'DART shared search syntax: `사과 포도` finds documents containing both 사과 and 포도, `사과|포도` finds documents containing either term, `사과!포도` excludes documents containing 포도 from results for 사과, and `"사과 포도"` searches for the exact 사과/포도 order as `사과포도` or `사과 포도` with no other word or phrase between them.';
 
 export const searchBodyFieldCopy = {
   page: {
-    description: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작).",
-    cliDescription: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작)."
+    description: "[default: 1] DART search result page, starting at 1.",
+    cliDescription: "[default: 1] DART search result page, starting at 1.",
   },
   sortBy: {
     description:
-      "[기본값: date] DART 본문내용 검색 결과 정렬 기준입니다(date=접수일자, reportName=보고서명).",
+      "[default: date] Sort key for DART 본문내용 results (date=접수일자, reportName=보고서명).",
     cliDescription:
-      "[기본값: date] DART 본문내용 검색 결과 정렬 기준입니다(date=접수일자, reportName=보고서명)."
+      "[default: date] Sort key for DART 본문내용 results (date=접수일자, reportName=보고서명).",
   },
   sortDirection: {
-    description: "[기본값: desc] 선택한 정렬 기준의 정렬 방향입니다.",
-    cliDescription: "[기본값: desc] 선택한 정렬 기준의 정렬 방향입니다."
+    description: "[default: desc] Sort direction for the selected sort key.",
+    cliDescription: "[default: desc] Sort direction for the selected sort key.",
   },
   keyword: {
     description:
-      `[필수] DART 공시통합검색의 본문내용 검색어입니다. ${dartSearchSyntaxDetails}`,
+      `[required] Search term for DART 공시통합검색 본문내용 mode. ${dartSearchSyntaxDetails}`,
     cliDescription:
-      `[필수] DART 공시통합검색의 본문내용 검색어입니다. ${dartSearchSyntaxSummary}`,
+      `[required] Search term for DART 공시통합검색 본문내용 mode. ${dartSearchSyntaxSummary}`,
   },
   startDate: {
-    description: "[필수] DART 검색기간 시작일입니다(YYYYMMDD).",
-    cliDescription: "[필수] DART 검색기간 시작일입니다(YYYYMMDD).",
+    description: "[required] DART search period start date (YYYYMMDD).",
+    cliDescription: "[required] DART search period start date (YYYYMMDD).",
   },
   endDate: {
-    description: "[필수] DART 검색기간 종료일입니다(YYYYMMDD).",
-    cliDescription: "[필수] DART 검색기간 종료일입니다(YYYYMMDD).",
+    description: "[required] DART search period end date (YYYYMMDD).",
+    cliDescription: "[required] DART search period end date (YYYYMMDD).",
   },
   companyCode: {
     description:
-      "DART 회사 코드(8자리 숫자). 회사명이나 종목코드 자유 입력은 지원하지 않습니다.",
+      "8-digit DART company code. Free-text company names and 6-digit stock codes are not accepted.",
     cliDescription:
-      "DART 회사 코드(8자리 숫자). 자유 입력 회사명은 지원하지 않습니다.",
+      "8-digit DART company code. Free-text company names are not accepted.",
   },
   presenterName: {
     description:
-      "제출인명. 제출인이 공시대상회사와 다를 수 있는 지분공시/감사보고서 검색에 유용합니다.",
+      "제출인명 (presenter name). Useful for ownership disclosures and 감사보고서 searches where the presenter may differ from the target company.",
     cliDescription:
-      "제출인명. 제출인이 공시대상회사와 다를 수 있는 지분공시/감사보고서 검색에 유용합니다.",
+      "제출인명 (presenter name). Useful when the presenter may differ from the target company.",
   },
   reportName: {
     description:
-      "보고서명 필터입니다. DART의 `보고서명` 입력에 대응합니다. 검색어가 아니라 보고서 제목 텍스트를 넣습니다(예: 사업보고서, 주주총회소집공고).",
+      "보고서명 (report title) filter. This maps to DART's `보고서명` field. Provide report-title text, not a body keyword (for example, 사업보고서 or 주주총회소집공고).",
     cliDescription:
-      "보고서명 필터입니다. 검색어가 아니라 보고서 제목 텍스트를 넣습니다(예: 사업보고서, 주주총회소집공고).",
+      "보고서명 (report title) filter. Provide report-title text, not a body keyword (for example, 사업보고서 or 주주총회소집공고).",
   },
 } as const;
 
 export const searchBodyCliCopy = {
-  summary: "DART 공시통합검색의 본문내용을 검색합니다.",
-  examplesHeading: "예시",
+  summary: "Search DART 공시통합검색 본문내용.",
+  examplesHeading: "Examples",
   examples: [
     {
-      description: "키워드로 DART 본문내용 일치 항목을 검색합니다.",
+      description: "Search DART 본문내용 matches by keyword.",
       argv: [
         "--keyword",
         "배당",
@@ -69,7 +69,7 @@ export const searchBodyCliCopy = {
       ],
     },
     {
-      description: "확인된 회사 코드와 제출인명으로 검색합니다.",
+      description: "Search with a verified company code and presenter name.",
       argv: [
         "--keyword",
         "배당",
@@ -86,31 +86,31 @@ export const searchBodyCliCopy = {
       ],
     },
   ],
-  notesHeading: "검색 팁",
+  notesHeading: "Search tips",
   notes: [
-    "본문내용 검색은 문서 단위 키워드 검색입니다. 공백으로 여러 단어를 넣으면 같은 문서 안에 모두 존재하는지를 찾으며, 같은 문단/표/항목에 함께 있다는 뜻은 아닙니다.",
-    "핵심감사사항(KAM)처럼 문맥 확인이 필요한 검색은 search-body로 후보를 좁힌 뒤 결과의 viewerUrl 또는 접수번호를 view-report에 넘겨 실제 보고서 본문을 확인하세요.",
-    "DART 행 원문이나 snippet HTML 같은 원문 검증 정보(evidence)가 필요하면 `--detail detailed` 또는 `--detail raw`와 함께 `--verbose`를 사용하세요. raw도 DART 검색 HTML 전체를 출력하지 않고 행 단위 검증 필드만 추가합니다.",
+    "본문내용 search is document-level keyword search. Multiple space-separated terms mean all terms exist somewhere in the same document, not necessarily in the same paragraph, table, or item.",
+    "For context-sensitive searches such as key audit matters (KAM), use search-body to narrow candidates, then pass a result viewerUrl or receipt number to view-report and inspect the actual filing body.",
+    "Use `--detail detailed` or `--detail raw` with `--verbose` when you need source evidence such as raw DART row text or snippet HTML. raw adds row-level evidence fields, not the full DART search HTML.",
   ],
   invalidInteger: (value: string): string =>
-    `정수를 입력해야 하지만 "${value}"을(를) 받았습니다.`,
+    `Expected an integer but received "${value}".`,
 } as const;
 
 export const searchBodyFailureCopy = {
-  unexpectedSearchBody: "본문 검색 중 예상하지 못한 내부 오류가 발생했습니다.",
+  unexpectedSearchBody: "Unexpected internal error while searching filing bodies.",
 } as const;
 
 export const searchBodyResultCopy = {
   partialRowsDropped: (droppedItemCount: number): string =>
-    `검색 결과 행 ${droppedItemCount}개를 파싱하지 못해 생략했습니다.`,
+    `Dropped ${droppedItemCount} search result row(s) because they could not be parsed.`,
   noResults:
-    "DART 본문내용 검색 결과가 없습니다. DART는 문서 단위 키워드와 명시 날짜/회사/보고서명 필터를 적용하므로 날짜 범위를 넓히거나 선택 필터를 줄인 뒤 다시 검색하세요.",
+    "No DART 본문내용 results. DART applies document-level keywords plus explicit date/company/report filters; widen the date range or remove optional filters, then search again.",
 } as const;
 
 export const searchBodySchemaCopy = {
-  dateStringDescription: "YYYYMMDD 형식의 날짜 문자열입니다.",
+  dateStringDescription: "Date string in YYYYMMDD format.",
   requestDescription:
-    "DART 공시통합검색 `본문내용` 모드의 의미 기반 검색 입력입니다. 필수: keyword, startDate, endDate.",
+    "Semantic search input for DART 공시통합검색 `본문내용` mode. Required: keyword, startDate, endDate.",
   requestExamples: [
     {
       page: 1,
@@ -123,46 +123,46 @@ export const searchBodySchemaCopy = {
       companyCode: "00126380",
     },
   ],
-  resultDescription: "성공한 search-body 결과 객체입니다. 검색 결과, 메타데이터, 참조 URL, 경고를 포함합니다.",
+  resultDescription: "Successful search-body result envelope with search results, metadata, source references, and warnings.",
 } as const;
 
 export const searchBodyToolCopy = {
-  title: "DART 본문내용 검색",
+  title: "DART body-content search",
   description:
-    `DART 공시통합검색의 \`본문내용\` 모드로 제출 공시문서 내용을 검색합니다. ${dartSearchSyntaxSummary}`,
+    `Search submitted filing text through DART 공시통합검색 \`본문내용\` mode. ${dartSearchSyntaxSummary}`,
 } as const;
 
 export const searchBodyValidationCopy = {
   inputExpected: "search_body_parameters_object",
   inputMustBeObject:
-    "search-body 입력은 의미 기반 매개변수를 담은 객체여야 합니다.",
-  expectedNonEmptyString: "비어 있지 않은 문자열",
-  expectedDateYYYYMMDD: "YYYYMMDD 형식의 날짜 문자열",
-  expectedOneOf: (choices: readonly string[]): string => choices.join(" 또는 "),
+    "search-body input must be an object containing semantic parameters.",
+  expectedNonEmptyString: "non-empty string",
+  expectedDateYYYYMMDD: "date string in YYYYMMDD format",
+  expectedOneOf: (choices: readonly string[]): string => choices.join(" or "),
   expectedIntegerBetween: (minimum: number, maximum: number): string =>
-    `${minimum} 이상 ${maximum} 이하의 정수`,
+    `integer between ${minimum} and ${maximum}`,
   missingRequired: (parameter: string, expectedDescription: string): string =>
-    `필수 매개변수 "${parameter}"이(가) 없습니다. 필요한 값: ${expectedDescription}.`,
+    `Missing required parameter "${parameter}". Expected ${expectedDescription}.`,
   mustBeString: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 문자열이어야 합니다.`,
+    `Parameter "${parameter}" must be a string.`,
   mustBeInteger: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 정수여야 합니다.`,
+    `Parameter "${parameter}" must be an integer.`,
   mustBeOneOf: (parameter: string, choices: readonly string[]): string =>
-    `매개변수 "${parameter}"은(는) 다음 중 하나여야 합니다: ${choices.join(", ")}.`,
+    `Parameter "${parameter}" must be one of: ${choices.join(", ")}.`,
   mustBeInRange: (parameter: string, minimum: number, maximum: number): string =>
-    `매개변수 "${parameter}"은(는) ${minimum} 이상 ${maximum} 이하여야 합니다.`,
+    `Parameter "${parameter}" must be between ${minimum} and ${maximum}.`,
   mustNotBeEmpty: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 비워 둘 수 없습니다.`,
+    `Parameter "${parameter}" cannot be empty.`,
   mustUseDateFormat: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) YYYYMMDD 형식이어야 합니다.`,
+    `Parameter "${parameter}" must use YYYYMMDD format.`,
   mustBeRealDate: (parameter: string, actual: string): string =>
-    `매개변수 "${parameter}"은(는) YYYYMMDD 형식의 실제 날짜여야 합니다. "${actual}"은(는) 유효한 날짜가 아닙니다.`,
+    `Parameter "${parameter}" must be a real date in YYYYMMDD format. "${actual}" is not a valid date.`,
   startDateMustNotBeAfterEndDate: (startDate: string, endDate: string): string =>
-    `검색 시작일은 종료일보다 늦을 수 없습니다. startDate=${startDate}, endDate=${endDate}.`,
+    `startDate cannot be after endDate. startDate=${startDate}, endDate=${endDate}.`,
   mustUseDartCompanyCode: (parameter: string): string =>
-    `매개변수 "${parameter}"은(는) 8자리 DART 회사 코드여야 합니다. 회사명이나 6자리 종목코드는 사용할 수 없습니다. 예: 삼성전자 DART 회사 코드 00126380.`,
+    `Parameter "${parameter}" must be an 8-digit DART company code. Company names and 6-digit stock codes are not accepted. Example: Samsung Electronics DART company code 00126380.`,
   invalidParameter: (parameter: string): string =>
-    `매개변수 "${parameter}"이(가) 올바르지 않습니다.`,
+    `Parameter "${parameter}" is invalid.`,
   unknownParameter: (parameter: string): string =>
-    `알 수 없는 매개변수입니다: "${parameter}".`,
+    `Unknown parameter: "${parameter}".`,
 } as const;

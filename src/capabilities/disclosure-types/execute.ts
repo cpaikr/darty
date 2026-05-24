@@ -79,12 +79,12 @@ const buildAmbiguousLabelWarnings = (
     .filter(([, matches]) => matches.length > 1)
     .map(([label, matches]) => ({
       code: "ambiguous_label_match",
-      message: `검색어 "${request.query}"에 같은 라벨("${label}")을 가진 상세 코드가 여러 대분류에서 반환되었습니다: ${matches
+      message: `Query "${request.query}" returned detailed codes with the same label ("${label}") in multiple categories: ${matches
         .map(
           (match) =>
             `${match.code}(${match.category}=${match.categoryLabel})`,
         )
-        .join(", ")}. 대분류 라벨을 확인하거나 category/--category로 좁히세요.`,
+        .join(", ")}. Inspect categoryLabel or narrow with category/--category.`,
     }));
 };
 

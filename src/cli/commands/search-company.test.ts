@@ -50,16 +50,14 @@ describe("parseSearchCompanyCommandArgs", () => {
         "--page-size",
         "nope",
       ]),
-    ).toThrow(
-      "option '--page-size <number>' argument 'nope' is invalid. 정수를 입력해야 하지만 \"nope\"을(를) 받았습니다.",
-    );
+    ).toThrow('Expected an integer but received "nope"');
   });
 
   test("documents the explicit CLI surface locally", () => {
     expect(searchCompanyUsage).toContain("--company-name <text>");
     expect(searchCompanyUsage).toContain("--page <number>");
     expect(searchCompanyUsage).toContain("--page-size <number>");
-    expect(searchCompanyUsage).toContain("DART 회사 고유코드(8자리)");
+    expect(searchCompanyUsage).toContain("8-digit DART company code");
     expect(searchCompanyUsage).toContain("companyCode");
     expect(searchCompanyUsage).toContain("--pretty");
     expect(searchCompanyUsage).toContain("--verbose");

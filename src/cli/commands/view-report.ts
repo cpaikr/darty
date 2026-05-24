@@ -55,7 +55,7 @@ const parseTocDepthOption = (value: string): number => {
   const parsed = parseIntegerOption(value);
 
   if (parsed < 1) {
-    throw new InvalidArgumentError("1 이상의 정수를 입력해야 합니다.");
+    throw new InvalidArgumentError("Expected an integer greater than or equal to 1.");
   }
 
   return parsed;
@@ -69,7 +69,7 @@ const parseContentStartByteOption = (value: string): number => {
   const parsed = Number.parseInt(value, 10);
 
   if (parsed < 0) {
-    throw new InvalidArgumentError("0 이상의 정수를 입력해야 합니다.");
+    throw new InvalidArgumentError("Expected an integer greater than or equal to 0.");
   }
 
   return parsed;
@@ -118,12 +118,12 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
     responseDetailCliDescriptions.viewReport,
   ),
   createVerboseOption(
-    "기본 CLI 출력에서 생략하는 locator(documents/toc)와 진단 필드를 포함합니다. --detail을 생략하면 요청 detail=raw로 처리합니다.",
+    "Include locator fields (documents/toc) and diagnostics omitted from the default CLI output. If --detail is omitted, request detail=raw.",
   ),
   createRegisteredOption(
     "tocDepth",
     "--toc-depth <number>",
-    "목차를 지정한 깊이까지만 출력합니다. 섹션 본문 출력에서는 목차 포함도 함께 켭니다.",
+    "Print the TOC only to the specified depth. For section body output, this also enables TOC inclusion.",
     (option) => {
       option.argParser((value) => parseTocDepthOption(value));
     },
@@ -195,7 +195,7 @@ const buildViewReportCommand = (
   const command = configureCliTransport(new Command(viewReportOperationName))
     .summary(viewReportCliCopy.summary)
     .description(viewReportToolCopy.description)
-    .helpOption("-h, --help", "명령 도움말을 표시합니다.")
+    .helpOption("-h, --help", "Display command help.")
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {

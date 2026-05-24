@@ -28,7 +28,7 @@ describe("parseCompanyDetailCommandArgs", () => {
 
   test("documents the CLI surface", () => {
     expect(companyDetailUsage).toContain("--company-code <text>");
-    expect(companyDetailUsage).toContain("기업개황 상세");
+    expect(companyDetailUsage).toContain("DART 기업개황 detail");
   });
 
   test("renders CLI-facing validation errors with flag names", () => {

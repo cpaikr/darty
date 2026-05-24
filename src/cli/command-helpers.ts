@@ -131,18 +131,21 @@ export const renderInvalidRequestCliErrorMessage = <Key extends string>(
   return error.message
     .replaceAll(`"${error.parameter}"`, `"${cliName}"`)
     .replaceAll("필수 매개변수", "필수 옵션")
-    .replaceAll("매개변수", "옵션");
+    .replaceAll("매개변수", "옵션")
+    .replaceAll("required parameter", "required option")
+    .replaceAll("Parameter", "Option")
+    .replaceAll("parameter", "option");
 };
 
 export const createPrettyOption = (): RegisteredOption<"pretty"> =>
   createRegisteredOption(
     "pretty",
     "--pretty",
-    "사람이 읽기 쉬운 들여쓰기 JSON으로 출력합니다.",
+    "Print human-readable indented JSON."
   );
 
 export const createVerboseOption = (
-  description = "기본 출력에서 생략하는 진단/출처 필드를 포함합니다.",
+  description = "Include diagnostic/source fields omitted from the default output.",
 ): RegisteredOption<"verbose"> =>
   createRegisteredOption("verbose", "--verbose", description);
 

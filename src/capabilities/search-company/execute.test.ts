@@ -45,7 +45,7 @@ describe("executeSearchCompany", () => {
       {
         code: "no_results",
         message:
-          "DART 기업개황 회사명 검색 결과가 없습니다. 더 짧은 회사명 일부로 다시 검색하세요. 사업자등록번호/법인등록번호 검색 모드는 이 도구에서 지원하지 않습니다.",
+          "No DART 기업개황 company-name results. Try a shorter company-name fragment. Business registration number and corporate registration number search modes are not supported by this tool.",
       },
     ]);
   });
@@ -98,9 +98,9 @@ describe("executeSearchCompany", () => {
 
       expect(error.code).toBe("invalid_request");
       expect(error.parameter).toBe("limit");
-      expect(error.recoveryHint).toContain("limit은 지원하지 않습니다");
+      expect(error.recoveryHint).toContain("limit is not supported");
       expect(error.recoveryHint).toContain("search-company");
-      expect(error.recoveryHint).toContain("pageSize(1~45)");
+      expect(error.recoveryHint).toContain("pageSize (1-45)");
     }
   });
 

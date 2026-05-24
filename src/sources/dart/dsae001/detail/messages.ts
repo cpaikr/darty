@@ -1,10 +1,10 @@
 export const dsae001DetailMessages = {
-  sourceUnavailable: "DART 기업개황 상세 정보를 가져오지 못했습니다.",
-  htmlDecodeFailure: "DART 기업개황 상세 HTML을 읽지 못했습니다.",
-  missingDetailTable: "DART 기업개황 상세 결과에서 상세 표를 찾지 못했습니다.",
-  missingCompanyName: "DART 기업개황 상세 결과에서 회사이름을 찾지 못했습니다.",
+  sourceUnavailable: "Could not fetch DART 기업개황 company details.",
+  htmlDecodeFailure: "Could not read DART 기업개황 detail HTML.",
+  missingDetailTable: "Could not find the detail table in DART 기업개황 detail results.",
+  missingCompanyName: "Could not find the company name in DART 기업개황 detail results.",
   companyNotFound: (companyCode: string): string =>
-    `DART 기업개황 상세에서 회사 코드 ${companyCode}에 해당하는 회사를 찾지 못했습니다.`,
-  sourceSchemaMismatch: "DART 기업개황 상세 결과가 예상한 스키마와 다릅니다.",
-  internalProvider: "DART 기업개황 상세 처리 중 내부 오류가 발생했습니다.",
+    `Could not find a company for DART company code ${companyCode} in DART 기업개황 details.`,
+  sourceSchemaMismatch: "DART 기업개황 detail results did not match the expected schema.",
+  internalProvider: "Unexpected internal error while processing DART 기업개황 details.",
 } as const;

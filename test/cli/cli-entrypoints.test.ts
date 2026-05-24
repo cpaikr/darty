@@ -93,9 +93,9 @@ describe("CLI entrypoints", () => {
       expect(stdout).toContain("search-company [options]");
       expect(stdout).toContain("search-company-reports [options]");
       expect(stdout).toContain("view-report [options]");
-      expect(stdout).toContain("브라우저 상호작용 중 발생하는 API 호출을 모방");
-      expect(stdout).toContain("DART의 공식 OpenDART API를 사용하지 않습니다");
-      expect(stdout).toContain("정확성을 보장하지 않습니다");
+      expect(stdout).toContain("replay of API calls observed during browser interaction");
+      expect(stdout).toContain("does not use DART's official OpenDART API");
+      expect(stdout).toContain("does not guarantee accuracy");
       expect(stdout).not.toContain("contents-search [options]");
       expect(stdout).not.toContain("report-view [options]");
     },
@@ -150,7 +150,7 @@ describe("CLI entrypoints", () => {
     expect(envelope.error.code).toBe("invalid_request");
     expect(envelope.error.parameter).toBe("companyCode");
     expect(envelope.error.message).toContain(
-      '옵션 "--company-code"은(는) 8자리 DART 회사 코드여야 합니다.',
+      'Option "--company-code" must be an 8-digit DART company code.',
     );
   });
 
@@ -208,7 +208,7 @@ describe("CLI entrypoints", () => {
     expect(result.exitCode).toBe(0);
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage: darty report-guide [options]");
-    expect(stdout).toContain("DART 보고서별 정보 안내");
+    expect(stdout).toContain("DART report information guide");
   });
 
   test("bundled CLI prints report-guide as human Markdown", () => {
@@ -218,7 +218,7 @@ describe("CLI entrypoints", () => {
 
     expect(result.exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(stdout).toContain("# DART 보고서별 정보 안내");
+    expect(stdout).toContain("# DART report information guide");
     expect(stdout).toContain("사업보고서");
     expect(stdout).toContain("주요사항보고서");
   });

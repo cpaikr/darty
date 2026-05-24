@@ -125,7 +125,7 @@ const buildSearchCompanyCommand = (
   const command = configureCliTransport(new Command(searchCompanyOperationName))
     .summary(searchCompanyCliCopy.summary)
     .description(searchCompanyToolCopy.description)
-    .helpOption("-h, --help", "명령 도움말을 표시합니다.")
+    .helpOption("-h, --help", "Display command help.")
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {

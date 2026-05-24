@@ -95,7 +95,7 @@ describe("toDsab007CompanyReportsProviderResult", () => {
         {
           code: "row_parse_failed",
           rowIndex: 2,
-          message: "DART 회사별 공시 결과 행을 파싱하지 못했습니다.",
+          message: "Could not parse a DART company filing result row.",
         },
       ],
       droppedRowCount: 1,
@@ -156,7 +156,7 @@ describe("toDsab007CompanyReportsProviderResult", () => {
       warnings: [
         {
           code: "partial_rows_dropped",
-          message: "검색 결과 행 1개를 파싱하지 못해 생략했습니다.",
+          message: "Dropped 1 search result row(s) because they could not be parsed.",
           droppedItemCount: 1,
         },
       ],

@@ -99,8 +99,8 @@ describe("resolveSearchCompanyReportsRequest", () => {
       expect(error.parameter).toBe("companyCode");
       expect(error.reason).toBe("invalid_format");
       expect(error.expected).toBe("8_digit_company_code");
-      expect(error.message).toContain("8자리 DART 회사 코드");
-      expect(error.message).toContain("6자리 종목코드");
+      expect(error.message).toContain("8-digit DART company code");
+      expect(error.message).toContain("6-digit stock codes");
     }
   });
 
@@ -177,8 +177,8 @@ describe("resolveSearchCompanyReportsRequest", () => {
       expect(error.reason).toBe("unknown_code");
       expect(error.expected).toBe("known_disclosure_type_code");
       expect(error.actual).toEqual(["A999"]);
-      expect(error.message).toContain("알려지지 않은");
-      expect(error.message).toContain("darty_list_disclosure_types");
+      expect(error.message).toContain("unknown");
+      expect(error.message).toContain("disclosure-types");
       expect(error.message).toContain("darty disclosure-types --query");
       expect(error.message).toContain("reportName");
     }
@@ -262,7 +262,7 @@ describe("resolveSearchCompanyReportsRequest", () => {
         startDate: "20250230",
         endDate: "20260507",
       }),
-    ).toThrow("실제 날짜");
+    ).toThrow("real date");
 
     expect(() =>
       resolveSearchCompanyReportsRequest({
@@ -270,7 +270,7 @@ describe("resolveSearchCompanyReportsRequest", () => {
         startDate: "20260507",
         endDate: "20250507",
       }),
-    ).toThrow("검색 시작일은 종료일보다 늦을 수 없습니다");
+    ).toThrow("startDate cannot be after endDate");
 
     expect(
       resolveSearchCompanyReportsRequest({
@@ -297,7 +297,7 @@ describe("resolveSearchCompanyReportsRequest", () => {
       expect(error.parameter).toBe("startDate");
       expect(error.reason).toBe("date_range_too_wide");
       expect(error.expected).toBe("date_range_at_most_10_years");
-      expect(error.message).toContain("최대 10년");
+      expect(error.message).toContain("10 years");
       expect(error.message).toContain("20160524");
     }
   });

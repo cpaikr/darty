@@ -93,7 +93,7 @@ const buildCompanyRssCommand = (
   const command = configureCliTransport(new Command(companyRssOperationName))
     .summary(companyRssCliCopy.summary)
     .description(companyRssToolCopy.description)
-    .helpOption("-h, --help", "명령 도움말을 표시합니다.")
+    .helpOption("-h, --help", "Display command help.")
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {

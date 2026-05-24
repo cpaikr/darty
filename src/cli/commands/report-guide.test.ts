@@ -11,7 +11,7 @@ import {
 const result = {
   result: {
     request: {},
-    title: "DART 보고서별 정보 안내",
+    title: "DART report information guide",
     contentMarkdown: reportGuideMarkdown,
   },
   metadata: {
@@ -36,9 +36,9 @@ describe("parseReportGuideCommandArgs", () => {
   });
 
   test("documents the simple CLI surface locally", () => {
-    expect(reportGuideUsage).toContain("DART 보고서별 정보 안내");
+    expect(reportGuideUsage).toContain("DART report information guide");
     expect(reportGuideUsage).toContain("darty report-guide");
-    expect(reportGuideUsage).toContain("네트워크를 사용하지 않고");
+    expect(reportGuideUsage).toContain("network-free");
   });
 
   test("passes an empty request to the command runner", async () => {
@@ -71,7 +71,7 @@ describe("executeReportGuideCommand", () => {
     );
 
     expect(output).toBe(reportGuideMarkdown);
-    expect(output).toContain("# DART 보고서별 정보 안내");
+    expect(output).toContain("# DART report information guide");
     expect(output).toContain("사업보고서");
     expect(output).toContain("주요사항보고서");
     expect(output).toContain("주식등의 대량보유상황보고서");

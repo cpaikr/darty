@@ -134,7 +134,7 @@ describe("parseCompanySearchHtml", () => {
       {
         code: "row_parse_failed",
         rowIndex: 1,
-        message: "DART 기업개황 회사별 검색 결과 행을 파싱하지 못했습니다.",
+        message: "Could not parse a DART 기업개황 company-search result row.",
       },
     ]);
   });

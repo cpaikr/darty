@@ -14,26 +14,26 @@ import {
 const DartCompanyCodeSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^\d{8}$/)),
   {
-    description: "8자리 DART 회사 코드.",
+    description: "8-digit DART company code.",
     examples: ["00126380"],
   },
 );
 
 export const SearchCompanyReportsCompanySchema = Schema.Struct({
   companyCode: DartCompanyCodeSchema,
-  name: Schema.optional(describedString("DART 결과 행에서 확인된 회사명.")),
-  marketLabel: Schema.optional(describedString("DART 결과 행의 시장 구분 라벨.")),
+  name: Schema.optional(describedString("Company name observed in the DART result row.")),
+  marketLabel: Schema.optional(describedString("Market category label in the DART result row.")),
 });
 export type SearchCompanyReportsCompany =
   typeof SearchCompanyReportsCompanySchema.Type;
 
 export const SearchCompanyReportsFilingSchema = Schema.Struct({
-  receiptNumber: describedString("14자리 DART 접수번호(rcpNo). 후속 view-report receipt로 사용할 수 있습니다.", [
+  receiptNumber: describedString("14-digit DART receipt number (rcpNo). Can be used as view-report receipt.", [
     "20260331004166",
   ]),
-  reportTitle: describedString("DART 결과 행의 보고서 제목."),
-  receiptDate: describedString("DART 접수일자(YYYY-MM-DD).", ["2026-03-31"]),
-  presenterName: Schema.optional(describedString("DART 결과 행의 제출인명.")),
+  reportTitle: describedString("Report title in the DART result row."),
+  receiptDate: describedString("DART receipt date (YYYY-MM-DD).", ["2026-03-31"]),
+  presenterName: Schema.optional(describedString("제출인명 in the DART result row.")),
 });
 export type SearchCompanyReportsFiling =
   typeof SearchCompanyReportsFilingSchema.Type;
@@ -41,7 +41,7 @@ export type SearchCompanyReportsFiling =
 const SearchCompanyReportsDisclosureTypeCodeSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^[A-J]\d{3}$/)),
   {
-    description: "검색 결과 행에 귀속된 DART 공시상세유형 코드.",
+    description: "DART 공시상세유형 code attributed to the search result row.",
     examples: ["A001", "I001"],
   },
 );
@@ -49,20 +49,20 @@ const SearchCompanyReportsDisclosureTypeCodeSchema = annotateSchema(
 const SearchCompanyReportsDisclosureTypeCategorySchema = annotateSchema(
   Schema.Literal("A", "B", "C", "D", "E", "F", "G", "H", "I", "J"),
   {
-    description: "검색 결과 행에 귀속된 DART 공시상세유형 대분류 코드.",
+    description: "DART 공시상세유형 category code attributed to the search result row.",
     examples: ["A", "I"],
   },
 );
 
 export const SearchCompanyReportsMatchedDisclosureTypeSchema = Schema.Struct({
   code: SearchCompanyReportsDisclosureTypeCodeSchema,
-  label: Schema.optional(describedString("공시상세유형 한국어 라벨.")),
+  label: Schema.optional(describedString("Korean 공시상세유형 label.")),
   category: SearchCompanyReportsDisclosureTypeCategorySchema,
-  categoryLabel: describedString("공시상세유형 대분류 한국어 라벨."),
+  categoryLabel: describedString("Korean 공시상세유형 category label."),
   evidence: Schema.Struct({
     source: annotateSchema(Schema.Literal("single_disclosure_type_request"), {
       description:
-        "DART 요청이 하나의 publicType으로 제한되어 행별 귀속이 가능한 경우임을 나타냅니다.",
+        "Indicates that the DART request was limited to one publicType, making row-level attribution possible.",
     }),
   }),
 });
@@ -70,20 +70,20 @@ export type SearchCompanyReportsMatchedDisclosureType =
   typeof SearchCompanyReportsMatchedDisclosureTypeSchema.Type;
 
 export const SearchCompanyReportsItemReferencesSchema = Schema.Struct({
-  viewerUrl: describedString("DART /dsaf001/main.do?rcpNo=... report-viewer URL. 후속 view-report receipt로 사용할 수 있습니다."),
+  viewerUrl: describedString("DART /dsaf001/main.do?rcpNo=... report-viewer URL. Can be used as view-report receipt."),
 });
 export type SearchCompanyReportsItemReferences =
   typeof SearchCompanyReportsItemReferencesSchema.Type;
 
 export const SearchCompanyReportsRemarkSchema = Schema.Struct({
-  text: describedString("DART 결과 행의 비고 텍스트."),
-  title: Schema.optional(describedString("DART 결과 행의 비고 title 속성.")),
+  text: describedString("Remark text in the DART result row."),
+  title: Schema.optional(describedString("Remark title attribute in the DART result row.")),
 });
 export type SearchCompanyReportsRemark =
   typeof SearchCompanyReportsRemarkSchema.Type;
 
 export const SearchCompanyReportsEvidenceSchema = Schema.Struct({
-  rawRowText: describedString("DART 결과 행의 원문 텍스트. 파서 검증용 evidence입니다."),
+  rawRowText: describedString("Raw DART result row text, preserved as parser-check evidence."),
 });
 export type SearchCompanyReportsEvidence =
   typeof SearchCompanyReportsEvidenceSchema.Type;
@@ -103,79 +103,79 @@ export type SearchCompanyReportsItem =
 
 export const SearchCompanyReportsPaginationSchema = Schema.Struct({
   currentPage: annotateSchema(Schema.Int.pipe(Schema.greaterThanOrEqualTo(1)), {
-    description: "반환된 DART 회사별 공시 검색 페이지(1부터 시작).",
+    description: "Returned DART company filing search page, starting at 1.",
   }),
-  totalPages: nonNegativeInt("DART가 보고한 전체 페이지 수."),
-  totalCount: nonNegativeInt("DART가 보고한 전체 공시 결과 수."),
-  returnedCount: nonNegativeInt("이번 응답의 items 개수."),
+  totalPages: nonNegativeInt("Total page count reported by DART."),
+  totalCount: nonNegativeInt("Total filing result count reported by DART."),
+  returnedCount: nonNegativeInt("Number of items in this response."),
 });
 export type SearchCompanyReportsPagination =
   typeof SearchCompanyReportsPaginationSchema.Type;
 
 export const SearchCompanyReportsMetadataSchema = Schema.Struct({
-  fetchedAt: describedString("DART 회사별 공시 검색 응답을 처리한 ISO timestamp."),
+  fetchedAt: describedString("ISO timestamp when the DART company filing search response was processed."),
   source: Schema.Struct({
-    system: annotateSchema(Schema.Literal("dart"), { description: "원천 시스템." }),
+    system: annotateSchema(Schema.Literal("dart"), { description: "Source system." }),
     surface: annotateSchema(Schema.Literal("dsab007"), {
-      description: "사용한 DART 통합검색 surface.",
+      description: "DART integrated search surface used.",
     }),
-    endpoint: describedString("DART 회사별 공시 검색 endpoint."),
+    endpoint: describedString("DART company filing search endpoint."),
   }),
   sourceBehavior: Schema.Struct({
     searchMode: annotateSchema(Schema.Literal("corp"), {
-      description: "DART 공시통합검색 회사명 모드.",
+      description: "DART 공시통합검색 company-name mode.",
     }),
     sortBy: annotateSchema(Schema.Literal("date"), {
-      description: "현재 capability가 사용하는 고정 정렬 기준.",
+      description: "Fixed sort key used by this capability.",
     }),
     callerControlsPageSize: annotateSchema(Schema.Literal(true), {
-      description: "caller가 pageSize를 제어할 수 있음을 나타냅니다.",
+      description: "Indicates that callers can control pageSize.",
     }),
     pageSizeChoices: annotateSchema(Schema.Array(Schema.Literal(15, 30, 50, 100)), {
-      description: "DART 회사별 공시 검색에서 관찰된 pageSize 선택지.",
+      description: "pageSize choices observed for DART company filing search.",
     }),
     finalReportDefault: annotateSchema(Schema.Literal(true), {
-      description: "기본 요청은 DART 최종보고서 필터를 적용합니다.",
+      description: "Default requests apply DART's final-report filter.",
     }),
     observationStatus: annotateSchema(Schema.Literal("observed"), {
-      description: "source 동작이 live 조사로 확인된 상태.",
+      description: "Source behavior has been verified by live investigation.",
     }),
   }),
   completeness: annotateSchema(Schema.Literal("complete", "partial"), {
-    description: "파싱 결과가 완전한지, 일부 행을 드롭했는지 나타냅니다.",
+    description: "Whether parsing is complete or some rows were dropped.",
   }),
-  droppedItemCount: nonNegativeInt("파싱하지 못해 items에서 제외한 결과 행 수."),
+  droppedItemCount: nonNegativeInt("Number of result rows excluded from items because they could not be parsed."),
 });
 export type SearchCompanyReportsMetadata =
   typeof SearchCompanyReportsMetadataSchema.Type;
 
 export const SearchCompanyReportsReferencesSchema = Schema.Struct({
-  searchUrl: describedString("DART /dsab007/detailSearch.ax 회사별 공시 검색 endpoint URL."),
+  searchUrl: describedString("DART /dsab007/detailSearch.ax company filing search endpoint URL."),
 });
 export type SearchCompanyReportsReferences =
   typeof SearchCompanyReportsReferencesSchema.Type;
 
 const PartialRowsDroppedWarningSchema = Schema.Struct({
   code: annotateSchema(Schema.Literal("partial_rows_dropped"), {
-    description: "결과 행 일부가 파싱되지 않았을 때 반환되는 경고 코드.",
+    description: "Warning code returned when some result rows were not parsed.",
   }),
-  message: describedString("경고 설명."),
-  droppedItemCount: nonNegativeInt("파싱하지 못해 제외한 결과 행 수."),
+  message: describedString("Warning explanation."),
+  droppedItemCount: nonNegativeInt("Number of result rows dropped because they could not be parsed."),
 });
 
 const MatchedDisclosureTypeAmbiguousWarningSchema = Schema.Struct({
   code: annotateSchema(Schema.Literal("matched_disclosure_type_ambiguous"), {
     description:
-      "여러 공시상세유형 코드로 검색해 결과 행의 매칭 코드가 모호할 때 반환되는 경고 코드.",
+      "Warning code returned when a search with multiple 공시상세유형 codes makes row-level matching ambiguous.",
   }),
-  message: describedString("경고 설명과 필요한 후속 조치."),
+  message: describedString("Warning explanation and required follow-up."),
 });
 
 const NoResultsWarningSchema = Schema.Struct({
   code: annotateSchema(Schema.Literal("no_results"), {
-    description: "검색 조건에 맞는 DART 회사별 공시가 없을 때 반환되는 경고 코드.",
+    description: "Warning code returned when DART has no company filings matching the search conditions.",
   }),
-  message: describedString("근거 있는 검색 확장 또는 필터 완화 제안."),
+  message: describedString("Evidence-based suggestion to widen the search or relax filters."),
 });
 
 export const SearchCompanyReportsWarningSchema = Schema.Union(

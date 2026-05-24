@@ -291,7 +291,7 @@ describe("executeSearchBody", () => {
       {
         code: "no_results",
         message:
-          "DART 본문내용 검색 결과가 없습니다. DART는 문서 단위 키워드와 명시 날짜/회사/보고서명 필터를 적용하므로 날짜 범위를 넓히거나 선택 필터를 줄인 뒤 다시 검색하세요.",
+          "No DART 본문내용 results. DART applies document-level keywords plus explicit date/company/report filters; widen the date range or remove optional filters, then search again.",
       },
     ]);
   });
@@ -336,7 +336,7 @@ describe("executeSearchBody", () => {
           {
             code: "partial_rows_dropped",
             message:
-              "검색 결과 행 1개를 파싱하지 못해 생략했습니다.",
+              "Dropped 1 search result row(s) because they could not be parsed.",
             droppedItemCount: 1,
           },
         ],
@@ -348,7 +348,7 @@ describe("executeSearchBody", () => {
     expect(result.warnings).toEqual([
       {
         code: "partial_rows_dropped",
-        message: "검색 결과 행 1개를 파싱하지 못해 생략했습니다.",
+        message: "Dropped 1 search result row(s) because they could not be parsed.",
         droppedItemCount: 1,
       },
     ]);
@@ -363,7 +363,7 @@ describe("executeSearchBody", () => {
           endDate: "20250101",
         },
         "startDate",
-        ["YYYYMMDD", "startDate는 endDate보다 늦을 수 없습니다"],
+        ["YYYYMMDD", "startDate cannot be after endDate"],
       ],
       [
         {
@@ -374,9 +374,9 @@ describe("executeSearchBody", () => {
         },
         "limit",
         [
-          "limit은 지원하지 않습니다",
-          "pageSize는 조절할 수 없습니다",
-          "pageSize(15, 30, 50, 100)",
+          "limit is not supported",
+          "cannot control pageSize",
+          "pageSize (15, 30, 50, 100)",
         ],
       ],
     ] as const) {
@@ -448,7 +448,7 @@ describe("executeSearchBody", () => {
     ).rejects.toEqual(
       new SearchBodyFailure({
         code: "internal_error",
-        message: "본문 검색 중 예상하지 못한 내부 오류가 발생했습니다.",
+        message: "Unexpected internal error while searching filing bodies.",
         retryable: false,
       }),
     );

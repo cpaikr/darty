@@ -124,8 +124,8 @@ describe("resolveSearchBodyRequest", () => {
       expect(error.reason).toBe("invalid_format");
       expect(error.expected).toBe("8_digit_company_code");
       expect(error.actual).toBe("005930");
-      expect(error.message).toContain("8자리 DART 회사 코드");
-      expect(error.message).toContain("6자리 종목코드");
+      expect(error.message).toContain("8-digit DART company code");
+      expect(error.message).toContain("6-digit stock codes");
     }
   });
 
@@ -149,7 +149,7 @@ describe("resolveSearchBodyRequest", () => {
       expect(error.reason).toBe("invalid_calendar_date");
       expect(error.expected).toBe("date_YYYYMMDD");
       expect(error.actual).toBe("20250230");
-      expect(error.message).toContain("실제 날짜");
+      expect(error.message).toContain("real date");
     }
   });
 
@@ -177,7 +177,7 @@ describe("resolveSearchBodyRequest", () => {
         endDate: "20250101",
       });
       expect(error.message).toBe(
-        "검색 시작일은 종료일보다 늦을 수 없습니다. startDate=20250331, endDate=20250101.",
+        "startDate cannot be after endDate. startDate=20250331, endDate=20250101.",
       );
     }
   });

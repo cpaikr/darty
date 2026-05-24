@@ -110,7 +110,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
   ),
   createPrettyOption(),
   createVerboseOption(
-    "기본 CLI 출력에서 생략하는 원문 검증 정보(evidence)와 진단 필드를 포함합니다. --detail을 생략하면 요청 detail=raw로 처리합니다.",
+    "Include source evidence and diagnostic fields omitted from the default CLI output. If --detail is omitted, request detail=raw.",
   ),
 ];
 
@@ -171,7 +171,7 @@ const buildSearchBodyCommand = (
   const command = configureCliTransport(new Command(searchBodyOperationName))
     .summary(searchBodyCliCopy.summary)
     .description(searchBodyToolCopy.description)
-    .helpOption("-h, --help", "명령 도움말을 표시합니다.")
+    .helpOption("-h, --help", "Display command help.")
     .addHelpText("after", renderSupplementalHelp());
 
   for (const registeredOption of registeredOptions) {

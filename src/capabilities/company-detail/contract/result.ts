@@ -10,55 +10,55 @@ import { CompanyDetailRequestSchema } from "./request.ts";
 const DartCompanyCodeSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^\d{8}$/)),
   {
-    description: "8자리 DART 회사 코드.",
+    description: "8-digit DART company code.",
     examples: ["00126380"],
   },
 );
 const ListedStockCodeSchema = annotateSchema(
   Schema.String.pipe(Schema.pattern(/^\d{6}$/)),
   {
-    description: "상장회사에 표시되는 6자리 종목코드. DART 회사 코드와 다릅니다.",
+    description: "6-digit listed-company stock code. This differs from the DART company code.",
     examples: ["005930"],
   },
 );
 
 export const CompanyDetailInfoSchema = Schema.Struct({
   companyCode: DartCompanyCodeSchema,
-  companyName: describedString("DART 기업개황 상세 화면의 회사명."),
-  englishName: Schema.optional(describedString("DART가 제공한 영문 회사명.")),
-  disclosureCompanyName: Schema.optional(describedString("DART 공시대상회사명.")),
+  companyName: describedString("Company name on the DART 기업개황 detail page."),
+  englishName: Schema.optional(describedString("English company name provided by DART.")),
+  disclosureCompanyName: Schema.optional(describedString("DART disclosure-subject company name.")),
   stockCode: Schema.optional(ListedStockCodeSchema),
-  representativeName: Schema.optional(describedString("대표자명.")),
-  corporationKind: Schema.optional(describedString("DART 법인 구분/시장 구분 텍스트.")),
-  corporateRegistrationNumber: Schema.optional(describedString("법인등록번호.")),
-  businessRegistrationNumber: Schema.optional(describedString("사업자등록번호.")),
-  address: Schema.optional(describedString("회사 주소.")),
-  homepage: Schema.optional(describedString("DART가 제공한 회사 홈페이지 URL.")),
-  phoneNumber: Schema.optional(describedString("대표 전화번호.")),
-  faxNumber: Schema.optional(describedString("팩스번호.")),
-  industryName: Schema.optional(describedString("업종명.")),
-  establishedDate: Schema.optional(describedString("설립일.")),
-  fiscalMonth: Schema.optional(describedString("결산월.")),
+  representativeName: Schema.optional(describedString("Representative name.")),
+  corporationKind: Schema.optional(describedString("DART corporation/market category text.")),
+  corporateRegistrationNumber: Schema.optional(describedString("Corporate registration number.")),
+  businessRegistrationNumber: Schema.optional(describedString("Business registration number.")),
+  address: Schema.optional(describedString("Company address.")),
+  homepage: Schema.optional(describedString("Company homepage URL provided by DART.")),
+  phoneNumber: Schema.optional(describedString("Main phone number.")),
+  faxNumber: Schema.optional(describedString("Fax number.")),
+  industryName: Schema.optional(describedString("Industry name.")),
+  establishedDate: Schema.optional(describedString("Establishment date.")),
+  fiscalMonth: Schema.optional(describedString("Fiscal closing month.")),
 });
 export type CompanyDetailInfo = typeof CompanyDetailInfoSchema.Type;
 
 export const CompanyDetailMetadataSchema = Schema.Struct({
-  fetchedAt: describedString("DART 기업개황 상세 응답을 처리한 ISO timestamp."),
+  fetchedAt: describedString("ISO timestamp when the DART 기업개황 detail response was processed."),
   source: Schema.Struct({
-    system: annotateSchema(Schema.Literal("dart"), { description: "원천 시스템." }),
+    system: annotateSchema(Schema.Literal("dart"), { description: "Source system." }),
     surface: annotateSchema(Schema.Literal("dsae001"), {
-      description: "사용한 DART 기업개황 surface.",
+      description: "DART 기업개황 surface used.",
     }),
-    endpoint: describedString("DART 기업개황 상세 endpoint."),
+    endpoint: describedString("DART 기업개황 detail endpoint."),
   }),
   completeness: annotateSchema(Schema.Literal("complete"), {
-    description: "company-detail은 현재 성공 시 완전 결과만 반환합니다.",
+    description: "company-detail currently returns only complete successful results.",
   }),
 });
 export type CompanyDetailMetadata = typeof CompanyDetailMetadataSchema.Type;
 
 export const CompanyDetailReferencesSchema = Schema.Struct({
-  detailUrl: describedString("DART 기업개황 상세 조회 URL."),
+  detailUrl: describedString("DART 기업개황 detail lookup URL."),
 });
 export type CompanyDetailReferences = typeof CompanyDetailReferencesSchema.Type;
 

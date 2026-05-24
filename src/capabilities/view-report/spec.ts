@@ -19,15 +19,15 @@ const viewReportTocNodeJsonSchema: JSONSchema.JsonSchema7 = {
     id: {
       type: "string",
       description:
-        "darty가 반환한 목차 섹션 ID. 같은 receipt/documentId의 후속 view-report sectionId로만 사용하세요.",
+        "TOC section ID returned by darty. Use only as a follow-up view-report sectionId for the same receipt/documentId.",
     },
     title: {
       type: "string",
-      description: "DART viewer 목차에 표시된 섹션 제목.",
+      description: "Section title shown in the DART viewer TOC.",
     },
     children: {
       type: "array",
-      description: "하위 목차 섹션.",
+      description: "Child TOC sections.",
       items: { $ref: "#/$defs/ViewReportTocNode" },
     },
   },
