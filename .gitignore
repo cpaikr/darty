@@ -1,6 +1,5 @@
 node_modules/
 dist/
-dist-bin/
 .npm-cache/
 .tmp/
 .env

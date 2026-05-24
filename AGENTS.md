@@ -19,7 +19,6 @@
 - Typecheck: `bun run typecheck`
 - Test: `bun test`
 - Build npm CLI: `bun run build`
-- Build standalone release binaries: `bun run build:binaries`
 - Live tests: `bun run test:live`
 - Manual search check: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
 - Do not add placeholder build, lint, or format commands to docs. Only document commands that exist in the repo.
@@ -38,7 +37,7 @@
 - Release Please owns normal version bumps and changelog updates; do not manually edit versions or changelogs unless doing the documented manual fallback.
 - Use Conventional Commit messages. While the package is pre-1.0, normal `feat:` and `fix:` commits become patch releases; breaking commits using `!` or `BREAKING CHANGE:` become minor releases.
 - Manual release tags must match `package.json` exactly: version `x.y.z` uses source tag `vx.y.z`.
-- The release workflow publishes npm and uploads standalone binaries to `open-creo/skills`; do not add a separate manual publishing path unless the docs change.
+- The release workflow publishes npm only; do not re-add standalone OS-native binary publishing unless the docs and product decision change first.
 
 ## Working Rules
 
