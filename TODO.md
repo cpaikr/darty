@@ -2,18 +2,7 @@
 
 ## Now
 
-- Consider internalization, accepting Korean and english
-- Review descriptions and schemas after eval failures.
-  - Use eval transcripts to refine descriptions and schemas.
-  - Look for wrong tool selection.
-  - Look for invalid parameter patterns.
-  - Look for repeated broad searches where a narrower call should work.
-  - Look for outputs where the model misses the next useful reference.
-  - Update descriptions, validation messages, result shapes, or examples based on concrete failures.
-  - Success criteria:
-    - Description changes are evidence-backed by eval transcripts.
-    - Improvements reduce invalid calls or unnecessary follow-up calls.
-    - Tool specs stay concise and do not become prompt dumps.
+- Create a simple doc or guidance on what information is in what report
 
 ## Later
 

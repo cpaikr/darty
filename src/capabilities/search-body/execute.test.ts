@@ -129,7 +129,6 @@ describe("executeSearchBody", () => {
             },
             filing: {
               receiptNumber: "20260331904807",
-              documentNumber: "11216440",
               reportTitle: "정기주주총회결과",
               reportModifier: undefined,
               reportPeriod: undefined,
@@ -171,6 +170,79 @@ describe("executeSearchBody", () => {
       },
       warnings: [],
     });
+  });
+
+  test("preserves source locator fields when detailed output is requested", async () => {
+    const result = await executeSearchBody(
+      {
+        keyword: "배당",
+        startDate: "20250331",
+        endDate: "20260331",
+        detail: "detailed",
+      },
+      {
+        search: async (request) => ({
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: 1,
+            returnedCount: 1,
+          },
+          items: [
+            {
+              company: {
+                name: "유일에너테크",
+                companyCode: "01368637",
+              },
+              filing: {
+                receiptNumber: "20260331904807",
+                documentNumber: "11216440",
+                reportTitle: "정기주주총회결과",
+                receiptDate: "2026-03-31",
+              },
+              match: {
+                snippetText: "배당",
+              },
+              references: {
+                viewerUrl:
+                  "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331904807&dcmNo=11216440",
+              },
+              evidence: {
+                reportNameRaw: "정기주주총회결과",
+                rawInfoText: "[거래소공시] [본문] 제출인 : 유일에너테크",
+                snippetHtml: "<strong>배당</strong>",
+              },
+            },
+          ],
+          metadata: {
+            fetchedAt: "2026-03-31T00:00:00.000Z",
+            source: {
+              system: "dart",
+              surface: "dsab007",
+              endpoint: "https://dart.fss.or.kr/dsab007/search.ax",
+            },
+            sourceBehavior: {
+              effectivePageSize: 10,
+              effectivePagerWidth: 10,
+              callerControlsPageSize: false,
+              callerControlsPagerWidth: false,
+              observationStatus: "observed",
+            },
+            completeness: "complete",
+            droppedItemCount: 0,
+          },
+          references: {
+            searchUrl: "https://dart.fss.or.kr/dsab007/search.ax",
+          },
+          warnings: [],
+        }),
+      },
+    );
+
+    expect(result.result.items[0]?.filing.documentNumber).toBe("11216440");
+    expect(result.result.items[0]?.evidence?.snippetHtml).toBe(
+      "<strong>배당</strong>",
+    );
   });
 
   test("adds an evidence-backed warning for no-result searches", async () => {

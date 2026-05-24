@@ -213,6 +213,26 @@ describe("resolveSearchCompanyReportsRequest", () => {
     ).toThrow('"01"');
   });
 
+  test("normalizes compact agent page sizes to the smallest DART page size", () => {
+    expect(
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        pageSize: 5,
+      }),
+    ).toMatchObject({ pageSize: 15 });
+
+    expect(
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00190321",
+        startDate: "20250507",
+        endDate: "20260507",
+        pageSize: 10,
+      }),
+    ).toMatchObject({ pageSize: 15 });
+  });
+
   test("rejects unsupported page sizes", () => {
     try {
       resolveSearchCompanyReportsRequest({
@@ -231,7 +251,7 @@ describe("resolveSearchCompanyReportsRequest", () => {
 
       expect(error.parameter).toBe("pageSize");
       expect(error.reason).toBe("invalid_choice");
-      expect(error.expected).toBe("one_of:15,30,50,100");
+      expect(error.expected).toBe("one_of:5,10,15,30,50,100");
     }
   });
 

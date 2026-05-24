@@ -54,8 +54,13 @@ const projectSearchBodyItem = (
     return item;
   }
 
-  const { evidence: _evidence, ...conciseItem } = item;
-  return conciseItem;
+  const { evidence: _evidence, filing, ...conciseItem } = item;
+  const { documentNumber: _documentNumber, ...conciseFiling } = filing;
+
+  return {
+    ...conciseItem,
+    filing: conciseFiling,
+  };
 };
 
 const getNoResultsWarnings = (

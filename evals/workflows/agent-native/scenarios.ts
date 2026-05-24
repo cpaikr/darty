@@ -56,7 +56,7 @@ export const workflowScenarios = [
   {
     id: "latest-annual-report-viewer-reference",
     description: "find the latest annual report for a company name and open its viewer",
-    task: `Find ${samsungElectronics.name}'s latest annual report between 20240101 and ${commonEndDate}, then open the report viewer and return the viewer reference. Use DART tools rather than guessing identifiers.`,
+    task: `First find ${samsungElectronics.name}'s DART company code, then find that company's latest annual report between 20240101 and ${commonEndDate}. Open the report viewer and return the viewer reference. Use DART tools rather than guessing identifiers.`,
     companySearch: {
       companyName: samsungElectronics.name,
       expectedCompanyCode: samsungElectronics.companyCode,
@@ -77,7 +77,7 @@ export const workflowScenarios = [
   {
     id: "annual-report-section-window",
     description: "retrieve a report TOC, then fetch a selected section window",
-    task: `Find ${samsungElectronics.name}'s annual report between 20240101 and ${commonEndDate}. Open the viewer, inspect the returned table of contents, then fetch one specific section window in markdown. Use the section ID returned by darty_view_report, not raw DART viewer parameters.`,
+    task: `First find ${samsungElectronics.name}'s DART company code, then find that company's annual report between 20240101 and ${commonEndDate}. Open the viewer, inspect the returned table of contents, then fetch one specific section window in markdown. Use the section ID returned by darty_view_report, not raw DART viewer parameters.`,
     companySearch: {
       companyName: samsungElectronics.name,
       expectedCompanyCode: samsungElectronics.companyCode,

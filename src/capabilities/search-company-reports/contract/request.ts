@@ -33,11 +33,29 @@ const SearchCompanyReportsDateString = annotateSchema(
 );
 
 export const searchCompanyReportsPageSizeValues = [15, 30, 50, 100] as const;
+const searchCompanyReportsAcceptedPageSizeValues = [
+  5,
+  10,
+  ...searchCompanyReportsPageSizeValues,
+] as const;
 export type SearchCompanyReportsPageSize =
   (typeof searchCompanyReportsPageSizeValues)[number];
 
-const SearchCompanyReportsPageSizeSchema = Schema.Literal(
+const SearchCompanyReportsSourcePageSizeSchema = Schema.Literal(
   ...searchCompanyReportsPageSizeValues,
+);
+
+const SearchCompanyReportsAcceptedPageSizeSchema = Schema.Literal(
+  ...searchCompanyReportsAcceptedPageSizeValues,
+);
+
+const SearchCompanyReportsPageSizeSchema = Schema.transform(
+  SearchCompanyReportsAcceptedPageSizeSchema,
+  SearchCompanyReportsSourcePageSizeSchema,
+  {
+    decode: (pageSize) => (pageSize === 5 || pageSize === 10 ? 15 : pageSize),
+    encode: (pageSize) => pageSize,
+  },
 );
 
 export const searchCompanyReportsSortDirectionValues = ["asc", "desc"] as const;
@@ -129,7 +147,7 @@ const inputSpecs = {
     },
     pageSize: {
       kind: "enum",
-      enumValues: searchCompanyReportsPageSizeValues,
+      enumValues: searchCompanyReportsAcceptedPageSizeValues,
       defaultValue: 15,
       schema: SearchCompanyReportsPageSizeSchema,
       description: searchCompanyReportsFieldCopy.pageSize.description,

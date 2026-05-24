@@ -29,7 +29,7 @@ export const SearchBodyFilingSchema = Schema.Struct({
     "20260331904807",
   ]),
   documentNumber: Schema.optional(
-    describedString("DART 문서번호(dcmNo). 참조용으로만 노출하며 caller 입력으로 요구하지 않습니다.", [
+    describedString("DART 문서번호(dcmNo). detailed/raw의 출처 검증용 locator이며 view-report documentId가 아닙니다.", [
       "11216440",
     ]),
   ),
@@ -50,7 +50,7 @@ export const SearchBodyMatchSchema = Schema.Struct({
 export type SearchBodyMatch = typeof SearchBodyMatchSchema.Type;
 
 export const SearchBodyItemReferencesSchema = Schema.Struct({
-  viewerUrl: describedString("DART /dsaf001/main.do?rcpNo=... report-viewer URL. 후속 view-report receipt로 사용할 수 있습니다."),
+  viewerUrl: describedString("DART /dsaf001/main.do?rcpNo=... report-viewer URL. 후속 view-report의 receipt에 URL 전체를 그대로 넘길 수 있습니다."),
 });
 export type SearchBodyItemReferences =
   typeof SearchBodyItemReferencesSchema.Type;

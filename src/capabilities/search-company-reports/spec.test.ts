@@ -30,7 +30,7 @@ describe("search-company-reports capability schemas", () => {
       },
     ]);
     expect(jsonSchema.properties.pageSize).toMatchObject({
-      enum: [15, 30, 50, 100],
+      enum: [5, 10, 15, 30, 50, 100],
       default: 15,
     });
     expect(jsonSchema.properties.sortDirection).toMatchObject({

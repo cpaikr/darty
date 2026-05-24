@@ -65,19 +65,19 @@ export const dartyAgentTools = [
   createDartyAgentTool({
     name: "darty_search_body",
     description:
-      "Search DART filing body text by keyword, date window, and optional company/report filters. Returns the shared search-body capability envelope with filing references.",
+      "Search DART filing body text by keyword, date window, and optional company/report filters. Do not use for report-title-only searches; use darty_search_company_reports reportName. To open a result, pass its references.viewerUrl or filing.receiptNumber to darty_view_report receipt.",
     operation: defaultSearchBodyOperation,
   }),
   createDartyAgentTool({
     name: "darty_search_company",
     description:
-      "Search DART company overview records by company name. Use this to find DART company codes before company-specific filing searches.",
+      "Search DART company overview records by company name. Use this to find DART company codes before company-specific filing searches when the user gave a company name rather than an 8-digit companyCode.",
     operation: defaultSearchCompanyOperation,
   }),
   createDartyAgentTool({
     name: "darty_search_company_reports",
     description:
-      "Search DART filings for a known 8-digit DART company code and date window, with optional report-name and DART filter codes.",
+      "Search DART filings for an 8-digit DART companyCode and date window. Use reportName for report title/name searches such as 'titled 사업보고서'. If the user gave only a company name, call darty_search_company first instead of using a memorized code. pageSize defaults to 15; compact 5/10 requests are normalized to 15.",
     operation: defaultSearchCompanyReportsOperation,
   }),
   createDartyAgentTool({
@@ -101,7 +101,7 @@ export const dartyAgentTools = [
   createDartyAgentTool({
     name: "darty_view_report",
     description:
-      "Open a DART filing viewer by receipt number or viewer URL and optionally retrieve a document or section window.",
+      "Open a DART filing viewer by receipt number or viewer URL; call this tool when the task asks to open/view a filing, not just to quote a viewer URL. Use only documents[].id as documentId; do not pass DART dcmNo/documentNumber as documentId.",
     operation: defaultViewReportOperation,
   }),
 ] as const satisfies readonly DartyAgentTool[];
