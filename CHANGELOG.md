@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/sjunepark/darty/compare/v0.2.1...v0.3.0) (2026-05-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* Standalone OS-native darty binaries and binary release assets are no longer built or published. Install and run the Node-based npm CLI instead.
+
+### Code Refactoring
+
+* remove standalone binary release support ([48e559d](https://github.com/sjunepark/darty/commit/48e559d2b427448d628b292dc8405bd4c4cce9fa))
+
 ## [0.2.1](https://github.com/sjunepark/darty/compare/v0.2.0...v0.2.1) (2026-05-24)
 
 
