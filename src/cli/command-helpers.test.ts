@@ -60,6 +60,40 @@ describe("renderCliFailureJson", () => {
     });
   });
 
+  test("adds recovery hints to unknown Commander commands", () => {
+    const text = renderCliFailureJson({
+      code: "commander.unknownCommand",
+      message: "error: unknown command 'nope'",
+    });
+
+    expect(JSON.parse(text).error).toEqual({
+      code: "invalid_request",
+      message: "error: unknown command 'nope'",
+      retryable: false,
+      recoveryHint: "Run darty --help to list commands.",
+    });
+  });
+
+  test("adds command help recovery to Commander option errors", () => {
+    const text = renderCliFailureJson(
+      {
+        code: "commander.invalidArgument",
+        message:
+          "error: option '--page-size <number>' argument 'nope' is invalid. Expected an integer but received \"nope\".",
+      },
+      { commandName: "search-company" },
+    );
+
+    expect(JSON.parse(text).error).toEqual({
+      code: "invalid_request",
+      message:
+        "error: option '--page-size <number>' argument 'nope' is invalid. Expected an integer but received \"nope\".",
+      retryable: false,
+      parameter: "--page-size",
+      recoveryHint: "Run darty search-company --help for options and examples.",
+    });
+  });
+
   test("does not pass through unknown structural error codes", () => {
     const text = renderCliFailureJson({
       code: "provider_private_error",

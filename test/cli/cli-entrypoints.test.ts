@@ -93,7 +93,13 @@ describe("CLI entrypoints", () => {
       expect(stdout).toContain("search-company [options]");
       expect(stdout).toContain("search-company-reports [options]");
       expect(stdout).toContain("view-report [options]");
-      expect(stdout).toContain("replay of API calls observed during browser interaction");
+      expect(stdout).toContain("Common agent flow");
+      expect(stdout).toContain("search-company --company-name 삼성전자");
+      expect(stdout).toContain("search-company-reports --company-code 00126380");
+      expect(stdout).toContain("view-report --receipt <filing.receiptNumber-or-viewerUrl>");
+      expect(stdout).toContain("Commands print a JSON response object to stdout");
+      expect(stdout).toContain("failures exit non-zero");
+      expect(stdout).toContain("replays read-only DART web requests observed during browser interaction");
       expect(stdout).toContain("does not use DART's official OpenDART API");
       expect(stdout).toContain("does not guarantee accuracy");
       expect(stdout).not.toContain("contents-search [options]");
@@ -117,7 +123,11 @@ describe("CLI entrypoints", () => {
     const stderr = decode(result.stderr);
     const envelope = JSON.parse(stdout) as {
       readonly result: unknown;
-      readonly error: { readonly code: string; readonly message: string };
+      readonly error: {
+        readonly code: string;
+        readonly message: string;
+        readonly recoveryHint?: string;
+      };
     };
 
     expect(result.exitCode).toBe(1);
@@ -125,7 +135,96 @@ describe("CLI entrypoints", () => {
     expect(envelope.result).toBeNull();
     expect(envelope.error.code).toBe("invalid_request");
     expect(envelope.error.message).toContain("unknown command 'missing-command'");
+    expect(envelope.error.recoveryHint).toBe("Run darty --help to list commands.");
   });
+
+  test.each([
+    [["missing-command", "--help"]],
+    [["help", "missing-command"]],
+  ] as const)(
+    "bundled CLI renders unknown help target %p as JSON failures",
+    (argv) => {
+      const result = runEntrypoint(nodeRuntime, builtEntrypoint, argv);
+      const stdout = decode(result.stdout);
+      const stderr = decode(result.stderr);
+      const envelope = JSON.parse(stdout) as {
+        readonly result: unknown;
+        readonly error: { readonly code: string; readonly recoveryHint?: string };
+      };
+
+      expect(result.exitCode).toBe(1);
+      expect(stderr).toBe("");
+      expect(envelope.result).toBeNull();
+      expect(envelope.error.code).toBe("invalid_request");
+      expect(envelope.error.recoveryHint).toBe("Run darty --help to list commands.");
+    },
+  );
+
+  test("bundled CLI renders missing required command input as JSON failures", () => {
+    for (const command of [
+      "company-detail",
+      "company-rss",
+      "search-body",
+      "search-company",
+      "search-company-reports",
+      "view-report",
+    ]) {
+      const result = runEntrypoint(nodeRuntime, builtEntrypoint, [command]);
+      const stdout = decode(result.stdout);
+      const stderr = decode(result.stderr);
+      const envelope = JSON.parse(stdout) as {
+        readonly result: unknown;
+        readonly error: { readonly code: string; readonly recoveryHint?: string };
+      };
+
+      expect(result.exitCode).toBe(1);
+      expect(stderr).toBe("");
+      expect(envelope.result).toBeNull();
+      expect(envelope.error.code).toBe("invalid_request");
+      expect(typeof envelope.error.recoveryHint).toBe("string");
+    }
+  });
+
+  test("bundled CLI keeps explicit command help as text", () => {
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "search-company",
+      "--help",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage: darty search-company [options]");
+    expect(stdout).not.toContain('"result"');
+  });
+
+  test.each([
+    [["search-company", "--page-size", "nope"], "--page-size"],
+    [["search-company", "--bogus"], "--bogus"],
+  ] as const)(
+    "bundled CLI adds recovery hints to option parse errors for %p",
+    (argv, parameter) => {
+      const result = runEntrypoint(nodeRuntime, builtEntrypoint, argv);
+      const stdout = decode(result.stdout);
+      const stderr = decode(result.stderr);
+      const envelope = JSON.parse(stdout) as {
+        readonly error: {
+          readonly code: string;
+          readonly parameter?: string;
+          readonly recoveryHint?: string;
+        };
+      };
+
+      expect(result.exitCode).toBe(1);
+      expect(stderr).toBe("");
+      expect(envelope.error.code).toBe("invalid_request");
+      expect(envelope.error.parameter).toBe(parameter);
+      expect(envelope.error.recoveryHint).toBe(
+        "Run darty search-company --help for options and examples.",
+      );
+    },
+  );
 
   test("bundled CLI validates command input through Node", () => {
     const result = runEntrypoint(nodeRuntime, builtEntrypoint, [

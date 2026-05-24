@@ -101,11 +101,6 @@ const buildCompanyDetailCommand = (
         registeredOptions,
       );
 
-      if (Object.keys(options).length === 0) {
-        command.outputHelp();
-        return undefined;
-      }
-
       return onRun(toCompanyDetailCliCommand(options));
     });
   }

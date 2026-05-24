@@ -199,6 +199,10 @@ export type CliFailureError = {
   readonly recoveryHint?: string;
 };
 
+export type CliFailureContext = {
+  readonly commandName?: string;
+};
+
 export type CliFailureEnvelope = {
   readonly result: null;
   readonly metadata: {
@@ -217,12 +221,18 @@ export const renderCliJson = (
 
 export const renderCliFailureJson = (
   error: unknown,
-  options: Partial<CliJsonOptions> & { readonly message?: string } = {},
-): string => renderCliJson(toCliFailureEnvelope(error, options.message), options);
+  options: Partial<CliJsonOptions> &
+    CliFailureContext & { readonly message?: string } = {},
+): string =>
+  renderCliJson(
+    toCliFailureEnvelope(error, options.message, options),
+    options,
+  );
 
 const toCliFailureEnvelope = (
   error: unknown,
   messageOverride: string | undefined,
+  context: CliFailureContext,
 ): CliFailureEnvelope => ({
   result: null,
   metadata: {
@@ -230,12 +240,13 @@ const toCliFailureEnvelope = (
   },
   references: {},
   warnings: [],
-  error: toCliFailureError(error, messageOverride),
+  error: toCliFailureError(error, messageOverride, context),
 });
 
 const toCliFailureError = (
   error: unknown,
   messageOverride: string | undefined,
+  context: CliFailureContext,
 ): CliFailureError => {
   const message = messageOverride ?? toErrorMessage(error);
 
@@ -246,21 +257,29 @@ const toCliFailureError = (
       retryable: error.retryable,
     } satisfies CliFailureError;
 
+    const recoveryHint =
+      error.recoveryHint ??
+      (error.code === "invalid_request"
+        ? getCommandHelpRecoveryHint(context)
+        : undefined);
+
     return {
       ...fields,
       ...(error.parameter === undefined ? {} : { parameter: error.parameter }),
       ...(error.sourceUrl === undefined ? {} : { sourceUrl: error.sourceUrl }),
-      ...(error.recoveryHint === undefined
-        ? {}
-        : { recoveryHint: error.recoveryHint }),
+      ...(recoveryHint === undefined ? {} : { recoveryHint }),
     };
   }
 
   if (isCommanderError(error)) {
+    const parameter = extractCommanderOptionName(message);
+
     return {
       code: "invalid_request",
       message,
       retryable: false,
+      ...(parameter === undefined ? {} : { parameter }),
+      recoveryHint: getCommanderRecoveryHint(error, context),
     };
   }
 
@@ -273,6 +292,10 @@ const toCliFailureError = (
 
 const toErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (isRecord(error) && typeof error.message === "string") {
     return error.message;
   }
 
@@ -310,10 +333,42 @@ const isTypedCliFailure = (
 const isOptionalString = (value: unknown): value is string | undefined =>
   value === undefined || typeof value === "string";
 
-const isCommanderError = (error: unknown): boolean =>
+const isCommanderError = (
+  error: unknown,
+): error is { readonly code: string } =>
   isRecord(error) &&
   typeof error.code === "string" &&
   error.code.startsWith("commander.");
+
+const getCommanderRecoveryHint = (
+  error: { readonly code: string },
+  context: CliFailureContext,
+): string => {
+  if (error.code === "commander.unknownCommand") {
+    return "Run darty --help to list commands.";
+  }
+
+  return getCommandHelpRecoveryHint(context) ??
+    "Run darty --help for options and commands.";
+};
+
+const getCommandHelpRecoveryHint = (
+  context: CliFailureContext,
+): string | undefined =>
+  context.commandName === undefined
+    ? undefined
+    : `Run darty ${context.commandName} --help for options and examples.`;
+
+const extractCommanderOptionName = (message: string): string | undefined => {
+  const match = message.match(/option '([^']+)'/);
+  const rawOption = match?.[1];
+
+  if (rawOption === undefined) {
+    return undefined;
+  }
+
+  return rawOption.split(/[ <]/)[0];
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object";

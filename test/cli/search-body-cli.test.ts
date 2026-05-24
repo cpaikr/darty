@@ -121,19 +121,14 @@ describe("search-body CLI subprocess", () => {
     expect(stderr).toBe("");
   });
 
-  test("prints command help to stdout when no command options are passed", () => {
+  test("prints JSON failure when no command options are passed", () => {
     const result = runCli(["search-body"]);
-    const stdout = decode(result.stdout);
-    const stderr = decode(result.stderr);
 
-    expect(result.exitCode).toBe(0);
-    expect(stdout).toContain("Usage: darty search-body [options]");
-    expect(stdout).toContain("--keyword <text>");
-    expect(stdout).toContain("Display command help.");
-    expect(stdout).not.toContain("display help for command");
-    expect(stdout).toContain("--start-date <YYYYMMDD>");
-    expect(stdout).toContain("--end-date <YYYYMMDD>");
-    expect(stderr).toBe("");
+    expectJsonFailure(result, {
+      code: "invalid_request",
+      parameter: "keyword",
+      messageIncludes: ['Missing required option "--keyword".'],
+    });
   });
 
   test("prints JSON failure for partial missing required arguments", () => {

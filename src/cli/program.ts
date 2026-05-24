@@ -56,6 +56,55 @@ const writeStdout = (text: string) => {
 const shouldPrettyPrintJson = (argv: readonly string[]): boolean =>
   argv.includes("--pretty");
 
+const isRootHelpCommandName = (name: string): boolean => name === "help";
+
+const isRegisteredCliCommandName = (program: Command, name: string): boolean =>
+  isRootHelpCommandName(name) ||
+  program.commands.some((command) => command.name() === name);
+
+const getCliCommandName = (
+  argv: readonly string[],
+  program: Command,
+): string | undefined => {
+  const candidate = argv[2];
+
+  if (
+    candidate === undefined ||
+    candidate.startsWith("-") ||
+    isRootHelpCommandName(candidate)
+  ) {
+    return undefined;
+  }
+
+  return isRegisteredCliCommandName(program, candidate) ? candidate : undefined;
+};
+
+const getUnknownCliCommandName = (
+  argv: readonly string[],
+  program: Command,
+): string | undefined => {
+  const commandCandidate = argv[2];
+
+  if (commandCandidate === undefined || commandCandidate.startsWith("-")) {
+    return undefined;
+  }
+
+  const candidate = isRootHelpCommandName(commandCandidate)
+    ? argv[3]
+    : commandCandidate;
+
+  if (candidate === undefined || candidate.startsWith("-")) {
+    return undefined;
+  }
+
+  return isRegisteredCliCommandName(program, candidate) ? undefined : candidate;
+};
+
+const createUnknownCommandError = (commandName: string) => ({
+  code: "commander.unknownCommand",
+  message: `error: unknown command '${commandName}'`,
+});
+
 const defaultCompanyDetailExecutor = {
   runOperation: (input: Record<string, unknown>) =>
     defaultCompanyDetailOperation.execute(input),
@@ -105,8 +154,20 @@ const defaultViewReportExecutor = {
 };
 
 const rootHelpNotes = `
+Common agent flow:
+  1. Find a company code: darty search-company --company-name 삼성전자
+  2. Search filings: darty search-company-reports --company-code 00126380 --start-date YYYYMMDD --end-date YYYYMMDD
+  3. Inspect a filing: darty view-report --receipt <filing.receiptNumber-or-viewerUrl>
+  4. Read a section: darty view-report --receipt <receipt> --section-id <toc[].id>
+  Use search-body for document-level keyword search and disclosure-types for --disclosure-type codes.
+
+Output:
+  - Commands print a JSON response object to stdout on success and failure; failures exit non-zero.
+  - Use --pretty for indented JSON.
+  - Help and report-guide print human-readable text.
+
 Cautions:
-  - This tool behaves like Yahoo Finance-style replay of API calls observed during browser interaction.
+  - This tool replays read-only DART web requests observed during browser interaction.
   - It does not use DART's official OpenDART API.
   - It does not guarantee accuracy. You are responsible for how you use the information, and this tool provides no warranty.
 `;
@@ -175,9 +236,12 @@ const renderDartyCliFailureJson = (
     renderSearchCompanyReportsCliErrorMessage(error) ??
     renderViewReportCliErrorMessage(error);
 
+  const commandName = getCliCommandName(argv, createDartyCliProgram());
+
   return renderCliFailureJson(error, {
     ...(cliMessage === undefined ? {} : { message: cliMessage }),
     pretty: shouldPrettyPrintJson(argv),
+    ...(commandName === undefined ? {} : { commandName }),
   });
 };
 
@@ -188,6 +252,18 @@ export const runDartyCli = async (
 
   if (argv.length <= 2) {
     program.outputHelp();
+    return;
+  }
+
+  const unknownCommandName = getUnknownCliCommandName(argv, program);
+  if (unknownCommandName !== undefined) {
+    writeStdout(
+      renderDartyCliFailureJson(
+        createUnknownCommandError(unknownCommandName),
+        argv,
+      ),
+    );
+    process.exitCode = 1;
     return;
   }
 

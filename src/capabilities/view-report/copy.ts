@@ -18,12 +18,12 @@ export const viewReportFieldCopy = {
   receipt: {
     description:
       "14-digit DART receipt number or /dsaf001/main.do viewer URL containing rcpNo. URL dcmNo is used only for internal document selection and is not accepted as a separate input.",
-    cliDescription: "DART receipt number or viewer URL",
+    cliDescription: "[required] DART receipt number or viewer URL",
   },
   documentId: {
     description:
       "documents[].id from a previous view-report response. This is not DART dcmNo; omit it to use the selected default body document.",
-    cliDescription: "Document ID to fetch (documents[].id)",
+    cliDescription: "Darty document ID to fetch (documents[].id, not DART dcmNo)",
   },
   sectionId: {
     description:
@@ -122,6 +122,12 @@ export const viewReportCliCopy = {
         "--receipt",
         "'https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260430001931&dcmNo=11360863'",
       ],
+    },
+    {
+      description:
+        "Follow search-company-reports output: inspect filing.receiptNumber, then use returned documents[].id/toc[].id",
+      command:
+        "--receipt <filing.receiptNumber> --document-id <documents[].id> --section-id <toc[].id>",
     },
     {
       description: "Read a long section in a small window",

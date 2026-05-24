@@ -156,7 +156,10 @@ describe("parseViewReportCommandArgs", () => {
 
   test("documents the explicit CLI surface locally", () => {
     expect(viewReportUsage).toContain("--receipt <receipt-or-url>");
+    expect(viewReportUsage).toContain("[required] DART receipt number or viewer URL");
     expect(viewReportUsage).toContain("--document-id <id>");
+    expect(viewReportUsage).toContain("Darty document ID to fetch");
+    expect(viewReportUsage).toContain("not DART dcmNo");
     expect(viewReportUsage).toContain("--section-id <id>");
     expect(viewReportUsage).toContain("report-specific");
     expect(viewReportUsage).toContain("--output-format <html|markdown>");
@@ -179,6 +182,7 @@ describe("parseViewReportCommandArgs", () => {
     expect(viewReportUsage).toContain("If --detail is omitted, request");
     expect(viewReportUsage).toContain("detail=raw");
     expect(viewReportUsage).toContain("--toc-depth <number>");
+    expect(viewReportUsage).toContain("Include TOC entries to the specified depth");
     expect(viewReportUsage).toContain("--pretty");
     expect(viewReportUsage).toContain("Cautions");
     expect(viewReportUsage).toContain("years, corrections, or other receipt numbers");
@@ -188,6 +192,9 @@ describe("parseViewReportCommandArgs", () => {
       "--content-start-byte <content.window.nextStartByte>",
     );
     expect(viewReportUsage).toContain("View TOC from a search-body viewerUrl");
+    expect(viewReportUsage).toContain("filing.receiptNumber");
+    expect(viewReportUsage).toContain("<documents[].id>");
+    expect(viewReportUsage).toContain("<toc[].id>");
     expect(viewReportUsage).toContain("Read a long section in a small window");
     expect(viewReportUsage).toContain("content.isFullContent");
     expect(viewReportUsage).toContain("`--detail` changes only supplemental locator fields");

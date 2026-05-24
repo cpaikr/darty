@@ -123,7 +123,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
   createRegisteredOption(
     "tocDepth",
     "--toc-depth <number>",
-    "Print the TOC only to the specified depth. For section body output, this also enables TOC inclusion.",
+    "Include TOC entries to the specified depth. For section body output, this also enables TOC inclusion.",
     (option) => {
       option.argParser((value) => parseTocDepthOption(value));
     },
@@ -208,11 +208,6 @@ const buildViewReportCommand = (
         command.opts<Record<string, unknown>>(),
         registeredOptions,
       );
-
-      if (Object.keys(options).length === 0) {
-        command.outputHelp();
-        return undefined;
-      }
 
       return onRun(toViewReportCliCommand(options));
     });
