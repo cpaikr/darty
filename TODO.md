@@ -2,7 +2,7 @@
 
 ## Now
 
-- Create a simple doc or guidance on what information is in what report
+- None.
 
 ## Later
 

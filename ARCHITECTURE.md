@@ -40,6 +40,8 @@ current supported surface.
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
   Durable source investigation notes for `dsab007` search, `dsae001` company overview search, and the report viewer.
+- [docs/research/dart-report-guide.md](docs/research/dart-report-guide.md)
+  Practical map of what information appears in major DART report families.
 - [docs/learning/](docs/learning/INDEX.md)
   Onboarding-oriented explanations for new readers. These pages are secondary learning material, not the source of truth for implementation behavior, product decisions, or project policy.
 - [docs/release.md](docs/release.md)
