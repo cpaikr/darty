@@ -79,7 +79,7 @@ export const dartyAgentTools = [
   createDartyAgentTool({
     name: "darty_search_company_reports",
     description:
-      "Search DART filings for an 8-digit DART companyCode and date window. Use reportName for report title/name searches such as 'titled 사업보고서'. If the user gave only a company name, call darty_search_company first instead of using a memorized code. pageSize defaults to 15; compact 5/10 requests are normalized to 15.",
+      "Search DART filings for an 8-digit DART companyCode and date window of at most 10 years. Use reportName for report title/name searches such as 'titled 사업보고서'. If the user gave only a company name, call darty_search_company first instead of using a memorized code. pageSize defaults to 15; compact 5/10 requests are normalized to 15.",
     operation: defaultSearchCompanyReportsOperation,
   }),
   createDartyAgentTool({

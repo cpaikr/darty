@@ -6,12 +6,16 @@ export const searchCompanyReportsFieldCopy = {
       "[필수] DART 회사 코드(8자리 숫자)입니다. 회사명이나 종목코드는 search-company로 먼저 확인하세요.",
   },
   startDate: {
-    description: "[필수] DART 검색기간 시작일입니다(YYYYMMDD).",
-    cliDescription: "[필수] DART 검색기간 시작일입니다(YYYYMMDD).",
+    description:
+      "[필수] DART 검색기간 시작일입니다(YYYYMMDD). search-company-reports의 검색기간은 최대 10년입니다.",
+    cliDescription:
+      "[필수] DART 검색기간 시작일입니다(YYYYMMDD). 검색기간은 최대 10년입니다.",
   },
   endDate: {
-    description: "[필수] DART 검색기간 종료일입니다(YYYYMMDD).",
-    cliDescription: "[필수] DART 검색기간 종료일입니다(YYYYMMDD).",
+    description:
+      "[필수] DART 검색기간 종료일입니다(YYYYMMDD). search-company-reports의 검색기간은 최대 10년입니다.",
+    cliDescription:
+      "[필수] DART 검색기간 종료일입니다(YYYYMMDD). 검색기간은 최대 10년입니다.",
   },
   page: {
     description: "[기본값: 1] DART 검색 결과 페이지입니다(1부터 시작).",
@@ -119,6 +123,7 @@ export const searchCompanyReportsCliCopy = {
   notesHeading: "검색 팁",
   notes: [
     "회사명을 알고 회사 코드를 모르면 먼저 `darty search-company --company-name <회사명>`으로 8자리 companyCode를 확인하세요.",
+    "검색기간은 최대 10년입니다. 더 긴 기간은 DART가 결과 없음처럼 응답할 수 있으므로 10년 이하 창으로 나누어 검색하세요.",
     "기본값은 DART의 최종보고서 필터를 적용합니다. `--include-all-reports`를 지정하면 정정 전 보고서까지 포함할 수 있어 총 건수가 늘어날 수 있습니다.",
     "공시유형은 DART 상세 코드(A001=사업보고서, A002=반기보고서, A003=분기보고서, I001=수시공시 등)를 사용합니다. 코드를 모르면 `darty disclosure-types --query <검색어>`로 조회하고, 여러 코드는 `--disclosure-type`을 반복해서 전달하세요.",
     "결산월은 DART 월 코드(01~12)로 전달됩니다. CLI에서는 `--closing-accounts-month 1`처럼 입력해도 `01`로 정규화됩니다.",
@@ -140,7 +145,7 @@ export const searchCompanyReportsResultCopy = {
   matchedDisclosureTypeAmbiguous:
     "여러 공시유형 코드로 검색해 DART 결과 행의 matchedDisclosureType이 모호합니다. 행별 공시유형 귀속이 필요하면 disclosureTypes를 하나만 지정해 다시 검색하세요.",
   noResults:
-    "DART 회사별 공시 검색 결과가 없습니다. 날짜 범위를 넓히거나 reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth 필터를 줄여 다시 검색하세요.",
+    "DART 회사별 공시 검색 결과가 없습니다. 검색기간이 10년 이하인지 확인하고, 필요한 경우 날짜 창을 조정하거나 reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth 필터를 줄여 다시 검색하세요.",
 } as const;
 
 export const searchCompanyReportsSchemaCopy = {
@@ -209,6 +214,12 @@ export const searchCompanyReportsValidationCopy = {
     `매개변수 "${parameter}"은(는) YYYYMMDD 형식의 실제 날짜여야 합니다. "${actual}"은(는) 유효한 날짜가 아닙니다.`,
   startDateMustNotBeAfterEndDate: (startDate: string, endDate: string): string =>
     `검색 시작일은 종료일보다 늦을 수 없습니다. startDate=${startDate}, endDate=${endDate}.`,
+  dateRangeMustBeAtMostTenYears: (
+    startDate: string,
+    endDate: string,
+    minimumStartDate: string,
+  ): string =>
+    `search-company-reports 검색기간은 최대 10년입니다. startDate=${startDate}, endDate=${endDate}; 이 endDate에서 허용되는 가장 이른 startDate는 ${minimumStartDate}입니다. 더 긴 기간은 10년 이하 창으로 나누어 검색하세요.`,
   mustUseDartCompanyCode: (parameter: string): string =>
     `매개변수 "${parameter}"은(는) 8자리 DART 회사 코드여야 합니다. 회사명이나 6자리 종목코드는 사용할 수 없습니다. 예: 삼성전자 DART 회사 코드 00126380.`,
   mustUseKnownPattern: (parameter: string, expected: string): string =>

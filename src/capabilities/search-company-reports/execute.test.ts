@@ -112,7 +112,7 @@ describe("executeSearchCompanyReports", () => {
       {
         code: "no_results",
         message:
-          "DART 회사별 공시 검색 결과가 없습니다. 날짜 범위를 넓히거나 reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth 필터를 줄여 다시 검색하세요.",
+          "DART 회사별 공시 검색 결과가 없습니다. 검색기간이 10년 이하인지 확인하고, 필요한 경우 날짜 창을 조정하거나 reportName/presenterName/disclosureTypes/industryCode/corporationType/closingAccountsMonth 필터를 줄여 다시 검색하세요.",
       },
     ]);
   });
@@ -160,6 +160,33 @@ describe("executeSearchCompanyReports", () => {
       expect(error.parameter).toBe("companyCode");
       expect(error.recoveryHint).toContain("search-company");
       expect(error.recoveryHint).toContain("8자리 companyCode");
+    }
+  });
+
+  test("adds a recovery hint for date windows wider than 10 years", async () => {
+    try {
+      await executeSearchCompanyReports(
+        {
+          companyCode: "00571818",
+          startDate: "20160523",
+          endDate: "20260524",
+        },
+        unusedProvider,
+      );
+      throw new Error("Expected search-company-reports execution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(SearchCompanyReportsFailure);
+
+      if (!(error instanceof SearchCompanyReportsFailure)) {
+        throw error;
+      }
+
+      expect(error.code).toBe("invalid_request");
+      expect(error.parameter).toBe("startDate");
+      expect(error.message).toContain("최대 10년");
+      expect(error.recoveryHint).toBe(
+        "search-company-reports는 DART 동작상 검색기간을 10년 이하로 나누어 호출하세요.",
+      );
     }
   });
 

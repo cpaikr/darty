@@ -26,6 +26,55 @@ const knownDisclosureTypeCodes: ReadonlySet<string> = new Set(
   disclosureTypeItems.map((item) => item.code),
 );
 
+const formatDateUtc = (date: Date): string =>
+  `${date.getUTCFullYear()}${String(date.getUTCMonth() + 1).padStart(2, "0")}${String(
+    date.getUTCDate(),
+  ).padStart(2, "0")}`;
+
+const toUtcDate = (value: string): Date =>
+  new Date(
+    Date.UTC(
+      Number.parseInt(value.slice(0, 4), 10),
+      Number.parseInt(value.slice(4, 6), 10) - 1,
+      Number.parseInt(value.slice(6, 8), 10),
+    ),
+  );
+
+const subtractUtcYears = (value: string, years: number): string => {
+  const date = toUtcDate(value);
+  const targetYear = date.getUTCFullYear() - years;
+  const targetMonth = date.getUTCMonth();
+  const targetDay = date.getUTCDate();
+  const candidate = new Date(Date.UTC(targetYear, targetMonth, targetDay));
+
+  if (candidate.getUTCMonth() === targetMonth) {
+    return formatDateUtc(candidate);
+  }
+
+  return formatDateUtc(new Date(Date.UTC(targetYear, targetMonth + 1, 0)));
+};
+
+const assertCompanyReportsDateWindow = (
+  request: SearchCompanyReportsRequest,
+): void => {
+  const minimumStartDate = subtractUtcYears(request.endDate, 10);
+
+  if (request.startDate < minimumStartDate) {
+    throw new InvalidSearchCompanyReportsRequest({
+      code: "invalid_parameter",
+      parameter: "startDate",
+      reason: "date_range_too_wide",
+      expected: "date_range_at_most_10_years",
+      actual: { startDate: request.startDate, endDate: request.endDate },
+      message: searchCompanyReportsValidationCopy.dateRangeMustBeAtMostTenYears(
+        request.startDate,
+        request.endDate,
+        minimumStartDate,
+      ),
+    });
+  }
+};
+
 const assertKnownDisclosureTypes = (
   disclosureTypes: readonly string[],
 ): void => {
@@ -92,6 +141,8 @@ const validateResolvedRequest = (request: SearchCompanyReportsRequest): void => 
           ),
       }),
   });
+
+  assertCompanyReportsDateWindow(request);
 };
 
 const getExpectedToken = (rule: SearchCompanyReportsFieldSpec): string => {

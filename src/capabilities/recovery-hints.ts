@@ -13,6 +13,9 @@ const companyCodeHint =
 const dateWindowHint =
   "날짜는 YYYYMMDD 형식의 실제 날짜여야 하며 startDate는 endDate보다 늦을 수 없습니다.";
 
+const companyReportsDateWindowHint =
+  "search-company-reports는 DART 동작상 검색기간을 10년 이하로 나누어 호출하세요.";
+
 const returnedViewReportIdHint =
   "같은 receipt로 view-report를 다시 호출해 최신 documents[].id/toc[].id를 받은 뒤 그 값을 사용하세요.";
 
@@ -72,7 +75,9 @@ export const getInvalidRequestRecoveryHint = (
       return companyCodeHint;
     case "startDate":
     case "endDate":
-      return dateWindowHint;
+      return error.reason === "date_range_too_wide"
+        ? companyReportsDateWindowHint
+        : dateWindowHint;
     case "page": {
       const expected = describeExpected(error.expected) ?? "1 이상의 정수";
       return `page는 ${expected}입니다. 범위를 벗어나면 더 작은 페이지 번호로 다시 호출하세요.`;

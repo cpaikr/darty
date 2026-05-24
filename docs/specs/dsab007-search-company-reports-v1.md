@@ -112,8 +112,8 @@ Inputs:
 | Field | Required | Constraint | Notes |
 |---|---:|---|---|
 | `companyCode` | yes | 8 digits | DART company code, not a 6-digit stock code |
-| `startDate` | yes | `YYYYMMDD` | DART search start date |
-| `endDate` | yes | `YYYYMMDD` | DART search end date; window must stay within DART's accepted range |
+| `startDate` | yes | `YYYYMMDD` | DART search start date; date window must be at most 10 years |
+| `endDate` | yes | `YYYYMMDD` | DART search end date; date window must be at most 10 years |
 | `page` | no | integer `>= 1` | default `1` |
 | `pageSize` | no | `15`, `30`, `50`, or `100` | default `15` |
 | `sortDirection` | no | `asc`, `desc` | default `desc`; sort field is fixed internally to receipt date |
@@ -247,6 +247,12 @@ Observed advanced filter behavior on 2026-05-08 for `textCrpCik=00190321`, `2025
 - `businessCode=612` matched the baseline company result set, while unrelated `businessCode=011` returned no rows.
 - `corporationType=P` matched the baseline company result set, while `corporationType=A` returned no rows.
 - `closingAccountsMonth=12` matched the baseline company result set, while `closingAccountsMonth=11` returned no rows.
+
+Observed date-window limit on 2026-05-24 for `textCrpCik=00571818`, `reportName=감사보고서`, and `publicType=F001`:
+
+- `20160524..20260524` returned rows.
+- `20160523..20260524` and wider ranges returned the normal no-result placeholder even though known receipt `20260402001821` was inside the range.
+- The public contract therefore rejects windows longer than 10 years instead of treating DART's silent empty response as an authoritative no-result search.
 
 Observed result row shape:
 

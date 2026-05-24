@@ -2,7 +2,8 @@
 
 ## Now
 
-- None.
+- Cosndier exposing both Korean and English versions(or maybe only English?)
+  - read ../creo/docs/research/korean-prompt-language-strategy.md
 
 ## Later
 

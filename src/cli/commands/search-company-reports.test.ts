@@ -115,6 +115,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("DART 결과 행 원문, snippet HTML");
     expect(searchCompanyReportsUsage).toContain("CLI에서 evidence를 보려면 --verbose");
     expect(searchCompanyReportsUsage).toContain("--detail을 생략하면 요청 detail=raw로 처리합니다.");
+    expect(searchCompanyReportsUsage).toContain("검색기간은 최대 10년");
     expect(searchCompanyReportsUsage).toContain("최종보고서 필터");
     expect(searchCompanyReportsUsage).toContain("정정 전 보고서까지 포함");
     expect(searchCompanyReportsUsage).toContain("1~9는 01~09로 처리");

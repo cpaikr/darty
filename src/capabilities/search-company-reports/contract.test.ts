@@ -255,7 +255,7 @@ describe("resolveSearchCompanyReportsRequest", () => {
     }
   });
 
-  test("rejects impossible dates and reversed ranges", () => {
+  test("rejects impossible dates, reversed ranges, and windows wider than 10 years", () => {
     expect(() =>
       resolveSearchCompanyReportsRequest({
         companyCode: "00190321",
@@ -271,6 +271,35 @@ describe("resolveSearchCompanyReportsRequest", () => {
         endDate: "20250507",
       }),
     ).toThrow("검색 시작일은 종료일보다 늦을 수 없습니다");
+
+    expect(
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00571818",
+        startDate: "20160524",
+        endDate: "20260524",
+      }),
+    ).toMatchObject({ startDate: "20160524", endDate: "20260524" });
+
+    try {
+      resolveSearchCompanyReportsRequest({
+        companyCode: "00571818",
+        startDate: "20160523",
+        endDate: "20260524",
+      });
+      throw new Error("Expected resolution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidSearchCompanyReportsRequest);
+
+      if (!(error instanceof InvalidSearchCompanyReportsRequest)) {
+        throw error;
+      }
+
+      expect(error.parameter).toBe("startDate");
+      expect(error.reason).toBe("date_range_too_wide");
+      expect(error.expected).toBe("date_range_at_most_10_years");
+      expect(error.message).toContain("최대 10년");
+      expect(error.message).toContain("20160524");
+    }
   });
 
   test("rejects unknown public parameters", () => {

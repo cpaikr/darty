@@ -229,12 +229,14 @@ Observed page-size, sort, and filter behavior for selected `유 케이티`:
 - on 2026-05-08, `textPresenterNm=케이티`, `reportName=사업보고서`, repeated `publicType`, `businessCode`, `corporationType`, and `closingAccountsMonth` were replay-observed as honored filters
 - observed `publicType` examples: `I001` returned 20 rows and `A001` returned 1 row for the seeded 케이티 date window
 - observed business/corporation/closing filters matched or excluded the seeded company as expected: `businessCode=612`, `corporationType=P`, and `closingAccountsMonth=12` matched the baseline; unrelated values returned no rows
+- on 2026-05-24, `textCrpCik=00571818`, `reportName=감사보고서`, and `publicType=F001` showed a 10-year date-window limit: `20160524..20260524` returned rows, while `20160523..20260524` and wider windows returned the normal no-result placeholder even though receipt `20260402001821` was inside the range
 
 Current implication:
 
 - integrated company-name filing search is replayable without browser automation
 - the public `search-company-reports` contract should be code-first and require the resolved 8-digit DART company code
 - callers that only know a company name should use the existing `search-company` capability first, then pass the selected `companyCode` to `search-company-reports`
+- callers should keep `search-company-reports` date windows at 10 years or less; the implementation rejects wider windows because DART can otherwise return a misleading empty result set
 - `/corp/searchCorp.ax` remains useful source evidence for the browser UI's chooser, but it should not be part of this operation unless a separate convenience wrapper is intentionally added later
 - the draft target spec is `docs/specs/dsab007-search-company-reports-v1.md`
 

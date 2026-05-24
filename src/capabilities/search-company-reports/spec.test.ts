@@ -23,6 +23,8 @@ describe("search-company-reports capability schemas", () => {
     });
     expect(jsonSchema.properties.companyCode?.pattern).toBe("^\\d{8}$");
     expect(jsonSchema.properties.companyCode?.examples).toEqual(["00126380"]);
+    expect(jsonSchema.properties.startDate?.description).toContain("최대 10년");
+    expect(jsonSchema.properties.endDate?.description).toContain("최대 10년");
     expect(jsonSchema.examples).toMatchObject([
       {
         companyCode: "00126380",
