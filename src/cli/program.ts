@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { defaultCompanyDetailOperation } from "../app/company-detail.ts";
 import { defaultCompanyRssOperation } from "../app/company-rss.ts";
 import { defaultDisclosureTypesOperation } from "../app/disclosure-types.ts";
+import { defaultReportGuideOperation } from "../app/report-guide.ts";
 import { defaultSearchBodyOperation } from "../app/search-body.ts";
 import { defaultSearchCompanyOperation } from "../app/search-company.ts";
 import { defaultSearchCompanyReportsOperation } from "../app/search-company-reports.ts";
@@ -22,6 +23,10 @@ import {
   executeDisclosureTypesCommand,
   renderDisclosureTypesCliErrorMessage,
 } from "./commands/disclosure-types.ts";
+import {
+  createReportGuideCommandWithRunner,
+  executeReportGuideCommand,
+} from "./commands/report-guide.ts";
 import {
   createSearchBodyCommandWithRunner,
   executeSearchBodyCommand,
@@ -66,6 +71,12 @@ const defaultCompanyRssExecutor = {
 const defaultDisclosureTypesExecutor = {
   runOperation: (input: Record<string, unknown>) =>
     defaultDisclosureTypesOperation.execute(input),
+  writeStdout,
+};
+
+const defaultReportGuideExecutor = {
+  runOperation: (input: Record<string, unknown>) =>
+    defaultReportGuideOperation.execute(input),
   writeStdout,
 };
 
@@ -120,6 +131,11 @@ export const createDartyCliProgram = (): Command =>
     .addCommand(
       createDisclosureTypesCommandWithRunner((options) =>
         executeDisclosureTypesCommand(options, defaultDisclosureTypesExecutor),
+      ),
+    )
+    .addCommand(
+      createReportGuideCommandWithRunner((options) =>
+        executeReportGuideCommand(options, defaultReportGuideExecutor),
       ),
     )
     .addCommand(

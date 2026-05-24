@@ -17,6 +17,7 @@ const expectedOperationNames: readonly DartyOperationName[] = [
   "company-detail",
   "company-rss",
   "disclosure-types",
+  "report-guide",
   "view-report",
 ];
 
@@ -78,7 +79,7 @@ describe("Darty neutral toolset", () => {
     const help = toolset.help();
 
     expect(help.id).toBe("darty");
-    expect(help.label).toBe("Darty");
+    expect(help.label).toBe("Dart 검색");
     expect(help.operations.map((operation) => operation.name)).toContain("search-body");
     expect(help.limitations.join("\n")).toContain("OpenDART");
     expect(help.citationGuidance.join("\n")).toContain("result.references");

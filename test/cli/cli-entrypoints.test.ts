@@ -88,6 +88,7 @@ describe("CLI entrypoints", () => {
       expect(stdout).toContain("company-detail [options]");
       expect(stdout).toContain("company-rss [options]");
       expect(stdout).toContain("disclosure-types [options]");
+      expect(stdout).toContain("report-guide");
       expect(stdout).toContain("search-body [options]");
       expect(stdout).toContain("search-company [options]");
       expect(stdout).toContain("search-company-reports [options]");
@@ -194,6 +195,32 @@ describe("CLI entrypoints", () => {
     expect(stdout).toContain("Usage: darty disclosure-types [options]");
     expect(stdout).toContain("--category <A-J>");
     expect(stdout).toContain("--query <text>");
+  });
+
+  test("bundled CLI accepts the documented report-guide command", () => {
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, [
+      "report-guide",
+      "--help",
+    ]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage: darty report-guide [options]");
+    expect(stdout).toContain("DART 보고서별 정보 안내");
+  });
+
+  test("bundled CLI prints report-guide as human Markdown", () => {
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, ["report-guide"]);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("# DART 보고서별 정보 안내");
+    expect(stdout).toContain("사업보고서");
+    expect(stdout).toContain("주요사항보고서");
   });
 
   test("bundled CLI accepts the documented search-company command", () => {

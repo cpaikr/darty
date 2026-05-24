@@ -8,10 +8,11 @@ shape and document ownership.
 
 `src/` contains the executable slice of `darty`: public `search-body`,
 `search-company`, `search-company-reports`, `company-detail`, `company-rss`,
-`disclosure-types`, and `view-report` capabilities, a local CLI transport, and
-internal DART source adapters for `dsab007` search, `dsae001` company overview
-search/detail, DART company RSS, and `dsaf001` report viewing. The
-`disclosure-types` helper is static and has no live DART adapter.
+`disclosure-types`, `report-guide`, and `view-report` capabilities, a local CLI
+transport, and internal DART source adapters for `dsab007` search, `dsae001`
+company overview search/detail, DART company RSS, and `dsaf001` report viewing.
+The `disclosure-types` and `report-guide` helpers are static and have no live
+DART adapter.
 
 The design goal is to keep the core reusable across transports. The active
 transports are the CLI, the neutral `src/toolset.ts` package API, and the
@@ -75,8 +76,8 @@ The diagram shows the established `search-body` path. `search-company`,
 `search-company-reports`, `company-detail`, `company-rss`, and `view-report` use
 the same transport/app/capability shape through their matching `app/`,
 `capabilities/`, `cli/commands/`, and `sources/dart/` modules. The static
-`disclosure-types` helper uses the same transport/app/capability shape without a
-`src/sources/dart/` provider.
+`disclosure-types` and `report-guide` helpers use the same
+transport/app/capability shape without a `src/sources/dart/` provider.
 
 ```mermaid
 graph TD
@@ -133,8 +134,9 @@ graph TD
   failures into the CLI v1 JSON failure envelope plus a process exit code.
 - **`src/cli/commands/`** — CLI transport adapters. Own Commander flags, help
   text, examples, and stdout formatting while delegating semantic validation and
-  execution through an injected command runner. Command success and failure both
-  serialize as JSON to stdout; help remains human-readable.
+  execution through an injected command runner. Most command successes and all
+  command failures serialize as JSON to stdout; `report-guide` success output
+  and help remain human-readable.
 - **`src/app/`** — Shared operation wiring. Exposes internal operation names,
   JSON Schemas, capability executors with the default DART providers already
   attached, and the initial namespaced `darty_*` agent tool definitions.

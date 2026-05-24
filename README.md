@@ -33,7 +33,7 @@ darty search-body --keyword 배당 --start-date 20250331 --end-date 20260331
 darty <command> --help
 ```
 
-명령 성공과 실패는 모두 표준 출력에 하나의 JSON 응답 객체로 출력됩니다. 도움말 출력은 사람이 읽기 쉬운 텍스트로 유지됩니다.
+대부분의 조회 명령은 성공과 실패를 모두 표준 출력의 JSON 응답 객체로 출력합니다. `report-guide`와 도움말 출력은 사람이 읽기 쉬운 텍스트로 유지됩니다.
 
 현재 제공하는 주요 작업은 다음과 같습니다.
 
@@ -43,6 +43,7 @@ darty <command> --help
 - `company-detail`: 회사 상세 정보 조회
 - `company-rss`: 회사별 공시 RSS 조회
 - `disclosure-types`: 공시상세유형 코드 조회
+- `report-guide`: 필요한 정보가 어떤 DART 보고서에 있는지 안내하는 Markdown 가이드 출력
 - `view-report`: 보고서 목차 또는 본문 조회
 
 ## 툴셋 API
@@ -75,6 +76,7 @@ const result = prepared.ok
 - `company-detail`
 - `company-rss`
 - `disclosure-types`
+- `report-guide`
 - `view-report`
 
 ## 패키지 API 안정성

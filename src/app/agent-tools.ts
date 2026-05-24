@@ -1,6 +1,7 @@
 import { defaultCompanyDetailOperation } from "./company-detail.ts";
 import { defaultCompanyRssOperation } from "./company-rss.ts";
 import { defaultDisclosureTypesOperation } from "./disclosure-types.ts";
+import { defaultReportGuideOperation } from "./report-guide.ts";
 import { defaultSearchBodyOperation } from "./search-body.ts";
 import { defaultSearchCompanyOperation } from "./search-company.ts";
 import { defaultSearchCompanyReportsOperation } from "./search-company-reports.ts";
@@ -13,6 +14,7 @@ export const dartyAgentToolNames = [
   "darty_get_company_detail",
   "darty_get_company_rss",
   "darty_list_disclosure_types",
+  "darty_get_report_guide",
   "darty_view_report",
 ] as const;
 
@@ -97,6 +99,12 @@ export const dartyAgentTools = [
     description:
       "List or search DART detailed disclosure-type codes for search-company-reports disclosureTypes. Optionally filter by category A-J or Korean/code query.",
     operation: defaultDisclosureTypesOperation,
+  }),
+  createDartyAgentTool({
+    name: "darty_get_report_guide",
+    description:
+      "Return the bundled Korean Markdown guide that explains which information appears in major DART report families. Use before searching when the user needs to know which report type or section likely contains the desired information.",
+    operation: defaultReportGuideOperation,
   }),
   createDartyAgentTool({
     name: "darty_view_report",

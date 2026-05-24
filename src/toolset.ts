@@ -1,6 +1,7 @@
 import { defaultCompanyDetailOperation } from "./app/company-detail.ts";
 import { defaultCompanyRssOperation } from "./app/company-rss.ts";
 import { defaultDisclosureTypesOperation } from "./app/disclosure-types.ts";
+import { defaultReportGuideOperation } from "./app/report-guide.ts";
 import { defaultSearchBodyOperation } from "./app/search-body.ts";
 import { defaultSearchCompanyOperation } from "./app/search-company.ts";
 import { defaultSearchCompanyReportsOperation } from "./app/search-company-reports.ts";
@@ -22,6 +23,12 @@ import {
 } from "./capabilities/disclosure-types/copy.ts";
 import { resolveDisclosureTypesRequest } from "./capabilities/disclosure-types/contract.ts";
 import { getInvalidRequestRecoveryHint } from "./capabilities/recovery-hints.ts";
+import {
+  reportGuideCliCopy,
+  reportGuideSchemaCopy,
+  reportGuideToolCopy,
+} from "./capabilities/report-guide/copy.ts";
+import { resolveReportGuideRequest } from "./capabilities/report-guide/contract.ts";
 import {
   searchBodyCliCopy,
   searchBodySchemaCopy,
@@ -54,6 +61,7 @@ export const dartyOperationNames = [
   "company-detail",
   "company-rss",
   "disclosure-types",
+  "report-guide",
   "view-report",
 ] as const;
 
@@ -261,7 +269,7 @@ export const dartySingleToolCopy = {
   description:
     "한국 DART 공시를 검색하고 보고서 본문을 조회하는 읽기 전용 도구입니다. 출처, 경고, 메타데이터를 함께 반환합니다.",
   promptSnippet:
-    "한국 DART 공시 검색, 회사 조회, 공시 목록, 공시유형 조회, RSS, 보고서 본문 조회가 필요하면 darty(action, command?, inputJson?)를 사용하세요.",
+    "한국 DART 공시 검색, 회사 조회, 공시 목록, 공시유형 조회, RSS, 보고서 본문 조회, 보고서별 정보 안내가 필요하면 darty(action, command?, inputJson?)를 사용하세요.",
   promptGuidelines: [
     "명령 이름을 추측하지 말고 먼저 action=help로 사용할 수 있는 DART 명령을 확인하세요.",
     "필수 입력값, 허용값, 예시, 결과 형태가 불명확하면 action=command_help를 사용하세요.",
@@ -431,6 +439,16 @@ const defaultOperationDefinitions = [
     examples: disclosureTypesSchemaCopy.requestExamples,
     limitations: disclosureTypesCliCopy.notes,
     resultSummary: disclosureTypesSchemaCopy.resultDescription,
+  },
+  {
+    name: "report-guide",
+    label: reportGuideToolCopy.title,
+    description: reportGuideToolCopy.description,
+    operation: defaultReportGuideOperation,
+    prepareInput: (input) => resolveReportGuideRequest(input),
+    examples: reportGuideSchemaCopy.requestExamples,
+    limitations: reportGuideCliCopy.notes,
+    resultSummary: reportGuideSchemaCopy.resultDescription,
   },
   {
     name: "view-report",
@@ -766,12 +784,12 @@ export const createDartyToolset = (
 
   return {
     id: "darty",
-    label: "Darty",
+    label: "Dart 검색",
     description:
       "한국 DART 공시 검색과 보고서 본문 조회를 위한 읽기 전용 작업입니다. 출처, 경고, 타입화된 기능 오류를 보존합니다.",
     help: () => ({
       id: "darty",
-      label: "Darty",
+      label: "Dart 검색",
       description:
         "한국 DART 공시 검색과 보고서 본문 조회를 위한 읽기 전용 작업입니다. 출처, 경고, 타입화된 기능 오류를 보존합니다.",
       usage:
