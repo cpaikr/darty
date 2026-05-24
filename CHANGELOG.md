@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/sjunepark/darty/compare/v0.1.3...v0.2.0) (2026-05-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* search-body concise/default results no longer include filing.documentNumber. Use detailed or raw response detail when DART locator fields are needed for source verification; use filing.receiptNumber or references.viewerUrl for view-report follow-up calls.
+
+### Bug Fixes
+
+* keep Darty tool description purpose-only ([dde0164](https://github.com/sjunepark/darty/commit/dde016479e1cf65ce02852e992a8951e5922ec69))
+* localize Darty tool-facing copy ([baaedb0](https://github.com/sjunepark/darty/commit/baaedb0c2147e5de074a860c8bf55472a3dc9101))
+* refine agent tool schemas from eval failures ([b91f8c1](https://github.com/sjunepark/darty/commit/b91f8c1cd8695c9363ca76b6da2dbfd60d291364))
+
 ## [0.1.1](https://github.com/sjunepark/darty/compare/v0.1.0...v0.1.1) (2026-05-21)
 
 
