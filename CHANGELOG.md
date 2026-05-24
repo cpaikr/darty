@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/sjunepark/darty/compare/v0.3.0...v0.3.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* reject overly wide company report date windows ([465930d](https://github.com/sjunepark/darty/commit/465930ddc642397f0fa3e564aec10cc438077c11))
+
 ## [0.3.0](https://github.com/sjunepark/darty/compare/v0.2.1...v0.3.0) (2026-05-24)
 
 
