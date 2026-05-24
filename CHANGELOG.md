@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/sjunepark/darty/compare/v0.2.0...v0.2.1) (2026-05-24)
+
+
+### Features
+
+* add DART report guide command ([4e2a1c9](https://github.com/sjunepark/darty/commit/4e2a1c99c89bafd78deba057b4d2d795eb38dd77))
+
 ## [0.2.0](https://github.com/sjunepark/darty/compare/v0.1.3...v0.2.0) (2026-05-24)
 
 
