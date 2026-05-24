@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/sjunepark/darty/compare/v0.3.1...v0.3.2) (2026-05-24)
+
+
+### Features
+
+* improve CLI recovery and workflow help ([1363ad8](https://github.com/sjunepark/darty/commit/1363ad89ace1b42c801323a0b59f31709a88974d))
+
 ## [0.3.1](https://github.com/sjunepark/darty/compare/v0.3.0...v0.3.1) (2026-05-24)
 
 
