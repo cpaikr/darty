@@ -100,6 +100,52 @@ describe("Darty Pi single-tool adapter", () => {
     });
   });
 
+  test("keeps transport-level status copy in English", async () => {
+    const tool = createDartyPiTool();
+
+    const [
+      validationSuccess,
+      validationFailure,
+      runSuccess,
+      adapterFailure,
+      unknownCommand,
+    ] = await Promise.all([
+      tool.execute("call-1", {
+        action: "validate",
+        command: "disclosure-types",
+        inputJson: { query: "사업보고서" },
+      }),
+      tool.execute("call-2", {
+        action: "validate",
+        command: "search-company",
+        inputJson: {},
+      }),
+      tool.execute("call-3", {
+        action: "run",
+        command: "disclosure-types",
+        inputJson: { query: "사업보고서" },
+      }),
+      tool.execute("call-4", { action: "run", command: "disclosure-types" }),
+      tool.execute("call-5", { action: "command_help", command: "not-a-command" }),
+    ]);
+
+    expect(validationSuccess.content[0]?.text).toStartWith(
+      "Darty disclosure-types input validation succeeded.\nNormalized input:",
+    );
+    expect(validationFailure.content[0]?.text).toStartWith(
+      "Darty validate input validation failed for search-company.\nRepair details:",
+    );
+    expect(runSuccess.content[0]?.text).toStartWith(
+      "Darty disclosure-types run succeeded.\nUse returned references, warnings, metadata, and original URLs for citation and follow-up commands.",
+    );
+    expect(adapterFailure.content[0]?.text).toStartWith(
+      "Invalid Darty tool input.",
+    );
+    expect(unknownCommand.content[0]?.text).toStartWith(
+      "Unknown Darty command: not-a-command",
+    );
+  });
+
   test("validates and normalizes without live DART execution", async () => {
     let executed = false;
     const tool = createDartyPiTool({

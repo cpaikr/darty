@@ -34,14 +34,13 @@ describe("parseCompanyDetailCommandArgs", () => {
   test("renders CLI-facing validation errors with flag names", () => {
     const error = new CompanyDetailFailure({
       code: "invalid_request",
-      message:
-        '필수 매개변수 "companyCode"이(가) 없습니다. 필요한 값: 8자리 DART 회사 코드.',
+      message: 'Missing required parameter "companyCode". Expected 8-digit DART company code.',
       parameter: "companyCode",
       retryable: false,
     });
 
     expect(renderCompanyDetailCliErrorMessage(error)).toBe(
-      '필수 옵션 "--company-code"이(가) 없습니다. 필요한 값: 8자리 DART 회사 코드.',
+      'Missing required option "--company-code". Expected 8-digit DART company code.',
     );
   });
 });

@@ -233,13 +233,13 @@ describe("parseViewReportCommandArgs", () => {
     const error = new ViewReportFailure({
       code: "invalid_request",
       message:
-        '필수 매개변수 "receipt"이(가) 없습니다. 필요한 값: 14자리 DART 접수번호 또는 rcpNo를 포함한 /dsaf001/main.do viewer URL.',
+        'Missing required parameter "receipt". Expected a 14-digit DART receipt number or /dsaf001/main.do viewer URL containing rcpNo.',
       parameter: "receipt",
       retryable: false,
     });
 
     expect(renderViewReportCliErrorMessage(error)).toBe(
-      '필수 옵션 "--receipt"이(가) 없습니다. 필요한 값: 14자리 DART 접수번호 또는 rcpNo를 포함한 /dsaf001/main.do viewer URL.',
+      'Missing required option "--receipt". Expected a 14-digit DART receipt number or /dsaf001/main.do viewer URL containing rcpNo.',
     );
   });
 

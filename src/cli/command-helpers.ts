@@ -130,8 +130,6 @@ export const renderInvalidRequestCliErrorMessage = <Key extends string>(
 
   return error.message
     .replaceAll(`"${error.parameter}"`, `"${cliName}"`)
-    .replaceAll("필수 매개변수", "필수 옵션")
-    .replaceAll("매개변수", "옵션")
     .replaceAll("required parameter", "required option")
     .replaceAll("Parameter", "Option")
     .replaceAll("parameter", "option");

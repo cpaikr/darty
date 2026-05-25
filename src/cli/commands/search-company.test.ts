@@ -108,14 +108,13 @@ describe("parseSearchCompanyCommandArgs", () => {
   test("renders CLI-facing validation errors with flag names", () => {
     const error = new SearchCompanyFailure({
       code: "invalid_request",
-      message:
-        '필수 매개변수 "companyName"이(가) 없습니다. 필요한 값: 2자 이상의 문자열.',
+      message: 'Missing required parameter "companyName". Expected string with at least 2 characters.',
       parameter: "companyName",
       retryable: false,
     });
 
     expect(renderSearchCompanyCliErrorMessage(error)).toBe(
-      '필수 옵션 "--company-name"이(가) 없습니다. 필요한 값: 2자 이상의 문자열.',
+      'Missing required option "--company-name". Expected string with at least 2 characters.',
     );
   });
 

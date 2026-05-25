@@ -179,20 +179,33 @@ const requireCommand = (
   );
 };
 
+type DartyPiInputJsonCheck =
+  | {
+      readonly ok: true;
+      readonly inputJson: Record<string, unknown>;
+    }
+  | {
+      readonly ok: false;
+      readonly result: PiToolResult;
+    };
+
 const requireInputJson = (
   action: DartySingleToolRunAction,
   command: string,
   inputJson: unknown,
-): Record<string, unknown> | PiToolResult => {
+): DartyPiInputJsonCheck => {
   if (isRecord(inputJson)) {
-    return inputJson;
+    return { ok: true, inputJson };
   }
 
-  return adapterFailureResult(
-    action,
-    createDartySingleToolInputJsonFailure(action, command, inputJson),
-    command,
-  );
+  return {
+    ok: false,
+    result: adapterFailureResult(
+      action,
+      createDartySingleToolInputJsonFailure(action, command, inputJson),
+      command,
+    ),
+  };
 };
 
 const unknownCommandResult = (
@@ -340,9 +353,9 @@ export const createDartyPiTool = (
           }
 
           const inputJson = requireInputJson(params.action, command, params.inputJson);
-          return isRecord(inputJson)
-            ? handleValidate(toolset, command, inputJson)
-            : inputJson;
+          return inputJson.ok
+            ? handleValidate(toolset, command, inputJson.inputJson)
+            : inputJson.result;
         }
         case "run": {
           const command = requireCommand(params.action, params.command);
@@ -351,9 +364,9 @@ export const createDartyPiTool = (
           }
 
           const inputJson = requireInputJson(params.action, command, params.inputJson);
-          return isRecord(inputJson)
-            ? handleRun(toolset, command, inputJson, signal)
-            : inputJson;
+          return inputJson.ok
+            ? handleRun(toolset, command, inputJson.inputJson, signal)
+            : inputJson.result;
         }
       }
     },
