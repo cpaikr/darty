@@ -1,58 +1,48 @@
 # Test and Eval Refactor Plan
 
-## Execution Status
+## Current Status
 
-Implemented in this pass:
+This refactor is implemented. The repo now separates implementation tests from scenario evals, has shared eval harness utilities, treats the public Pi single-tool surface as a first-class eval target, and includes judged research-answer evals with deterministic trace checks.
+
+Completed in this pass:
 
 - extracted shared eval harness code under `evals/harness/` for OpenAI chat loops, model-tool loops, tool traces, truncation, artifacts, JSON helpers, and reporting;
 - added model-eval JSON artifacts under `.tmp/evals/<suite>/<timestamp>/<scenario-id>.json`;
-- created transport-independent scenario modules under `evals/scenarios/` for search-body, filing workflows, and recovery;
+- created transport-independent scenarios under `evals/scenarios/` for search-body, filing workflows, recovery, and research answers;
 - added reusable CLI, typed-agent, and public Pi single-tool surface modules under `evals/surfaces/`;
-- added Pi suites for search-body, workflow, and validation/recovery under `evals/suites/`;
-- added Pi research-answer eval scenarios with deterministic trace assertions plus versioned final-answer judge/rubric files;
-- documented the eval architecture, surface matrix, deterministic assertion policy, and new scripts.
+- added Pi suites for search-body, workflow, validation/recovery, and research-answer coverage under `evals/suites/`;
+- added deterministic workflow assertions for identifier handoff, ordering, no-result behavior, returned-reference citations, and anti-invention checks;
+- added versioned final-answer judge/rubric files under `evals/judges/`;
+- preserved model-eval artifacts when the judge returns malformed JSON;
+- documented the eval architecture, surface matrix, assertion policy, artifact format, and scripts.
 
-Still pending:
+Remaining follow-ups:
 
-- optional `toolset-host` surface if an external host wrapper needs model-in-the-loop coverage;
-- decisions in Open Questions, especially required model families and pass thresholds for judged research evals.
+- decide which model families are required release gates versus exploratory evals;
+- decide the final-answer judge score/pass threshold policy before making judged research evals release-blocking;
+- add a `toolset-host` eval surface only if an external host wrapper needs model-in-the-loop coverage.
 
 ## Goal
 
-Reorganize tests and evals around one boundary:
+Keep one clear boundary:
 
 - tests verify implementation contracts, source parsing, package integrity, and adapter mechanics;
-- evals verify whether agents can use the actual exposed Darty surfaces to complete realistic DART tasks.
+- evals verify whether fixed commands or agents can use exposed Darty surfaces to complete realistic DART tasks.
 
-The main missing coverage is model-in-the-loop evals for the public Pi single-tool surface, plus final-answer research evals that judge whether an agent can produce useful, cited answers from DART evidence.
-
-## Target Principles
+## Principles
 
 - Keep colocated `src/**/*.test.ts` for implementation-level contracts and parser fixtures.
 - Keep opt-in live DART drift checks under `test/live/`.
 - Keep package/export smoke checks under `test/package/`.
-- Make eval scenarios independent from transport surfaces.
+- Keep eval scenarios independent from transport surfaces.
 - Treat public surfaces as first-class eval targets: CLI and Pi now; future surfaces only when active.
-- Keep deterministic assertions for objective facts: tool names, arguments, identifiers, ordering, envelopes, and no-result behavior.
+- Keep deterministic assertions for objective facts: tool names, arguments, identifiers, ordering, envelopes, returned references, and no-result behavior.
 - Use an LLM judge only for subjective final-answer quality.
 - Persist model-eval artifacts so failures can be debugged without rerunning.
 
-## Target Layout
+## Current Layout
 
 ```text
-test/
-  live/
-    dart-source/
-      dsab007-contents.test.ts
-      dsab007-company-reports.test.ts
-      dsaf001-view-report.test.ts
-  cli/
-    cli-entrypoints.test.ts
-    search-body-cli.test.ts
-  package/
-    package-exports.test.ts
-    pi-tool-type-smoke.ts
-
 evals/
   README.md
   scenarios/
@@ -75,168 +65,85 @@ evals/
     pi/
       pi-single-tool.ts
       assertions.ts
+      assertions.test.ts
     typed-agent/
       typed-darty-tools.ts
-      assertions.ts
-    toolset-host/
-      toolset-single-tool.ts
       assertions.ts
   judges/
     final-answer-judge.ts
     rubrics.ts
   suites/
-    search-body-cli.eval.ts
-    search-body-agent-cli.eval.ts
     search-body-pi.eval.ts
     workflow-pi.eval.ts
-    workflow-typed-agent.eval.ts
     recovery-pi.eval.ts
     research-answer-pi.eval.ts
+  search-body/
+    cli/
+    agent-cli/
+    agent-native/
+    shared/
+  workflows/
+    agent-native/
 ```
 
-This is a target shape, not a requirement to move every file in one commit. Prefer staged, passing refactors.
+`search-body/` and `workflows/` keep the staged legacy runners while shared eval code lives in `harness/`, `scenarios/`, and `surfaces/`.
 
-## Phase 1: Preserve Current Behavior While Extracting Shared Eval Harness
+## Commands
 
-1. Create `evals/harness/` for reusable model-loop and reporting code.
-2. Move duplicated OpenAI chat calls out of `search-body/agent-cli` and `search-body/agent-native`.
-3. Move shared tool execution trace types, truncation, JSON parsing helpers, and model-loop logic into `evals/harness/`.
-4. Add artifact writing for every model eval under an ignored path such as `.tmp/evals/<suite>/<timestamp>/<scenario-id>.json`.
-5. Keep current suite commands passing during extraction:
-   - `bun run eval:search-body:cli`
-   - `bun run eval:search-body:agent:cli`
-   - `bun run eval:search-body:agent:native`
-   - `bun run eval:workflows:agent:native`
+Fixed CLI eval, no OpenAI key required:
 
-Acceptance criteria:
-
-- Existing eval behavior is unchanged.
-- Every model-in-the-loop eval emits a concise console summary and a detailed JSON artifact.
-- Shared code is no longer semantically owned by `search-body` when it applies to all evals.
-
-## Phase 2: Decouple Scenarios From Surfaces
-
-1. Create `evals/scenarios/` with pure task definitions.
-2. Move current search-body scenarios into `evals/scenarios/search-body.ts`.
-3. Move current workflow scenarios into `evals/scenarios/filing-workflows.ts`.
-4. Keep scenario fields focused on task intent and expected facts, not argv or one specific adapter.
-5. Let each surface adapter derive its prompt/tool shape from the same scenario.
-
-Acceptance criteria:
-
-- Search-body CLI, agent CLI, and typed-agent evals can reuse the same semantic scenario definitions.
-- Scenario files do not depend on CLI argv unless the scenario is explicitly fixed-CLI-only.
-
-## Phase 3: Make Public Surfaces First-Class
-
-1. Create `evals/surfaces/cli/` for fixed CLI and agent CLI wrappers.
-2. Create `evals/surfaces/pi/` for the public Pi single-tool adapter:
-   - tool name: `darty`
-   - input shape: `action`, `command`, `inputJson`
-   - actions: `help`, `command_help`, `validate`, `run`
-3. Keep `evals/surfaces/typed-agent/` as a diagnostic/control surface for direct `darty_*` tools.
-4. Optionally add `evals/surfaces/toolset-host/` only if external host wrapping of `createDartyToolset()` needs model-in-the-loop coverage.
-
-Acceptance criteria:
-
-- Pi single-tool evals run against `createDartyPiTool()` or the same public adapter path exported by the package.
-- Typed-agent evals are clearly documented as internal/reference coverage, not proof that the public Pi surface works.
-
-## Phase 4: Add Pi Single-Tool Evals
-
-Add these suites:
-
-- `evals/suites/search-body-pi.eval.ts`
-- `evals/suites/workflow-pi.eval.ts`
-- `evals/suites/recovery-pi.eval.ts`
-
-The Pi evals should check that the model can:
-
-- discover operations through `help` or `command_help` when needed;
-- use canonical command names such as `search-company-reports` and `view-report`;
-- pass valid `inputJson`;
-- use `validate` or recover from validation failures when relevant;
-- chain identifiers from one result into the next command;
-- avoid invented receipt numbers and viewer URLs on no-result paths.
-
-Acceptance criteria:
-
-- At least one Pi eval covers simple `search-body`.
-- At least one Pi eval covers company name → company code → company reports → view report.
-- At least one Pi eval covers no-result behavior without invented references.
-- At least one Pi eval covers validation/recovery behavior.
-
-## Phase 5: Add Realistic Research-Answer Evals
-
-Create `evals/scenarios/research-answers.ts` and `evals/suites/research-answer-pi.eval.ts`.
-
-Initial candidate tasks:
-
-- `삼성전자 최근 사업보고서에서 부문별 매출액 내역을 확인해 주세요.`
-- `삼성전자 최근 사업보고서에서 배당 관련 내용을 찾아 출처와 함께 요약해 주세요.`
-- A no-result or insufficient-evidence task where the correct answer must say the evidence was not found.
-
-Evaluation should have two layers:
-
-1. Deterministic trace assertions:
-   - searched company when given a company name;
-   - used returned DART company code;
-   - searched relevant filings;
-   - opened a returned filing;
-   - retrieved TOC, document content, or a section;
-   - final answer cites a returned receipt/viewer/section reference.
-2. LLM judge only for subjective final-answer quality:
-   - answers the user’s business question;
-   - cites source evidence;
-   - avoids unsupported claims;
-   - distinguishes missing evidence from negative facts;
-   - does not provide investment, legal, or accounting advice.
-
-Acceptance criteria:
-
-- Research-answer evals fail if the agent only returns a filing URL without answering the task.
-- Research-answer evals fail if the answer contains material facts unsupported by retrieved tool evidence.
-- Judge prompts and rubrics are versioned in `evals/judges/`.
-
-## Phase 6: Clean Up Scripts and Documentation
-
-Update `package.json` scripts to reflect surface and purpose. Candidate names:
-
-```json
-{
-  "eval:cli:search-body": "...",
-  "eval:agent-cli:search-body": "...",
-  "eval:pi:search-body": "...",
-  "eval:pi:workflow": "...",
-  "eval:pi:recovery": "...",
-  "eval:pi:research-answer": "...",
-  "eval:typed:workflow": "..."
-}
+```bash
+bun run eval:cli:search-body
 ```
 
-Update docs:
+Model-in-the-loop evals require `OPENAI_API_KEY` through the environment, usually via `varlock`:
 
-- `evals/README.md`: eval architecture, surface matrix, commands, artifact format.
-- `docs/tools/evaluation.md`: policy for deterministic assertions vs LLM judges.
-- `README.md`: only mention stable user-facing eval commands if appropriate.
+```bash
+bun run env:check
+bun run eval:agent-cli:search-body
+bun run eval:typed:search-body
+bun run eval:typed:workflow
+bun run eval:pi:search-body
+bun run eval:pi:workflow
+bun run eval:pi:recovery
+bun run eval:pi:research-answer
+```
 
-Acceptance criteria:
+Legacy names remain available during the staged refactor:
 
-- A new contributor can answer which public surfaces have model-in-the-loop eval coverage.
-- Eval docs clearly distinguish tests, fixed CLI evals, agent tool-use evals, and final-answer evals.
+```bash
+bun run eval:search-body:cli
+bun run eval:search-body:agent:cli
+bun run eval:search-body:agent:native
+bun run eval:workflows:agent:native
+```
 
-## Coverage Matrix Target
+## Coverage Matrix
 
 | Capability / flow | CLI fixed | Agent CLI | Pi single tool | Typed internal | Final answer judge |
 |---|---:|---:|---:|---:|---:|
-| `search-body` basic | yes | yes | yes | optional | no |
+| `search-body` basic | yes | yes | yes | yes | no |
 | company name → code | no | optional | yes | yes | no |
 | company code → reports | no | optional | yes | yes | no |
 | report open / TOC | no | optional | yes | yes | no |
 | section retrieval | no | no | yes | yes | maybe |
 | no-result handling | yes | yes | yes | yes | maybe |
-| recovery from bad input | no | maybe | yes | optional | no |
+| validation/recovery from bad input | no | maybe | yes | optional | no |
 | realistic research answer | no | no | yes | optional | yes |
+
+## Assertion Policy
+
+Deterministic assertions own objective facts:
+
+- tool/action/command names;
+- input keys and normalized values;
+- company codes, receipt numbers, viewer URLs, document IDs, and section IDs;
+- call ordering and identifier handoff;
+- success/failure envelopes, warnings, and no-result item counts;
+- whether a final answer cites a concrete reference returned by tool evidence;
+- whether a final answer invents filing references after an empty source result.
+
+The LLM judge owns only subjective final-answer quality: whether the answer addresses the business question, cites returned evidence, avoids unsupported claims, distinguishes missing evidence from negative facts, and avoids investment/legal/accounting advice.
 
 ## Non-Goals
 
