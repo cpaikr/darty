@@ -37,13 +37,13 @@ Use opt-in live checks for source behavior that fixtures cannot prove, such as u
 
 ### Scenario evals
 
-Use user-like tasks at the capability level. Put scenario-style CLI and model-in-the-loop checks under `evals/` when they exercise live task usefulness or agent/tool wiring rather than narrow unit behavior.
+Use user-like tasks at the capability level. Put scenario-style CLI and model-in-the-loop checks under `evals/` when they exercise live task usefulness or agent/tool wiring rather than narrow unit behavior. Keep scenarios independent from transport surfaces where possible; let each surface adapter derive the CLI argv, Pi single-tool call shape, or typed-tool definition from the same task intent.
 
 Current `search-body` examples:
 
 - run a fixed CLI contents search and assert the stdout envelope has filing references
 - ask a model to invoke the structured local CLI runner with keyword, date range, and optional company filter
-- when a future adapter is active, ask a model to invoke that adapter and assert the returned structured envelope
+- ask a model to invoke the active Pi single-tool adapter with `darty(action, command?, inputJson?)` and assert canonical commands, JSON input, validation/recovery, and identifier handoff
 
 Future retrieval examples:
 
@@ -61,6 +61,19 @@ Probe:
 - rate-limited or partially unavailable surfaces
 - auth-required adjacent-source paths, such as future OpenDART experiments
 - section pointers that no longer align with viewer offsets
+
+## Deterministic Assertions vs LLM Judges
+
+Use deterministic assertions for objective facts:
+
+- tool/action/command names
+- input keys and normalized values
+- company codes, receipt numbers, viewer URLs, document IDs, and section IDs
+- call ordering and identifier handoff
+- success/failure envelopes, warning presence, and no-result item counts
+- whether the final answer invented references after an empty source result
+
+Use an LLM judge only for subjective final-answer quality, such as whether an answer directly addresses the business question, cites returned evidence, distinguishes missing evidence from negative facts, avoids unsupported claims, and avoids investment/legal/accounting advice. Do not replace objective trace checks with a judge.
 
 ## Measure Agent Burden
 

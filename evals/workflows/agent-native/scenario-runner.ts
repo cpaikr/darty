@@ -1,11 +1,12 @@
-import { callOpenAi } from "../../search-body/agent-native/openai-chat.ts";
+import { dartyAgentToolNames } from "../../../src/app/agent-tools.ts";
+import { runModelToolLoop } from "../../harness/model-loop.ts";
 import {
   agentNativeTools,
   executeAgentNativeToolCall,
   toAgentNativeToolMessageContent,
 } from "../../search-body/agent-native/tools.ts";
 import type {
-  ChatMessage,
+  AgentNativeToolName,
   ToolExecution,
 } from "../../search-body/agent-native/types.ts";
 import { evaluateWorkflowInvocation } from "./invocation-assertions.ts";
@@ -71,60 +72,32 @@ export const runWorkflowScenario = async (input: {
   readonly model: string;
   readonly openAiApiKey: string;
 }): Promise<WorkflowRunResult> => {
-  const messages: ChatMessage[] = [
-    {
-      role: "system",
-      content: `You are an assistant with access to typed local darty tools.
+  const startedAt = performance.now();
+  const loop = await runModelToolLoop<AgentNativeToolName>({
+    openAiApiKey: input.openAiApiKey,
+    model: input.model,
+    systemPrompt: `You are an assistant with access to typed local darty tools.
 
 Use the darty_* tools when the user's request requires live DART data. Chain tools when an identifier from one result is needed by the next call. Do not guess company codes, filing identifiers, viewer URLs, document IDs, section IDs, or no-result answers.`,
-    },
-    { role: "user", content: input.scenario.task },
-  ];
-  const toolExecutions: ToolExecution[] = [];
-  let finalAnswer = "";
-  const startedAt = performance.now();
-
-  for (let turn = 0; turn < 8; turn += 1) {
-    const response = await callOpenAi({
-      apiKey: input.openAiApiKey,
-      model: input.model,
-      messages,
-      tools: agentNativeTools,
-    });
-
-    if (response.toolCalls.length === 0) {
-      finalAnswer = response.content;
-      break;
-    }
-
-    messages.push({
-      role: "assistant",
-      content: response.content.length > 0 ? response.content : null,
-      tool_calls: response.toolCalls,
-    });
-
-    for (const toolCall of response.toolCalls) {
-      const toolExecution = await executeAgentNativeToolCall(toolCall);
-      toolExecutions.push(toolExecution);
-      messages.push({
-        role: "tool",
-        tool_call_id: toolCall.id,
-        content: toAgentNativeToolMessageContent(toolExecution),
-      });
-    }
-  }
+    userPrompt: input.scenario.task,
+    tools: agentNativeTools,
+    toolNames: new Set(dartyAgentToolNames),
+    maxTurns: 8,
+    executeToolCall: executeAgentNativeToolCall,
+    toToolMessageContent: toAgentNativeToolMessageContent,
+  });
 
   const runtimeMs = Math.round(performance.now() - startedAt);
-  const reasons = evaluateWorkflowInvocation(input.scenario, toolExecutions, {
-    finalAnswer,
+  const reasons = evaluateWorkflowInvocation(input.scenario, loop.toolExecutions, {
+    finalAnswer: loop.finalAnswer,
   });
 
   return {
     scenario: input.scenario,
     pass: reasons.length === 0,
     reasons,
-    finalAnswer,
-    toolExecutions,
-    metrics: buildMetrics(runtimeMs, toolExecutions),
+    finalAnswer: loop.finalAnswer,
+    toolExecutions: loop.toolExecutions,
+    metrics: buildMetrics(runtimeMs, loop.toolExecutions),
   };
 };

@@ -1,5 +1,22 @@
 # Test and Eval Refactor Plan
 
+## Execution Status
+
+Implemented in this pass:
+
+- extracted shared eval harness code under `evals/harness/` for OpenAI chat loops, model-tool loops, tool traces, truncation, artifacts, JSON helpers, and reporting;
+- added model-eval JSON artifacts under `.tmp/evals/<suite>/<timestamp>/<scenario-id>.json`;
+- created transport-independent scenario modules under `evals/scenarios/` for search-body, filing workflows, and recovery;
+- added reusable CLI, typed-agent, and public Pi single-tool surface modules under `evals/surfaces/`;
+- added Pi suites for search-body, workflow, and validation/recovery under `evals/suites/`;
+- added Pi research-answer eval scenarios with deterministic trace assertions plus versioned final-answer judge/rubric files;
+- documented the eval architecture, surface matrix, deterministic assertion policy, and new scripts.
+
+Still pending:
+
+- optional `toolset-host` surface if an external host wrapper needs model-in-the-loop coverage;
+- decisions in Open Questions, especially required model families and pass thresholds for judged research evals.
+
 ## Goal
 
 Reorganize tests and evals around one boundary:

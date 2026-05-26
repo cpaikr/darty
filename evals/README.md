@@ -1,59 +1,76 @@
 # Evals
 
-This directory holds model-in-the-loop evals for `darty` tool use.
+This directory holds scenario evals for Darty task usefulness and agent tool use. It complements `test/`: tests verify implementation contracts, parser behavior, package exports, and adapter mechanics; evals verify whether a fixed command or a model can use an exposed surface to complete realistic DART tasks.
 
-## Current stance
+## Layout
 
-- Keep each eval track focused on one behavior boundary: a single capability such as `search-body`, or an explicit multi-step workflow that exercises tool chaining.
-- Treat `search-body` as the current single-capability family and `workflows` as the current multi-step agent-native family.
-- Use evals for agent/tool wiring behavior, not raw source correctness.
-- Keep deterministic source, schema, transport, and CLI contract checks in `test/` and colocated `*.test.ts` files.
-- Use deterministic assertions first. Add LLM judges only for subjective final-answer quality.
+- `scenarios/` contains transport-independent task definitions and expected facts.
+- `harness/` contains shared OpenAI chat-loop, tool trace, JSON, artifact, and reporting helpers.
+- `surfaces/` contains adapters and assertions for each evaluated surface.
+  - `cli/` contains reusable fixed CLI and agent CLI surface wrappers while the staged runners stay under `search-body/`.
+  - `pi/` evaluates the public single `darty(action, command?, inputJson?)` Pi tool.
+  - `typed-agent/` is an internal diagnostic/control surface for direct `darty_*` tools.
+- `suites/` contains top-level public-surface eval entrypoints.
+- `search-body/` and `workflows/` keep the existing staged runners while shared code is extracted.
 
-## Test boundary
+## Verification Boundaries
 
-The repo has three verification layers:
+1. **Tests**: no LLM; deterministic implementation and package guarantees. Live DART drift checks belong in `test/live/`.
+2. **Fixed CLI evals**: no LLM; run scenario commands against live DART and assert stdout envelopes.
+3. **Agent tool-use evals**: LLM involved; assert objective tool traces, arguments, identifiers, ordering, envelopes, and no-result behavior.
+4. **Final-answer evals**: future LLM-judge layer for subjective answer quality. Do not use judges for objective tool-call facts.
 
-1. **Direct tool/API tests**
-   - No LLM.
-   - Prove the DART adapter and search-body capability work against source data.
-   - Live upstream checks belong under `test/live/`.
+## Public Surface Matrix
 
-2. **CLI scenario evals**
-   - No LLM.
-   - Prove fixed CLI commands return the expected live structured envelope through stdout.
-   - These live under `evals/` when they are scenario-style checks rather than narrow subprocess behavior tests.
+| Surface | Current evals | Purpose |
+|---|---|---|
+| CLI fixed command | `eval:cli:search-body` | Live stdout envelope sanity for known commands. |
+| Agent CLI runner | `eval:agent-cli:search-body` | Whether a model can invoke the CLI runner with matching argv. |
+| Pi single tool | `eval:pi:search-body`, `eval:pi:workflow`, `eval:pi:recovery`, `eval:pi:research-answer` | Whether a model can use the public Pi `darty` tool, canonical commands, JSON input, validation/recovery, identifier chaining, and cited final-answer research. |
+| Typed `darty_*` tools | `eval:typed:search-body`, `eval:typed:workflow` | Internal/reference coverage; not proof that the public Pi surface works. |
 
-3. **Agent tool-use evals**
-   - LLM involved.
-   - Prove the configured model can use structured local tools, either through a CLI runner or typed `darty_*` calls, with appropriate arguments and identifier handoff.
-   - These live under `evals/`.
+## Commands
 
-Future MCP, Pi-native, SDK, or other adapter evals should be added only when
-that adapter is active again. The archived MCP evals are preserved at git tag
-`archive/mcp-before-removal`.
+Fixed CLI eval, no OpenAI key required:
 
-## Current tracks
+```bash
+bun run eval:cli:search-body
+```
 
-- `search-body/cli/run-eval.ts`
-  Fixed-command live CLI scenarios that parse stdout JSON and assert the shared search-body envelope.
-- `search-body/agent-cli/run-eval.ts`
-  Agentic CLI invocation runner where a model receives a structured local darty CLI runner and must call it with arguments that match the user request.
-- `search-body/agent-native/run-eval.ts`
-  Agent-native tool-use runner where a model receives typed `darty_*` tools backed directly by `src/app/*` operations.
-- `workflows/agent-native/run-eval.ts`
-  Multi-step agent-native workflow runner where a model must chain typed `darty_*` tools and hand identifiers from one result into the next call.
-
-## Environment
-
-`OPENAI_API_KEY` must be available in `.env.local` for agentic evals.
-
-Useful commands:
+Model-in-the-loop evals require `OPENAI_API_KEY` (usually through `.env.local` and `varlock`):
 
 ```bash
 bun run env:check
+bun run eval:agent-cli:search-body
+bun run eval:typed:search-body
+bun run eval:typed:workflow
+bun run eval:pi:search-body
+bun run eval:pi:workflow
+bun run eval:pi:recovery
+bun run eval:pi:research-answer
+```
+
+Legacy script names remain available for the staged refactor:
+
+```bash
 bun run eval:search-body:cli
 bun run eval:search-body:agent:cli
 bun run eval:search-body:agent:native
 bun run eval:workflows:agent:native
 ```
+
+Set `OPENAI_MODEL` to override the default model.
+
+## Artifacts
+
+Every model-in-the-loop eval writes one JSON artifact per scenario under:
+
+```text
+.tmp/evals/<suite>/<timestamp>/<scenario-id>.json
+```
+
+Artifacts include the model, scenario, pass/fail reasons, final answer, tool executions, and suite-specific metrics. Keep them ignored; use them to debug failures without rerunning live/model calls.
+
+## Assertion Policy
+
+Prefer deterministic JavaScript assertions for objective facts: command names, action names, arguments, validation failures, company codes, receipt handoff, section IDs, item counts, and no-result behavior. Use an LLM judge only when evaluating subjective final prose, such as whether a research answer is useful, cited, and avoids unsupported claims. Judge prompts and rubrics live under `judges/` and are versioned in code.

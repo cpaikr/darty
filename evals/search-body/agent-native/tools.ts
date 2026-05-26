@@ -2,6 +2,7 @@ import {
   dartyAgentToolDefinitions,
   executeDartyAgentTool,
 } from "../../../src/app/agent-tools.ts";
+import { toTruncatedToolMessageContent, truncate } from "../../harness/tool-trace.ts";
 import type { AgentNativeToolName, ToolCall, ToolExecution } from "./types.ts";
 
 export const agentNativeTools = dartyAgentToolDefinitions;
@@ -9,17 +10,7 @@ export const agentNativeTools = dartyAgentToolDefinitions;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const truncate = (text: string, maxLength: number): string =>
-  text.length <= maxLength ? text : `${text.slice(0, maxLength)}\n...<truncated>`;
-
-export const toAgentNativeToolMessageContent = (
-  execution: ToolExecution,
-): string =>
-  JSON.stringify({
-    ...execution,
-    stdout: truncate(execution.stdout, 16_000),
-    stderr: truncate(execution.stderr, 4_000),
-  });
+export const toAgentNativeToolMessageContent = toTruncatedToolMessageContent;
 
 const parseToolArguments = (toolCall: ToolCall): unknown =>
   JSON.parse(toolCall.function.arguments);

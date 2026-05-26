@@ -1,4 +1,5 @@
 import { parseSearchBodyCommandArgs } from "../../../src/cli/commands/search-body.ts";
+import { truncate } from "../../harness/tool-trace.ts";
 import type { AgentCliToolName, ToolCall, ToolExecution } from "./types.ts";
 
 export type ParsedDartyCliInvocation =
@@ -41,9 +42,6 @@ export const agentCliTools = [
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
-
-const truncate = (text: string, maxLength: number): string =>
-  text.length <= maxLength ? text : `${text.slice(0, maxLength)}\n...<truncated>`;
 
 const includesHelpFlag = (argv: readonly string[]): boolean =>
   argv.some((argument) => argument === "--help" || argument === "-h");

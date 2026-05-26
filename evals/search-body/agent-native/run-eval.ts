@@ -1,3 +1,5 @@
+import { createEvalArtifactWriter } from "../../harness/artifacts.ts";
+import { printFailedExecutions, printFinalAnswer } from "../../harness/reporter.ts";
 import { runAgentNativeScenario } from "./scenario-runner.ts";
 import { searchBodyCliScenarios } from "../shared/cli-scenarios.ts";
 
@@ -9,10 +11,12 @@ if (openAiApiKey === undefined || openAiApiKey.length === 0) {
 }
 
 let failed = 0;
+const artifacts = await createEvalArtifactWriter({ suite: "search-body-agent-native" });
 
 console.log(
   `Running ${searchBodyCliScenarios.length} agent-native tool-use eval scenario(s) with ${model}.`,
 );
+console.log(`Artifacts: ${artifacts.runDir}`);
 
 for (const scenario of searchBodyCliScenarios) {
   const result = await runAgentNativeScenario({
@@ -21,23 +25,21 @@ for (const scenario of searchBodyCliScenarios) {
     openAiApiKey,
   });
 
+  const artifactPath = await artifacts.writeScenario(scenario.id, {
+    suite: "search-body-agent-native",
+    model,
+    result,
+  });
+
   if (result.pass) {
-    console.log(`✓ ${scenario.id}: ${scenario.description}`);
+    console.log(`✓ ${scenario.id}: ${scenario.description} (${artifactPath})`);
     continue;
   }
 
   failed += 1;
-  console.error(`✗ ${scenario.id}: ${result.reasons.join("; ")}`);
-  for (const execution of result.toolExecutions) {
-    console.error(`  tool: ${execution.display}`);
-    console.error(`  exitCode: ${execution.exitCode}`);
-    if (execution.stderr.length > 0) {
-      console.error(`  stderr: ${execution.stderr}`);
-    }
-  }
-  if (result.finalAnswer.length > 0) {
-    console.error(`  finalAnswer: ${result.finalAnswer}`);
-  }
+  console.error(`✗ ${scenario.id}: ${result.reasons.join("; ")} (${artifactPath})`);
+  printFailedExecutions(result.toolExecutions);
+  printFinalAnswer(result.finalAnswer);
 }
 
 if (failed > 0) {

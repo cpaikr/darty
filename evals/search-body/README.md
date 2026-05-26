@@ -11,8 +11,7 @@ The current tracks answer two separate questions:
 - Can a configured model use namespaced, typed `darty_*` tools with parameters that match the user request?
 
 The archived MCP eval track is preserved at git tag `archive/mcp-before-removal`.
-Do not reintroduce MCP, Pi-native, SDK, or other adapter evals until that adapter
-is active again and justified.
+Do not reintroduce MCP, SDK, or other adapter evals until that adapter is active again and justified. The public Pi single-tool surface is active and covered by `../suites/search-body-pi.eval.ts`.
 
 ## Eval Track
 
@@ -93,6 +92,12 @@ Run the agent-native typed-tool eval:
 
 ```bash
 bun run eval:search-body:agent:native
+```
+
+Run the public Pi single-tool eval:
+
+```bash
+bun run eval:pi:search-body
 ```
 
 ## Notes

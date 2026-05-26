@@ -2,33 +2,15 @@ import type { SearchBodyCliScenario } from "../shared/cli-scenarios.ts";
 
 export type AgentCliToolName = "run_darty_cli";
 
-export type ToolCall = {
-  readonly id: string;
-  readonly type: "function";
-  readonly function: {
-    readonly name: AgentCliToolName;
-    readonly arguments: string;
-  };
-};
+import type {
+  ChatMessage as HarnessChatMessage,
+  ToolCall as HarnessToolCall,
+  ToolExecution as HarnessToolExecution,
+} from "../../harness/tool-trace.ts";
 
-export type ChatMessage =
-  | { readonly role: "system" | "user"; readonly content: string }
-  | {
-      readonly role: "assistant";
-      readonly content: string | null;
-      readonly tool_calls?: readonly ToolCall[];
-    }
-  | { readonly role: "tool"; readonly tool_call_id: string; readonly content: string };
-
-export type ToolExecution = {
-  readonly toolName: AgentCliToolName;
-  readonly input: unknown;
-  readonly display: string;
-  readonly exitCode: number;
-  readonly stdout: string;
-  readonly stderr: string;
-  readonly rejected?: string;
-};
+export type ToolCall = HarnessToolCall<AgentCliToolName>;
+export type ChatMessage = HarnessChatMessage<AgentCliToolName>;
+export type ToolExecution = HarnessToolExecution<AgentCliToolName>;
 
 export type ScenarioRunResult = {
   readonly scenario: SearchBodyCliScenario;

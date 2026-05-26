@@ -1,3 +1,5 @@
+import { createEvalArtifactWriter } from "../../harness/artifacts.ts";
+import { printFailedExecutions, printFinalAnswer } from "../../harness/reporter.ts";
 import { runWorkflowScenario } from "./scenario-runner.ts";
 import { workflowScenarios } from "./scenarios.ts";
 
@@ -9,10 +11,12 @@ if (openAiApiKey === undefined || openAiApiKey.length === 0) {
 }
 
 let failed = 0;
+const artifacts = await createEvalArtifactWriter({ suite: "workflow-agent-native" });
 
 console.log(
   `Running ${workflowScenarios.length} agent-native workflow eval scenario(s) with ${model}.`,
 );
+console.log(`Artifacts: ${artifacts.runDir}`);
 
 for (const scenario of workflowScenarios) {
   const result = await runWorkflowScenario({
@@ -23,23 +27,23 @@ for (const scenario of workflowScenarios) {
 
   const metrics = `tools=${result.metrics.toolCallCount}, failedTools=${result.metrics.failedToolCallCount}, retryLike=${result.metrics.retryLikeToolCallCount}, runtimeMs=${result.metrics.runtimeMs}, stdoutBytes=${result.metrics.stdoutUtf8Bytes}, stdoutChars=${result.metrics.stdoutJsonCharacters}`;
 
+  const artifactPath = await artifacts.writeScenario(scenario.id, {
+    suite: "workflow-agent-native",
+    model,
+    result,
+  });
+
   if (result.pass) {
-    console.log(`✓ ${scenario.id}: ${scenario.description} (${metrics})`);
+    console.log(`✓ ${scenario.id}: ${scenario.description} (${metrics}, ${artifactPath})`);
     continue;
   }
 
   failed += 1;
-  console.error(`✗ ${scenario.id}: ${result.reasons.join("; ")} (${metrics})`);
-  for (const execution of result.toolExecutions) {
-    console.error(`  tool: ${execution.display}`);
-    console.error(`  exitCode: ${execution.exitCode}`);
-    if (execution.stderr.length > 0) {
-      console.error(`  stderr: ${execution.stderr}`);
-    }
-  }
-  if (result.finalAnswer.length > 0) {
-    console.error(`  finalAnswer: ${result.finalAnswer}`);
-  }
+  console.error(
+    `✗ ${scenario.id}: ${result.reasons.join("; ")} (${metrics}, ${artifactPath})`,
+  );
+  printFailedExecutions(result.toolExecutions);
+  printFinalAnswer(result.finalAnswer);
 }
 
 if (failed > 0) {
