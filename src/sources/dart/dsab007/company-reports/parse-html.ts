@@ -4,6 +4,10 @@ import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
 import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
+import {
+  getSourceResponseErrorContext,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { dsab007CompanyReportsMessages } from "./messages.ts";
 import {
   SourceCompanyReportsSearchPage,
@@ -57,7 +61,7 @@ const parseReceiptNumber = (href: string): string | undefined =>
 const parsePagination = (
   $: cheerio.CheerioAPI,
   request: SourceCompanyReportsReplayInput,
-  sourceUrl: string,
+  response: DartSourceTextResponse,
 ): Effect.Effect<SourceCompanyReportsPagination, SourceChanged> =>
   Effect.gen(function* () {
     if (hasNoResultsPlaceholder($)) {
@@ -78,7 +82,7 @@ const parsePagination = (
       return yield* Effect.fail(
         new SourceChanged({
           message: dsab007CompanyReportsMessages.missingTotalCount,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -88,7 +92,7 @@ const parsePagination = (
       return yield* Effect.fail(
         new SourceChanged({
           message: dsab007CompanyReportsMessages.missingTotalCount,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -226,17 +230,19 @@ const parseCompany = (
 };
 
 export const parseCompanyReportsSearchHtml = (
-  html: string,
+  response: DartSourceTextResponse,
   request: SourceCompanyReportsReplayInput,
-  sourceUrl: string,
 ): Effect.Effect<
   Schema.Schema.Type<typeof SourceCompanyReportsSearchPage>,
   SourceChanged | ParseFailure
-> =>
-  Effect.gen(function* () {
+> => {
+  const html = response.body;
+  const sourceUrl = response.sourceUrl;
+
+  return Effect.gen(function* () {
     const $ = cheerio.load(html);
     const parsedRows = parseRows($);
-    const pagination = yield* parsePagination($, request, sourceUrl);
+    const pagination = yield* parsePagination($, request, response);
 
     return yield* Schema.decodeUnknown(SourceCompanyReportsSearchPage)({
       request,
@@ -260,9 +266,10 @@ export const parseCompanyReportsSearchHtml = (
             sourceUrl,
             diagnostics: toParseFailureDiagnostics({
               reason: dsab007CompanyReportsMessages.sourceSchemaMismatch,
-              responseText: html,
+              response,
               cause: error,
             }),
           }),
     ),
   );
+};

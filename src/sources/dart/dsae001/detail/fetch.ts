@@ -13,8 +13,13 @@ import {
 } from "../../errors.ts";
 import {
   toHttpFailureDiagnostics,
+  toHttpResponseDiagnostics,
   toTextDecodeFailureDiagnostics,
 } from "../../http-diagnostics.ts";
+import {
+  createDartSourceTextResponse,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { toDsae001CompanyDetailUrl } from "../urls.ts";
 import { dsae001DetailMessages } from "./messages.ts";
 import { parseCompanyDetailHtml } from "./parse-html.ts";
@@ -28,7 +33,7 @@ export const toCompanyDetailUrl = toDsae001CompanyDetailUrl;
 export const fetchCompanyDetailHtml = (
   companyCode: string,
 ): Effect.Effect<
-  { readonly html: string; readonly sourceUrl: string },
+  DartSourceTextResponse,
   SourceUnavailable | ParseFailure,
   HttpClient.HttpClient
 > =>
@@ -65,7 +70,11 @@ export const fetchCompanyDetailHtml = (
       ),
     );
 
-    return { html, sourceUrl };
+    return createDartSourceTextResponse(
+      html,
+      sourceUrl,
+      toHttpResponseDiagnostics(response, html),
+    );
   });
 
 export const fetchCompanyDetailPage = (
@@ -75,6 +84,6 @@ export const fetchCompanyDetailPage = (
   SourceUnavailable | SourceChanged | SourceNotFound | ParseFailure
 > =>
   Effect.gen(function* () {
-    const { html, sourceUrl } = yield* fetchCompanyDetailHtml(companyCode);
-    return yield* parseCompanyDetailHtml(html, companyCode, sourceUrl);
+    const response = yield* fetchCompanyDetailHtml(companyCode);
+    return yield* parseCompanyDetailHtml(response, companyCode);
   }).pipe(Effect.provide(FetchHttpClient.layer));

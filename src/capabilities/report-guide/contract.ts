@@ -36,17 +36,20 @@ export class ReportGuideFailure extends Error {
   readonly code: ReportGuideFailureCode;
   readonly retryable: boolean;
   readonly parameter: string | undefined;
+  readonly recoveryHint: string | undefined;
 
   constructor(input: {
     readonly code: ReportGuideFailureCode;
     readonly message: string;
     readonly retryable: boolean;
     readonly parameter?: string;
+    readonly recoveryHint?: string;
   }) {
     super(input.message);
     this.code = input.code;
     this.retryable = input.retryable;
     this.parameter = input.parameter;
+    this.recoveryHint = input.recoveryHint;
   }
 }
 

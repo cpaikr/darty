@@ -5,6 +5,7 @@ import {
   mergeErrorDiagnostics,
   type DartyErrorDiagnostics,
 } from "../../error-diagnostics.ts";
+import type { DartSourceTextResponse } from "./source-response.ts";
 
 export const toHttpResponseDiagnostics = (
   response: Pick<HttpClientResponse, "headers" | "status">,
@@ -19,6 +20,21 @@ export const toHttpResponseDiagnostics = (
     : { httpResponseLength: responseText.length }),
 });
 
+export const toWebResponseDiagnostics = (
+  response: Pick<Response, "headers" | "status">,
+  responseText?: string,
+): DartyErrorDiagnostics => {
+  const contentType = response.headers.get("content-type");
+
+  return {
+    httpStatus: response.status,
+    ...(contentType === null ? {} : { httpContentType: contentType }),
+    ...(responseText === undefined
+      ? {}
+      : { httpResponseLength: responseText.length }),
+  };
+};
+
 export const toHttpFailureDiagnostics = (
   cause: unknown,
 ): DartyErrorDiagnostics | undefined => createCauseDiagnostics(cause);
@@ -32,16 +48,15 @@ export const toTextDecodeFailureDiagnostics = (
 export const toParseFailureDiagnostics = (
   input: {
     readonly reason: string;
-    readonly responseText?: string;
+    readonly response: DartSourceTextResponse;
     readonly cause?: unknown;
   },
 ): DartyErrorDiagnostics | undefined =>
   mergeErrorDiagnostics(
     {
       parseReason: input.reason,
-      ...(input.responseText === undefined
-        ? {}
-        : { httpResponseLength: input.responseText.length }),
+      httpResponseLength: input.response.body.length,
     },
+    input.response.diagnostics,
     input.cause === undefined ? undefined : createCauseDiagnostics(input.cause),
   );

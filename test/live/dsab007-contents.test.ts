@@ -33,12 +33,12 @@ const runSearch = async (
 const fetchPagerAnchorTexts = async (
   input: SourceContentsReplayInput,
 ): Promise<readonly string[]> => {
-  const html = await Effect.runPromise(
+  const response = await Effect.runPromise(
     fetchContentsSearchHtml(
       buildContentsSearchForm(input),
     ).pipe(Effect.provide(FetchHttpClient.layer)),
   );
-  const $ = cheerio.load(html);
+  const $ = cheerio.load(response.body);
 
   return $("#psWrap a")
     .map((_, element) => $(element).text().trim())

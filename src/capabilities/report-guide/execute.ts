@@ -1,3 +1,4 @@
+import { getExecutionFailureRecoveryHint } from "../recovery-hints.ts";
 import { reportGuideFailureCopy } from "./copy.ts";
 import {
   InvalidReportGuideRequest,
@@ -42,10 +43,13 @@ const toReportGuideFailure = (error: unknown): ReportGuideFailure => {
     });
   }
 
+  const recoveryHint = getExecutionFailureRecoveryHint("internal_error", false);
+
   return new ReportGuideFailure({
     code: "internal_error",
     message: reportGuideFailureCopy.unexpectedReportGuide,
     retryable: false,
+    ...(recoveryHint === undefined ? {} : { recoveryHint }),
   });
 };
 

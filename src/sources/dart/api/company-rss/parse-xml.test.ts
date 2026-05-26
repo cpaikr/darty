@@ -2,7 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { Effect, Either } from "effect";
 
 import { SourceChanged } from "../../errors.ts";
+import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseCompanyRssXml } from "./parse-xml.ts";
+
+const sourceUrl = "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00126380";
 
 const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
@@ -25,10 +28,7 @@ const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
 describe("parseCompanyRssXml", () => {
   test("parses RSS channel and filing items", async () => {
     const result = await Effect.runPromise(
-      parseCompanyRssXml(
-        rssXml,
-        "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00126380",
-      ),
+      parseCompanyRssXml(createDartSourceTextResponse(rssXml, sourceUrl)),
     );
 
     expect(result.channel).toMatchObject({
@@ -52,8 +52,11 @@ describe("parseCompanyRssXml", () => {
     const result = await Effect.runPromise(
       Effect.either(
         parseCompanyRssXml(
-          malformedRssXml,
-          "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00126380",
+          createDartSourceTextResponse(malformedRssXml, sourceUrl, {
+            httpStatus: 200,
+            httpContentType: "application/xml",
+            httpResponseLength: malformedRssXml.length,
+          }),
         ),
       ),
     );
@@ -62,6 +65,11 @@ describe("parseCompanyRssXml", () => {
 
     if (Either.isLeft(result)) {
       expect(result.left).toBeInstanceOf(SourceChanged);
+      expect(result.left.diagnostics).toMatchObject({
+        httpStatus: 200,
+        httpContentType: "application/xml",
+        httpResponseLength: malformedRssXml.length,
+      });
     }
   });
 
@@ -73,10 +81,7 @@ describe("parseCompanyRssXml", () => {
 
     const result = await Effect.runPromise(
       Effect.either(
-        parseCompanyRssXml(
-          malformedRssXml,
-          "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00126380",
-        ),
+        parseCompanyRssXml(createDartSourceTextResponse(malformedRssXml, sourceUrl)),
       ),
     );
 

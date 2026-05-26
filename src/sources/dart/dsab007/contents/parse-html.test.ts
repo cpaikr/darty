@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { Effect } from "effect";
 
+import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseContentsSearchHtml } from "./parse-html.ts";
+
+const sourceUrl = "https://dart.fss.or.kr/dsab007/search.ax";
+const sourceResponse = (html: string) => createDartSourceTextResponse(html, sourceUrl);
 
 const populatedHtml = readFileSync(
   new URL("./fixtures/contents-populated-2026-03-31.html", import.meta.url),
@@ -52,7 +56,7 @@ describe("parseContentsSearchHtml", () => {
   test("parses a selected live populated fixture captured on 2026-03-31", async () => {
     const result = await Effect.runPromise(
       parseContentsSearchHtml(
-        populatedHtml,
+        sourceResponse(populatedHtml),
         {
           option: "contents",
           currentPage: 1,
@@ -64,7 +68,6 @@ describe("parseContentsSearchHtml", () => {
           startDate: "20250331",
           endDate: "20260331",
         },
-        "https://dart.fss.or.kr/dsab007/search.ax",
       ),
     );
 
@@ -107,7 +110,7 @@ describe("parseContentsSearchHtml", () => {
   test("parses the live no-result row shape with no pagination block", async () => {
     const result = await Effect.runPromise(
       parseContentsSearchHtml(
-        noResultsHtml,
+        sourceResponse(noResultsHtml),
         {
           option: "contents",
           currentPage: 1,
@@ -119,7 +122,6 @@ describe("parseContentsSearchHtml", () => {
           startDate: "20250331",
           endDate: "20260331",
         },
-        "https://dart.fss.or.kr/dsab007/search.ax",
       ),
     );
 
@@ -133,7 +135,7 @@ describe("parseContentsSearchHtml", () => {
   test("preserves attachment-style report suffixes", async () => {
     const result = await Effect.runPromise(
       parseContentsSearchHtml(
-        attachmentHtml,
+        sourceResponse(attachmentHtml),
         {
           option: "contents",
           currentPage: 1,
@@ -145,7 +147,6 @@ describe("parseContentsSearchHtml", () => {
           startDate: "20250331",
           endDate: "20260331",
         },
-        "https://dart.fss.or.kr/dsab007/search.ax",
       ),
     );
 

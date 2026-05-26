@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { getExecutionFailureRecoveryHint } from "../recovery-hints.ts";
 import { DisclosureTypesFailure } from "./contract.ts";
 import { executeDisclosureTypes } from "./execute.ts";
 
@@ -125,6 +126,22 @@ describe("executeDisclosureTypes", () => {
     await expect(executeDisclosureTypes({ extra: true })).rejects.toMatchObject({
       code: "invalid_request",
       parameter: "extra",
+    });
+  });
+
+  test("adds recovery hints to unexpected internal failures", async () => {
+    const input = {} as Record<string, unknown>;
+    Object.defineProperty(input, "query", {
+      enumerable: true,
+      get: () => {
+        throw new Error("query getter failed");
+      },
+    });
+
+    await expect(executeDisclosureTypes(input)).rejects.toMatchObject({
+      code: "internal_error",
+      retryable: false,
+      recoveryHint: getExecutionFailureRecoveryHint("internal_error", false),
     });
   });
 });

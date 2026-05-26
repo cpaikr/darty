@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
+import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseReportShell } from "./parse-shell.ts";
+
+const sourceResponse = (html: string, receiptNumber: string) =>
+  createDartSourceTextResponse(
+    html,
+    `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${receiptNumber}`,
+  );
 
 const shellHtml = `
 <html>
@@ -62,10 +69,7 @@ viewDoc("20260331904807", "11216440", "0", "0", "0", "HTML", "");
 
 describe("parseReportShell", () => {
   test("parses documents, TOC, and the initial viewer locator", () => {
-    const shell = parseReportShell(
-      shellHtml,
-      "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
-    );
+    const shell = parseReportShell(sourceResponse(shellHtml, "20260331004166"));
 
     expect(shell.selectedDocument).toMatchObject({
       id: "document:body:1",
@@ -123,8 +127,7 @@ describe("parseReportShell", () => {
 
   test("keeps no-TOC documents addressable through their initial locator", () => {
     const shell = parseReportShell(
-      noTocShellHtml,
-      "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331904807",
+      sourceResponse(noTocShellHtml, "20260331904807"),
     );
 
     expect(shell.toc).toEqual([]);

@@ -237,7 +237,7 @@ graph TD
     BUILD["buildContentsSearchForm()"]
     FETCH["fetchContentsSearchHtml()"]
     POST["POST /dsab007/search.ax"]
-    HTML["HTML response"]
+    HTML["Source text response\nbody + safe HTTP diagnostics"]
     PARSE_HTML["parseContentsSearchHtml()"]
     SOURCE_PAGE["SourceContentsSearchPage"]
     TO_RESULT["toDsab007ContentsProviderResult()"]
@@ -274,8 +274,8 @@ Step by step:
 4. `src/app/search-body.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
 5. `toDsab007ContentsReplayInput()` translates the public request into the internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
 6. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
-7. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax`.
-8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from the HTML fragment.
+7. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax` and returns a source text response containing the body, source URL, and safe HTTP diagnostics.
+8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from that source response so parser failures can retain HTTP status/content-type/response-length context.
 9. `toDsab007ContentsProviderResult()` maps source rows into public items.
 10. `buildSearchBodyResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
 11. The CLI projects the capability envelope into its CLI output contract, then serializes exactly one JSON stdout payload. Default CLI output may omit low-benefit diagnostic/context fields; `--verbose` restores them.

@@ -2,6 +2,10 @@ import * as cheerio from "cheerio";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
 import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
+import {
+  getSourceResponseErrorContext,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import type {
   SourceReportDocument,
@@ -236,9 +240,10 @@ const parseInitialViewLocator = (html: string): SourceReportLocator | undefined 
 };
 
 export const parseReportShell = (
-  html: string,
-  sourceUrl: string,
+  response: DartSourceTextResponse,
 ): SourceReportShell => {
+  const html = response.body;
+  const sourceUrl = response.sourceUrl;
   const $ = cheerio.load(html);
   const documents = parseDocuments($);
   const selectedDocument = documents.find((document) => document.selected) ?? documents[0];
@@ -247,7 +252,7 @@ export const parseReportShell = (
   if (receiptNumber === undefined || selectedDocument === undefined) {
     throw new SourceChanged({
       message: dsaf001ReportMessages.shellChanged,
-      sourceUrl,
+      ...getSourceResponseErrorContext(response),
     });
   }
 
@@ -266,7 +271,7 @@ export const parseReportShell = (
       sourceUrl,
       diagnostics: toParseFailureDiagnostics({
         reason: dsaf001ReportMessages.htmlDecodeFailure,
-        responseText: html,
+        response,
         cause: error,
       }),
     });

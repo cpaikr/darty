@@ -1,3 +1,4 @@
+import { getExecutionFailureRecoveryHint } from "../recovery-hints.ts";
 import { disclosureTypesFailureCopy } from "./copy.ts";
 import {
   DisclosureTypesFailure,
@@ -136,10 +137,13 @@ const toDisclosureTypesFailure = (error: unknown): DisclosureTypesFailure => {
     });
   }
 
+  const recoveryHint = getExecutionFailureRecoveryHint("internal_error", false);
+
   return new DisclosureTypesFailure({
     code: "internal_error",
     message: disclosureTypesFailureCopy.unexpectedDisclosureTypes,
     retryable: false,
+    ...(recoveryHint === undefined ? {} : { recoveryHint }),
   });
 };
 

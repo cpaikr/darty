@@ -21,8 +21,13 @@ import {
 } from "../../errors.ts";
 import {
   toHttpFailureDiagnostics,
+  toHttpResponseDiagnostics,
   toTextDecodeFailureDiagnostics,
 } from "../../http-diagnostics.ts";
+import {
+  createDartSourceTextResponse,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 
 export const searchUrl = "https://dart.fss.or.kr/dsab007/search.ax";
 const chromeDesktopUserAgent =
@@ -43,7 +48,7 @@ const decodeReplayInput = (
 export const fetchContentsSearchHtml = (
   form: URLSearchParams,
 ): Effect.Effect<
-  string,
+  DartSourceTextResponse,
   SourceUnavailable | ParseFailure,
   HttpClient.HttpClient
 > =>
@@ -72,7 +77,7 @@ export const fetchContentsSearchHtml = (
       ),
     );
 
-    return yield* response.text.pipe(
+    const html = yield* response.text.pipe(
       Effect.mapError(
         (error) =>
           new ParseFailure({
@@ -81,6 +86,12 @@ export const fetchContentsSearchHtml = (
             diagnostics: toTextDecodeFailureDiagnostics(response, error),
           }),
       ),
+    );
+
+    return createDartSourceTextResponse(
+      html,
+      searchUrl,
+      toHttpResponseDiagnostics(response, html),
     );
   });
 
@@ -93,6 +104,6 @@ export const searchContentsSourcePage = (
   Effect.gen(function* () {
     const request = yield* decodeReplayInput(input);
     const form = buildContentsSearchForm(request);
-    const html = yield* fetchContentsSearchHtml(form);
-    return yield* parseContentsSearchHtml(html, request, searchUrl);
+    const response = yield* fetchContentsSearchHtml(form);
+    return yield* parseContentsSearchHtml(response, request);
   }).pipe(Effect.provide(FetchHttpClient.layer));

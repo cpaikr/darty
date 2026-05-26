@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { getExecutionFailureRecoveryHint } from "../recovery-hints.ts";
 import { reportGuideMarkdown, reportGuideSourceUrls } from "./content.ts";
 import { executeReportGuide } from "./execute.ts";
 
@@ -31,6 +32,24 @@ describe("executeReportGuide", () => {
       code: "invalid_request",
       retryable: false,
       parameter: "topic",
+    });
+  });
+
+  test("adds recovery hints to unexpected internal failures", async () => {
+    const input = new Proxy(
+      {},
+      {
+        ownKeys: () => {
+          throw new Error("key enumeration failed");
+        },
+      },
+    ) as Record<string, unknown>;
+
+    await expect(executeReportGuide(input)).rejects.toMatchObject({
+      name: "ReportGuideFailure",
+      code: "internal_error",
+      retryable: false,
+      recoveryHint: getExecutionFailureRecoveryHint("internal_error", false),
     });
   });
 });

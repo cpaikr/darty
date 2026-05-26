@@ -1,5 +1,10 @@
 import { createCauseDiagnostics, mergeErrorDiagnostics } from "../../../../error-diagnostics.ts";
 import { ParseFailure, SourceUnavailable } from "../../errors.ts";
+import { toWebResponseDiagnostics } from "../../http-diagnostics.ts";
+import {
+  createDartSourceTextResponse,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import { parseReportShell } from "./parse-shell.ts";
 import { sanitizeFetchedReportHtml } from "./sanitize-html.ts";
@@ -26,7 +31,7 @@ const charsetFromContentType = (contentType: string | null): string => {
   return "utf-8";
 };
 
-const fetchDecodedHtml = async (url: string): Promise<string> => {
+const fetchDecodedHtml = async (url: string): Promise<DartSourceTextResponse> => {
   let response: Response;
 
   try {
@@ -64,7 +69,13 @@ const fetchDecodedHtml = async (url: string): Promise<string> => {
       >[0],
     );
 
-    return decoder.decode(buffer);
+    const html = decoder.decode(buffer);
+
+    return createDartSourceTextResponse(
+      html,
+      url,
+      toWebResponseDiagnostics(response, html),
+    );
   } catch (error) {
     throw new ParseFailure({
       message: dsaf001ReportMessages.htmlDecodeFailure,
@@ -104,19 +115,19 @@ export const fetchReportShell = async (
 ): Promise<SourceReportShell> => {
   const query = documentQuery ?? `rcpNo=${encodeURIComponent(receiptNumber)}`;
   const sourceUrl = buildReportShellUrl(query);
-  const html = await fetchDecodedHtml(sourceUrl);
+  const response = await fetchDecodedHtml(sourceUrl);
 
-  return parseReportShell(html, sourceUrl);
+  return parseReportShell(response);
 };
 
 export const fetchReportContent = async (
   locator: SourceReportLocator,
 ): Promise<SourceReportContent> => {
   const sourceUrl = buildReportViewerUrl(locator);
-  const html = await fetchDecodedHtml(sourceUrl);
+  const response = await fetchDecodedHtml(sourceUrl);
 
   return {
     sourceUrl,
-    html: sanitizeFetchedReportHtml(html, { baseUrl: dartBaseUrl }),
+    html: sanitizeFetchedReportHtml(response.body, { baseUrl: dartBaseUrl }),
   };
 };

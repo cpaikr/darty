@@ -3,6 +3,10 @@ import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
 import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
+import {
+  getSourceResponseErrorContext,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { dsab007ContentsMessages } from "./messages.ts";
 import {
   SourceContentsSearchPage,
@@ -105,7 +109,7 @@ const parseDate = (value: string): string => {
 
 const parsePagination = (
   $: cheerio.CheerioAPI,
-  sourceUrl: string,
+  response: DartSourceTextResponse,
 ): Effect.Effect<SourceContentsPagination, SourceChanged> =>
   Effect.gen(function* () {
     const totalCountValue =
@@ -118,7 +122,7 @@ const parsePagination = (
       return yield* Effect.fail(
         new SourceChanged({
           message: dsab007ContentsMessages.missingTotalCount,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -238,17 +242,19 @@ const parseRows = (
 };
 
 export const parseContentsSearchHtml = (
-  html: string,
+  response: DartSourceTextResponse,
   request: SourceContentsReplayInput,
-  sourceUrl: string,
 ): Effect.Effect<
   Schema.Schema.Type<typeof SourceContentsSearchPage>,
   SourceChanged | ParseFailure
-> =>
-  Effect.gen(function* () {
+> => {
+  const html = response.body;
+  const sourceUrl = response.sourceUrl;
+
+  return Effect.gen(function* () {
     const $ = cheerio.load(html);
     const parsedRows = parseRows($);
-    const pagination = yield* parsePagination($, sourceUrl);
+    const pagination = yield* parsePagination($, response);
 
     return yield* Schema.decodeUnknown(SourceContentsSearchPage)({
       request,
@@ -271,9 +277,10 @@ export const parseContentsSearchHtml = (
             sourceUrl,
             diagnostics: toParseFailureDiagnostics({
               reason: dsab007ContentsMessages.sourceSchemaMismatch,
-              responseText: html,
+              response,
               cause: error,
             }),
           }),
     ),
   );
+};

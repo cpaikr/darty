@@ -3,6 +3,10 @@ import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
 import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
+import {
+  getSourceResponseErrorContext,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { companyRssMessages } from "./messages.ts";
 import {
   SourceCompanyRssFeed,
@@ -28,13 +32,15 @@ const receiptFromLink = (link: string): string | undefined => {
 };
 
 export const parseCompanyRssXml = (
-  xml: string,
-  sourceUrl: string,
+  response: DartSourceTextResponse,
 ): Effect.Effect<
   Schema.Schema.Type<typeof SourceCompanyRssFeed>,
   SourceChanged | ParseFailure
-> =>
-  Effect.gen(function* () {
+> => {
+  const xml = response.body;
+  const sourceUrl = response.sourceUrl;
+
+  return Effect.gen(function* () {
     const $ = cheerio.load(xml, { xmlMode: true });
     const channel = $("channel").first();
 
@@ -42,7 +48,7 @@ export const parseCompanyRssXml = (
       return yield* Effect.fail(
         new SourceChanged({
           message: companyRssMessages.missingChannel,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -52,7 +58,7 @@ export const parseCompanyRssXml = (
       return yield* Effect.fail(
         new SourceChanged({
           message: companyRssMessages.missingChannelTitle,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -62,7 +68,7 @@ export const parseCompanyRssXml = (
       return yield* Effect.fail(
         new SourceChanged({
           message: companyRssMessages.missingChannelLink,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -78,7 +84,7 @@ export const parseCompanyRssXml = (
         return yield* Effect.fail(
           new SourceChanged({
             message: companyRssMessages.missingItemField,
-            sourceUrl,
+            ...getSourceResponseErrorContext(response),
           }),
         );
       }
@@ -119,9 +125,10 @@ export const parseCompanyRssXml = (
             sourceUrl,
             diagnostics: toParseFailureDiagnostics({
               reason: companyRssMessages.sourceSchemaMismatch,
-              responseText: xml,
+              response,
               cause: error,
             }),
           }),
     ),
   );
+};

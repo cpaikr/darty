@@ -3,6 +3,10 @@ import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
 import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
+import {
+  getSourceResponseErrorContext,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { dsae001CompanyMessages } from "./messages.ts";
 import {
   SourceCompanySearchPage,
@@ -67,7 +71,7 @@ const toMarketKind = (
 const parsePagination = (
   $: cheerio.CheerioAPI,
   request: SourceCompanyReplayInput,
-  sourceUrl: string,
+  response: DartSourceTextResponse,
 ): Effect.Effect<SourceCompanyPagination, SourceChanged> =>
   Effect.gen(function* () {
     const pageInfoText = collapseWhitespace($(".pageInfo").first().text());
@@ -86,7 +90,7 @@ const parsePagination = (
       return yield* Effect.fail(
         new SourceChanged({
           message: dsae001CompanyMessages.missingTotalCount,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -96,7 +100,7 @@ const parsePagination = (
       return yield* Effect.fail(
         new SourceChanged({
           message: dsae001CompanyMessages.missingTotalCount,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -171,17 +175,19 @@ const parseRows = (
 };
 
 export const parseCompanySearchHtml = (
-  html: string,
+  response: DartSourceTextResponse,
   request: SourceCompanyReplayInput,
-  sourceUrl: string,
 ): Effect.Effect<
   Schema.Schema.Type<typeof SourceCompanySearchPage>,
   SourceChanged | ParseFailure
-> =>
-  Effect.gen(function* () {
+> => {
+  const html = response.body;
+  const sourceUrl = response.sourceUrl;
+
+  return Effect.gen(function* () {
     const $ = cheerio.load(html);
     const parsedRows = parseRows($);
-    const pagination = yield* parsePagination($, request, sourceUrl);
+    const pagination = yield* parsePagination($, request, response);
 
     return yield* Schema.decodeUnknown(SourceCompanySearchPage)({
       request,
@@ -204,9 +210,10 @@ export const parseCompanySearchHtml = (
             sourceUrl,
             diagnostics: toParseFailureDiagnostics({
               reason: dsae001CompanyMessages.sourceSchemaMismatch,
-              responseText: html,
+              response,
               cause: error,
             }),
           }),
     ),
   );
+};

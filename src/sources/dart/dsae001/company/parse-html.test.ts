@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "effect";
 
+import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseCompanySearchHtml } from "./parse-html.ts";
+
+const sourceUrl = "https://dart.fss.or.kr/dsae001/search.ax";
+const sourceResponse = (html: string) => createDartSourceTextResponse(html, sourceUrl);
 
 const request = {
   currentPage: 1,
@@ -69,11 +73,7 @@ const partiallyMalformedHtml = `
 describe("parseCompanySearchHtml", () => {
   test("parses company rows and exposes the 8-digit DART company code", async () => {
     const result = await Effect.runPromise(
-      parseCompanySearchHtml(
-        populatedHtml,
-        request,
-        "https://dart.fss.or.kr/dsae001/search.ax",
-      ),
+      parseCompanySearchHtml(sourceResponse(populatedHtml), request),
     );
 
     expect(result.pagination).toMatchObject({
@@ -101,11 +101,7 @@ describe("parseCompanySearchHtml", () => {
 
   test("parses the no-result row shape", async () => {
     const result = await Effect.runPromise(
-      parseCompanySearchHtml(
-        noResultsHtml,
-        request,
-        "https://dart.fss.or.kr/dsae001/search.ax",
-      ),
+      parseCompanySearchHtml(sourceResponse(noResultsHtml), request),
     );
 
     expect(result.pagination).toEqual({
@@ -119,11 +115,7 @@ describe("parseCompanySearchHtml", () => {
 
   test("drops malformed company rows before exposing public fields", async () => {
     const result = await Effect.runPromise(
-      parseCompanySearchHtml(
-        partiallyMalformedHtml,
-        request,
-        "https://dart.fss.or.kr/dsae001/search.ax",
-      ),
+      parseCompanySearchHtml(sourceResponse(partiallyMalformedHtml), request),
     );
 
     expect(result.pagination.returnedCount).toBe(1);

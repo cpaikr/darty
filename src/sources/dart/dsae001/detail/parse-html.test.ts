@@ -2,7 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { Effect, Either } from "effect";
 
 import { SourceNotFound } from "../../errors.ts";
+import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseCompanyDetailHtml } from "./parse-html.ts";
+
+const sourceUrl = (companyCode: string) =>
+  `https://dart.fss.or.kr/dsae001/select.ax?selectKey=${companyCode}`;
+const sourceResponse = (html: string, companyCode: string) =>
+  createDartSourceTextResponse(html, sourceUrl(companyCode));
 
 const emptyDetailHtml = `
 <table id="corpDetailTable">
@@ -31,11 +37,7 @@ const detailHtml = `
 describe("parseCompanyDetailHtml", () => {
   test("parses the DART company detail table", async () => {
     const result = await Effect.runPromise(
-      parseCompanyDetailHtml(
-        detailHtml,
-        "00126380",
-        "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00126380",
-      ),
+      parseCompanyDetailHtml(sourceResponse(detailHtml, "00126380"), "00126380"),
     );
 
     expect(result.company).toMatchObject({
@@ -52,9 +54,8 @@ describe("parseCompanyDetailHtml", () => {
     const result = await Effect.runPromise(
       Effect.either(
         parseCompanyDetailHtml(
-          emptyDetailHtml,
+          sourceResponse(emptyDetailHtml, "99999999"),
           "99999999",
-          "https://dart.fss.or.kr/dsae001/select.ax?selectKey=99999999",
         ),
       ),
     );

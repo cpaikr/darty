@@ -8,8 +8,13 @@ import { Effect } from "effect";
 import { ParseFailure, SourceChanged, SourceUnavailable } from "../../errors.ts";
 import {
   toHttpFailureDiagnostics,
+  toHttpResponseDiagnostics,
   toTextDecodeFailureDiagnostics,
 } from "../../http-diagnostics.ts";
+import {
+  createDartSourceTextResponse,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { companyRssMessages } from "./messages.ts";
 import { parseCompanyRssXml } from "./parse-xml.ts";
 import type { SourceCompanyRssFeed } from "./source-model.ts";
@@ -23,7 +28,7 @@ export const toCompanyRssUrl = (companyCode: string): string =>
 export const fetchCompanyRssXml = (
   companyCode: string,
 ): Effect.Effect<
-  { readonly xml: string; readonly sourceUrl: string },
+  DartSourceTextResponse,
   SourceUnavailable | ParseFailure,
   HttpClient.HttpClient
 > =>
@@ -56,7 +61,11 @@ export const fetchCompanyRssXml = (
       ),
     );
 
-    return { xml, sourceUrl };
+    return createDartSourceTextResponse(
+      xml,
+      sourceUrl,
+      toHttpResponseDiagnostics(response, xml),
+    );
   });
 
 export const fetchCompanyRssFeed = (
@@ -66,6 +75,6 @@ export const fetchCompanyRssFeed = (
   SourceUnavailable | SourceChanged | ParseFailure
 > =>
   Effect.gen(function* () {
-    const { xml, sourceUrl } = yield* fetchCompanyRssXml(companyCode);
-    return yield* parseCompanyRssXml(xml, sourceUrl);
+    const response = yield* fetchCompanyRssXml(companyCode);
+    return yield* parseCompanyRssXml(response);
   }).pipe(Effect.provide(FetchHttpClient.layer));

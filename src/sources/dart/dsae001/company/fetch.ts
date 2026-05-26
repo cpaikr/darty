@@ -13,8 +13,13 @@ import {
 } from "../../errors.ts";
 import {
   toHttpFailureDiagnostics,
+  toHttpResponseDiagnostics,
   toTextDecodeFailureDiagnostics,
 } from "../../http-diagnostics.ts";
+import {
+  createDartSourceTextResponse,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { buildCompanySearchForm } from "./build-form.ts";
 import { dsae001CompanyMessages } from "./messages.ts";
 import { parseCompanySearchHtml } from "./parse-html.ts";
@@ -43,7 +48,7 @@ const decodeReplayInput = (
 export const fetchCompanySearchHtml = (
   form: URLSearchParams,
 ): Effect.Effect<
-  string,
+  DartSourceTextResponse,
   SourceUnavailable | ParseFailure,
   HttpClient.HttpClient
 > =>
@@ -76,7 +81,7 @@ export const fetchCompanySearchHtml = (
       ),
     );
 
-    return yield* response.text.pipe(
+    const html = yield* response.text.pipe(
       Effect.mapError(
         (error) =>
           new ParseFailure({
@@ -85,6 +90,12 @@ export const fetchCompanySearchHtml = (
             diagnostics: toTextDecodeFailureDiagnostics(response, error),
           }),
       ),
+    );
+
+    return createDartSourceTextResponse(
+      html,
+      searchUrl,
+      toHttpResponseDiagnostics(response, html),
     );
   });
 
@@ -97,6 +108,6 @@ export const searchCompanySourcePage = (
   Effect.gen(function* () {
     const request = yield* decodeReplayInput(input);
     const form = buildCompanySearchForm(request);
-    const html = yield* fetchCompanySearchHtml(form);
-    return yield* parseCompanySearchHtml(html, request, searchUrl);
+    const response = yield* fetchCompanySearchHtml(form);
+    return yield* parseCompanySearchHtml(response, request);
   }).pipe(Effect.provide(FetchHttpClient.layer));

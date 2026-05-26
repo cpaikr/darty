@@ -4,6 +4,10 @@ import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged, SourceNotFound } from "../../errors.ts";
 import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
+import {
+  getSourceResponseErrorContext,
+  type DartSourceTextResponse,
+} from "../../source-response.ts";
 import { dsae001DetailMessages } from "./messages.ts";
 import { SourceCompanyDetailPage } from "./source-model.ts";
 
@@ -38,21 +42,23 @@ const collectDetailFields = ($: cheerio.CheerioAPI): Map<string, string> => {
 };
 
 export const parseCompanyDetailHtml = (
-  html: string,
+  response: DartSourceTextResponse,
   companyCode: string,
-  sourceUrl: string,
 ): Effect.Effect<
   Schema.Schema.Type<typeof SourceCompanyDetailPage>,
   SourceChanged | SourceNotFound | ParseFailure
-> =>
-  Effect.gen(function* () {
+> => {
+  const html = response.body;
+  const sourceUrl = response.sourceUrl;
+
+  return Effect.gen(function* () {
     const $ = cheerio.load(html);
 
     if ($("#corpDetailTable").length === 0) {
       return yield* Effect.fail(
         new SourceChanged({
           message: dsae001DetailMessages.missingDetailTable,
-          sourceUrl,
+          ...getSourceResponseErrorContext(response),
         }),
       );
     }
@@ -66,11 +72,11 @@ export const parseCompanyDetailHtml = (
         rawCompanyName === undefined
           ? new SourceChanged({
               message: dsae001DetailMessages.missingCompanyName,
-              sourceUrl,
+              ...getSourceResponseErrorContext(response),
             })
           : new SourceNotFound({
               message: dsae001DetailMessages.companyNotFound(companyCode),
-              sourceUrl,
+              ...getSourceResponseErrorContext(response),
             });
 
       return yield* Effect.fail(error);
@@ -117,9 +123,10 @@ export const parseCompanyDetailHtml = (
             sourceUrl,
             diagnostics: toParseFailureDiagnostics({
               reason: dsae001DetailMessages.sourceSchemaMismatch,
-              responseText: html,
+              response,
               cause: error,
             }),
           }),
     ),
   );
+};

@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "effect";
 
+import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseCompanyReportsSearchHtml } from "./parse-html.ts";
+
+const sourceUrl = "https://dart.fss.or.kr/dsab007/detailSearch.ax";
+const sourceResponse = (html: string) => createDartSourceTextResponse(html, sourceUrl);
 
 const populatedHtml = `
 <div class="tbListInner">
@@ -77,11 +81,7 @@ const request = {
 describe("parseCompanyReportsSearchHtml", () => {
   test("parses company-report rows and pagination", async () => {
     const result = await Effect.runPromise(
-      parseCompanyReportsSearchHtml(
-        populatedHtml,
-        request,
-        "https://dart.fss.or.kr/dsab007/detailSearch.ax",
-      ),
+      parseCompanyReportsSearchHtml(sourceResponse(populatedHtml), request),
     );
 
     expect(result.company).toEqual({
@@ -119,11 +119,7 @@ describe("parseCompanyReportsSearchHtml", () => {
 
   test("parses no-result tables as successful empty searches", async () => {
     const result = await Effect.runPromise(
-      parseCompanyReportsSearchHtml(
-        noResultsHtml,
-        request,
-        "https://dart.fss.or.kr/dsab007/detailSearch.ax",
-      ),
+      parseCompanyReportsSearchHtml(sourceResponse(noResultsHtml), request),
     );
 
     expect(result.company).toEqual({ companyCode: "00190321" });
