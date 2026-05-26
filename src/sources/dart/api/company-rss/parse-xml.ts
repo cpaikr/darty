@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
+import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
 import { companyRssMessages } from "./messages.ts";
 import {
   SourceCompanyRssFeed,
@@ -116,6 +117,11 @@ export const parseCompanyRssXml = (
         : new ParseFailure({
             message: companyRssMessages.sourceSchemaMismatch,
             sourceUrl,
+            diagnostics: toParseFailureDiagnostics({
+              reason: companyRssMessages.sourceSchemaMismatch,
+              responseText: xml,
+              cause: error,
+            }),
           }),
     ),
   );

@@ -1,5 +1,9 @@
-import { toCommonSourceFailure } from "../provider-errors.ts";
 import {
+  getProviderFailureDiagnostics,
+  toCommonSourceFailure,
+} from "../provider-errors.ts";
+import {
+  getExecutionFailureRecoveryHint,
   getInvalidRequestRecoveryHint,
   getViewReportNotFoundRecoveryHint,
 } from "../recovery-hints.ts";
@@ -30,6 +34,8 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
 
   if (error instanceof ViewReportProviderError) {
     if (error.code === "not_found") {
+      const diagnostics = getProviderFailureDiagnostics(error);
+
       return new ViewReportFailure({
         code: "not_found",
         message: error.message,
@@ -37,6 +43,7 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
         parameter: error.parameter,
         sourceUrl: error.sourceUrl,
         recoveryHint: getViewReportNotFoundRecoveryHint(error.parameter),
+        ...(diagnostics === undefined ? {} : { diagnostics }),
       });
     }
 
@@ -49,10 +56,14 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
       return sourceFailure;
     }
 
+    const diagnostics = getProviderFailureDiagnostics(error);
+
     return new ViewReportFailure({
       code: "internal_error",
       message: viewReportFailureCopy.unexpectedViewReport,
       retryable: error.retryable,
+      recoveryHint: getExecutionFailureRecoveryHint(error.code, error.retryable),
+      ...(diagnostics === undefined ? {} : { diagnostics }),
     });
   }
 
@@ -60,6 +71,7 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
     code: "internal_error",
     message: viewReportFailureCopy.unexpectedViewReport,
     retryable: false,
+    recoveryHint: getExecutionFailureRecoveryHint("internal_error", false),
   });
 };
 

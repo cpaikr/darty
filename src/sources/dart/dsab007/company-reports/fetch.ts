@@ -11,6 +11,10 @@ import {
   SourceChanged,
   SourceUnavailable,
 } from "../../errors.ts";
+import {
+  toHttpFailureDiagnostics,
+  toTextDecodeFailureDiagnostics,
+} from "../../http-diagnostics.ts";
 import { buildCompanyReportsSearchForm } from "./build-form.ts";
 import { dsab007CompanyReportsMessages } from "./messages.ts";
 import { parseCompanyReportsSearchHtml } from "./parse-html.ts";
@@ -63,20 +67,22 @@ export const fetchCompanyReportsSearchHtml = (
 
     const response = yield* client.execute(request).pipe(
       Effect.mapError(
-        () =>
+        (error) =>
           new SourceUnavailable({
             message: dsab007CompanyReportsMessages.sourceUnavailable,
             sourceUrl: searchUrl,
+            diagnostics: toHttpFailureDiagnostics(error),
           }),
       ),
     );
 
     return yield* response.text.pipe(
       Effect.mapError(
-        () =>
+        (error) =>
           new ParseFailure({
             message: dsab007CompanyReportsMessages.htmlDecodeFailure,
             sourceUrl: searchUrl,
+            diagnostics: toTextDecodeFailureDiagnostics(response, error),
           }),
       ),
     );

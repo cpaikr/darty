@@ -12,7 +12,7 @@ For command executions that run or attempt to run a capability:
 - success exits `0`
 - failure exits `1`
 - stdout contains exactly one JSON envelope followed by a newline
-- stderr is empty
+- stderr is empty by default
 - `--pretty` pretty-prints both success and failure JSON
 
 Help paths are the exception: `darty --help`, `darty <command> --help`, and a
@@ -71,5 +71,9 @@ Failure `error` fields:
 
 ## Stderr
 
-Do not parse stderr as part of the contract. It is reserved for unexpected
-process-level diagnostics outside normal command failure handling.
+Do not parse stderr as part of the normal result contract. It is empty by
+default. When `--verbose`, root `--debug`, or `DARTY_LOG_LEVEL=debug|trace` is
+set, the CLI may write safe execution diagnostics to stderr for failures, such
+as provider id/code, source URL, HTTP status/content-type/response length, parse
+reason, and sanitized cause name/message/code/retryability. CLI stdout remains
+the single parseable command result.

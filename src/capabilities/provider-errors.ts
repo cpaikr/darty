@@ -1,8 +1,17 @@
+import {
+  getErrorDiagnostics,
+  mergeErrorDiagnostics,
+  type DartyErrorDiagnostics,
+} from "../error-diagnostics.ts";
+import { getExecutionFailureRecoveryHint } from "./recovery-hints.ts";
+
 export type CommonSourceProviderError = {
   readonly code: string;
   readonly message: string;
   readonly retryable: boolean;
+  readonly providerId?: string | undefined;
   readonly sourceUrl?: string | undefined;
+  readonly diagnostics?: DartyErrorDiagnostics | undefined;
 };
 
 export type CommonSourceFailureFields = {
@@ -13,7 +22,21 @@ export type CommonSourceFailureFields = {
   readonly message: string;
   readonly retryable: boolean;
   readonly sourceUrl?: string;
+  readonly recoveryHint?: string;
+  readonly diagnostics?: DartyErrorDiagnostics;
 };
+
+export const getProviderFailureDiagnostics = (
+  error: CommonSourceProviderError,
+): DartyErrorDiagnostics | undefined =>
+  mergeErrorDiagnostics(
+    {
+      ...(error.providerId === undefined ? {} : { providerId: error.providerId }),
+      providerCode: error.code,
+      ...(error.sourceUrl === undefined ? {} : { sourceUrl: error.sourceUrl }),
+    },
+    getErrorDiagnostics(error),
+  );
 
 export const toCommonSourceFailure = <Failure>(
   error: CommonSourceProviderError,
@@ -27,15 +50,16 @@ export const toCommonSourceFailure = <Failure>(
     return undefined;
   }
 
+  const diagnostics = getProviderFailureDiagnostics(error);
+  const recoveryHint = getExecutionFailureRecoveryHint(error.code, error.retryable);
   const fields = {
     code: error.code,
     message: error.message,
     retryable: error.retryable,
+    ...(error.sourceUrl === undefined ? {} : { sourceUrl: error.sourceUrl }),
+    ...(recoveryHint === undefined ? {} : { recoveryHint }),
+    ...(diagnostics === undefined ? {} : { diagnostics }),
   } satisfies CommonSourceFailureFields;
 
-  return createFailure(
-    error.sourceUrl === undefined
-      ? fields
-      : { ...fields, sourceUrl: error.sourceUrl },
-  );
+  return createFailure(fields);
 };

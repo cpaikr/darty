@@ -10,6 +10,7 @@ import {
   type ViewReportProvider,
   type ViewReportProviderResult,
 } from "../../../../capabilities/view-report/provider.ts";
+import { createCauseDiagnostics } from "../../../../error-diagnostics.ts";
 import { toCommonDartSourceProviderError } from "../../provider-errors.ts";
 import { buildReportContent } from "./content.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
@@ -226,5 +227,6 @@ export const toDsaf001ReportProviderError = (
     message: dsaf001ReportMessages.internalProvider,
     retryable: false,
     providerId,
+    diagnostics: createCauseDiagnostics(error),
   });
 };

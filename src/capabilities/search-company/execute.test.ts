@@ -127,6 +127,12 @@ describe("executeSearchCompany", () => {
 
       expect(error.code).toBe("source_changed");
       expect(error.sourceUrl).toBe("https://dart.fss.or.kr/dsae001/search.ax");
+      expect(error.recoveryHint).toContain("DART may have changed");
+      expect(error.diagnostics).toEqual({
+        providerId: "test",
+        providerCode: "source_changed",
+        sourceUrl: "https://dart.fss.or.kr/dsae001/search.ax",
+      });
     }
   });
 });

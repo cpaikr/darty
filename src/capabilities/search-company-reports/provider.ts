@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { includesSourceEvidence } from "../response-detail.ts";
 import {
   disclosureTypeCategories,
@@ -40,6 +41,7 @@ export class SearchCompanyReportsProviderError extends Schema.TaggedError<Search
     retryable: Schema.Boolean,
     providerId: Schema.String,
     sourceUrl: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 

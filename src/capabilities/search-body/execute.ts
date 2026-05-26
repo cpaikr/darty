@@ -1,5 +1,11 @@
-import { toCommonSourceFailure } from "../provider-errors.ts";
-import { getInvalidRequestRecoveryHint } from "../recovery-hints.ts";
+import {
+  getProviderFailureDiagnostics,
+  toCommonSourceFailure,
+} from "../provider-errors.ts";
+import {
+  getExecutionFailureRecoveryHint,
+  getInvalidRequestRecoveryHint,
+} from "../recovery-hints.ts";
 import { searchBodyFailureCopy } from "./copy.ts";
 import {
   SearchBodyFailure,
@@ -35,10 +41,14 @@ const toSearchBodyFailure = (error: unknown): SearchBodyFailure => {
       return sourceFailure;
     }
 
+    const diagnostics = getProviderFailureDiagnostics(error);
+
     return new SearchBodyFailure({
       code: "internal_error",
       message: searchBodyFailureCopy.unexpectedSearchBody,
       retryable: error.retryable,
+      recoveryHint: getExecutionFailureRecoveryHint(error.code, error.retryable),
+      ...(diagnostics === undefined ? {} : { diagnostics }),
     });
   }
 
@@ -46,6 +56,7 @@ const toSearchBodyFailure = (error: unknown): SearchBodyFailure => {
     code: "internal_error",
     message: searchBodyFailureCopy.unexpectedSearchBody,
     retryable: false,
+    recoveryHint: getExecutionFailureRecoveryHint("internal_error", false),
   });
 };
 

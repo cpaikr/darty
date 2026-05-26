@@ -66,7 +66,7 @@ const result = prepared.ok
 
 이 API가 Darty의 표준 통합 지점입니다. 작업 이름, 소스/명령 도움말, JSON Schema 기반 입력/결과 계약, 네트워크 없는 입력 검증/정규화, 실행, 응답 객체, 참조 정보, 경고, 메타데이터, 타입화된 오류를 이 계층에서 관리합니다.
 
-호스트 앱이 `darty(action, command?, inputJson?)` 같은 CLI형 단일 도구를 만들 때는 Darty의 `help()`, `getCommandHelp(name)`, `validateInput(name, input)`, `execute(name, input)`, `serializeError(error)`를 사용하세요. `validateInput`에는 파싱된 JSON 값을 그대로 전달하면 Darty가 최상위 입력 형태와 명령별 매개변수를 함께 검증/정규화합니다. 검증 실패는 `code`, `parameter`, `reason`, `expected`, `actual`, `message`, `recoveryHint`, `exampleInput`, `retryable`, `recoveryAction`을 보존합니다. 호스트는 JSON Schema에서 재시도 정책을 추론하지 말고 이 복구 메타데이터를 사용하세요. 실행 오류를 호스트/번들러 경계 밖으로 넘길 때는 `serializeDartyError(error)` 또는 `toolset.serializeError(error)`로 `code`, `retryable`, `parameter`, `sourceUrl`, `recoveryHint`, `operationName`, `message`를 구조적으로 보존할 수 있습니다.
+호스트 앱이 `darty(action, command?, inputJson?)` 같은 CLI형 단일 도구를 만들 때는 Darty의 `help()`, `getCommandHelp(name)`, `validateInput(name, input)`, `execute(name, input)`, `serializeError(error)`를 사용하세요. `validateInput`에는 파싱된 JSON 값을 그대로 전달하면 Darty가 최상위 입력 형태와 명령별 매개변수를 함께 검증/정규화합니다. 검증 실패는 `code`, `parameter`, `reason`, `expected`, `actual`, `message`, `recoveryHint`, `exampleInput`, `retryable`, `recoveryAction`을 보존합니다. 호스트는 JSON Schema에서 재시도 정책을 추론하지 말고 이 복구 메타데이터를 사용하세요. 실행 오류를 호스트/번들러 경계 밖으로 넘길 때는 `serializeDartyError(error)` 또는 `toolset.serializeError(error)`로 `code`, `retryable`, `parameter`, `sourceUrl`, `recoveryHint`, `operationName`, `message`, 안전한 `diagnostics`를 구조적으로 보존할 수 있습니다. Pi 어댑터는 실행 실패에서 공개 오류와 진단 정보를 분리해 `details.error`와 `details.diagnostics`로 반환합니다.
 
 표준 작업 이름은 특정 호스트나 어댑터에 종속되지 않습니다.
 

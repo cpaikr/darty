@@ -1,5 +1,7 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../../error-diagnostics.ts";
+
 export class InvalidViewReportRequest extends Schema.TaggedError<InvalidViewReportRequest>()(
   "InvalidViewReportRequest",
   {
@@ -32,5 +34,6 @@ export class ViewReportFailure extends Schema.TaggedError<ViewReportFailure>()(
     parameter: Schema.optional(Schema.String),
     sourceUrl: Schema.optional(Schema.String),
     recoveryHint: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}

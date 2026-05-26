@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { normalizeResponseDetail } from "../response-detail.ts";
 import type {
   ViewReportRequest,
@@ -41,6 +42,7 @@ export class ViewReportProviderError extends Schema.TaggedError<ViewReportProvid
     providerId: Schema.String,
     parameter: Schema.optional(Schema.String),
     sourceUrl: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 

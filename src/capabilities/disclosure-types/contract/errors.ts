@@ -1,5 +1,7 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../../error-diagnostics.ts";
+
 export class InvalidDisclosureTypesRequest extends Schema.TaggedError<InvalidDisclosureTypesRequest>()(
   "InvalidDisclosureTypesRequest",
   {
@@ -20,5 +22,6 @@ export class DisclosureTypesFailure extends Schema.TaggedError<DisclosureTypesFa
     retryable: Schema.Boolean,
     parameter: Schema.optional(Schema.String),
     recoveryHint: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}

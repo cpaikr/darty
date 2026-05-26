@@ -19,6 +19,10 @@ import {
   SourceChanged,
   SourceUnavailable,
 } from "../../errors.ts";
+import {
+  toHttpFailureDiagnostics,
+  toTextDecodeFailureDiagnostics,
+} from "../../http-diagnostics.ts";
 
 export const searchUrl = "https://dart.fss.or.kr/dsab007/search.ax";
 const chromeDesktopUserAgent =
@@ -63,6 +67,7 @@ export const fetchContentsSearchHtml = (
           new SourceUnavailable({
             message: dsab007ContentsMessages.sourceUnavailable,
             sourceUrl: searchUrl,
+            diagnostics: toHttpFailureDiagnostics(error),
           }),
       ),
     );
@@ -73,6 +78,7 @@ export const fetchContentsSearchHtml = (
           new ParseFailure({
             message: dsab007ContentsMessages.htmlDecodeFailure,
             sourceUrl: searchUrl,
+            diagnostics: toTextDecodeFailureDiagnostics(response, error),
           }),
       ),
     );

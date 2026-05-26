@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { normalizeResponseDetail } from "../response-detail.ts";
 import type {
   CompanyRssChannel,
@@ -30,6 +31,7 @@ export class CompanyRssProviderError extends Schema.TaggedError<CompanyRssProvid
     retryable: Schema.Boolean,
     providerId: Schema.String,
     sourceUrl: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 

@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import { createCauseDiagnostics } from "../../../../error-diagnostics.ts";
 import { searchBodyResultCopy } from "../../../../capabilities/search-body/copy.ts";
 import type {
   SearchBodyItem,
@@ -149,5 +150,6 @@ export const toDsab007ContentsProviderError = (
     message: dsab007ContentsMessages.internalProvider,
     retryable: false,
     providerId,
+    diagnostics: createCauseDiagnostics(error),
   });
 };

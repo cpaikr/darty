@@ -1,3 +1,4 @@
+import { createCauseDiagnostics, mergeErrorDiagnostics } from "../../../../error-diagnostics.ts";
 import { ParseFailure, SourceUnavailable } from "../../errors.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import { parseReportShell } from "./parse-shell.ts";
@@ -34,10 +35,11 @@ const fetchDecodedHtml = async (url: string): Promise<string> => {
         "user-agent": chromeDesktopUserAgent,
       },
     });
-  } catch {
+  } catch (error) {
     throw new SourceUnavailable({
       message: dsaf001ReportMessages.sourceUnavailable,
       sourceUrl: url,
+      diagnostics: createCauseDiagnostics(error),
     });
   }
 
@@ -45,6 +47,12 @@ const fetchDecodedHtml = async (url: string): Promise<string> => {
     throw new SourceUnavailable({
       message: dsaf001ReportMessages.sourceUnavailable,
       sourceUrl: url,
+      diagnostics: {
+        httpStatus: response.status,
+        ...(response.headers.get("content-type") === null
+          ? {}
+          : { httpContentType: response.headers.get("content-type") ?? undefined }),
+      },
     });
   }
 
@@ -57,10 +65,19 @@ const fetchDecodedHtml = async (url: string): Promise<string> => {
     );
 
     return decoder.decode(buffer);
-  } catch {
+  } catch (error) {
     throw new ParseFailure({
       message: dsaf001ReportMessages.htmlDecodeFailure,
       sourceUrl: url,
+      diagnostics: mergeErrorDiagnostics(
+        {
+          httpStatus: response.status,
+          ...(response.headers.get("content-type") === null
+            ? {}
+            : { httpContentType: response.headers.get("content-type") ?? undefined }),
+        },
+        createCauseDiagnostics(error),
+      ),
     });
   }
 };

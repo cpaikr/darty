@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
+import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
 import { dsae001CompanyMessages } from "./messages.ts";
 import {
   SourceCompanySearchPage,
@@ -201,6 +202,11 @@ export const parseCompanySearchHtml = (
         : new ParseFailure({
             message: dsae001CompanyMessages.sourceSchemaMismatch,
             sourceUrl,
+            diagnostics: toParseFailureDiagnostics({
+              reason: dsae001CompanyMessages.sourceSchemaMismatch,
+              responseText: html,
+              cause: error,
+            }),
           }),
     ),
   );

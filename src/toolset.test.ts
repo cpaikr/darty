@@ -202,6 +202,11 @@ describe("Darty neutral toolset", () => {
       sourceUrl: string;
       recoveryHint: string;
       operationName: string;
+      diagnostics: {
+        providerId: string;
+        providerCode: string;
+        sourceUrl: string;
+      };
     };
     error.code = "source_unavailable";
     error.retryable = true;
@@ -209,6 +214,11 @@ describe("Darty neutral toolset", () => {
     error.sourceUrl = "mock://dart/search";
     error.recoveryHint = "Try again later.";
     error.operationName = "search-body";
+    error.diagnostics = {
+      providerId: "mock-provider",
+      providerCode: "mock_provider_failure",
+      sourceUrl: "mock://dart/search",
+    };
 
     expect(toolset.serializeError(error)).toEqual({
       name: "Error",
@@ -219,6 +229,11 @@ describe("Darty neutral toolset", () => {
       sourceUrl: "mock://dart/search",
       recoveryHint: "Try again later.",
       operationName: "search-body",
+      diagnostics: {
+        providerId: "mock-provider",
+        providerCode: "mock_provider_failure",
+        sourceUrl: "mock://dart/search",
+      },
     });
 
     expect(toolset.validateInput("not-a-command", {})).toMatchObject({

@@ -312,6 +312,11 @@ describe("Darty Pi single-tool adapter", () => {
             retryable: boolean;
             sourceUrl: string;
             recoveryHint: string;
+            diagnostics: {
+              providerId: string;
+              providerCode: string;
+              sourceUrl: string;
+            };
           };
           error.code = "mock_failure";
           error.operationName = "search-body";
@@ -319,17 +324,27 @@ describe("Darty Pi single-tool adapter", () => {
           error.retryable = false;
           error.sourceUrl = "mock://dart/search";
           error.recoveryHint = "Use a different keyword.";
+          error.diagnostics = {
+            providerId: "mock-provider",
+            providerCode: "mock_provider_failure",
+            sourceUrl: "mock://dart/search",
+          };
           throw error;
         },
       },
     });
 
-    await expect(
-      tool.execute("call-1", { action: "run", command: "search-body", inputJson: {} }),
-    ).resolves.toMatchObject({
+    const result = await tool.execute("call-1", {
+      action: "run",
+      command: "search-body",
+      inputJson: {},
+    });
+
+    expect(result).toMatchObject({
       details: {
         ok: false,
         action: "run",
+        normalizedInput: {},
         error: {
           code: "mock_failure",
           operationName: "search-body",
@@ -338,7 +353,13 @@ describe("Darty Pi single-tool adapter", () => {
           sourceUrl: "mock://dart/search",
           recoveryHint: "Use a different keyword.",
         },
+        diagnostics: {
+          providerId: "mock-provider",
+          providerCode: "mock_provider_failure",
+          sourceUrl: "mock://dart/search",
+        },
       },
     });
+    expect((result.details as { error: { diagnostics?: unknown } }).error.diagnostics).toBeUndefined();
   });
 });

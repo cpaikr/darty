@@ -7,6 +7,10 @@ import { defaultSearchCompanyOperation } from "./app/search-company.ts";
 import { defaultSearchCompanyReportsOperation } from "./app/search-company-reports.ts";
 import { defaultViewReportOperation } from "./app/view-report.ts";
 import {
+  sanitizeErrorDiagnostics,
+  type DartyErrorDiagnostics,
+} from "./error-diagnostics.ts";
+import {
   companyDetailSchemaCopy,
   companyDetailToolCopy,
 } from "./capabilities/company-detail/copy.ts";
@@ -164,6 +168,7 @@ export type DartySerializedError = {
   readonly sourceUrl?: string;
   readonly recoveryHint?: string;
   readonly operationName?: string;
+  readonly diagnostics?: DartyErrorDiagnostics;
 };
 
 export type DartyToolRunResult = unknown;
@@ -725,18 +730,23 @@ const toValidationFailureCode = (code: string): DartyValidationFailureCode => {
 
 const copyKnownErrorFields = (
   record: Record<string, unknown>,
-): Omit<DartySerializedError, "name" | "message"> => ({
-  ...(typeof record.code === "string" ? { code: record.code } : {}),
-  ...(typeof record.retryable === "boolean" ? { retryable: record.retryable } : {}),
-  ...(typeof record.parameter === "string" ? { parameter: record.parameter } : {}),
-  ...(typeof record.operationName === "string"
-    ? { operationName: record.operationName }
-    : {}),
-  ...(typeof record.sourceUrl === "string" ? { sourceUrl: record.sourceUrl } : {}),
-  ...(typeof record.recoveryHint === "string"
-    ? { recoveryHint: record.recoveryHint }
-    : {}),
-});
+): Omit<DartySerializedError, "name" | "message"> => {
+  const diagnostics = sanitizeErrorDiagnostics(record.diagnostics);
+
+  return {
+    ...(typeof record.code === "string" ? { code: record.code } : {}),
+    ...(typeof record.retryable === "boolean" ? { retryable: record.retryable } : {}),
+    ...(typeof record.parameter === "string" ? { parameter: record.parameter } : {}),
+    ...(typeof record.operationName === "string"
+      ? { operationName: record.operationName }
+      : {}),
+    ...(typeof record.sourceUrl === "string" ? { sourceUrl: record.sourceUrl } : {}),
+    ...(typeof record.recoveryHint === "string"
+      ? { recoveryHint: record.recoveryHint }
+      : {}),
+    ...(diagnostics === undefined ? {} : { diagnostics }),
+  };
+};
 
 export const serializeDartyError = (error: unknown): DartySerializedError => {
   if (error instanceof Error) {

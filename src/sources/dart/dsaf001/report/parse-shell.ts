@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 
 import { ParseFailure, SourceChanged } from "../../errors.ts";
+import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import type {
   SourceReportDocument,
@@ -263,6 +264,11 @@ export const parseReportShell = (
     throw new ParseFailure({
       message: dsaf001ReportMessages.htmlDecodeFailure,
       sourceUrl,
+      diagnostics: toParseFailureDiagnostics({
+        reason: dsaf001ReportMessages.htmlDecodeFailure,
+        responseText: html,
+        cause: error,
+      }),
     });
   }
 };

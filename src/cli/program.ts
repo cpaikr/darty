@@ -8,6 +8,7 @@ import { defaultSearchBodyOperation } from "../app/search-body.ts";
 import { defaultSearchCompanyOperation } from "../app/search-company.ts";
 import { defaultSearchCompanyReportsOperation } from "../app/search-company-reports.ts";
 import { defaultViewReportOperation } from "../app/view-report.ts";
+import { getErrorDiagnostics } from "../error-diagnostics.ts";
 import {
   createCompanyDetailCommandWithRunner,
   executeCompanyDetailCommand,
@@ -53,8 +54,15 @@ const writeStdout = (text: string) => {
   console.log(text);
 };
 
+const writeStderr = (text: string) => {
+  console.error(text);
+};
+
 const shouldPrettyPrintJson = (argv: readonly string[]): boolean =>
   argv.includes("--pretty");
+
+const stripDebugFlag = (argv: readonly string[]): readonly string[] =>
+  argv.filter((arg, index) => index < 2 || arg !== "--debug");
 
 const isRootHelpCommandName = (name: string): boolean => name === "help";
 
@@ -176,6 +184,7 @@ export const createDartyCliProgram = (): Command =>
   configureCliTransport(new Command())
     .name("darty")
     .description("Tool-friendly DART search and retrieval commands.")
+    .option("--debug", "Write execution diagnostics to stderr when available.")
     .helpOption("-h, --help", "Display help.")
     .addHelpCommand("help [command]", "Display help for a command.")
     .addHelpText("after", rootHelpNotes)
@@ -223,6 +232,35 @@ export const createDartyCliProgram = (): Command =>
       ),
     );
 
+const isDiagnosticLogLevel = (value: string | undefined): boolean =>
+  value === "debug" || value === "trace";
+
+const shouldWriteCliDiagnostics = (argv: readonly string[]): boolean =>
+  argv.includes("--verbose") ||
+  argv.includes("--debug") ||
+  isDiagnosticLogLevel(process.env.DARTY_LOG_LEVEL);
+
+const renderDartyCliFailureDiagnostics = (error: unknown): string | undefined => {
+  const diagnostics = getErrorDiagnostics(error);
+  return diagnostics === undefined
+    ? undefined
+    : JSON.stringify({ diagnostics }, undefined, 2);
+};
+
+const maybeWriteCliFailureDiagnostics = (
+  error: unknown,
+  argv: readonly string[],
+): void => {
+  if (!shouldWriteCliDiagnostics(argv)) {
+    return;
+  }
+
+  const diagnostics = renderDartyCliFailureDiagnostics(error);
+  if (diagnostics !== undefined) {
+    writeStderr(diagnostics);
+  }
+};
+
 const renderDartyCliFailureJson = (
   error: unknown,
   argv: readonly string[],
@@ -249,18 +287,19 @@ export const runDartyCli = async (
   argv: readonly string[] = process.argv,
 ): Promise<void> => {
   const program = createDartyCliProgram();
+  const parseArgv = stripDebugFlag(argv);
 
-  if (argv.length <= 2) {
+  if (parseArgv.length <= 2) {
     program.outputHelp();
     return;
   }
 
-  const unknownCommandName = getUnknownCliCommandName(argv, program);
+  const unknownCommandName = getUnknownCliCommandName(parseArgv, program);
   if (unknownCommandName !== undefined) {
     writeStdout(
       renderDartyCliFailureJson(
         createUnknownCommandError(unknownCommandName),
-        argv,
+        parseArgv,
       ),
     );
     process.exitCode = 1;
@@ -268,9 +307,10 @@ export const runDartyCli = async (
   }
 
   try {
-    await program.parseAsync([...argv]);
+    await program.parseAsync([...parseArgv]);
   } catch (error) {
-    writeStdout(renderDartyCliFailureJson(error, argv));
+    maybeWriteCliFailureDiagnostics(error, argv);
+    writeStdout(renderDartyCliFailureJson(error, parseArgv));
     process.exitCode = 1;
   }
 };

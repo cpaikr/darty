@@ -11,6 +11,10 @@ import {
   SourceNotFound,
   SourceUnavailable,
 } from "../../errors.ts";
+import {
+  toHttpFailureDiagnostics,
+  toTextDecodeFailureDiagnostics,
+} from "../../http-diagnostics.ts";
 import { toDsae001CompanyDetailUrl } from "../urls.ts";
 import { dsae001DetailMessages } from "./messages.ts";
 import { parseCompanyDetailHtml } from "./parse-html.ts";
@@ -41,20 +45,22 @@ export const fetchCompanyDetailHtml = (
 
     const response = yield* client.execute(request).pipe(
       Effect.mapError(
-        () =>
+        (error) =>
           new SourceUnavailable({
             message: dsae001DetailMessages.sourceUnavailable,
             sourceUrl,
+            diagnostics: toHttpFailureDiagnostics(error),
           }),
       ),
     );
 
     const html = yield* response.text.pipe(
       Effect.mapError(
-        () =>
+        (error) =>
           new ParseFailure({
             message: dsae001DetailMessages.htmlDecodeFailure,
             sourceUrl,
+            diagnostics: toTextDecodeFailureDiagnostics(response, error),
           }),
       ),
     );

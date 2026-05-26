@@ -121,3 +121,25 @@ export const getViewReportNotFoundRecoveryHint = (
     : undefined;
 
 export const getCompanyNotFoundRecoveryHint = (): string => companyCodeHint;
+
+export const getExecutionFailureRecoveryHint = (
+  code: string,
+  retryable: boolean,
+): string | undefined => {
+  switch (code) {
+    case "source_unavailable":
+      return "Check DART availability and retry later. If DART is reachable in a browser, report a Darty bug with diagnostics.";
+    case "source_changed":
+    case "source_parse_failure":
+      return "DART may have changed its response shape. Report a Darty bug with the command input and diagnostics.";
+    case "internal_error":
+    case "internal_provider_error":
+      return retryable
+        ? "Retry the Darty command later; the failure appears transient. If it repeats, report a Darty bug with the returned diagnostics."
+        : "Report a Darty bug with the command input and diagnostics.";
+    default:
+      return retryable
+        ? "Retry the Darty command later; the failure appears transient. If it repeats, report a Darty bug with the returned diagnostics."
+        : undefined;
+  }
+};

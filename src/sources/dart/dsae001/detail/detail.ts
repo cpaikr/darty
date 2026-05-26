@@ -1,5 +1,9 @@
 import { Effect } from "effect";
 
+import {
+  createCauseDiagnostics,
+  getErrorDiagnostics,
+} from "../../../../error-diagnostics.ts";
 import type { CompanyDetailRequest } from "../../../../capabilities/company-detail/contract.ts";
 import {
   CompanyDetailProviderError,
@@ -62,6 +66,7 @@ export const toDsae001CompanyDetailProviderError = (
       retryable: false,
       providerId,
       sourceUrl: error.sourceUrl,
+      diagnostics: getErrorDiagnostics(error),
     });
   }
 
@@ -70,5 +75,6 @@ export const toDsae001CompanyDetailProviderError = (
     message: dsae001DetailMessages.internalProvider,
     retryable: false,
     providerId,
+    diagnostics: createCauseDiagnostics(error),
   });
 };

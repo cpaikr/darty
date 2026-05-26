@@ -1,5 +1,11 @@
-import { toCommonSourceFailure } from "../provider-errors.ts";
-import { getInvalidRequestRecoveryHint } from "../recovery-hints.ts";
+import {
+  getProviderFailureDiagnostics,
+  toCommonSourceFailure,
+} from "../provider-errors.ts";
+import {
+  getExecutionFailureRecoveryHint,
+  getInvalidRequestRecoveryHint,
+} from "../recovery-hints.ts";
 import { companyRssFailureCopy } from "./copy.ts";
 import {
   CompanyRssFailure,
@@ -35,10 +41,14 @@ const toCompanyRssFailure = (error: unknown): CompanyRssFailure => {
       return sourceFailure;
     }
 
+    const diagnostics = getProviderFailureDiagnostics(error);
+
     return new CompanyRssFailure({
       code: "internal_error",
       message: companyRssFailureCopy.unexpectedCompanyRss,
       retryable: error.retryable,
+      recoveryHint: getExecutionFailureRecoveryHint(error.code, error.retryable),
+      ...(diagnostics === undefined ? {} : { diagnostics }),
     });
   }
 
@@ -46,6 +56,7 @@ const toCompanyRssFailure = (error: unknown): CompanyRssFailure => {
     code: "internal_error",
     message: companyRssFailureCopy.unexpectedCompanyRss,
     retryable: false,
+    recoveryHint: getExecutionFailureRecoveryHint("internal_error", false),
   });
 };
 

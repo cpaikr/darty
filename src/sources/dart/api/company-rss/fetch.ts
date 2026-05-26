@@ -6,6 +6,10 @@ import {
 import { Effect } from "effect";
 
 import { ParseFailure, SourceChanged, SourceUnavailable } from "../../errors.ts";
+import {
+  toHttpFailureDiagnostics,
+  toTextDecodeFailureDiagnostics,
+} from "../../http-diagnostics.ts";
 import { companyRssMessages } from "./messages.ts";
 import { parseCompanyRssXml } from "./parse-xml.ts";
 import type { SourceCompanyRssFeed } from "./source-model.ts";
@@ -32,20 +36,22 @@ export const fetchCompanyRssXml = (
 
     const response = yield* client.execute(request).pipe(
       Effect.mapError(
-        () =>
+        (error) =>
           new SourceUnavailable({
             message: companyRssMessages.sourceUnavailable,
             sourceUrl,
+            diagnostics: toHttpFailureDiagnostics(error),
           }),
       ),
     );
 
     const xml = yield* response.text.pipe(
       Effect.mapError(
-        () =>
+        (error) =>
           new ParseFailure({
             message: companyRssMessages.xmlDecodeFailure,
             sourceUrl,
+            diagnostics: toTextDecodeFailureDiagnostics(response, error),
           }),
       ),
     );

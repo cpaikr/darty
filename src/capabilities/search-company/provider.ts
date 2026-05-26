@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { searchCompanyResultCopy } from "./copy.ts";
 import type {
   SearchCompanyItem,
@@ -32,6 +33,7 @@ export class SearchCompanyProviderError extends Schema.TaggedError<SearchCompany
     retryable: Schema.Boolean,
     providerId: Schema.String,
     sourceUrl: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 

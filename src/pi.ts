@@ -1,3 +1,4 @@
+import type { DartyErrorDiagnostics } from "./error-diagnostics.ts";
 import {
   createDartySingleToolActionFailure,
   createDartySingleToolCommandFailure,
@@ -107,7 +108,9 @@ type DartyPiActionResult =
       ok: false;
       action: DartyPiToolAction | "adapter_validation";
       command?: string;
+      normalizedInput?: Record<string, unknown>;
       error: DartyValidationFailure | DartySerializedError;
+      diagnostics?: DartyErrorDiagnostics;
     };
 
 const actionSchema = {
@@ -274,6 +277,17 @@ const handleValidate = (
   });
 };
 
+const withoutDiagnostics = (
+  error: DartySerializedError,
+): DartySerializedError => {
+  const { diagnostics: _diagnostics, ...publicError } = error;
+  return publicError;
+};
+
+const withRunDiagnostics = (
+  error: DartySerializedError,
+): DartyErrorDiagnostics | undefined => error.diagnostics;
+
 const handleRun = async (
   toolset: DartyPiToolset,
   command: string,
@@ -307,12 +321,16 @@ const handleRun = async (
     });
   } catch (error) {
     const serialized = toolset.serializeError?.(error) ?? serializeDartyError(error);
+    const publicError = withoutDiagnostics(serialized);
+    const diagnostics = withRunDiagnostics(serialized);
 
-    return toTextResult(formatDartyRunFailure(command, serialized), {
+    return toTextResult(formatDartyRunFailure(command, publicError), {
       ok: false,
       action: "run",
       command,
-      error: serialized,
+      normalizedInput: validation.input,
+      error: publicError,
+      ...(diagnostics === undefined ? {} : { diagnostics }),
     });
   }
 };

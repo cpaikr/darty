@@ -1,5 +1,7 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../../error-diagnostics.ts";
+
 export class InvalidSearchBodyRequest extends Schema.TaggedError<InvalidSearchBodyRequest>()(
   "InvalidSearchBodyRequest",
   {
@@ -31,5 +33,6 @@ export class SearchBodyFailure extends Schema.TaggedError<SearchBodyFailure>()(
     parameter: Schema.optional(Schema.String),
     sourceUrl: Schema.optional(Schema.String),
     recoveryHint: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}

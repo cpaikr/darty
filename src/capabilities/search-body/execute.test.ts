@@ -450,6 +450,7 @@ describe("executeSearchBody", () => {
         code: "internal_error",
         message: "Unexpected internal error while searching filing bodies.",
         retryable: false,
+        recoveryHint: "Report a Darty bug with the command input and diagnostics.",
       }),
     );
   });

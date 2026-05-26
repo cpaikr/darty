@@ -1,5 +1,7 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
+
 export class InvalidInput extends Schema.TaggedError<InvalidInput>()(
   "InvalidInput",
   {
@@ -12,6 +14,7 @@ export class SourceUnavailable extends Schema.TaggedError<SourceUnavailable>()(
   {
     message: Schema.String,
     sourceUrl: Schema.String,
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 
@@ -20,6 +23,7 @@ export class SourceChanged extends Schema.TaggedError<SourceChanged>()(
   {
     message: Schema.String,
     sourceUrl: Schema.String,
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 
@@ -28,6 +32,7 @@ export class SourceNotFound extends Schema.TaggedError<SourceNotFound>()(
   {
     message: Schema.String,
     sourceUrl: Schema.String,
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 
@@ -36,5 +41,6 @@ export class ParseFailure extends Schema.TaggedError<ParseFailure>()(
   {
     message: Schema.String,
     sourceUrl: Schema.String,
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}

@@ -3,6 +3,7 @@ import type { AnyNode } from "domhandler";
 import { Effect, Schema } from "effect";
 
 import { ParseFailure, SourceChanged, SourceNotFound } from "../../errors.ts";
+import { toParseFailureDiagnostics } from "../../http-diagnostics.ts";
 import { dsae001DetailMessages } from "./messages.ts";
 import { SourceCompanyDetailPage } from "./source-model.ts";
 
@@ -114,6 +115,11 @@ export const parseCompanyDetailHtml = (
         : new ParseFailure({
             message: dsae001DetailMessages.sourceSchemaMismatch,
             sourceUrl,
+            diagnostics: toParseFailureDiagnostics({
+              reason: dsae001DetailMessages.sourceSchemaMismatch,
+              responseText: html,
+              cause: error,
+            }),
           }),
     ),
   );

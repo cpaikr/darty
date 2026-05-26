@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import { createCauseDiagnostics } from "../../../../error-diagnostics.ts";
 import { searchCompanyReportsResultCopy } from "../../../../capabilities/search-company-reports/copy.ts";
 import type {
   SearchCompanyReportsItem,
@@ -159,5 +160,6 @@ export const toDsab007CompanyReportsProviderError = (
     message: dsab007CompanyReportsMessages.internalProvider,
     retryable: false,
     providerId,
+    diagnostics: createCauseDiagnostics(error),
   });
 };

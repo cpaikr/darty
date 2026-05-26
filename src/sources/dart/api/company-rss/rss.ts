@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import { createCauseDiagnostics } from "../../../../error-diagnostics.ts";
 import type { CompanyRssRequest } from "../../../../capabilities/company-rss/contract.ts";
 import {
   CompanyRssProviderError,
@@ -61,5 +62,6 @@ export const toCompanyRssProviderError = (
     message: companyRssMessages.internalProvider,
     retryable: false,
     providerId,
+    diagnostics: createCauseDiagnostics(error),
   });
 };

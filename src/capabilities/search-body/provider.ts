@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { includesSourceEvidence } from "../response-detail.ts";
 import { searchBodyResultCopy } from "./copy.ts";
 import type {
@@ -33,6 +34,7 @@ export class SearchBodyProviderError extends Schema.TaggedError<SearchBodyProvid
     retryable: Schema.Boolean,
     providerId: Schema.String,
     sourceUrl: Schema.optional(Schema.String),
+    diagnostics: Schema.optional(DartyErrorDiagnosticsSchema),
   },
 ) {}
 
