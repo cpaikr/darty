@@ -77,7 +77,38 @@ const noResultCompanyReports = execution(
   { result: { items: [] } },
 );
 
+const noResultBodySearch = execution(
+  "darty_search_body",
+  {
+    keyword: "unlikely-darty-eval-keyword-20260404",
+    startDate: "20250331",
+    endDate: "20260331",
+    companyCode: "00126380",
+  },
+  { result: { items: [] } },
+);
+
 const noResultScenario = scenarioById("no-result-does-not-invent-reference");
+const noResultBodySearchScenario: WorkflowScenario = {
+  id: "body-search-no-result-does-not-invent-reference",
+  description: "confirm a no-result body search without inventing references",
+  task: "Search body text for an unlikely keyword and do not invent references.",
+  bodySearch: {
+    keyword: "unlikely-darty-eval-keyword-20260404",
+    startDate: "20250331",
+    endDate: "20260331",
+    companyCode: "00126380",
+    expectedItems: "empty",
+    forbidViewReportWhenEmpty: true,
+  },
+};
+const companyNameToBodySearchScenario: WorkflowScenario = {
+  ...noResultBodySearchScenario,
+  companySearch: {
+    companyName: "삼성전자",
+    expectedCompanyCode: "00126380",
+  },
+};
 const inventedReferenceReason =
   "final answer included a filing reference after the source search returned no filing references";
 
@@ -177,5 +208,37 @@ describe("evaluateWorkflowInvocation", () => {
     );
 
     expect(reasons).toEqual([]);
+  });
+
+  test("requires body-search workflows with company names to look up the company first", () => {
+    const reasons = evaluateWorkflowInvocation(
+      companyNameToBodySearchScenario,
+      [noResultBodySearch, companySearch],
+      { finalAnswer: "No matching body-search evidence was found." },
+    );
+
+    expect(reasons).toContain("darty_search_body ran before darty_search_company");
+  });
+
+  test("forbids opening a report after an empty body-search source", () => {
+    const reasons = evaluateWorkflowInvocation(
+      noResultBodySearchScenario,
+      [noResultBodySearch, viewReport("20260331000001")],
+      { finalAnswer: "No matching body-search evidence was found." },
+    );
+
+    expect(reasons).toContain(
+      "darty_view_report was called after the source search returned no filing references",
+    );
+  });
+
+  test("forbids a filing reference in a no-result body-search final answer", () => {
+    const reasons = evaluateWorkflowInvocation(
+      noResultBodySearchScenario,
+      [noResultBodySearch],
+      { finalAnswer: "No matching body-search evidence was found in 20260331000001." },
+    );
+
+    expect(reasons).toContain(inventedReferenceReason);
   });
 });

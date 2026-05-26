@@ -26,7 +26,20 @@ const evidenceSummary = (toolExecutions: readonly PiToolExecution[]): string =>
     .join("\n\n");
 
 const parseJudgeResult = (content: string): FinalAnswerJudgeResult => {
-  const parsed = parseJsonObject(content);
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = parseJsonObject(content);
+  } catch (error) {
+    return {
+      pass: false,
+      score: 0,
+      reasons: [
+        `Judge did not return parseable JSON: ${error instanceof Error ? error.message : String(error)}`,
+        `Raw judge response: ${truncate(content, 1_000)}`,
+      ],
+    };
+  }
+
   const score = typeof parsed.score === "number" ? parsed.score : 0;
   const reasons = Array.isArray(parsed.reasons)
     ? parsed.reasons.filter((reason): reason is string => typeof reason === "string")

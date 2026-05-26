@@ -4,11 +4,15 @@ import { runModelToolLoop } from "../harness/model-loop.ts";
 import { printFailedExecutions, printFinalAnswer } from "../harness/reporter.ts";
 import { judgeFinalAnswer } from "../judges/final-answer-judge.ts";
 import { researchAnswerScenarios } from "../scenarios/research-answers.ts";
-import { evaluatePiWorkflowInvocation } from "../surfaces/pi/assertions.ts";
+import {
+  collectReturnedDartEvidenceReferences,
+  evaluatePiWorkflowInvocation,
+} from "../surfaces/pi/assertions.ts";
 import {
   executePiSingleToolCall,
   piSingleToolDefinitions,
   toPiToolMessageContent,
+  type PiToolExecution,
   type PiToolName,
 } from "../surfaces/pi/pi-single-tool.ts";
 
@@ -20,10 +24,12 @@ if (openAiApiKey === undefined || openAiApiKey.length === 0) {
   throw new Error("OPENAI_API_KEY is required for the Pi research-answer eval.");
 }
 
-const DART_REFERENCE_PATTERN = /(?:dart\.fss\.or\.kr|rcpNo\s*=\s*20\d{12}|\b20\d{12}\b|section|문서|보고서|출처)/iu;
 const URL_ONLY_PATTERN = /^\s*(?:https?:\/\/\S+|20\d{12})\s*$/u;
 
-const deterministicAnswerReasons = (finalAnswer: string): readonly string[] => {
+const deterministicAnswerReasons = (
+  finalAnswer: string,
+  toolExecutions: readonly PiToolExecution[],
+): readonly string[] => {
   const reasons: string[] = [];
   if (finalAnswer.trim().length === 0) {
     reasons.push("agent did not produce a final answer");
@@ -31,8 +37,11 @@ const deterministicAnswerReasons = (finalAnswer: string): readonly string[] => {
   if (URL_ONLY_PATTERN.test(finalAnswer.trim())) {
     reasons.push("final answer only returned a filing URL or receipt number");
   }
-  if (!DART_REFERENCE_PATTERN.test(finalAnswer)) {
-    reasons.push("final answer did not cite a returned DART reference or section");
+  const returnedReferences = collectReturnedDartEvidenceReferences(toolExecutions);
+  if (returnedReferences.length === 0) {
+    reasons.push("tool evidence did not include a concrete DART reference to cite");
+  } else if (!returnedReferences.some((reference) => finalAnswer.includes(reference))) {
+    reasons.push("final answer did not cite a concrete DART reference returned by the tools");
   }
   return reasons;
 };
@@ -62,7 +71,7 @@ for (const scenario of researchAnswerScenarios) {
     ...evaluatePiWorkflowInvocation(scenario.trace, loop.toolExecutions, {
       finalAnswer: loop.finalAnswer,
     }),
-    ...deterministicAnswerReasons(loop.finalAnswer),
+    ...deterministicAnswerReasons(loop.finalAnswer, loop.toolExecutions),
   ];
   const judge = await judgeFinalAnswer({
     apiKey: openAiApiKey,

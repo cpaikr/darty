@@ -7,6 +7,10 @@ import type { WorkflowScenario } from "../../scenarios/filing-workflows.ts";
 import { isRecord, parseJsonObject } from "../../harness/json.ts";
 import type { PiToolExecution } from "./pi-single-tool.ts";
 
+const DART_URL_PATTERN = /https?:\/\/[^\s"'<>)]*dart\.fss\.or\.kr\/[^\s"'<>)]*/giu;
+const RECEIPT_NUMBER_PATTERN = /\b20\d{12}\b/gu;
+const RETURNED_ID_PATTERN = /\b(?:document|section):[A-Za-z0-9._:-]+\b/gu;
+
 const operationToTypedToolName = new Map<string, DartyAgentToolName>([
   ["search-body", "darty_search_body"],
   ["search-company", "darty_search_company"],
@@ -39,6 +43,35 @@ const runDetails = (execution: PiToolExecution): Record<string, unknown> | undef
   } catch {
     return undefined;
   }
+};
+
+const collectMatches = (text: string, pattern: RegExp, references: Set<string>): void => {
+  for (const match of text.matchAll(pattern)) {
+    const [reference] = match;
+    if (reference !== undefined) {
+      references.add(reference);
+    }
+  }
+};
+
+export const collectReturnedDartEvidenceReferences = (
+  toolExecutions: readonly PiToolExecution[],
+): readonly string[] => {
+  const references = new Set<string>();
+
+  for (const execution of toolExecutions) {
+    const details = runDetails(execution);
+    if (details?.ok !== true) {
+      continue;
+    }
+
+    const serialized = JSON.stringify(details.result ?? details);
+    collectMatches(serialized, DART_URL_PATTERN, references);
+    collectMatches(serialized, RECEIPT_NUMBER_PATTERN, references);
+    collectMatches(serialized, RETURNED_ID_PATTERN, references);
+  }
+
+  return [...references];
 };
 
 export const toTypedToolExecutions = (

@@ -81,6 +81,7 @@ export const researchAnswerScenarios = [
         endDate: "20260331",
         companyCode: samsungElectronics.companyCode,
         expectedItems: "empty",
+        forbidViewReportWhenEmpty: true,
       },
     },
     judgeFocus:

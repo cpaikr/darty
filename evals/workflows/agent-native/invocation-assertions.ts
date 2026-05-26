@@ -556,11 +556,26 @@ export const evaluateWorkflowInvocation = (
   ) {
     reasons.push("darty_search_company_reports ran before darty_search_company");
   }
+  if (
+    companySearch !== undefined &&
+    bodySearch !== undefined &&
+    companySearch.index > bodySearch.indexed.index
+  ) {
+    reasons.push("darty_search_body ran before darty_search_company");
+  }
 
   if (scenario.companyReports?.forbidViewReportWhenEmpty === true) {
     assertNoViewReportAfterEmptySource(
       toolExecutions,
       companyReports,
+      options?.finalAnswer,
+      reasons,
+    );
+  }
+  if (scenario.bodySearch?.forbidViewReportWhenEmpty === true) {
+    assertNoViewReportAfterEmptySource(
+      toolExecutions,
+      bodySearch,
       options?.finalAnswer,
       reasons,
     );

@@ -22,6 +22,7 @@ export type WorkflowScenario = {
     readonly endDate: string;
     readonly companyCode?: string;
     readonly expectedItems: "non_empty" | "empty";
+    readonly forbidViewReportWhenEmpty?: boolean;
   };
   readonly viewReport?: {
     readonly source: "companyReports" | "bodySearch";
