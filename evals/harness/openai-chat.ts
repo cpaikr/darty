@@ -1,6 +1,56 @@
 import type { ChatMessage, ToolCall } from "./tool-trace.ts";
 import { isRecord } from "./json.ts";
 
+const RETRYABLE_OPENAI_STATUSES = new Set([408, 409, 429, 500, 502, 503, 504]);
+const MAX_OPENAI_ATTEMPTS = 4;
+
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const retryDelayMs = (attempt: number): number => 750 * 2 ** attempt;
+
+const fetchOpenAiChatCompletion = async (input: {
+  readonly apiKey: string;
+  readonly body: unknown;
+}): Promise<string> => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < MAX_OPENAI_ATTEMPTS; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${input.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input.body),
+      });
+    } catch (error) {
+      if (attempt === MAX_OPENAI_ATTEMPTS - 1) {
+        throw error;
+      }
+      lastError = error;
+      await delay(retryDelayMs(attempt));
+      continue;
+    }
+
+    const bodyText = await response.text();
+    if (response.ok) {
+      return bodyText;
+    }
+
+    const error = new Error(`OpenAI request failed with ${response.status}: ${bodyText}`);
+    if (!RETRYABLE_OPENAI_STATUSES.has(response.status) || attempt === MAX_OPENAI_ATTEMPTS - 1) {
+      throw error;
+    }
+
+    lastError = error;
+    await delay(retryDelayMs(attempt));
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+};
+
 export const callOpenAi = async <ToolName extends string>(input: {
   readonly apiKey: string;
   readonly model: string;
@@ -9,13 +59,9 @@ export const callOpenAi = async <ToolName extends string>(input: {
   readonly toolNames: ReadonlySet<ToolName>;
   readonly maxCompletionTokens?: number;
 }): Promise<{ readonly content: string; readonly toolCalls: readonly ToolCall<ToolName>[] }> => {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${input.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const bodyText = await fetchOpenAiChatCompletion({
+    apiKey: input.apiKey,
+    body: {
       model: input.model,
       messages: input.messages,
       ...(input.tools.length === 0
@@ -25,13 +71,8 @@ export const callOpenAi = async <ToolName extends string>(input: {
             tool_choice: "auto",
           }),
       max_completion_tokens: input.maxCompletionTokens ?? 1_200,
-    }),
+    },
   });
-
-  const bodyText = await response.text();
-  if (!response.ok) {
-    throw new Error(`OpenAI request failed with ${response.status}: ${bodyText}`);
-  }
 
   const body: unknown = JSON.parse(bodyText);
   if (!isRecord(body)) {

@@ -58,7 +58,7 @@ for (const scenario of researchAnswerScenarios) {
   const loop = await runModelToolLoop<PiToolName>({
     openAiApiKey,
     model,
-    systemPrompt: `You are an assistant with access to the public Darty Pi single tool.\n\n${dartySingleToolCopy.promptSnippet}\n${dartySingleToolCopy.promptGuidelines.join("\n")}\n\nFor research questions, retrieve DART evidence, answer the user's actual question, cite returned evidence, and say when evidence is insufficient. Do not give investment, legal, or accounting advice.`,
+    systemPrompt: `You are an assistant with access to the public Darty Pi single tool.\n\n${dartySingleToolCopy.promptSnippet}\n${dartySingleToolCopy.promptGuidelines.join("\n")}\n\nFor research questions, retrieve DART evidence, answer the user's actual question, cite returned evidence, and say when evidence is insufficient. Include at least one exact returned DART reference in the final answer, such as a receipt number, viewer URL, section ID, or search source URL. Prefer command_help before the first run of each command, and use only input keys shown in that command schema or examples. When citing report body facts, inspect the report or relevant section with command=view-report. Do not give investment, legal, or accounting advice.`,
     userPrompt: scenario.task,
     tools: piSingleToolDefinitions,
     toolNames: new Set(["darty"]),

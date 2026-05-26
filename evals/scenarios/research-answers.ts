@@ -42,7 +42,7 @@ export const researchAnswerScenarios = [
   {
     id: "samsung-segment-revenue-summary",
     description: "answer a segment revenue question from Samsung Electronics annual-report evidence",
-    task: "삼성전자 최근 사업보고서에서 부문별 매출액 내역을 확인해 주세요. 출처를 함께 제시해 주세요.",
+    task: "20240101부터 20260331까지 삼성전자의 최신 사업보고서를 찾아 부문별 매출액 내역을 확인해 주세요. 출처를 함께 제시해 주세요.",
     trace: recentAnnualReportTrace({
       id: "samsung-segment-revenue-summary",
       description: "find Samsung Electronics' latest annual report and inspect it for segment revenue evidence",
@@ -54,7 +54,7 @@ export const researchAnswerScenarios = [
   {
     id: "samsung-dividend-summary",
     description: "answer a dividend question from Samsung Electronics annual-report evidence",
-    task: "삼성전자 최근 사업보고서에서 배당 관련 내용을 찾아 출처와 함께 요약해 주세요.",
+    task: "20240101부터 20260331까지 삼성전자의 최신 사업보고서를 찾아 배당 관련 내용을 출처와 함께 요약해 주세요.",
     trace: recentAnnualReportTrace({
       id: "samsung-dividend-summary",
       description: "find Samsung Electronics' latest annual report and inspect it for dividend evidence",
@@ -66,7 +66,7 @@ export const researchAnswerScenarios = [
   {
     id: "insufficient-evidence-no-invention",
     description: "say when retrieved evidence does not support an unlikely requested fact",
-    task: "삼성전자 최근 사업보고서에서 unlikely-darty-eval-keyword-20260404 관련 내용을 찾아 출처와 함께 요약해 주세요. 없으면 없다고 말해 주세요.",
+    task: "삼성전자 회사코드를 확인한 뒤 20250331부터 20260331까지 DART 공시 본문에서 unlikely-darty-eval-keyword-20260404 관련 내용을 검색해 주세요. 검색 결과가 없으면 근거 범위와 반환된 DART 검색 출처 URL을 밝히고 없다고 말해 주세요.",
     trace: {
       id: "insufficient-evidence-no-invention",
       description: "search an unlikely term in Samsung Electronics filings without inventing a reference",

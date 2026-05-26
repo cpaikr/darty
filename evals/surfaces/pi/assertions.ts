@@ -83,11 +83,11 @@ export const toTypedToolExecutions = (
       typeof details?.command === "string" ? details.command : inputCommand(execution);
     const toolName = command === undefined ? undefined : operationToTypedToolName.get(command);
 
-    if (toolName === undefined) {
+    if (toolName === undefined || details?.ok !== true) {
       return [];
     }
 
-    const normalizedInput = isRecord(details?.normalizedInput)
+    const normalizedInput = isRecord(details.normalizedInput)
       ? details.normalizedInput
       : isRecord(execution.input) && isRecord(execution.input.inputJson)
         ? execution.input.inputJson

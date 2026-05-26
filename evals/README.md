@@ -18,7 +18,7 @@ This directory holds scenario evals for Darty task usefulness and agent tool use
 1. **Tests**: no LLM; deterministic implementation and package guarantees. Live DART drift checks belong in `test/live/`.
 2. **Fixed CLI evals**: no LLM; run scenario commands against live DART and assert stdout envelopes.
 3. **Agent tool-use evals**: LLM involved; assert objective tool traces, arguments, identifiers, ordering, envelopes, and no-result behavior.
-4. **Final-answer evals**: future LLM-judge layer for subjective answer quality. Do not use judges for objective tool-call facts.
+4. **Final-answer evals**: LLM-judged layer for subjective answer quality. Deterministic trace checks still own objective tool-call facts.
 
 ## Public Surface Matrix
 
@@ -48,6 +48,7 @@ bun run eval:pi:search-body
 bun run eval:pi:workflow
 bun run eval:pi:recovery
 bun run eval:pi:research-answer
+bun run eval:pi:gate
 ```
 
 Legacy script names remain available for the staged refactor:
@@ -59,7 +60,17 @@ bun run eval:search-body:agent:native
 bun run eval:workflows:agent:native
 ```
 
-Set `OPENAI_MODEL` to override the default model.
+Set `OPENAI_MODEL` to override the default model. Set `OPENAI_JUDGE_MODEL` to override the final-answer judge model.
+
+## Gate Policy
+
+CI and npm release publishing remain deterministic: `bun run typecheck`, `bun test`, and `bun run build` are the required automated gates because they do not depend on live DART or hosted model availability.
+
+For manual release readiness, run `bun run eval:pi:gate` with the default OpenAI model family before cutting a release that changes tool contracts, Pi adapter behavior, eval harness behavior, or answer-quality prompts. That gate covers the active public Pi surface: search-body, filing workflows, validation/recovery, and research answers. Agent CLI and typed-agent suites are diagnostic/exploratory unless the changed code specifically touches those surfaces.
+
+Additional model families, exact model overrides, or alternate judge models are exploratory comparisons. Record their artifact paths and failures in the release notes or PR discussion, but do not treat them as blockers unless the project explicitly promotes that family to the default Pi gate.
+
+Research-answer evals pass only when deterministic trace checks pass and the judge returns `pass: true` with a score at or above the rubric's `passingScore` (`4/5` as of rubric `2026-05-26`). Malformed judge JSON is a failed judged eval; the raw judge response is retained in the scenario artifact for debugging.
 
 ## Artifacts
 

@@ -31,7 +31,7 @@ for (const scenario of workflowScenarios) {
   const loop = await runModelToolLoop<PiToolName>({
     openAiApiKey,
     model,
-    systemPrompt: `You are an assistant with access to the public Darty Pi single tool.\n\n${dartySingleToolCopy.promptSnippet}\n${dartySingleToolCopy.promptGuidelines.join("\n")}\n\nUse action=help or action=command_help when you need command names or input schemas. Chain identifiers returned by one Darty run into the next run.`,
+    systemPrompt: `You are an assistant with access to the public Darty Pi single tool.\n\n${dartySingleToolCopy.promptSnippet}\n${dartySingleToolCopy.promptGuidelines.join("\n")}\n\nUse action=help or action=command_help when you need command names or input schemas. Prefer command_help before the first run of each command, and use only input keys shown in that command schema or examples. Chain identifiers returned by one Darty run into the next run. When a task asks you to open or inspect a report viewer, call command=view-report with the returned receipt/viewer reference instead of only returning a URL.`,
     userPrompt: scenario.task,
     tools: piSingleToolDefinitions,
     toolNames: new Set(["darty"]),

@@ -54,6 +54,7 @@
     "eval:pi:workflow": "varlock run -- bun run evals/suites/workflow-pi.eval.ts",
     "eval:pi:recovery": "varlock run -- bun run evals/suites/recovery-pi.eval.ts",
     "eval:pi:research-answer": "varlock run -- bun run evals/suites/research-answer-pi.eval.ts",
+    "eval:pi:gate": "bun run eval:pi:search-body && bun run eval:pi:workflow && bun run eval:pi:recovery && bun run eval:pi:research-answer",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:live": "LIVE_DART_TESTS=1 bun test",

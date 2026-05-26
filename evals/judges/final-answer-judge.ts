@@ -12,17 +12,28 @@ export type FinalAnswerJudgeResult = {
 
 const evidenceSummary = (toolExecutions: readonly PiToolExecution[]): string =>
   toolExecutions
-    .map((execution, index) =>
-      [
-        `# Tool execution ${index + 1}`,
-        `display: ${execution.display}`,
-        `exitCode: ${execution.exitCode}`,
-        `stdout: ${truncate(execution.stdout, 6_000)}`,
-        execution.stderr.length > 0 ? `stderr: ${truncate(execution.stderr, 1_000)}` : undefined,
-      ]
-        .filter((line): line is string => line !== undefined)
-        .join("\n"),
-    )
+    .flatMap((execution, index) => {
+      try {
+        const details = parseJsonObject(execution.stdout.length > 0 ? execution.stdout : execution.stderr);
+        if (details.action !== "run") {
+          return [];
+        }
+      } catch {
+        return [];
+      }
+
+      return [
+        [
+          `# Darty run ${index + 1}`,
+          `display: ${execution.display}`,
+          `exitCode: ${execution.exitCode}`,
+          `stdout: ${truncate(execution.stdout, 16_000)}`,
+          execution.stderr.length > 0 ? `stderr: ${truncate(execution.stderr, 1_000)}` : undefined,
+        ]
+          .filter((line): line is string => line !== undefined)
+          .join("\n"),
+      ];
+    })
     .join("\n\n");
 
 const parseJudgeResult = (content: string): FinalAnswerJudgeResult => {
@@ -65,6 +76,7 @@ export const judgeFinalAnswer = async (input: {
     model: input.model,
     toolNames: new Set<never>(),
     tools: [],
+    maxCompletionTokens: 500,
     messages: [
       {
         role: "system",
@@ -73,7 +85,10 @@ export const judgeFinalAnswer = async (input: {
 Rubric version: ${finalAnswerJudgeRubric.version}
 Passing score: ${finalAnswerJudgeRubric.passingScore}/5
 Criteria:
-${finalAnswerJudgeRubric.criteria.map((criterion) => `- ${criterion}`).join("\n")}`,
+${finalAnswerJudgeRubric.criteria.map((criterion) => `- ${criterion}`).join("\n")}
+
+Scoring guidance:
+${finalAnswerJudgeRubric.scoringGuidance.map((guidance) => `- ${guidance}`).join("\n")}`,
       },
       {
         role: "user",

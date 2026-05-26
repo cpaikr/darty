@@ -8,4 +8,10 @@ export const finalAnswerJudgeRubric = {
     "Distinguishes missing evidence from negative facts and states the search scope when evidence is insufficient.",
     "Does not provide investment, legal, or accounting advice.",
   ],
+  scoringGuidance: [
+    "Score 5 when all criteria are satisfied.",
+    "Score 4 when the answer is evidence-backed and useful but has minor presentation, wording, or citation-specificity issues.",
+    "Score 3 or lower only for material problems: unsupported factual claims, missing returned-evidence citation, failure to answer the question, overclaiming absent evidence, or investment/legal/accounting advice.",
+    "Do not fail a harmless offer to reformat, tabulate, or compare already cited evidence unless it adds advice or unsupported claims.",
+  ],
 } as const;

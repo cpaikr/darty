@@ -14,12 +14,11 @@ Completed in this pass:
 - added deterministic workflow assertions for identifier handoff, ordering, no-result behavior, returned-reference citations, and anti-invention checks;
 - added versioned final-answer judge/rubric files under `evals/judges/`;
 - preserved model-eval artifacts when the judge returns malformed JSON;
-- documented the eval architecture, surface matrix, assertion policy, artifact format, and scripts.
+- documented the eval architecture, surface matrix, assertion policy, artifact format, scripts, manual Pi gate policy, default-vs-exploratory model-family policy, and judged final-answer pass threshold;
+- hardened Pi model eval prompts, judge evidence summaries, recovered-call assertions, and OpenAI retry handling so the manual Pi gate is usable against live model/source variance.
 
 Remaining follow-ups:
 
-- decide which model families are required release gates versus exploratory evals;
-- decide the final-answer judge score/pass threshold policy before making judged research evals release-blocking;
 - add a `toolset-host` eval surface only if an external host wrapper needs model-in-the-loop coverage.
 
 ## Goal
@@ -107,6 +106,7 @@ bun run eval:pi:search-body
 bun run eval:pi:workflow
 bun run eval:pi:recovery
 bun run eval:pi:research-answer
+bun run eval:pi:gate
 ```
 
 Legacy names remain available during the staged refactor:
@@ -156,5 +156,3 @@ The LLM judge owns only subjective final-answer quality: whether the answer addr
 
 - Should the typed `darty_*` tool surface become public, or remain only a test/control harness?
 - Should Pi evals use the source TypeScript adapter directly or the packed package export for stronger distribution realism?
-- Which model families should be tracked as required gates versus exploratory evals?
-- What minimum score or pass rule should final-answer judge evals use before they become release gates?

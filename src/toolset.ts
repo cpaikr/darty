@@ -277,7 +277,7 @@ export const dartySingleToolCopy = {
     "Use darty(action, command?, inputJson?) when you need Korean DART disclosure search, company lookup, company filing lists, disclosure type lookup, RSS, report body retrieval, or a report information guide.",
   promptGuidelines: [
     "Do not guess command names; first call action=help to inspect available DART commands.",
-    "Use action=command_help when required inputs, accepted values, examples, or result shape are unclear.",
+    "Use action=command_help when required inputs, accepted values, examples, or result shape are unclear; do not infer input key names from prose.",
     "Use action=validate to repair or normalize input without a live DART request.",
     "After constructing command input, use action=run. Darty validates before execution and returns references, warnings, metadata, and original URLs needed for citation.",
   ],

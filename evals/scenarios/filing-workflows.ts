@@ -57,7 +57,7 @@ export const workflowScenarios = [
   {
     id: "latest-annual-report-viewer-reference",
     description: "find the latest annual report for a company name and open its viewer",
-    task: `First find ${samsungElectronics.name}'s DART company code, then find that company's latest annual report between 20240101 and ${commonEndDate}. Open the report viewer and return the viewer reference. Use DART tools rather than guessing identifiers.`,
+    task: `First find ${samsungElectronics.name}'s DART company code, then find that company's latest annual report between 20240101 and ${commonEndDate}. Call the view-report command with the receipt returned by the filing search, then return the viewer reference. Use DART tools rather than guessing identifiers.`,
     companySearch: {
       companyName: samsungElectronics.name,
       expectedCompanyCode: samsungElectronics.companyCode,
@@ -78,7 +78,7 @@ export const workflowScenarios = [
   {
     id: "annual-report-section-window",
     description: "retrieve a report TOC, then fetch a selected section window",
-    task: `First find ${samsungElectronics.name}'s DART company code, then find that company's annual report between 20240101 and ${commonEndDate}. Open the viewer, inspect the returned table of contents, then fetch one specific section window in markdown. Use the section ID returned by darty_view_report, not raw DART viewer parameters.`,
+    task: `First find ${samsungElectronics.name}'s DART company code, then find that company's annual report between 20240101 and ${commonEndDate}. Open the viewer with the view-report command, inspect the returned table of contents, then fetch one specific section window in markdown. Use the section ID returned by view-report, not raw DART viewer parameters.`,
     companySearch: {
       companyName: samsungElectronics.name,
       expectedCompanyCode: samsungElectronics.companyCode,
@@ -98,7 +98,7 @@ export const workflowScenarios = [
   {
     id: "body-search-open-matching-filing",
     description: "search body text, open a matching filing, and use the returned filing reference",
-    task: `Search DART filing body text for ${samsungElectronics.name} filings matching the keyword "배당" between ${commonStartDate} and ${commonEndDate}. Use DART company code ${samsungElectronics.companyCode}. Then open one matching filing viewer using the receipt or viewer URL returned by the search.`,
+    task: `Search DART filing body text for ${samsungElectronics.name} filings matching the keyword "배당" between ${commonStartDate} and ${commonEndDate}. Use DART company code ${samsungElectronics.companyCode}. Then call view-report to open one matching filing viewer using the receipt or viewer URL returned by the search.`,
     bodySearch: {
       keyword: "배당",
       startDate: commonStartDate,

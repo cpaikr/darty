@@ -39,11 +39,12 @@ Use opt-in live checks for source behavior that fixtures cannot prove, such as u
 
 Use user-like tasks at the capability level. Put scenario-style CLI and model-in-the-loop checks under `evals/` when they exercise live task usefulness or agent/tool wiring rather than narrow unit behavior. Keep scenarios independent from transport surfaces where possible; let each surface adapter derive the CLI argv, Pi single-tool call shape, or typed-tool definition from the same task intent.
 
-Current `search-body` examples:
+Current examples:
 
 - run a fixed CLI contents search and assert the stdout envelope has filing references
 - ask a model to invoke the structured local CLI runner with keyword, date range, and optional company filter
-- ask a model to invoke the active Pi single-tool adapter with `darty(action, command?, inputJson?)` and assert canonical commands, JSON input, validation/recovery, and identifier handoff
+- ask a model to invoke the active Pi single-tool adapter with `darty(action, command?, inputJson?)` and assert canonical commands, JSON input, validation/recovery, identifier handoff, and cited final answers
+- run `bun run eval:pi:gate` as the manual model-in-the-loop readiness check for public Pi surface changes
 
 Future retrieval examples:
 
@@ -74,6 +75,8 @@ Use deterministic assertions for objective facts:
 - whether the final answer invented references after an empty source result
 
 Use an LLM judge only for subjective final-answer quality, such as whether an answer directly addresses the business question, cites returned evidence, distinguishes missing evidence from negative facts, avoids unsupported claims, and avoids investment/legal/accounting advice. Do not replace objective trace checks with a judge.
+
+For Darty research-answer evals, a scenario passes only when deterministic trace checks pass and the judge returns `pass: true` with a score at or above the versioned rubric threshold. As of rubric `2026-05-26`, the threshold is `4/5`. Malformed judge output is a failed judged eval, with the raw response preserved in artifacts.
 
 ## Measure Agent Burden
 
