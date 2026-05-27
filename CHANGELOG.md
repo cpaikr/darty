@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/sjunepark/darty/compare/v0.3.2...v0.3.3) (2026-05-25)
+
+
+### Bug Fixes
+
+* keep Darty tool status copy English ([323254c](https://github.com/sjunepark/darty/commit/323254c80952d53748d1e673bf44fcd6815ba914))
+
 ## [0.3.2](https://github.com/sjunepark/darty/compare/v0.3.1...v0.3.2) (2026-05-24)
 
 
