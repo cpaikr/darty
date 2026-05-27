@@ -152,7 +152,7 @@ The LLM judge owns only subjective final-answer quality: whether the answer addr
 - Do not move colocated implementation tests out of `src/` just to centralize all tests.
 - Do not require final-answer judge evals for every low-level tool capability.
 
-## Open Questions
+## Decisions
 
-- Should the typed `darty_*` tool surface become public, or remain only a test/control harness?
-- Should Pi evals use the source TypeScript adapter directly or the packed package export for stronger distribution realism?
+- Keep the typed `darty_*` tool surface as an internal diagnostic/control harness. The public reusable surfaces are the neutral toolset API, CLI, and Pi single-tool adapter.
+- Keep Pi model evals pointed at the source TypeScript adapter for fast local iteration. Distribution realism is covered by deterministic package export smoke tests; add a packed-package Pi eval only if the packaging seam itself becomes a recurring source of failures.
