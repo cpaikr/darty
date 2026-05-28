@@ -10,6 +10,7 @@ Completed in this pass:
 - changed the build to emit only `dist/cli.js`;
 - updated package smoke tests to reject `@sjunepark/darty/toolset` and `@sjunepark/darty/pi` imports;
 - removed Pi and typed-agent eval scripts from the documented package commands;
+- deleted the inactive toolset, Pi adapter, agent-tool definitions, and matching non-CLI eval scaffolding;
 - updated README, architecture, release, spec, and eval docs to point agents at the CLI subprocess contract.
 
 ## Boundary
@@ -20,5 +21,4 @@ Completed in this pass:
 
 ## Follow-ups
 
-- Delete or archive leftover internal Pi/toolset/typed-agent source and eval files in a separate cleanup if we want the repository implementation tree to match the CLI-only package surface exactly.
 - Add a dependency-light CLI surface validator script if package conformance starts drifting.

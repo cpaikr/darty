@@ -14,8 +14,7 @@
 11. `src/capabilities/search-body/provider.ts` (lines 1-72) - provider interface, provider errors, result projection.
 12. `src/capabilities/search-body/execute.ts` (lines 1-50) - capability execution and error mapping.
 13. `src/app/search-body.ts` (lines 1-36) - reusable operation factory and default provider wiring.
-14. `src/app/agent-tools.ts` (lines 1-113) - in-process agent tool definitions from shared operations.
-15. `src/cli.ts` (lines 1-160) - root Commander CLI and JSON failure handling.
+14. `src/cli.ts` (lines 1-160) - root Commander CLI and JSON failure handling.
 16. `src/cli/commands/search-body.ts` (lines 1-236) - thin command adapter, options, help examples, execution.
 17. `src/cli/command-helpers.ts` (lines 1-200) - shared CLI parsing/output primitives and failure envelope types.
 18. `src/sources/dart/dsab007/contents/search.ts` (lines 1-130) - source adapter maps public request to DART replay and provider result.
@@ -40,7 +39,6 @@
 - Execution: `executeSearchBody()` resolves semantic request, calls provider, and maps invalid/provider/unknown errors into a typed capability failure (`src/capabilities/search-body/execute.ts` lines 11-50).
 - Source adapter: DART-specific code maps semantic `sortBy`, `sortDirection`, filters, and defaults to replay fields; provider result adds observed source behavior and completeness/warnings (`src/sources/dart/dsab007/contents/search.ts` lines 17-101). Upstream form fields are explicit and isolated (`build-form.ts` lines 1-47). Fetching uses Effect HTTP layers and typed source errors (`fetch.ts` lines 1-82).
 - CLI: root `src/cli.ts` composes operations and command adapters; commands parse flags only, keep help text local, and delegate required/default/domain validation to shared capability resolver (`src/cli/commands/search-body.ts` lines 21-236). Shared CLI helpers keep Commander parse failures from exiting and define JSON failure envelope (`src/cli/command-helpers.ts` lines 1-200).
-- Agent tool surface: `src/app/agent-tools.ts` derives `darty_*` function-tool definitions from the same app operations and JSON Schemas; this is the in-process/public-client shape to copy before adding extra transports.
 
 ## Architecture
 
@@ -48,7 +46,7 @@ Darty separates four concerns cleanly:
 
 1. **Docs/spec/research**: root docs define purpose and ownership; `docs/research` stores observed source behavior; `docs/specs` stores stable capability and CLI contracts (`ARCHITECTURE.md` lines 20-67).
 2. **Capability contract**: semantic request/result schemas, validation, typed failures, examples/copy, and JSON Schema export live under `src/capabilities/<capability>/`.
-3. **App composition/client seam**: `src/app/<capability>.ts` creates a small operation object that can be called by CLI, agent tools, future SDK/MCP, or tests.
+3. **App composition/client seam**: `src/app/<capability>.ts` creates a small operation object that can be called by CLI commands or tests.
 4. **Source adapter**: `src/sources/<source>/...` owns upstream request construction, HTTP, parsing, and source-error mapping. It should not leak replay-only upstream fields into public input unless they are meaningful to callers.
 5. **Transport**: `src/cli/` owns flags, help, presentation, stdout/stderr discipline, and subprocess behavior only.
 

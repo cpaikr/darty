@@ -11,8 +11,6 @@ export type SearchBodyScenario = {
   };
   readonly prompts: {
     readonly cliAgent: string;
-    readonly typedAgent: string;
-    readonly pi: string;
   };
 };
 
@@ -37,8 +35,6 @@ export const searchBodyScenarios = [
     },
     prompts: {
       cliAgent: `Use the local darty CLI to search DART filing contents for the keyword "배당" between 20250331 and 20260331.`,
-      typedAgent: `Use the local darty tools to search DART filing contents for the keyword "배당" between 20250331 and 20260331.`,
-      pi: `Use the darty Pi tool to search DART filing contents for the keyword "배당" between 20250331 and 20260331.`,
     },
   },
   {
@@ -61,8 +57,6 @@ export const searchBodyScenarios = [
     },
     prompts: {
       cliAgent: `Use the local darty CLI to search DART filing contents for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331.`,
-      typedAgent: `Use the local darty tools to search DART filing contents for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331.`,
-      pi: `Use the darty Pi tool to search DART filing contents for the keyword "unlikely-darty-eval-keyword-20260404" between 20250331 and 20260331. Do not invent filing references if no results are returned.`,
     },
   },
   {
@@ -88,8 +82,6 @@ export const searchBodyScenarios = [
     },
     prompts: {
       cliAgent: `Use the local darty CLI to search DART filing contents for Samsung Electronics filings matching the keyword "배당" between 20250331 and 20260331. Use DART company code 00126380 as the company-code filter.`,
-      typedAgent: `Use the local darty tools to search DART filing contents for Samsung Electronics filings matching the keyword "배당" between 20250331 and 20260331. Use DART company code 00126380 as the company-code filter.`,
-      pi: `Use the darty Pi tool to search DART filing contents for Samsung Electronics filings matching the keyword "배당" between 20250331 and 20260331. Use DART company code 00126380 as the company-code filter.`,
     },
   },
 ] as const satisfies readonly SearchBodyScenario[];

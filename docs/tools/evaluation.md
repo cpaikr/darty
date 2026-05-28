@@ -73,9 +73,7 @@ Use deterministic assertions for objective facts:
 - success/failure envelopes, warning presence, and no-result item counts
 - whether the final answer invented references after an empty source result
 
-Use an LLM judge only for subjective final-answer quality, such as whether an answer directly addresses the business question, cites returned evidence, distinguishes missing evidence from negative facts, avoids unsupported claims, and avoids investment/legal/accounting advice. Do not replace objective trace checks with a judge.
-
-For Darty research-answer evals, a scenario passes only when deterministic trace checks pass and the judge returns `pass: true` with a score at or above the versioned rubric threshold. As of rubric `2026-05-26`, the threshold is `4/5`. Malformed judge output is a failed judged eval, with the raw response preserved in artifacts.
+Use an LLM judge only for subjective final-answer quality, such as whether an answer directly addresses the business question, cites returned evidence, distinguishes missing evidence from negative facts, avoids unsupported claims, and avoids investment/legal/accounting advice. Do not replace objective trace checks with a judge. Add judged evals only when there is an active final-answer track to own the rubric and artifacts.
 
 ## Measure Agent Burden
 

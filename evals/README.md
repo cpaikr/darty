@@ -68,4 +68,4 @@ Artifacts include the model, scenario, pass/fail reasons, final answer, tool exe
 
 ## Assertion Policy
 
-Prefer deterministic JavaScript assertions for objective facts: command names, action names, arguments, validation failures, company codes, receipt handoff, section IDs, item counts, and no-result behavior. Use an LLM judge only when evaluating subjective final prose, such as whether a research answer is useful, cited, and avoids unsupported claims. Judge prompts and rubrics live under `judges/` and are versioned in code.
+Prefer deterministic JavaScript assertions for objective facts: command names, action names, arguments, validation failures, company codes, receipt handoff, section IDs, item counts, and no-result behavior. Add an LLM judge only if a future final-answer eval track explicitly treats subjective answer quality as the target.

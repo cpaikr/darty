@@ -23,7 +23,7 @@ A common first impression is that this is only command-line argument parsing aro
                  +---------+---------+
                            |
                            |
-                    +------v------+ 
+                    +------v------+
                     | CLI adapter |
                     | user flags  |
                     +-------------+

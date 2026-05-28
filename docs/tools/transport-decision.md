@@ -30,7 +30,7 @@ The practical default for durable tools is:
 
 - the capability is important enough to deserve a stable core
 - humans and agents both need it
-- there is real value in manual debugging plus agent-native integration
+- there is real value in manual debugging plus another justified integration
 
 ## Recommendation For This Repo
 
