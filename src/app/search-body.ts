@@ -14,8 +14,8 @@ import { dsab007ContentsProvider } from "../sources/dart/dsab007/contents/search
 /**
  * Shared composition seam for the public search-body capability.
  *
- * Transports can reuse the semantic schemas and execution wiring without
- * importing the DART adapter directly.
+ * CLI composition and tests can use the semantic schemas and execution wiring
+ * without importing the DART adapter directly.
  */
 export type SearchBodyOperation = {
   readonly name: typeof searchBodyOperationName;

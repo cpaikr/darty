@@ -35,7 +35,7 @@ The priority is not human UX polish. The priority is deterministic tool behavior
 
 - The implemented CLI commands include `search-body` and `view-report`; this prompt focuses on `search-body` tests.
 - The CLI is Commander-backed.
-- Operation metadata and machine-readable schemas live under `src/capabilities/search-body/` and are reused by the CLI adapter; future adapters should use the same seam.
+- Operation metadata and machine-readable schemas live under `src/capabilities/search-body/` and are reused by the CLI adapter and tests.
 - The underlying DART replay core has deterministic schema, serialization, parser, and replay-contract tests under `src/sources/dart/dsab007/contents/`.
 - Live DART tests exist separately under `test/live/` and are opt-in.
 

@@ -23,7 +23,7 @@ src/sources/dart/...
 DART web endpoint
 ```
 
-The important point: the CLI parses transport input, then delegates. It does not implement DART search or view-report behavior itself. New public integration surfaces should only be added after an explicit product decision and should join at the `src/app/` seam.
+The important point: the CLI parses process input, then delegates. It does not implement DART search or view-report behavior itself. The `src/app/` seam is internal composition, not a public package API.
 
 ## CLI Flow
 
@@ -62,7 +62,7 @@ The capability layer does three key jobs:
 - applies defaults where the contract defines them
 - converts provider-specific failures into capability-owned failures
 
-This is why future adapters can get aligned behavior without duplicating validation.
+This is why CLI commands can stay thin without duplicating domain validation.
 
 ## DART Contents Search Adapter Flow
 

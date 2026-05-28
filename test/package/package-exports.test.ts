@@ -3,6 +3,7 @@ import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -35,6 +36,17 @@ const run = (cmd: readonly string[], cwd: string) => {
 
   return result;
 };
+
+const listPackageFiles = (root: string, prefix = ""): string[] =>
+  readdirSync(join(root, prefix), { withFileTypes: true }).flatMap((entry) => {
+    const relativePath = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+
+    if (entry.isDirectory()) {
+      return listPackageFiles(root, relativePath);
+    }
+
+    return [relativePath];
+  });
 
 describe("packed package exports", () => {
   let workDir: string;
@@ -94,9 +106,15 @@ describe("packed package exports", () => {
     run([nodeRuntime, "smoke.mjs"], consumerDir);
   });
 
-  test("packs only the executable CLI artifact", () => {
+  test("packs only CLI package contents", () => {
     const packageDir = join(consumerDir, "node_modules", "@sjunepark", "darty");
 
+    expect(listPackageFiles(packageDir).sort()).toEqual([
+      "LICENSE.md",
+      "README.md",
+      "dist/cli.js",
+      "package.json",
+    ]);
     expect(
       readFileSync(join(packageDir, "dist", "cli.js"), "utf8").startsWith(
         "#!/usr/bin/env node",

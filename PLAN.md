@@ -17,7 +17,6 @@ Completed in this pass:
 
 - Public: `darty` CLI, command help, stdout JSON envelopes, stderr diagnostics, and process exit codes.
 - Internal: capability contracts, app wiring, source adapters, and parser/provider tests.
-- Future adapters: only after the CLI contract is stable and a concrete host need justifies the new surface.
 
 ## Follow-ups
 

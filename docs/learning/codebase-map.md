@@ -88,7 +88,7 @@ It does not own required-field validation, enum validation, date-format validati
 
 ### Public surface boundary
 
-The active public surface is the CLI. New public integration surfaces should only appear after an explicit product decision, and should reuse `src/app/` and `src/capabilities/` rather than importing DART source internals directly.
+The active public surface is the CLI. `src/app/` and `src/capabilities/` are internal seams that keep DART source internals out of command handling.
 
 ## Test And Eval Areas
 

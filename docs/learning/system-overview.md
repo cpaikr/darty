@@ -29,7 +29,7 @@ A common first impression is that this is only command-line argument parsing aro
                     +-------------+
 ```
 
-This keeps the semantic contract reusable internally without exposing extra public package APIs. Any new public integration surface would need an explicit product decision instead of appearing as compatibility scaffolding.
+This keeps the semantic contract reusable inside the package without exposing extra public package APIs. The CLI remains the public surface.
 
 ## Current Product Shape
 

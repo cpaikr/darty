@@ -22,7 +22,7 @@ This contract lives under `src/capabilities/search-body/contract/`. It is used f
 
 - runtime validation with Effect Schema
 - TypeScript types
-- JSON Schema export for transport adapters and tooling
+- JSON Schema export for CLI wiring, tests, and package-owned introspection
 - defaulting optional behavior such as `page = 1`
 - clear invalid-request errors
 
@@ -97,18 +97,17 @@ The capability layer does not call DART directly. It calls a provider:
 search(request: SearchBodyRequest): Promise<SearchBodyProviderResult>
 ```
 
-That provider result is already capability-shaped. This prevents raw DART source models from leaking upward into CLI, future adapters, or public result contracts.
+That provider result is already capability-shaped. This prevents raw DART source models from leaking upward into CLI output or public result contracts.
 
 The current provider is `dsab007ContentsProvider`, but the seam leaves room for another source implementation if the public capability remains the same.
 
-## Transport Boundary
+## CLI Boundary
 
-Transports own user/protocol experience:
+The CLI owns process-level user experience:
 
-- CLI owns flags, help text, examples, stdout formatting, and process behavior.
-- Future adapters should not be added until justified; when they are, they should own their own protocol metadata, request handling, output serialization, and protocol-specific error behavior.
+- flags, help text, examples, stdout formatting, and process behavior.
 
-They do not own:
+It does not own:
 
 - required field checks
 - enum/date validation
@@ -117,7 +116,7 @@ They do not own:
 - HTML parsing
 - public result shape
 
-That split avoids a common failure mode where two transports drift into slightly different tools.
+That split avoids a common failure mode where process parsing and domain behavior drift into slightly different tools.
 
 ## Error Ownership
 
@@ -134,6 +133,6 @@ External callers should reason about public capability failure codes, not source
 
 ## Design Tradeoffs
 
-The current design allows CLI metadata to stay local to the CLI rather than forcing one manifest abstraction too early. The gain is explicit process-level UX; the cost is that a future adapter may need its own metadata if it is reintroduced.
+The current design allows CLI metadata to stay local to the CLI rather than forcing one manifest abstraction too early. The gain is explicit process-level UX without unused public package surface.
 
 The other major tradeoff is keeping replay-only DART fields internal. This makes the public contract smaller and more stable, but it means low-level knobs such as page size are unavailable until live evidence shows they are worth exposing.

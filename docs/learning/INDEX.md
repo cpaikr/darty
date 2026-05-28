@@ -33,4 +33,4 @@ DART source adapter
 structured JSON envelope with references and warnings
 ```
 
-The important architectural idea is that CLI is only the current host over the same core future adapters should use. The capability contract and executor decide semantic behavior; source adapters handle DART-specific replay and parsing.
+The important architectural idea is that the CLI is a thin process surface over shared internal capability code. The capability contract and executor decide semantic behavior; source adapters handle DART-specific replay and parsing.

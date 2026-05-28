@@ -24,7 +24,7 @@ The adapter owns four jobs:
 3. Fetch and parse DART's HTML response.
 4. Map source rows and source failures back to the provider seam.
 
-It should not define public CLI flags, future adapter schemas, or product-level capability names.
+It should not define public CLI flags, public capability schemas, or product-level capability names.
 
 ## Replay Input
 

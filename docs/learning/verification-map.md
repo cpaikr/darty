@@ -66,7 +66,7 @@ These do not replace deterministic tests. They answer model/tool-use questions s
 - can a fixed live scenario return the expected structured envelope?
 - can a model use the provided local CLI runner with valid arguments?
 
-Non-CLI eval tracks should not return unless a new public integration surface becomes an explicit product decision.
+Non-CLI eval tracks are out of scope for the current CLI-only product boundary.
 
 ## What To Run While Working
 
@@ -96,7 +96,7 @@ Agentic evals require `OPENAI_API_KEY` in `.env.local`.
 ## Boundary Rules
 
 - Parser correctness belongs in parser tests and live source checks, not LLM evals.
-- Future adapter schema and call correctness should live near that adapter's implementation only after the adapter is reintroduced.
+- CLI command shape belongs in CLI command tests.
 - CLI subprocess behavior belongs in `test/cli/`.
 - Fixed live scenario usefulness can live in `evals/`.
 - Final user-facing answer quality should be a separate future eval track if needed.

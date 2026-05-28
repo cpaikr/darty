@@ -161,26 +161,23 @@ How it works:
    `contract/` files define the request schema, success result schema, typed
    failures, and semantic validation rules.
 2. **`spec.ts`** exports the operation name plus request/result JSON Schemas for
-   transports and tooling.
+   CLI command registration, tests, and package-owned introspection.
 3. **`app/`** wires those schemas and shared executors to the default provider
    implementations.
 4. **`cli/commands/`** defines each CLI UX explicitly, then delegates to the
    shared operation.
-5. Future adapters should use the same schemas and app wiring only after their
-   transport is explicitly justified; the CLI remains the public contract.
 
 One source of truth gives you:
 
 - runtime validation shape
 - TypeScript types
 - success result schema
-- JSON Schema for transport adapters
+- JSON Schema for CLI wiring and tests
 
 What is intentionally *not* centralized:
 
 - CLI flags and CLI-specific flag wording
 - process-level help text, examples, and formatting
-- host-only rendering for adapters that are not part of the active public surface
 
 ## Runtime Flow
 
@@ -195,7 +192,6 @@ truncation, and TOC navigation respectively.
 ```mermaid
 graph TD
     CLI_INPUT["CLI flags"]
-    FUTURE_INPUT["Future adapter input"]
     CLI_ENTRY["src/cli.ts\nexecutable entrypoint"]
     CLI_PROGRAM["src/cli/program.ts\nCommander runtime"]
     CLI_CMD["executeSearchBodyCommand()\nCLI-only stdout handling"]
@@ -213,13 +209,11 @@ graph TD
     TO_RESULT["toDsab007ContentsProviderResult()"]
     ENVELOPE["SearchBodyResult\nenvelope"]
     CLI_OUTPUT["JSON to stdout"]
-    FUTURE_OUTPUT["Future adapter output"]
 
     CLI_INPUT --> CLI_ENTRY
     CLI_ENTRY --> CLI_PROGRAM
     CLI_PROGRAM --> CLI_CMD
     CLI_CMD --> APP
-    FUTURE_INPUT -.-> APP
     APP --> RESOLVE
     RESOLVE --> REQUEST
     REQUEST --> PROVIDER
@@ -233,24 +227,22 @@ graph TD
     SOURCE_PAGE --> TO_RESULT
     TO_RESULT --> ENVELOPE
     ENVELOPE --> CLI_OUTPUT
-    ENVELOPE -.-> FUTURE_OUTPUT
 ```
 
 Step by step:
 
 1. CLI converts flags into a parsed command with separate `request` and `output` buckets. `request` contains only public semantic capability keys (`keyword`, `startDate`, etc.); `output` contains CLI presentation controls such as `pretty` and `verbose`.
-2. Future adapters should convert their protocol input into the same public semantic object and call the shared operation from `src/app/search-body.ts`.
-3. `resolveSearchBodyRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
-4. `src/app/search-body.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
-5. `toDsab007ContentsReplayInput()` translates the public request into the internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
-6. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
-7. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax` and returns a source text response containing the body, source URL, and safe HTTP diagnostics.
-8. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from that source response so parser failures can retain HTTP status/content-type/response-length context.
-9. `toDsab007ContentsProviderResult()` maps source rows into public items.
-10. `buildSearchBodyResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
-11. The CLI projects the capability envelope into its CLI output contract, then serializes exactly one JSON stdout payload. Default CLI output may omit low-benefit diagnostic/context fields; `--verbose` restores them.
+2. `resolveSearchBodyRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
+3. `src/app/search-body.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
+4. `toDsab007ContentsReplayInput()` translates the public request into the internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
+5. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
+6. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax` and returns a source text response containing the body, source URL, and safe HTTP diagnostics.
+7. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from that source response so parser failures can retain HTTP status/content-type/response-length context.
+8. `toDsab007ContentsProviderResult()` maps source rows into public items.
+9. `buildSearchBodyResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
+10. The CLI projects the capability envelope into its CLI output contract, then serializes exactly one JSON stdout payload. Default CLI output may omit low-benefit diagnostic/context fields; `--verbose` restores them.
 
-Semantic validation happens inside the capability executor, not in the CLI transport. CLI-only presentation options are kept out of the capability request so future adapters stay aligned without reimplementing validation.
+Semantic validation happens inside the capability executor, not in the CLI transport. CLI-only presentation options stay out of the capability request so the domain contract remains independent from process-output controls.
 
 ## Two Schemas
 
@@ -285,8 +277,8 @@ graph LR
 ```
 
 - **Public semantic schema** (`SearchBodyRequestSchema`, re-exported from
-  `contract.ts`): what users and future adapters see. Semantic names, clean
-  enums, documented metadata.
+  `contract.ts`): what the CLI accepts after flag parsing. Semantic names,
+  clean enums, documented metadata.
 - **Internal replay schema** (`SourceContentsReplayInput` in
   `replay-schema.ts`): what DART's form actually expects. Raw field names,
   fixed page-size values, duplicated `b_*` parameters.
@@ -295,54 +287,11 @@ graph LR
 replay schema stays internal unless the product decides to expose lower-level
 knobs.
 
-## Transport Extension Seam
-
-Future transports should reuse the same layer split instead of reimplementing
-tool contracts.
-
-```mermaid
-graph TD
-    subgraph CLI["CLI Transport"]
-        CLI_PROGRAM["src/cli/program.ts\nCommander runtime"]
-        CLI_COMMAND["src/cli/commands/*\nCLI UX"]
-    end
-
-    subgraph Future["Future Transport"]
-        ADAPTER["Protocol handler\nsemantic JSON input"]
-    end
-
-    OP_ID["searchBodyOperationName"]
-    INPUT_SCHEMA["searchBodyInputJsonSchema"]
-    RESULT_SCHEMA["searchBodyResultJsonSchema"]
-    COMPOSE["src/app/search-body.ts\nshared provider wiring"]
-    EXEC["executeSearchBody()"]
-
-    OP_ID --> CLI_PROGRAM
-    CLI_PROGRAM --> CLI_COMMAND
-    CLI_COMMAND --> COMPOSE
-    OP_ID -.-> ADAPTER
-    INPUT_SCHEMA -.-> ADAPTER
-    RESULT_SCHEMA -.-> ADAPTER
-    ADAPTER -.-> COMPOSE
-    COMPOSE --> EXEC
-```
-
-A future adapter should reuse:
-
-- operation identifiers such as `searchBodyOperationName`
-- input JSON Schemas such as `searchBodyInputJsonSchema`
-- result JSON Schemas such as `searchBodyResultJsonSchema`
-- `src/app/*` shared provider wiring plus raw semantic execution
-- capability executors such as `executeSearchBody()` for validation and error normalization
-
-This keeps adapters aligned on the same public contract and executor while each
-host keeps explicit control over adapter wiring.
-
 ## Start Here
 
 - `src/cli.ts` — executable CLI entry point
 - `src/cli/program.ts` — reusable Commander program, command registration, and CLI runtime
-- `src/app/*` — shared transport composition seams
+- `src/app/*` — shared operation composition seams
 - `src/cli/commands/*` — explicit CLI surfaces over shared operations
 - `src/cli/command-helpers.ts` — small Commander transport helpers shared by
   command files
@@ -370,7 +319,7 @@ Tests make the design relationships explicit:
 ## Invariants
 
 - Public capability modules do not import DART-specific replay schemas or parser
-  models. That boundary keeps future transports independent from source details.
+  models. That boundary keeps source details below the capability contract.
 - CLI parsing stays shallow. Required fields, defaults, enum checks, and public
   validation happen in capability execution, not in Commander option handlers.
 - Provider implementations return capability-shaped results, not raw source page
@@ -380,5 +329,5 @@ Tests make the design relationships explicit:
   decides they are stable public knobs.
 - The capability layer is the single source of truth for semantic behavior and
   machine-readable request/result schemas.
-- Adapters may duplicate small amounts of transport UX metadata rather than
+- CLI commands may duplicate small amounts of process UX metadata rather than
   forcing one shared manifest abstraction.
