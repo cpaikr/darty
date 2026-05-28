@@ -10,12 +10,12 @@ For interactive/static discovery of detailed disclosure-type codes, use:
 darty disclosure-types --query 사업보고서
 ```
 
-Agent-native callers can use `darty_list_disclosure_types` with optional `category` (`A`-`J`) or `query`. Results include source-backed `categoryLabel` and implementation-authored `categoryDescription` guidance because some labels appear in more than one category; for example, `B001` is the general `주요사항보고` code while `H006` is the `자산유동화` category's `주요사항보고서` code.
+CLI callers can use `darty disclosure-types` with optional `--category` (`A`-`J`) or `--query`. Results include source-backed `categoryLabel` and implementation-authored `categoryDescription` guidance because some labels appear in more than one category; for example, `B001` is the general `주요사항보고` code while `H006` is the `자산유동화` category's `주요사항보고서` code.
 
 ## Quick Rules
 
 - Use `reportName` for report title text such as `사업보고서`, `반기보고서`, `감사보고서`, or `기업설명회`.
-- Use `disclosureTypes[]` only for DART detailed disclosure-type codes returned by `disclosure-types` / `darty_list_disclosure_types`.
+- Use `disclosureTypes[]` only for DART detailed disclosure-type codes returned by `darty disclosure-types`.
 - Use `industryCode: "all"`, `corporationType: "all"`, and `closingAccountsMonth: "all"` when the exact DART code is unknown. Do not guess from Korean labels.
 - `search-company-reports` validates `disclosureTypes[]` against the implemented DART detailed-code table; shape-only values like `A999` are rejected with a lookup hint.
 

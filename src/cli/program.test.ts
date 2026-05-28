@@ -1,41 +1,26 @@
 import { describe, expect, test } from "bun:test";
 
-import { createDartyPiTool } from "../pi.ts";
-import { createDartyToolset, dartyOperationNames } from "../toolset.ts";
 import { createDartyCliProgram } from "./program.ts";
+
+const publicCliCommands = [
+  "company-detail",
+  "company-rss",
+  "disclosure-types",
+  "report-guide",
+  "search-body",
+  "search-company",
+  "search-company-reports",
+  "view-report",
+] as const;
 
 const sorted = (values: readonly string[]): string[] => [...values].sort();
 
-const getPiOperationNames = async (): Promise<readonly string[]> => {
-  const dartyTool = createDartyPiTool();
-
-  const result = await dartyTool.execute("operation-registry-test", {
-    action: "help",
-  });
-  const details = result?.details as
-    | { readonly help?: { readonly operations?: readonly { readonly name?: unknown }[] } }
-    | undefined;
-
-  return (
-    details?.help?.operations
-      ?.map((operation) => operation.name)
-      .filter((name): name is string => typeof name === "string") ?? []
-  );
-};
-
 describe("Darty public operation registry", () => {
-  test("keeps CLI commands, neutral toolset operations, and Pi adapter operations in sync", async () => {
-    const expectedNames = sorted(dartyOperationNames);
+  test("keeps the CLI command registry explicit", () => {
     const cliCommandNames = sorted(
       createDartyCliProgram().commands.map((command) => command.name()),
     );
-    const toolsetOperationNames = sorted(
-      createDartyToolset().listOperations().map((operation) => operation.name),
-    );
-    const piOperationNames = sorted(await getPiOperationNames());
 
-    expect(cliCommandNames).toEqual(expectedNames);
-    expect(toolsetOperationNames).toEqual(expectedNames);
-    expect(piOperationNames).toEqual(expectedNames);
+    expect(cliCommandNames).toEqual(sorted(publicCliCommands));
   });
 });

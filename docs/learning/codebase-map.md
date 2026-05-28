@@ -46,7 +46,7 @@ src/
 - shared executor
 - default DART provider
 
-Transports import this seam so they do not need to know which source adapter backs the operation.
+The CLI imports this seam so it does not need to know which source adapter backs the operation.
 
 ### `src/capabilities/`
 
@@ -73,7 +73,7 @@ The source layer owns DART-specific details:
 - source-model validation
 - mapping source failures into provider errors
 
-This is intentionally below the public contract. DART field names like `textCrpCik`, `sortType`, and duplicated `b_*` form fields should not leak into CLI or future adapters unless the product contract changes.
+This is intentionally below the public contract. DART field names like `textCrpCik`, `sortType`, and duplicated `b_*` form fields should not leak into CLI unless the product contract changes.
 
 ### `src/cli*`
 
@@ -88,7 +88,7 @@ It does not own required-field validation, enum validation, date-format validati
 
 ### Future adapters
 
-The early MCP adapter was removed from the active tree and preserved at git tag `archive/mcp-before-removal`. Future MCP, Pi-native, SDK, or other adapters should reuse `src/app/` and `src/capabilities/` rather than importing DART source internals directly.
+The early MCP adapter was removed from the active tree and preserved at git tag `archive/mcp-before-removal`. Future MCP, Pi-native, SDK, or other adapters should only return when explicitly justified, and should reuse `src/app/` and `src/capabilities/` rather than importing DART source internals directly.
 
 ## Test And Eval Areas
 

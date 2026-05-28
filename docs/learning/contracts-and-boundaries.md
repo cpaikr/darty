@@ -1,6 +1,6 @@
 # Contracts And Boundaries
 
-`darty` is organized around contract boundaries. The current implementation has a public semantic contract, an internal DART replay contract, a provider seam between them, and transport adapters above them.
+`darty` is organized around contract boundaries. The current implementation has a public CLI contract, shared semantic capability contracts, an internal DART replay contract, and a provider seam between them.
 
 ## Public Semantic Contract
 
@@ -106,7 +106,7 @@ The current provider is `dsab007ContentsProvider`, but the seam leaves room for 
 Transports own user/protocol experience:
 
 - CLI owns flags, help text, examples, stdout formatting, and process behavior.
-- Future adapters should own their own protocol metadata, request handling, output serialization, and protocol-specific error behavior.
+- Future adapters should not be added until justified; when they are, they should own their own protocol metadata, request handling, output serialization, and protocol-specific error behavior.
 
 They do not own:
 
@@ -128,12 +128,12 @@ Error classes narrow as they move up:
 | Source adapter | `SourceUnavailable`, `SourceChanged`, `ParseFailure`, `InvalidInput` |
 | Provider seam | `SearchBodyProviderError` |
 | Public capability | `SearchBodyFailure` |
-| Transport | CLI v1 JSON failure envelope or future adapter-specific error result |
+| Transport | CLI v1 JSON failure envelope |
 
 External callers should reason about public capability failure codes, not source-internal classes. In the active CLI transport, those codes are projected into stdout JSON on both success and failure.
 
 ## Design Tradeoffs
 
-The current design allows a little duplication in transport metadata to keep boundaries clear. CLI help text and future adapter titles or annotations should not be forced through one manifest abstraction too early. The gain is explicit, transport-local UX; the cost is that small wording updates may touch more than one adapter when those adapters exist.
+The current design allows CLI metadata to stay local to the CLI rather than forcing one manifest abstraction too early. The gain is explicit process-level UX; the cost is that a future adapter may need its own metadata if it is reintroduced.
 
 The other major tradeoff is keeping replay-only DART fields internal. This makes the public contract smaller and more stable, but it means low-level knobs such as page size are unavailable until live evidence shows they are worth exposing.

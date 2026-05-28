@@ -1,17 +1,16 @@
 # Contents Search Evals
 
-These evals cover the current public `search-body` capability through CLI, LLM-backed CLI tool-use, and LLM-backed agent-native typed tool-use paths.
+These evals cover the current public `search-body` capability through fixed CLI commands and LLM-backed CLI tool use.
 
 ## Goal
 
-The current tracks answer two separate questions:
+The current tracks answer two questions:
 
 - Can fixed CLI commands return the expected live structured stdout envelope?
 - Can a configured model use a structured local darty CLI runner with arguments that match the user request?
-- Can a configured model use namespaced, typed `darty_*` tools with parameters that match the user request?
 
 The archived MCP eval track is preserved at git tag `archive/mcp-before-removal`.
-Do not reintroduce MCP, SDK, or other adapter evals until that adapter is active again and justified. The public Pi single-tool surface is active and covered by `../suites/search-body-pi.eval.ts`.
+Do not reintroduce MCP, SDK, Pi, or other adapter evals until that adapter is active again and justified.
 
 ## Eval Track
 
@@ -42,17 +41,11 @@ This track validates the invocation boundary:
 
 It only requires the matching structured CLI invocation to exit successfully. Detailed stdout envelope correctness belongs to the fixed-command CLI eval, and final-answer quality belongs in a separate future track.
 
-### Agent-native typed tools
-
-`agent-native/run-eval.ts` evaluates the same scenarios with typed `darty_*` tools instead of CLI argv. The active exposed tools include `darty_search_body`, `darty_search_company`, `darty_search_company_reports`, `darty_get_company_detail`, `darty_get_company_rss`, `darty_list_disclosure_types`, and `darty_view_report`.
-
-This track validates that the model can choose `darty_search_body`, pass semantic parameters directly, and receive the shared capability envelope without CLI syntax reasoning.
-
 Set `OPENAI_MODEL` to override the model.
 
 ## Scenario Shape
 
-Shared CLI scenarios live in `shared/cli-scenarios.ts` and are reused by the fixed-command, agentic CLI, and agent-native runners. The fixed-command runner uses each scenario's `argv`; the agentic CLI runner uses the CLI-oriented `task`; the agent-native runner uses `agentNativeTask` so typed-tool evals do not prompt for CLI syntax.
+Shared CLI scenarios live in `shared/cli-scenarios.ts` and are reused by the fixed-command and agentic CLI runners. The fixed-command runner uses each scenario's `argv`; the agentic CLI runner uses the CLI-oriented `task`.
 
 Current scenarios stay narrow on purpose:
 
@@ -86,18 +79,6 @@ Run the agentic CLI eval:
 
 ```bash
 bun run eval:search-body:agent:cli
-```
-
-Run the agent-native typed-tool eval:
-
-```bash
-bun run eval:search-body:agent:native
-```
-
-Run the public Pi single-tool eval:
-
-```bash
-bun run eval:pi:search-body
 ```
 
 ## Notes

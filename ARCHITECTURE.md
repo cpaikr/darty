@@ -7,23 +7,23 @@ This repo now has two layers:
 
 ## Big Picture
 
-The CLI is not the real app. The capability layer is: a semantic request
-contract, a provider interface, and an execution path that normalizes errors
-and shapes results. The active public surfaces are the CLI, the neutral
-`@sjunepark/darty/toolset` package API, and the single-tool
-`@sjunepark/darty/pi` adapter. The core stays transport-neutral so future MCP,
-SDK, web-chat, or other adapters can bind to the same capabilities without
-duplicating DART logic.
+The CLI is the only public integration surface. Behind it, the capability layer
+is: a semantic request contract, a provider interface, and an execution path
+that normalizes errors and shapes results. The core stays transport-neutral
+internally, but external agents and host apps should discover and run Darty
+through the `darty` command rather than package APIs, Pi extensions, MCP
+servers, or host-specific adapters.
 
-The current core has seven public capabilities: `search-body` for DART body
-search, `search-company` for DART company overview company-name search,
+The current core has eight CLI capabilities: `search-body` for DART body search,
+`search-company` for DART company overview company-name search,
 `search-company-reports` for company-code based filing search, `company-detail`
 for company overview detail lookup, `company-rss` for company-specific RSS,
-`disclosure-types` for static DART detailed disclosure-type code discovery, and
-`view-report` for receipt-based report TOC/section retrieval.
+`disclosure-types` for static DART detailed disclosure-type code discovery,
+`report-guide` for report-family guidance, and `view-report` for receipt-based
+report TOC/section retrieval.
 
-For layer diagrams, the schema derivation chain, the runtime pipeline, and the
-adapter extension seam, see [src/ARCHITECTURE.md](src/ARCHITECTURE.md).
+For layer diagrams, the schema derivation chain, and the runtime pipeline, see
+[src/ARCHITECTURE.md](src/ARCHITECTURE.md).
 
 ## Archived Transports
 
@@ -53,7 +53,7 @@ current supported surface.
 - `evals/`
   Agent task evals where a model uses local tools to complete user-like tasks.
 - `src/`
-  Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, the neutral toolset, the Pi adapter, and colocated deterministic tests.
+  Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
 - `test/`
   Opt-in live or broader integration checks that should stay separate from module-local fixture tests.
   Use `test/live/` for live DART coverage and `test/cli/` for subprocess CLI smoke tests.
@@ -132,11 +132,6 @@ argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/disclosure-types.ts
      -> app/disclosure-types.ts -> capabilities/disclosure-types/execute.ts
      -> static pblntf_detail_ty code table
 
-agent host -> @sjunepark/darty/toolset -> src/toolset.ts
-           -> app/<operation>.ts -> capabilities/<operation>/execute.ts
-
-Pi -> @sjunepark/darty/pi -> src/pi.ts single darty(action, command?, inputJson?) tool
-   -> @sjunepark/darty/toolset
 ```
 
 See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the full runtime pipeline,
@@ -155,5 +150,5 @@ If the current single-package shape holds up, expand carefully:
 - `docs/specs/` for stable capability specs
 - `src/` for the core capability while the surface is still small
 - `packages/cli` only if the CLI outgrows a single-package layout
-- `packages/mcp`, `packages/pi-tools`, or other adapter packages only after the core contract is stable and the transport is justified
+- `packages/mcp`, `packages/pi-tools`, SDK exports, or other adapter packages only after the CLI contract is stable and the transport is explicitly justified
 - `evals/` for agent task evals and transcripts

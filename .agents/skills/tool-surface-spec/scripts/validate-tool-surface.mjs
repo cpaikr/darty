@@ -2,9 +2,19 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { pathToFileURL } from "node:url";
 
-const requiredPiActions = ["help", "command_help", "validate", "run"];
+const parseJsonArrayOption = (value, flag) => {
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed) && parsed.every((item) => typeof item === "string")) {
+      return parsed;
+    }
+  } catch {
+    // handled below
+  }
+
+  throw new Error(`${flag} must be a JSON array of strings, for example '["--version"]'`);
+};
 
 const parseArgs = (argv) => {
   const result = { _: [] };
@@ -30,7 +40,16 @@ const parseArgs = (argv) => {
         throw new Error(`Missing value for ${arg}`);
       }
 
-      result[key] = value;
+      if (
+        key === "command-args" ||
+        key === "success-args" ||
+        key === "invalid-args"
+      ) {
+        result[key] = parseJsonArrayOption(value, arg);
+      } else {
+        result[key] = value;
+      }
+
       index += 1;
       continue;
     }
@@ -45,11 +64,13 @@ const usage = () => `Usage:
   node validate-tool-surface.mjs [package-dir] [options]
 
 Options:
-  --id <id>                         Expected toolset id / Pi tool name.
-  --toolset-factory <exportName>     Explicit ./toolset factory export.
-  --pi-factory <exportName>          Explicit ./pi factory export.
-  --run-cli                          Run CLI --help and invalid-command smoke checks.
-  -h, --help                         Show this help.
+  --id <id>                    Expected package name or first CLI bin name.
+  --command <command-or-path>   CLI command/path to run for smoke checks.
+  --command-args <json-array>   Args inserted after --command before smoke-test args.
+  --run-cli                    Run CLI --help and invalid-command smoke checks.
+  --success-args <json-array>   Safe success invocation args to verify JSON stdout.
+  --invalid-args <json-array>   Invalid invocation args. Default: ["__validate_tool_surface_unknown__"].
+  -h, --help                   Show this help.
 `;
 
 const isRecord = (value) =>
@@ -57,24 +78,6 @@ const isRecord = (value) =>
 
 const hasString = (value, key) =>
   isRecord(value) && typeof value[key] === "string";
-
-const hasFunction = (value, key) =>
-  isRecord(value) && typeof value[key] === "function";
-
-const isKebabCaseOperationName = (value) =>
-  typeof value === "string" && /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value);
-
-const descriptionHowToCuePatterns = [
-  /\b(?:action|command)\s*[:=]/i,
-  /\bcommand_help\b/i,
-  /\binputJson\b/i,
-  /\bwith\s+action\b/i,
-  /\b(?:use|call|invoke|execute|run)\s+(?:this\s+)?(?:tool\s+)?(?:with|using)\b/i,
-];
-
-const hasHowToDescriptionCue = (value) =>
-  typeof value === "string" &&
-  descriptionHowToCuePatterns.some((pattern) => pattern.test(value));
 
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
 
@@ -101,7 +104,7 @@ const createReporter = () => {
       }
     },
     print() {
-      console.log("# Tool surface validation\n");
+      console.log("# CLI tool surface validation\n");
 
       if (passes.length > 0) {
         console.log("## Passes");
@@ -133,573 +136,200 @@ const createReporter = () => {
   };
 };
 
-const getExportEntry = (pkg, subpath) => {
-  if (!isRecord(pkg.exports)) return undefined;
-  return pkg.exports[subpath];
-};
-
-const getImportTarget = (entry) => {
-  if (typeof entry === "string") return entry;
-  if (!isRecord(entry)) return undefined;
-  if (typeof entry.import === "string") return entry.import;
-  if (typeof entry.default === "string") return entry.default;
-  return undefined;
-};
-
-const resolvePackageTarget = (root, target) => {
-  if (typeof target !== "string") return undefined;
-  return resolve(root, target);
-};
-
-const importPackageTarget = async (path) => import(pathToFileURL(path).href);
-
-const detectFactory = (module, explicitName, pattern) => {
-  if (explicitName !== undefined) {
-    return typeof module[explicitName] === "function"
-      ? { name: explicitName, factory: module[explicitName] }
-      : undefined;
-  }
-
-  const candidates = Object.entries(module).filter(
-    ([name, value]) => pattern.test(name) && typeof value === "function",
-  );
-
-  if (candidates.length !== 1) return undefined;
-
-  const [[name, factory]] = candidates;
-  return { name, factory };
-};
-
 const getBinEntries = (pkg) => {
   if (typeof pkg.bin === "string") {
     return [[pkg.name ?? "cli", pkg.bin]];
   }
 
   if (isRecord(pkg.bin)) {
-    return Object.entries(pkg.bin).filter(
-      ([, value]) => typeof value === "string",
-    );
+    return Object.entries(pkg.bin).filter(([, value]) => typeof value === "string");
   }
 
   return [];
 };
 
-const expectValidationFailureShape = (reporter, value, label) => {
-  reporter.check(isRecord(value), `${label} returns an object`);
-  if (!isRecord(value)) return;
+const isLikelyPath = (command) =>
+  command.startsWith(".") || command.startsWith("/") || command.includes("/");
 
-  reporter.check(value.ok === false, `${label} has ok:false`);
-  reporter.check(isRecord(value.error), `${label} includes error object`);
+const resolveCommand = (root, pkg, args) => {
+  const explicitCommand = args.command;
 
-  if (isRecord(value.error)) {
-    reporter.check(
-      typeof value.error.code === "string",
-      `${label} error has code`,
-    );
-    reporter.check(
-      typeof value.error.message === "string",
-      `${label} error has message`,
-    );
-    reporter.check(
-      typeof value.error.retryable === "boolean",
-      `${label} error has retryable flag`,
-    );
-
-    if (value.error.retryable === true) {
-      reporter.check(
-        isRecord(value.error.recoveryAction) ||
-          typeof value.error.recoveryHint === "string",
-        `${label} retryable error has recovery metadata`,
-      );
-    }
+  if (typeof explicitCommand === "string") {
+    return {
+      label: [explicitCommand, ...(args["command-args"] ?? [])].join(" "),
+      command: isLikelyPath(explicitCommand) ? resolve(root, explicitCommand) : explicitCommand,
+      argsPrefix: Array.isArray(args["command-args"]) ? args["command-args"] : [],
+    };
   }
+
+  const [firstBin] = getBinEntries(pkg ?? {});
+  if (firstBin === undefined) return undefined;
+
+  const [binName, binTarget] = firstBin;
+  return {
+    label: binName,
+    command: process.execPath,
+    argsPrefix: [resolve(root, binTarget)],
+  };
 };
 
-const expectPiToolResultShape = (reporter, value, label) => {
-  reporter.check(isRecord(value), `${label} returns object`);
-  if (!isRecord(value)) return undefined;
-
-  reporter.check(Array.isArray(value.content), `${label} has content array`);
-  if (Array.isArray(value.content)) {
-    reporter.check(
-      value.content.every(
-        (item) =>
-          isRecord(item) && item.type === "text" && typeof item.text === "string",
-      ),
-      `${label} content entries are text blocks`,
-    );
-  }
-
-  reporter.check(isRecord(value.details), `${label} preserves details object`);
-  return isRecord(value.details) ? value.details : undefined;
-};
-
-const expectPiActionDetailsShape = (reporter, details, label, expected) => {
-  reporter.check(isRecord(details), `${label} is object`);
-  if (!isRecord(details)) return;
-
-  reporter.check(details.ok === expected.ok, `${label} has ok:${expected.ok}`);
-  reporter.check(
-    details.action === expected.action,
-    `${label} action is ${expected.action}`,
-  );
-
-  if (expected.command !== undefined) {
-    reporter.check(
-      details.command === expected.command,
-      `${label} command is ${expected.command}`,
-    );
-  }
-
-  if (expected.field !== undefined) {
-    reporter.check(expected.field in details, `${label} includes ${expected.field}`);
-  }
-
-  if (expected.ok === false) {
-    reporter.check(isRecord(details.error), `${label} includes error object`);
-    if (isRecord(details.error)) {
-      reporter.check(
-        typeof details.error.message === "string",
-        `${label} error has message`,
-      );
-    }
-  }
-};
-
-const validateOperationSpec = (reporter, spec, name) => {
-  reporter.check(isRecord(spec), `operation ${name} help returns an object`);
-  if (!isRecord(spec)) return;
-
-  reporter.check(spec.name === name, `operation ${name} help preserves name`);
-  reporter.check(
-    isKebabCaseOperationName(spec.name),
-    `operation ${name} uses kebab-case canonical name`,
-  );
-  reporter.check(typeof spec.label === "string", `operation ${name} has label`);
-  reporter.check(
-    typeof spec.description === "string",
-    `operation ${name} has description`,
-  );
-  reporter.check(
-    isRecord(spec.inputJsonSchema),
-    `operation ${name} has object inputJsonSchema`,
-  );
-  reporter.check(
-    isRecord(spec.resultJsonSchema),
-    `operation ${name} has object resultJsonSchema`,
-  );
-  reporter.check(
-    Array.isArray(spec.requiredInputKeys),
-    `operation ${name} has requiredInputKeys array`,
-  );
-  reporter.check(
-    Array.isArray(spec.examples),
-    `operation ${name} has examples array`,
-  );
-  reporter.check(
-    Array.isArray(spec.limitations),
-    `operation ${name} has limitations array`,
-  );
-  reporter.check(
-    typeof spec.resultSummary === "string",
-    `operation ${name} has resultSummary`,
-  );
-};
-
-const validateToolset = async (reporter, toolsetModule, args) => {
-  const detected = detectFactory(
-    toolsetModule,
-    args["toolset-factory"],
-    /^create[A-Z].*Toolset$/,
-  );
-
-  reporter.check(
-    detected !== undefined,
-    args["toolset-factory"] === undefined
-      ? "./toolset has exactly one create*Toolset factory export"
-      : `./toolset exports ${args["toolset-factory"]}`,
-  );
-
-  if (detected === undefined) return undefined;
-
-  const toolset = await detected.factory();
-  reporter.pass(`loaded neutral toolset via ${detected.name}()`);
-
-  reporter.check(hasString(toolset, "id"), "toolset has id string");
-  reporter.check(hasString(toolset, "label"), "toolset has label string");
-  reporter.check(
-    hasString(toolset, "description"),
-    "toolset has description string",
-  );
-  if (hasString(toolset, "description")) {
-    reporter.check(
-      !hasHowToDescriptionCue(toolset.description),
-      "top-level toolset description is purpose-only, not usage instructions",
-    );
-  }
-
-  if (args.id !== undefined && hasString(toolset, "id")) {
-    reporter.check(toolset.id === args.id, `toolset id is ${args.id}`);
-  }
-
-  for (const method of [
-    "help",
-    "listOperations",
-    "getCommandHelp",
-    "validateInput",
-    "execute",
-    "serializeError",
-  ]) {
-    reporter.check(hasFunction(toolset, method), `toolset has ${method}()`);
-  }
-
-  if (
-    !hasFunction(toolset, "help") ||
-    !hasFunction(toolset, "listOperations")
-  ) {
-    return toolset;
-  }
-
-  const help = toolset.help();
-  reporter.check(isRecord(help), "toolset help() returns an object");
-  reporter.check(hasString(help, "id"), "toolset help has id");
-  reporter.check(
-    Array.isArray(help.operations),
-    "toolset help has operations array",
-  );
-
-  const operations = toolset.listOperations();
-  reporter.check(
-    Array.isArray(operations),
-    "listOperations() returns an array",
-  );
-  reporter.check(
-    operations.length > 0,
-    "listOperations() returns at least one operation",
-  );
-
-  if (!Array.isArray(operations)) return toolset;
-
-  for (const operation of operations) {
-    reporter.check(isRecord(operation), "operation summary is an object");
-    if (!isRecord(operation)) continue;
-
-    reporter.check(
-      typeof operation.name === "string" && operation.name.length > 0,
-      "operation summary has name",
-    );
-    reporter.check(
-      isKebabCaseOperationName(operation.name),
-      `operation ${operation.name ?? "<unknown>"} summary name is kebab-case`,
-    );
-    reporter.check(
-      typeof operation.label === "string" && operation.label.length > 0,
-      `operation ${operation.name ?? "<unknown>"} has label`,
-    );
-    reporter.check(
-      typeof operation.description === "string" &&
-        operation.description.length > 0,
-      `operation ${operation.name ?? "<unknown>"} has description`,
-    );
-
-    if (
-      typeof operation.name !== "string" ||
-      !hasFunction(toolset, "getCommandHelp")
-    ) {
-      continue;
-    }
-
-    const spec = toolset.getCommandHelp(operation.name);
-    validateOperationSpec(reporter, spec, operation.name);
-
-    if (
-      isRecord(spec) &&
-      Array.isArray(spec.examples) &&
-      spec.examples.length > 0 &&
-      hasFunction(toolset, "validateInput")
-    ) {
-      const validation = toolset.validateInput(
-        operation.name,
-        spec.examples[0],
-      );
-      reporter.check(
-        isRecord(validation) &&
-          validation.ok === true &&
-          isRecord(validation.input),
-        `operation ${operation.name} first example validates`,
-      );
-    }
-  }
-
-  if (hasFunction(toolset, "validateInput")) {
-    expectValidationFailureShape(
-      reporter,
-      toolset.validateInput("__validate_tool_surface_unknown__", {}),
-      "unknown operation validation",
-    );
-  }
-
-  if (hasFunction(toolset, "serializeError")) {
-    const serialized = toolset.serializeError(new Error("validation smoke"));
-    reporter.check(isRecord(serialized), "serializeError() returns an object");
-    reporter.check(hasString(serialized, "name"), "serialized error has name");
-    reporter.check(
-      hasString(serialized, "message"),
-      "serialized error has message",
-    );
-  }
-
-  return toolset;
-};
-
-const validatePi = async (reporter, piModule, args, toolset) => {
-  const detected = detectFactory(
-    piModule,
-    args["pi-factory"],
-    /^create[A-Z].*PiTool$/,
-  );
-
-  reporter.check(
-    detected !== undefined,
-    args["pi-factory"] === undefined
-      ? "./pi has exactly one create*PiTool factory export"
-      : `./pi exports ${args["pi-factory"]}`,
-  );
-
-  if (detected === undefined) return;
-
-  const piTool = await detected.factory();
-  reporter.pass(`loaded Pi tool via ${detected.name}()`);
-
-  reporter.check(hasString(piTool, "name"), "Pi tool has name string");
-  reporter.check(hasString(piTool, "label"), "Pi tool has label string");
-  reporter.check(
-    hasString(piTool, "description"),
-    "Pi tool has description string",
-  );
-  if (hasString(piTool, "description")) {
-    reporter.check(
-      !hasHowToDescriptionCue(piTool.description),
-      "top-level Pi tool description is purpose-only, not usage instructions",
-    );
-  }
-  reporter.check(isRecord(piTool.parameters), "Pi tool has parameters object");
-  reporter.check(
-    hasFunction(piTool, "execute"),
-    "Pi tool has execute() function",
-  );
-
-  if (args.id !== undefined && hasString(piTool, "name")) {
-    reporter.check(piTool.name === args.id, `Pi tool name is ${args.id}`);
-  }
-
-  const properties = isRecord(piTool.parameters?.properties)
-    ? piTool.parameters.properties
-    : undefined;
-  reporter.check(properties !== undefined, "Pi parameters expose properties");
-
-  if (properties !== undefined) {
-    const actionEnum = Array.isArray(properties.action?.enum)
-      ? properties.action.enum
-      : [];
-
-    for (const action of requiredPiActions) {
-      reporter.check(
-        actionEnum.includes(action),
-        `Pi action enum includes ${action}`,
-      );
-    }
-
-    reporter.check(
-      Array.isArray(properties.command?.enum),
-      "Pi command parameter has enum of operation names",
-    );
-    reporter.check(
-      isRecord(properties.inputJson),
-      "Pi parameters include inputJson object schema",
-    );
-
-    if (
-      Array.isArray(properties.command?.enum) &&
-      toolset !== undefined &&
-      hasFunction(toolset, "listOperations")
-    ) {
-      const operationNames = toolset
-        .listOperations()
-        .map((operation) => operation?.name)
-        .filter((name) => typeof name === "string");
-      const missing = operationNames.filter(
-        (name) => !properties.command.enum.includes(name),
-      );
-      reporter.check(
-        missing.length === 0,
-        missing.length === 0
-          ? "Pi command enum includes all toolset operations"
-          : `Pi command enum missing operations: ${missing.join(", ")}`,
-      );
-    }
-  }
-
-  if (hasFunction(piTool, "execute")) {
-    const helpResult = await piTool.execute("validate-tool-surface", {
-      action: "help",
-    });
-    const helpDetails = expectPiToolResultShape(
-      reporter,
-      helpResult,
-      "Pi help action",
-    );
-    expectPiActionDetailsShape(reporter, helpDetails, "Pi help details", {
-      ok: true,
-      action: "help",
-      field: "help",
-    });
-
-    if (toolset !== undefined && hasFunction(toolset, "listOperations")) {
-      const [firstOperation] = toolset.listOperations();
-      if (typeof firstOperation?.name === "string") {
-        const commandHelp = await piTool.execute("validate-tool-surface", {
-          action: "command_help",
-          command: firstOperation.name,
-        });
-        const commandHelpDetails = expectPiToolResultShape(
-          reporter,
-          commandHelp,
-          "Pi command_help action",
-        );
-        expectPiActionDetailsShape(
-          reporter,
-          commandHelpDetails,
-          "Pi command_help details",
-          {
-            ok: true,
-            action: "command_help",
-            command: firstOperation.name,
-            field: "commandHelp",
-          },
-        );
-
-        const spec = hasFunction(toolset, "getCommandHelp")
-          ? toolset.getCommandHelp(firstOperation.name)
-          : undefined;
-        const [example] = isRecord(spec) && Array.isArray(spec.examples)
-          ? spec.examples
-          : [];
-
-        if (isRecord(example)) {
-          const validateResult = await piTool.execute("validate-tool-surface", {
-            action: "validate",
-            command: firstOperation.name,
-            inputJson: example,
-          });
-          const validateDetails = expectPiToolResultShape(
-            reporter,
-            validateResult,
-            "Pi validate action",
-          );
-          expectPiActionDetailsShape(
-            reporter,
-            validateDetails,
-            "Pi validate details",
-            {
-              ok: true,
-              action: "validate",
-              command: firstOperation.name,
-              field: "validation",
-            },
-          );
-
-          if (isRecord(validateDetails?.validation)) {
-            reporter.check(
-              validateDetails.validation.ok === true,
-              "Pi validate details include successful validation",
-            );
-            reporter.check(
-              isRecord(validateDetails.validation.input),
-              "Pi validate details include normalized input",
-            );
-          }
-        }
-      }
-    }
-
-    const invalidValidate = await piTool.execute("validate-tool-surface", {
-      action: "validate",
-      command: "__validate_tool_surface_unknown__",
-      inputJson: {},
-    });
-    const invalidValidateDetails = expectPiToolResultShape(
-      reporter,
-      invalidValidate,
-      "Pi invalid validate action",
-    );
-    expectPiActionDetailsShape(
-      reporter,
-      invalidValidateDetails,
-      "Pi invalid validate details",
-      {
-        ok: false,
-        action: "validate",
-        command: "__validate_tool_surface_unknown__",
-      },
-    );
-  }
-};
-
-const validateCli = (reporter, root, pkg) => {
-  const entries = getBinEntries(pkg);
-
-  reporter.check(entries.length > 0, "package has CLI bin entry");
-  if (entries.length === 0) return;
-
-  const [binName, binTarget] = entries[0];
-  const binPath = resolve(root, binTarget);
-  reporter.check(existsSync(binPath), `CLI bin target exists: ${binTarget}`);
-
-  if (!existsSync(binPath)) return;
-
-  const help = spawnSync(process.execPath, [binPath, "--help"], {
+const spawnCli = (resolved, args, root) =>
+  spawnSync(resolved.command, [...resolved.argsPrefix, ...args], {
     cwd: root,
     encoding: "utf8",
     timeout: 10_000,
+    env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" },
   });
 
-  reporter.check(help.status === 0, `${binName} --help exits 0`);
-  reporter.check(
-    `${help.stdout}${help.stderr}`.trim().length > 0,
-    `${binName} --help prints help text`,
-  );
+const parseSingleJsonObject = (stdout) => {
+  const trimmed = stdout.trim();
+  if (trimmed.length === 0) return { ok: false, reason: "stdout is empty" };
 
-  const invalid = spawnSync(
-    process.execPath,
-    [binPath, "__validate_tool_surface_unknown__"],
-    {
-      cwd: root,
-      encoding: "utf8",
-      timeout: 10_000,
-    },
-  );
-
-  reporter.check(
-    invalid.status !== 0,
-    `${binName} invalid command exits non-zero`,
-  );
-
-  const stdout = invalid.stdout.trim();
   let parsed;
   try {
-    parsed = JSON.parse(stdout);
-  } catch {
-    parsed = undefined;
+    parsed = JSON.parse(trimmed);
+  } catch (error) {
+    return { ok: false, reason: `stdout is not exactly one JSON value: ${error.message}` };
   }
 
-  reporter.check(
-    isRecord(parsed),
-    `${binName} invalid command prints one JSON object to stdout`,
-  );
+  if (!isRecord(parsed)) {
+    return { ok: false, reason: "stdout JSON is not an object" };
+  }
+
+  return { ok: true, value: parsed };
 };
 
-const main = async () => {
+const checkStructuredFailure = (reporter, value, label) => {
+  if (!isRecord(value)) return;
+
+  if (value.ok === false) {
+    reporter.pass(`${label} has ok:false failure marker`);
+  } else {
+    reporter.warn(`${label} does not use recommended ok:false failure marker`);
+  }
+
+  if (isRecord(value.error)) {
+    reporter.pass(`${label} includes structured error object`);
+    reporter.check(typeof value.error.message === "string", `${label} error has message`);
+
+    if (typeof value.error.code === "string") {
+      reporter.pass(`${label} error has code`);
+    } else {
+      reporter.warn(`${label} error lacks recommended code`);
+    }
+
+    if (typeof value.error.retryable === "boolean") {
+      reporter.pass(`${label} error has retryable flag`);
+    } else {
+      reporter.warn(`${label} error lacks recommended retryable flag`);
+    }
+
+    if (
+      typeof value.error.recoveryHint === "string" ||
+      isRecord(value.error.recoveryAction) ||
+      typeof value.error.parameter === "string"
+    ) {
+      reporter.pass(`${label} error has recovery metadata`);
+    } else {
+      reporter.warn(`${label} error lacks recommended recovery metadata`);
+    }
+  } else {
+    reporter.warn(`${label} lacks recommended structured error object`);
+  }
+};
+
+const checkStructuredSuccess = (reporter, value, label) => {
+  if (!isRecord(value)) return;
+
+  if (value.ok === true) {
+    reporter.pass(`${label} has ok:true success marker`);
+  } else {
+    reporter.warn(`${label} does not use recommended ok:true success marker`);
+  }
+
+  if ("result" in value) {
+    reporter.pass(`${label} includes result field`);
+  } else {
+    reporter.warn(`${label} lacks recommended result field`);
+  }
+
+  if ("metadata" in value || "references" in value || "warnings" in value) {
+    reporter.pass(`${label} includes result context metadata/references/warnings`);
+  } else {
+    reporter.warn(`${label} lacks recommended result context metadata/references/warnings`);
+  }
+};
+
+const validatePackageShape = (reporter, root, pkg, args) => {
+  reporter.check(hasString(pkg, "name"), "package has name");
+
+  const binEntries = getBinEntries(pkg);
+  reporter.check(binEntries.length > 0, "package has at least one CLI bin");
+
+  if (args.id !== undefined) {
+    const binNames = binEntries.map(([name]) => name);
+    reporter.check(
+      pkg.name === args.id || binNames.includes(args.id),
+      `package name or CLI bin matches --id ${args.id}`,
+    );
+  }
+
+  for (const [, target] of binEntries) {
+    reporter.check(existsSync(resolve(root, target)), `CLI bin file exists: ${target}`);
+  }
+};
+
+const validateCli = (reporter, root, resolved, args) => {
+  if (resolved === undefined) {
+    reporter.fail("no CLI command available; define package bin or pass --command");
+    return;
+  }
+
+  const help = spawnCli(resolved, ["--help"], root);
+  reporter.check(help.error === undefined, `${resolved.label} --help starts`);
+  reporter.check(help.status === 0, `${resolved.label} --help exits 0`);
+  reporter.check(
+    `${help.stdout}${help.stderr}`.trim().length > 0,
+    `${resolved.label} --help prints help text`,
+  );
+
+  const invalidArgs = args["invalid-args"] ?? ["__validate_tool_surface_unknown__"];
+  const invalid = spawnCli(resolved, invalidArgs, root);
+  reporter.check(invalid.error === undefined, `${resolved.label} invalid invocation starts`);
+  reporter.check(invalid.status !== 0, `${resolved.label} invalid invocation exits non-zero`);
+
+  const invalidJson = parseSingleJsonObject(invalid.stdout);
+  reporter.check(
+    invalidJson.ok,
+    invalidJson.ok
+      ? `${resolved.label} invalid invocation prints one JSON object to stdout`
+      : `${resolved.label} invalid invocation stdout check failed: ${invalidJson.reason}`,
+  );
+  if (invalidJson.ok) checkStructuredFailure(reporter, invalidJson.value, "invalid invocation JSON");
+
+  if (Array.isArray(args["success-args"])) {
+    const success = spawnCli(resolved, args["success-args"], root);
+    reporter.check(success.error === undefined, `${resolved.label} success invocation starts`);
+    reporter.check(success.status === 0, `${resolved.label} success invocation exits 0`);
+
+    const successJson = parseSingleJsonObject(success.stdout);
+    reporter.check(
+      successJson.ok,
+      successJson.ok
+        ? `${resolved.label} success invocation prints one JSON object to stdout`
+        : `${resolved.label} success invocation stdout check failed: ${successJson.reason}`,
+    );
+    if (successJson.ok) checkStructuredSuccess(reporter, successJson.value, "success invocation JSON");
+
+    if (success.stderr.trim().length > 0) {
+      reporter.warn(`${resolved.label} success invocation wrote to stderr; ensure stdout JSON has any important warnings`);
+    }
+  } else {
+    reporter.warn("success JSON smoke check skipped; pass --success-args with a safe command to enable it.");
+  }
+};
+
+const main = () => {
   const args = parseArgs(process.argv.slice(2));
 
   if (args.help) {
@@ -710,95 +340,30 @@ const main = async () => {
   const root = resolve(args._[0] ?? process.cwd());
   const reporter = createReporter();
   const pkgPath = join(root, "package.json");
+  let pkg;
 
-  reporter.check(existsSync(pkgPath), "package.json exists");
-  if (!existsSync(pkgPath)) {
-    reporter.print();
-    process.exitCode = 1;
-    return;
-  }
-
-  const pkg = readJson(pkgPath);
-  reporter.check(hasString(pkg, "name"), "package has name");
-
-  const binEntries = getBinEntries(pkg);
-  reporter.check(binEntries.length > 0, "package has at least one CLI bin");
-  for (const [, target] of binEntries) {
-    reporter.check(
-      existsSync(resolve(root, target)),
-      `CLI bin file exists: ${target}`,
-    );
-  }
-
-  const toolsetEntry = getExportEntry(pkg, "./toolset");
-  const piEntry = getExportEntry(pkg, "./pi");
-  const toolsetTarget = resolvePackageTarget(
-    root,
-    getImportTarget(toolsetEntry),
-  );
-  const piTarget = resolvePackageTarget(root, getImportTarget(piEntry));
-
-  reporter.check(toolsetEntry !== undefined, "package exports ./toolset");
-  reporter.check(piEntry !== undefined, "package exports ./pi");
-  reporter.check(
-    toolsetTarget !== undefined && existsSync(toolsetTarget),
-    "./toolset import target exists",
-  );
-  reporter.check(
-    piTarget !== undefined && existsSync(piTarget),
-    "./pi import target exists",
-  );
-
-  reporter.check(
-    isRecord(pkg.pi) &&
-      Array.isArray(pkg.pi.extensions) &&
-      pkg.pi.extensions.length > 0,
-    "package declares pi.extensions",
-  );
-
-  if (isRecord(pkg.pi) && Array.isArray(pkg.pi.extensions)) {
-    for (const extension of pkg.pi.extensions) {
-      reporter.check(
-        typeof extension === "string" && existsSync(resolve(root, extension)),
-        `Pi extension file exists: ${extension}`,
-      );
-    }
-  }
-
-  let toolset;
-  if (toolsetTarget !== undefined && existsSync(toolsetTarget)) {
-    try {
-      const toolsetModule = await importPackageTarget(toolsetTarget);
-      toolset = await validateToolset(reporter, toolsetModule, args);
-    } catch (error) {
-      reporter.fail(
-        `failed to import/validate ./toolset: ${error.stack ?? error}`,
-      );
-    }
-  }
-
-  if (piTarget !== undefined && existsSync(piTarget)) {
-    try {
-      const piModule = await importPackageTarget(piTarget);
-      await validatePi(reporter, piModule, args, toolset);
-    } catch (error) {
-      reporter.fail(`failed to import/validate ./pi: ${error.stack ?? error}`);
-    }
-  }
-
-  if (args.runCli) {
-    validateCli(reporter, root, pkg);
+  if (existsSync(pkgPath)) {
+    reporter.pass("package.json exists");
+    pkg = readJson(pkgPath);
+    validatePackageShape(reporter, root, pkg, args);
   } else {
-    reporter.warn(
-      "CLI runtime smoke checks skipped; pass --run-cli to enable them.",
-    );
+    reporter.warn("package.json not found; package bin checks skipped. Pass --command to run CLI smoke checks.");
+  }
+
+  const resolved = resolveCommand(root, pkg, args);
+  if (args.runCli || Array.isArray(args["success-args"])) {
+    validateCli(reporter, root, resolved, args);
+  } else {
+    reporter.warn("CLI runtime smoke checks skipped; pass --run-cli to enable them.");
   }
 
   reporter.print();
   process.exitCode = reporter.failed ? 1 : 0;
 };
 
-main().catch((error) => {
+try {
+  main();
+} catch (error) {
   console.error(error);
   process.exitCode = 1;
-});
+}

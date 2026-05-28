@@ -21,14 +21,14 @@ npm publishing uses OIDC trusted publishing, so no npm publish token is required
 
 Protect `main` so release PRs cannot merge until `.github/workflows/ci.yml` passes. At minimum, require the `CI / validate` status check before merging. Release Please and CI both run from pushes to `main`, so branch protection is the gate that ensures release PR contents are validated before Release Please creates source tags and releases.
 
-For changes to tool contracts, Pi adapter behavior, eval harness behavior, or answer-quality prompts, run the manual model-in-the-loop Pi gate before release readiness signoff:
+For changes to CLI tool contracts, eval harness behavior, or answer-quality prompts, run the relevant manual model-in-the-loop CLI eval before release readiness signoff:
 
 ```sh
 bun run env:check
-bun run eval:pi:gate
+bun run eval:agent-cli:search-body
 ```
 
-This eval gate depends on live DART and hosted model availability, so it is not part of required CI or npm publishing automation. Use the default `OPENAI_MODEL` as the required manual gate; additional model or judge-model overrides are exploratory unless explicitly promoted in `evals/README.md`.
+This eval depends on live DART and hosted model availability, so it is not part of required CI or npm publishing automation. Use the default `OPENAI_MODEL` as the required manual gate; additional model overrides are exploratory unless explicitly promoted in `evals/README.md`.
 
 ## Automated release flow
 

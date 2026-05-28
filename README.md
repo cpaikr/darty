@@ -1,6 +1,6 @@
 # darty
 
-한국 DART 공시를 검색하고 조회하는 읽기 전용 도구입니다. 사람은 CLI로, 에이전트나 다른 런타임은 재사용 가능한 툴셋 API로 같은 기능을 사용할 수 있습니다.
+한국 DART 공시를 검색하고 조회하는 읽기 전용 CLI 도구입니다. 사람과 에이전트 모두 `darty` 명령을 subprocess로 실행해 같은 기능을 사용할 수 있습니다.
 
 Darty는 DART 공개 웹 화면을 읽기 전용으로 사용합니다. 공식 OpenDART API가 아니며, DART 웹 동작이 바뀌면 결과나 파서가 영향을 받을 수 있습니다.
 
@@ -46,82 +46,18 @@ darty <command> --help
 - `report-guide`: 필요한 정보가 어떤 DART 보고서에 있는지 안내하는 Markdown 가이드 출력
 - `view-report`: 보고서 목차 또는 본문 조회
 
-## 툴셋 API
+## 통합 계약
 
-셸 명령을 호출하지 않고 Darty를 통합하려면 런타임 중립 툴셋 API를 사용하세요.
+Darty의 공개 통합 표면은 CLI입니다. 외부 에이전트와 호스트 앱은 TypeScript API, Pi 확장, MCP 서버, 호스트별 어댑터를 import하지 말고 `darty` 명령을 실행하세요.
 
-```ts
-import { createDartyToolset } from "@sjunepark/darty/toolset";
-
-const darty = createDartyToolset();
-
-const help = darty.help();
-const operations = darty.listOperations();
-const searchCompany = darty.getCommandHelp("search-company");
-const prepared = darty.validateInput("disclosure-types", { query: "사업보고서" });
-const result = prepared.ok
-  ? await darty.execute("disclosure-types", prepared.input)
-  : prepared.error;
-```
-
-이 API가 Darty의 표준 통합 지점입니다. 작업 이름, 소스/명령 도움말, JSON Schema 기반 입력/결과 계약, 네트워크 없는 입력 검증/정규화, 실행, 응답 객체, 참조 정보, 경고, 메타데이터, 타입화된 오류를 이 계층에서 관리합니다.
-
-호스트 앱이 `darty(action, command?, inputJson?)` 같은 CLI형 단일 도구를 만들 때는 Darty의 `help()`, `getCommandHelp(name)`, `validateInput(name, input)`, `execute(name, input)`, `serializeError(error)`를 사용하세요. `validateInput`에는 파싱된 JSON 값을 그대로 전달하면 Darty가 최상위 입력 형태와 명령별 매개변수를 함께 검증/정규화합니다. 검증 실패는 `code`, `parameter`, `reason`, `expected`, `actual`, `message`, `recoveryHint`, `exampleInput`, `retryable`, `recoveryAction`을 보존합니다. 호스트는 JSON Schema에서 재시도 정책을 추론하지 말고 이 복구 메타데이터를 사용하세요. 실행 오류를 호스트/번들러 경계 밖으로 넘길 때는 `serializeDartyError(error)` 또는 `toolset.serializeError(error)`로 `code`, `retryable`, `parameter`, `sourceUrl`, `recoveryHint`, `operationName`, `message`, 안전한 `diagnostics`를 구조적으로 보존할 수 있습니다. Pi 어댑터는 실행 실패에서 공개 오류와 진단 정보를 분리해 `details.error`와 `details.diagnostics`로 반환합니다.
-
-표준 작업 이름은 특정 호스트나 어댑터에 종속되지 않습니다.
-
-- `search-body`
-- `search-company`
-- `search-company-reports`
-- `company-detail`
-- `company-rss`
-- `disclosure-types`
-- `report-guide`
-- `view-report`
-
-## 패키지 API 안정성
-
-재사용 가능한 패키지 계약으로 보는 범위는 다음과 같습니다.
-
-- 작업 이름
-- 소스/명령 도움말 필드
-- 입력 JSON Schema
-- 검증 실패 필드와 오류 코드의 의미
-- 최상위 응답 객체 필드
-- 경고와 오류 코드의 의미
-
-작업을 제거하거나 이름을 바꾸는 변경, 입력/결과 필드를 제거하는 변경, 경고/오류 코드의 의미를 바꾸는 변경은 호환성을 깨는 변경입니다.
-
-작업 추가, 선택 입력 필드 추가, 결과 필드 추가, 경고 추가, 메타데이터 추가는 호환 가능한 변경입니다.
-
-현재 TypeScript API는 `execute(name, input)` 중심의 발견 가능한 형태를 유지합니다. 작업별 강한 타입 오버로드는 실제 TypeScript 호스트에서 유지 비용을 감수할 만큼 필요해질 때 추가합니다.
-
-## Pi 패키지/확장
-
-Pi에서는 다음처럼 설치할 수 있습니다.
+CLI 도움말이 현재 명령, 옵션, 입력 제약, 출력 동작의 기준입니다.
 
 ```bash
-pi install npm:@sjunepark/darty
+darty --help
+darty <command> --help
 ```
 
-Pi 어댑터는 하나의 도구만 노출합니다.
-
-```ts
-import { createDartyPiTool } from "@sjunepark/darty/pi";
-
-const dartyTool = createDartyPiTool();
-```
-
-Pi SDK 호스트는 이 도구를 그대로 전달할 수 있습니다.
-
-```ts
-await createAgentSession({
-  customTools: [dartyTool],
-  tools: ["darty"],
-});
-```
-
-모델이 보는 호출 형태는 `darty(action, command?, inputJson?)`입니다. 지원 action은 `help`, `command_help`, `validate`, `run`이며, command는 표준 Darty 작업 이름을 사용합니다. 이 어댑터는 내부에서 `createDartyToolset()`을 감싸며, 모델용 content에 도움말, 검증 피드백, 실행 결과, 참조, 경고, 메타데이터를 포함하고 전체 구조화 결과는 details에 보존합니다.
+정상 조회 명령은 표준 출력에 단일 JSON 응답 객체를 출력합니다. 실패도 표준 출력에 단일 JSON 실패 객체를 출력하고 non-zero로 종료합니다. 진행 로그와 디버그 진단은 표준 에러를 사용해 stdout JSON 파싱을 방해하지 않습니다.
 
 ## 주의사항
 

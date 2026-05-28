@@ -12,22 +12,10 @@
     "darty": "dist/cli.js"
   },
   "exports": {
-    "./toolset": {
-      "types": "./dist/toolset.d.ts",
-      "import": "./dist/toolset.js"
-    },
-    "./pi": {
-      "types": "./dist/pi.d.ts",
-      "import": "./dist/pi.js"
-    }
-  },
-  "pi": {
-    "extensions": [
-      "./dist/pi-extension.js"
-    ]
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist",
+    "dist/cli.js",
     "README.md",
     "LICENSE.md"
   ],
@@ -44,17 +32,8 @@
     "env:check": "varlock load",
     "eval:search-body:cli": "bun run evals/search-body/cli/run-eval.ts",
     "eval:search-body:agent:cli": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
-    "eval:search-body:agent:native": "varlock run -- bun run evals/search-body/agent-native/run-eval.ts",
-    "eval:workflows:agent:native": "varlock run -- bun run evals/workflows/agent-native/run-eval.ts",
     "eval:cli:search-body": "bun run evals/search-body/cli/run-eval.ts",
     "eval:agent-cli:search-body": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
-    "eval:typed:search-body": "varlock run -- bun run evals/search-body/agent-native/run-eval.ts",
-    "eval:typed:workflow": "varlock run -- bun run evals/workflows/agent-native/run-eval.ts",
-    "eval:pi:search-body": "varlock run -- bun run evals/suites/search-body-pi.eval.ts",
-    "eval:pi:workflow": "varlock run -- bun run evals/suites/workflow-pi.eval.ts",
-    "eval:pi:recovery": "varlock run -- bun run evals/suites/recovery-pi.eval.ts",
-    "eval:pi:research-answer": "varlock run -- bun run evals/suites/research-answer-pi.eval.ts",
-    "eval:pi:gate": "bun run eval:pi:search-body && bun run eval:pi:workflow && bun run eval:pi:recovery && bun run eval:pi:research-answer",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:live": "LIVE_DART_TESTS=1 bun test",

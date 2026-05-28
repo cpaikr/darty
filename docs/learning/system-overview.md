@@ -6,35 +6,34 @@
 
 The executable slice is intentionally narrow:
 
-- public CLI commands: `search-body` and `view-report`
-- DART source adapters for `dsab007` contents search and `dsaf001` report viewing
+- public CLI commands for company search/detail/RSS, filing search, body search, disclosure-type discovery, report guidance, and report viewing
+- DART source adapters for `dsab007`, `dsae001`, company RSS, and `dsaf001` report viewing
 - structured result envelopes with request echo, metadata, references, and warnings
-- deterministic tests plus opt-in live, agentic CLI, and agent-native typed-tool eval tracks
+- deterministic tests plus opt-in live and agentic CLI eval tracks
 
 The broader product direction is in [VISION](../../VISION.md). Do not infer the full product scope from the current capabilities; the repo explicitly treats current code as the first slice of a larger DART querying/searching tool.
 
-## Why The CLI Is Not The Center
+## Why The CLI Is The Public Surface
 
-A common first impression is that this is a CLI wrapper around DART. The architecture is the opposite: the core capability is the product boundary, and CLI is the current adapter.
+A common first impression is that this is only command-line argument parsing around DART. The architecture is different: reusable capability code owns semantic behavior, and the CLI is the single public adapter over that core.
 
 ```text
                  +-------------------+
                  | capability core   |
                  +---------+---------+
                            |
-        +------------------+------------------+
-        |                                     |
-+-------v-------+                     +-------v-------+
-| CLI adapter   |                     | future adapter|
-| user flags    |                     | MCP/Pi/SDK    |
-+---------------+                     +---------------+
+                           |
+                    +------v------+ 
+                    | CLI adapter |
+                    | user flags  |
+                    +-------------+
 ```
 
-This keeps the semantic contract reusable. If MCP, Pi-native tools, an SDK, or another transport is added later, it should call the same operation instead of re-encoding DART behavior.
+This keeps the semantic contract reusable without exposing extra public package APIs. If MCP, Pi-native tools, an SDK, or another transport is added later, it should be explicitly justified and call the same operation instead of re-encoding DART behavior.
 
 ## Current Product Shape
 
-The current public operations search filing body content through DART's integrated filing search surface and retrieve report document/section content by receipt. They return structured results, not generated explanations.
+The current public operations search filing body content, find companies, list company filings, fetch company detail/RSS data, discover disclosure types, print a report-family guide, and retrieve report document/section content by receipt. They return structured results, not generated explanations.
 
 A successful result is shaped for downstream verification:
 

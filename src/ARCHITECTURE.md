@@ -14,11 +14,10 @@ company overview search/detail, DART company RSS, and `dsaf001` report viewing.
 The `disclosure-types` and `report-guide` helpers are static and have no live
 DART adapter.
 
-The design goal is to keep the core reusable across transports. The active
-transports are the CLI, the neutral `src/toolset.ts` package API, and the
-single-tool Pi adapter in `src/pi.ts`; future MCP, SDK, or other adapters should
-bind to the same capability contracts and app composition layer instead of
-copying DART-specific logic.
+The public design goal is one CLI surface over reusable capability code. The
+active public transport is the CLI; future MCP, SDK, Pi, or other adapters should
+only be added after the CLI contract is stable and the transport is explicitly
+justified.
 
 ## Archived MCP Adapter
 
@@ -35,11 +34,8 @@ and shapes results. CLI is the current transport host over that core.
 
 ```mermaid
 graph TD
-    subgraph Transport["Transport Adapters"]
+    subgraph Transport["Transport Adapter"]
         CLI["CLI · src/cli/"]
-        TOOLSET["Neutral toolset · src/toolset.ts"]
-        PI["Pi adapter · src/pi.ts"]
-        FUTURE["Future adapters\nMCP · SDK"]
     end
 
     subgraph App["Shared Composition · src/app/"]
@@ -55,9 +51,6 @@ graph TD
     end
 
     CLI --> APP
-    TOOLSET --> APP
-    PI --> TOOLSET
-    FUTURE -.-> TOOLSET
     APP --> CAP
     CAP --> SRC
     SRC --> DART[("dart.fss.or.kr")]
@@ -65,7 +58,7 @@ graph TD
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Transport** | `src/cli.ts`, `src/cli/program.ts`, `src/cli/`, `src/toolset.ts`, `src/pi.ts` | Parse or adapt transport input, own transport UX, call the shared operation, and serialize results |
+| **Transport** | `src/cli.ts`, `src/cli/program.ts`, `src/cli/` | Parse CLI input, own command UX, call the shared operation, and serialize process output |
 | **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
 | **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
 | **Source** | `src/sources/dart/` | DART replay/viewer fields, form POST or viewer GETs, HTML parsing, source models, and error mapping |
@@ -138,16 +131,8 @@ graph TD
   command failures serialize as JSON to stdout; `report-guide` success output
   and help remain human-readable.
 - **`src/app/`** — Shared operation wiring. Exposes internal operation names,
-  JSON Schemas, capability executors with the default DART providers already
-  attached, and the initial namespaced `darty_*` agent tool definitions.
-- **`src/toolset.ts`** — Runtime-neutral package API. Lists canonical operation
-  IDs, exposes source/command help, operation schemas, schema-owned examples,
-  network-free input validation/normalization, structural error serialization,
-  reusable single-tool agent copy/formatting, executes operations by name, and
-  preserves capability result envelopes and typed failures.
-- **`src/pi.ts`** — Pi adapter over the neutral toolset. Registers one
-  `darty(action, command?, inputJson?)` tool that exposes help, command help,
-  validation, and execution actions while reusing toolset-owned Darty copy.
+  JSON Schemas, and capability executors with the default DART providers already
+  attached.
 - **`src/capabilities/`** — Public, transport-neutral contracts and execution
   flow. Defines semantic inputs, success result shapes, typed failures, and
   execution logic.
@@ -163,9 +148,8 @@ graph TD
 ## Behavior-First Core
 
 The biggest design choice is **behavior-first core, transport-local UX**. The
-shared layer owns semantic schemas, execution behavior, and reusable Darty
-agent guidance. Each transport owns its own protocol details and final
-presentation shape.
+shared layer owns semantic schemas and execution behavior. The CLI owns
+process-level parsing, help text, and final stdout/stderr/exit-code behavior.
 
 ```mermaid
 graph LR
@@ -174,13 +158,9 @@ graph LR
     CONTRACT --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
 
     SPEC --> CLI_META["CLI name reuse"]
-    SPEC --> AGENT_META["darty_* tool schemas"]
-    SPEC -.-> FUTURE_META["Future adapter schemas"]
     CONTRACT --> RESULT["Success result\nenvelope"]
 
     CLI_META -. transport local .-> CLI_FLAGS["CLI flags · help · examples"]
-    AGENT_META -. adapter local .-> AGENT_TOOLS["Agent-native typed tools"]
-    FUTURE_META -. adapter local .-> FUTURE_UX["MCP · Pi-native · SDK metadata"]
 ```
 
 How it works:
@@ -194,10 +174,8 @@ How it works:
    implementations.
 4. **`cli/commands/`** defines each CLI UX explicitly, then delegates to the
    shared operation.
-5. Agent-native exposure uses namespaced `darty_*` tool names over the same
-   schemas and app executors, while leaving internal operation names stable.
-6. Future adapters should use the same schemas and app wiring while keeping
-   protocol-specific names and metadata local to that adapter.
+5. Future adapters should use the same schemas and app wiring only after their
+   transport is explicitly justified; the CLI remains the public contract.
 
 One source of truth gives you:
 
@@ -209,8 +187,8 @@ One source of truth gives you:
 What is intentionally *not* centralized:
 
 - CLI flags and CLI-specific flag wording
-- protocol-specific titles, annotations, and result envelope shapes
-- host-only rendering that is not reusable by another Darty tool adapter
+- process-level help text, examples, and formatting
+- host-only rendering for adapters that are not part of the active public surface
 
 ## Runtime Flow
 

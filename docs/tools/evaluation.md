@@ -37,14 +37,13 @@ Use opt-in live checks for source behavior that fixtures cannot prove, such as u
 
 ### Scenario evals
 
-Use user-like tasks at the capability level. Put scenario-style CLI and model-in-the-loop checks under `evals/` when they exercise live task usefulness or agent/tool wiring rather than narrow unit behavior. Keep scenarios independent from transport surfaces where possible; let each surface adapter derive the CLI argv, Pi single-tool call shape, or typed-tool definition from the same task intent.
+Use user-like tasks at the capability level. Put scenario-style CLI and model-in-the-loop checks under `evals/` when they exercise live task usefulness or agent/tool wiring rather than narrow unit behavior. Keep scenarios focused on the public CLI subprocess surface unless another transport is explicitly reintroduced.
 
 Current examples:
 
 - run a fixed CLI contents search and assert the stdout envelope has filing references
 - ask a model to invoke the structured local CLI runner with keyword, date range, and optional company filter
-- ask a model to invoke the active Pi single-tool adapter with `darty(action, command?, inputJson?)` and assert canonical commands, JSON input, validation/recovery, identifier handoff, and cited final answers
-- run `bun run eval:pi:gate` as the manual model-in-the-loop readiness check for public Pi surface changes
+- run `bun run eval:agent-cli:search-body` as the manual model-in-the-loop readiness check for CLI surface changes
 
 Future retrieval examples:
 

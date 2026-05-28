@@ -4,13 +4,10 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
-  readdirSync,
   rmSync,
-  statSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { builtinModules } from "node:module";
 import { basename, join } from "node:path";
 
 const repoRoot = join(import.meta.dir, "..", "..");
@@ -18,31 +15,6 @@ const nodeRuntime = process.env.DART_NODE_RUNTIME ?? "node";
 
 const decode = (value: Uint8Array<ArrayBufferLike>) =>
   new TextDecoder().decode(value);
-
-const packageNameFromSpecifier = (specifier: string): string =>
-  specifier.startsWith("@")
-    ? specifier.split("/").slice(0, 2).join("/")
-    : specifier.split("/")[0]!;
-
-const listJavaScriptFiles = (directory: string): readonly string[] =>
-  readdirSync(directory).flatMap((entry) => {
-    const path = join(directory, entry);
-    const stats = statSync(path);
-
-    if (stats.isDirectory()) {
-      return [...listJavaScriptFiles(path)];
-    }
-
-    return entry.endsWith(".js") ? [path] : [];
-  });
-
-const externalImportsFromJavaScript = (source: string): readonly string[] =>
-  [...source.matchAll(/(?:from\s+|import\s*\(\s*|import\s+)["']([^"']+)["']/g)]
-    .map((match) => match[1])
-    .filter((specifier): specifier is string => specifier !== undefined)
-    .filter(
-      (specifier) => !specifier.startsWith(".") && !specifier.startsWith("/"),
-    );
 
 const run = (cmd: readonly string[], cwd: string) => {
   const result = Bun.spawnSync({
@@ -103,22 +75,18 @@ describe("packed package exports", () => {
       join(consumerDir, "smoke.mjs"),
       `import assert from "node:assert/strict";\n` +
         `import { spawnSync } from "node:child_process";\n` +
-        `import { createDartyToolset, DartyToolsetError } from "@sjunepark/darty/toolset";\n` +
-        `import { createDartyPiTool } from "@sjunepark/darty/pi";\n` +
-        `const toolset = createDartyToolset();\n` +
-        `try {\n` +
-        `  await toolset.execute("not-a-darty-operation", {});\n` +
-        `  assert.fail("expected unknown operation to throw");\n` +
-        `} catch (error) {\n` +
-        `  assert(error instanceof DartyToolsetError);\n` +
+        `const rejectedSubpaths = ["@sjunepark/darty/toolset", "@sjunepark/darty/pi"];\n` +
+        `for (const specifier of rejectedSubpaths) {\n` +
+        `  await assert.rejects(import(specifier), /Package subpath/);\n` +
         `}\n` +
-        `const darty = createDartyPiTool({ toolset });\n` +
-        `assert.equal(darty.name, "darty");\n` +
-        `const result = await darty.execute("call-1", { action: "run", command: "not-a-darty-operation", inputJson: {} });\n` +
-        `assert.equal(result.details.error.operationName, "not-a-darty-operation");\n` +
         `const help = spawnSync("./node_modules/.bin/darty", ["--help"], { cwd: process.cwd(), encoding: "utf8" });\n` +
         `assert.equal(help.status, 0, help.stderr);\n` +
-        `assert.match(help.stdout, /Usage: darty/);\n`,
+        `assert.match(help.stdout, /Usage: darty/);\n` +
+        `const failure = spawnSync("./node_modules/.bin/darty", ["not-a-command"], { cwd: process.cwd(), encoding: "utf8" });\n` +
+        `assert.notEqual(failure.status, 0);\n` +
+        `const failureJson = JSON.parse(failure.stdout);\n` +
+        `assert.equal(failureJson.result, null);\n` +
+        `assert.equal(failureJson.error.code, "invalid_request");\n`,
     );
   }, 60_000);
 
@@ -126,46 +94,19 @@ describe("packed package exports", () => {
     rmSync(workDir, { force: true, recursive: true });
   });
 
-  test("imports shared subpaths and preserves cross-subpath error identity", () => {
+  test("exposes only the CLI public surface", () => {
     run([nodeRuntime, "smoke.mjs"], consumerDir);
   });
 
-  test("emits shared library modules instead of independent subpath bundles", () => {
+  test("packs only the executable CLI artifact", () => {
     const packageDir = join(consumerDir, "node_modules", "@sjunepark", "darty");
 
-    expect(readFileSync(join(packageDir, "dist", "pi.js"), "utf8")).toContain(
-      'from "./toolset.js"',
-    );
     expect(
-      readFileSync(join(packageDir, "dist", "pi-extension.js"), "utf8"),
-    ).toContain('from "./pi.js"');
-  });
-
-  test("declares every unbundled runtime import as a package dependency", () => {
-    const packageDir = join(consumerDir, "node_modules", "@sjunepark", "darty");
-    const packageJson = JSON.parse(
-      readFileSync(join(packageDir, "package.json"), "utf8"),
-    ) as { readonly dependencies?: Record<string, string> };
-    const dependencyNames = new Set(Object.keys(packageJson.dependencies ?? {}));
-    const nodeBuiltins = new Set([
-      ...builtinModules,
-      ...builtinModules.map((moduleName) => `node:${moduleName}`),
-    ]);
-
-    const undeclaredImports = listJavaScriptFiles(join(packageDir, "dist"))
-      .filter((path) => path !== join(packageDir, "dist", "cli.js"))
-      .flatMap((path) =>
-        externalImportsFromJavaScript(readFileSync(path, "utf8")).map(
-          (specifier) => ({
-            packageName: packageNameFromSpecifier(specifier),
-            path,
-            specifier,
-          }),
-        ),
-      )
-      .filter(({ packageName }) => !nodeBuiltins.has(packageName))
-      .filter(({ packageName }) => !dependencyNames.has(packageName));
-
-    expect(undeclaredImports).toEqual([]);
+      readFileSync(join(packageDir, "dist", "cli.js"), "utf8").startsWith(
+        "#!/usr/bin/env node",
+      ),
+    ).toBe(true);
+    expect(() => readFileSync(join(packageDir, "dist", "toolset.js"), "utf8")).toThrow();
+    expect(() => readFileSync(join(packageDir, "dist", "pi.js"), "utf8")).toThrow();
   });
 });
