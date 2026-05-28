@@ -15,16 +15,8 @@ The `disclosure-types` and `report-guide` helpers are static and have no live
 DART adapter.
 
 The public design goal is one CLI surface over reusable capability code. The
-active public transport is the CLI; future MCP, SDK, Pi, or other adapters should
-only be added after the CLI contract is stable and the transport is explicitly
-justified.
-
-## Archived MCP Adapter
-
-The early MCP adapter was removed from the active `src/` tree while the project
-is greenfield. The exact implementation is preserved at git tag
-`archive/mcp-before-removal`. Treat MCP as a future adapter option, not a
-current supported transport.
+active public transport is the CLI; do not add another public integration surface
+without an explicit product decision.
 
 ## Layer Overview
 

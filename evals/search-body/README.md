@@ -9,8 +9,7 @@ The current tracks answer two questions:
 - Can fixed CLI commands return the expected live structured stdout envelope?
 - Can a configured model use a structured local darty CLI runner with arguments that match the user request?
 
-The archived MCP eval track is preserved at git tag `archive/mcp-before-removal`.
-Do not reintroduce MCP, SDK, Pi, or other adapter evals until that adapter is active again and justified.
+Do not reintroduce non-CLI eval tracks unless a new public integration surface becomes an explicit product decision.
 
 ## Eval Track
 

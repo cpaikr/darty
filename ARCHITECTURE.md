@@ -11,8 +11,7 @@ The CLI is the only public integration surface. Behind it, the capability layer
 is: a semantic request contract, a provider interface, and an execution path
 that normalizes errors and shapes results. The core stays transport-neutral
 internally, but external agents and host apps should discover and run Darty
-through the `darty` command rather than package APIs, Pi extensions, MCP
-servers, or host-specific adapters.
+through the `darty` command only.
 
 The current core has eight CLI capabilities: `search-body` for DART body search,
 `search-company` for DART company overview company-name search,
@@ -24,13 +23,6 @@ report TOC/section retrieval.
 
 For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 [src/ARCHITECTURE.md](src/ARCHITECTURE.md).
-
-## Archived Transports
-
-The early MCP adapter was removed from the active codebase while the project is
-greenfield. The exact code is preserved at git tag
-`archive/mcp-before-removal`. Treat MCP as a future adapter option, not a
-current supported surface.
 
 ## Document Ownership
 
@@ -65,7 +57,7 @@ current supported surface.
 3. Use [docs/research/dart-source-map.md](docs/research/dart-source-map.md) to understand what the live source actually exposes today.
 4. Use [docs/tools/foundations.md](docs/tools/foundations.md) and the linked tool docs to shape the contract.
 5. Promote only evidence-backed, implementation-ready capability specs into [docs/specs/](docs/specs/README.md).
-6. Keep the first implementation slice small: `dsab007` contracts, shared request/client seams, one mode parser, and a thin CLI adapter before adding more transports.
+6. Keep the implementation slice small: capability contracts, shared request/client seams, source parsers, and thin CLI commands.
 7. Keep tool rules in the tool docs; link to canonical guidance instead of duplicating it.
 
 ## Invariants
@@ -150,5 +142,5 @@ If the current single-package shape holds up, expand carefully:
 - `docs/specs/` for stable capability specs
 - `src/` for the core capability while the surface is still small
 - `packages/cli` only if the CLI outgrows a single-package layout
-- `packages/mcp`, `packages/pi-tools`, SDK exports, or other adapter packages only after the CLI contract is stable and the transport is explicitly justified
-- `evals/` for agent task evals and transcripts
+- split packages only if the CLI or core capability layout outgrows the current single-package shape
+- `evals/` for CLI-based agent task evals and transcripts

@@ -66,7 +66,7 @@ These do not replace deterministic tests. They answer model/tool-use questions s
 - can a fixed live scenario return the expected structured envelope?
 - can a model use the provided local CLI runner with valid arguments?
 
-The archived MCP eval track is preserved at git tag `archive/mcp-before-removal` and should only return if MCP becomes an active adapter again. Other adapter evals should not return until that adapter is active and justified.
+Non-CLI eval tracks should not return unless a new public integration surface becomes an explicit product decision.
 
 ## What To Run While Working
 

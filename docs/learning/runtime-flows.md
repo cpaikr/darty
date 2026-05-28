@@ -23,7 +23,7 @@ src/sources/dart/...
 DART web endpoint
 ```
 
-The important point: the CLI parses transport input, then delegates. It does not implement DART search or view-report behavior itself. Future MCP, Pi-native, SDK, or other adapters should only be added when justified and should join at the `src/app/` seam.
+The important point: the CLI parses transport input, then delegates. It does not implement DART search or view-report behavior itself. New public integration surfaces should only be added after an explicit product decision and should join at the `src/app/` seam.
 
 ## CLI Flow
 

@@ -2,15 +2,15 @@
 
 ## Current Status
 
-Darty's public integration surface is the CLI. The package publishes the `darty` bin and does not export TypeScript toolset or Pi adapter subpaths.
+Darty's public integration surface is the CLI. The package publishes the `darty` bin and does not export package API subpaths.
 
 Completed in this pass:
 
 - narrowed `package.json` to CLI packaging only;
 - changed the build to emit only `dist/cli.js`;
-- updated package smoke tests to reject `@sjunepark/darty/toolset` and `@sjunepark/darty/pi` imports;
-- removed Pi and typed-agent eval scripts from the documented package commands;
-- deleted the inactive toolset, Pi adapter, agent-tool definitions, and matching non-CLI eval scaffolding;
+- updated package smoke tests to exercise only the installed `darty` command;
+- removed non-CLI eval scripts from the documented package commands;
+- deleted inactive package API definitions and matching non-CLI eval scaffolding;
 - updated README, architecture, release, spec, and eval docs to point agents at the CLI subprocess contract.
 
 ## Boundary

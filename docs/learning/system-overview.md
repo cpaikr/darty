@@ -29,7 +29,7 @@ A common first impression is that this is only command-line argument parsing aro
                     +-------------+
 ```
 
-This keeps the semantic contract reusable without exposing extra public package APIs. If MCP, Pi-native tools, an SDK, or another transport is added later, it should be explicitly justified and call the same operation instead of re-encoding DART behavior.
+This keeps the semantic contract reusable internally without exposing extra public package APIs. Any new public integration surface would need an explicit product decision instead of appearing as compatibility scaffolding.
 
 ## Current Product Shape
 

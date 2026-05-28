@@ -86,9 +86,9 @@ The CLI adapter owns user-facing command behavior:
 
 It does not own required-field validation, enum validation, date-format validation, defaults, or result shaping. Those belong to the capability layer.
 
-### Future adapters
+### Public surface boundary
 
-The early MCP adapter was removed from the active tree and preserved at git tag `archive/mcp-before-removal`. Future MCP, Pi-native, SDK, or other adapters should only return when explicitly justified, and should reuse `src/app/` and `src/capabilities/` rather than importing DART source internals directly.
+The active public surface is the CLI. New public integration surfaces should only appear after an explicit product decision, and should reuse `src/app/` and `src/capabilities/` rather than importing DART source internals directly.
 
 ## Test And Eval Areas
 

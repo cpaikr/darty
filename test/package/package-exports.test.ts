@@ -75,10 +75,6 @@ describe("packed package exports", () => {
       join(consumerDir, "smoke.mjs"),
       `import assert from "node:assert/strict";\n` +
         `import { spawnSync } from "node:child_process";\n` +
-        `const rejectedSubpaths = ["@sjunepark/darty/toolset", "@sjunepark/darty/pi"];\n` +
-        `for (const specifier of rejectedSubpaths) {\n` +
-        `  await assert.rejects(import(specifier), /Package subpath/);\n` +
-        `}\n` +
         `const help = spawnSync("./node_modules/.bin/darty", ["--help"], { cwd: process.cwd(), encoding: "utf8" });\n` +
         `assert.equal(help.status, 0, help.stderr);\n` +
         `assert.match(help.stdout, /Usage: darty/);\n` +
@@ -106,7 +102,5 @@ describe("packed package exports", () => {
         "#!/usr/bin/env node",
       ),
     ).toBe(true);
-    expect(() => readFileSync(join(packageDir, "dist", "toolset.js"), "utf8")).toThrow();
-    expect(() => readFileSync(join(packageDir, "dist", "pi.js"), "utf8")).toThrow();
   });
 });

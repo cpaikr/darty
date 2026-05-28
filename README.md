@@ -48,7 +48,7 @@ darty <command> --help
 
 ## 통합 계약
 
-Darty의 공개 통합 표면은 CLI입니다. 외부 에이전트와 호스트 앱은 TypeScript API, Pi 확장, MCP 서버, 호스트별 어댑터를 import하지 말고 `darty` 명령을 실행하세요.
+Darty의 공개 통합 표면은 CLI입니다. 외부 에이전트와 호스트 앱은 패키지 API를 import하지 말고 `darty` 명령을 실행하세요.
 
 CLI 도움말이 현재 명령, 옵션, 입력 제약, 출력 동작의 기준입니다.
 
