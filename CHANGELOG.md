@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0](https://github.com/sjunepark/darty/compare/v0.3.4...v0.4.0) (2026-05-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove Pi package adapter
+* finalize 0.4.0 package surface
+
+### Features
+
+* add toolset validation recovery metadata ([764c3ed](https://github.com/sjunepark/darty/commit/764c3ed690ab7e76ba64f2585b0a5a8b6411bf93))
+* finalize 0.4.0 package surface ([05c4a84](https://github.com/sjunepark/darty/commit/05c4a8406edae50063f140c03fa3c59b7f6367b3))
+* remove Pi package adapter ([0bb1e35](https://github.com/sjunepark/darty/commit/0bb1e35444bce050ce3ad50dc3eb50535e3b8617))
+* restore trusted server toolset export ([c61154f](https://github.com/sjunepark/darty/commit/c61154f2762866ab4acdbc7a99d765d2b98565a5))
+
+
+### Bug Fixes
+
+* **evals:** parse search-body request options in agent CLI eval ([1c5b891](https://github.com/sjunepark/darty/commit/1c5b891b2f2507a5c20cbebdb0318a093adbe679))
+
 ## [0.3.4](https://github.com/sjunepark/darty/compare/v0.3.3...v0.3.4) (2026-05-28)
 
 
