@@ -104,6 +104,13 @@ export type DartyValidationFailureCode =
   | "unknown_parameter"
   | "invalid_request";
 
+export type DartyValidationRecoveryAction =
+  | { readonly kind: "inspect_tool_help" }
+  | {
+      readonly kind: "inspect_command_help";
+      readonly operationName: DartyOperationName;
+    };
+
 export type DartyValidationFailure = {
   readonly code: DartyValidationFailureCode;
   readonly message: string;
@@ -114,6 +121,8 @@ export type DartyValidationFailure = {
   readonly actual?: unknown;
   readonly recoveryHint?: string;
   readonly exampleInput?: Record<string, unknown>;
+  readonly recoverable: true;
+  readonly recoveryAction: DartyValidationRecoveryAction;
 };
 
 export type DartyValidationResult =
@@ -124,7 +133,9 @@ export type DartySerializedError = {
   readonly name: string;
   readonly message: string;
   readonly code?: string;
+  readonly recoverable?: boolean;
   readonly retryable?: boolean;
+  readonly recoveryAction?: DartyValidationRecoveryAction;
   readonly parameter?: string;
   readonly sourceUrl?: string;
   readonly recoveryHint?: string;
@@ -132,6 +143,7 @@ export type DartySerializedError = {
   readonly reason?: string;
   readonly expected?: string;
   readonly actual?: unknown;
+  readonly exampleInput?: Record<string, unknown>;
 };
 
 export type DartyToolRunResult = unknown;
@@ -183,7 +195,6 @@ export class DartyToolsetError extends Error {
 export class DartyToolsetValidationError extends Error {
   override readonly name = "DartyToolsetValidationError";
   readonly code = "validation_failed";
-  readonly retryable = false;
   readonly validation: DartyValidationFailure;
   readonly operationName: string | undefined;
   readonly parameter: string | undefined;
@@ -191,6 +202,9 @@ export class DartyToolsetValidationError extends Error {
   readonly expected: string | undefined;
   readonly actual: unknown;
   readonly recoveryHint: string | undefined;
+  readonly exampleInput: Record<string, unknown> | undefined;
+  readonly recoverable: true;
+  readonly recoveryAction: DartyValidationRecoveryAction;
 
   constructor(validation: DartyValidationFailure) {
     super(validation.message);
@@ -201,6 +215,9 @@ export class DartyToolsetValidationError extends Error {
     this.expected = validation.expected;
     this.actual = validation.actual;
     this.recoveryHint = validation.recoveryHint;
+    this.exampleInput = validation.exampleInput;
+    this.recoverable = validation.recoverable;
+    this.recoveryAction = validation.recoveryAction;
   }
 }
 
@@ -398,6 +415,20 @@ const createCommandHelp = (
   resultSummary: definition.resultSummary ?? "Darty result envelope for this operation.",
 });
 
+const inspectToolHelpRecoveryAction = {
+  kind: "inspect_tool_help",
+} as const satisfies DartyValidationRecoveryAction;
+
+const inspectCommandHelpRecoveryAction = (
+  operationName: DartyOperationName,
+): DartyValidationRecoveryAction => ({
+  kind: "inspect_command_help",
+  operationName,
+});
+
+const commandHelpRecoveryHint = (operationName: DartyOperationName): string =>
+  `Inspect getCommandHelp("${operationName}") for the input schema and examples.`;
+
 const createUnknownOperationValidationFailure = (
   name: string,
 ): DartyValidationFailure => ({
@@ -409,10 +440,12 @@ const createUnknownOperationValidationFailure = (
   expected: dartyOperationNames.join(","),
   actual: name,
   recoveryHint: "Use help() or listOperations() to choose a canonical Darty operation name.",
+  recoverable: true,
+  recoveryAction: inspectToolHelpRecoveryAction,
 });
 
 const createInvalidInputValidationFailure = (
-  operationName: string,
+  operationName: DartyOperationName,
   actual: unknown,
   exampleInput: Record<string, unknown> | undefined,
 ): DartyValidationFailure => ({
@@ -423,12 +456,15 @@ const createInvalidInputValidationFailure = (
   reason: "invalid_type",
   expected: "object",
   actual,
+  recoveryHint: commandHelpRecoveryHint(operationName),
+  recoverable: true,
+  recoveryAction: inspectCommandHelpRecoveryAction(operationName),
   ...(exampleInput === undefined ? {} : { exampleInput }),
 });
 
 const toValidationFailure = (
   error: unknown,
-  operationName: string,
+  operationName: DartyOperationName,
   exampleInput: Record<string, unknown> | undefined,
 ): DartyValidationFailure => {
   if (isRecord(error)) {
@@ -441,13 +477,13 @@ const toValidationFailure = (
     const recoveryHint = hasString(error, "recoveryHint")
       ? error.recoveryHint
       : parameter === undefined
-        ? undefined
-        : getInvalidRequestRecoveryHint({
+        ? commandHelpRecoveryHint(operationName)
+        : (getInvalidRequestRecoveryHint({
             code,
             parameter,
             ...(reason === undefined ? {} : { reason }),
             ...(expected === undefined ? {} : { expected }),
-          });
+          }) ?? commandHelpRecoveryHint(operationName));
 
     return {
       code,
@@ -459,8 +495,10 @@ const toValidationFailure = (
       ...(reason === undefined ? {} : { reason }),
       ...(expected === undefined ? {} : { expected }),
       ...("actual" in error ? { actual: error.actual } : {}),
-      ...(recoveryHint === undefined ? {} : { recoveryHint }),
+      recoveryHint,
       ...(exampleInput === undefined ? {} : { exampleInput }),
+      recoverable: true,
+      recoveryAction: inspectCommandHelpRecoveryAction(operationName),
     };
   }
 
@@ -468,7 +506,10 @@ const toValidationFailure = (
     code: "invalid_request",
     message: "Darty input validation failed.",
     operationName,
+    recoveryHint: commandHelpRecoveryHint(operationName),
     ...(exampleInput === undefined ? {} : { exampleInput }),
+    recoverable: true,
+    recoveryAction: inspectCommandHelpRecoveryAction(operationName),
   };
 };
 
@@ -483,11 +524,29 @@ const toValidationFailureCode = (code: string): DartyValidationFailureCode => {
   }
 };
 
+const isDartyOperationName = (value: unknown): value is DartyOperationName =>
+  typeof value === "string" &&
+  (dartyOperationNames as readonly string[]).includes(value);
+
+const isValidationRecoveryAction = (
+  value: unknown,
+): value is DartyValidationRecoveryAction =>
+  isRecord(value) &&
+  (value.kind === "inspect_tool_help" ||
+    (value.kind === "inspect_command_help" &&
+      isDartyOperationName(value.operationName)));
+
 const copyKnownErrorFields = (
   record: Record<string, unknown>,
 ): Omit<DartySerializedError, "name" | "message"> => ({
   ...(typeof record.code === "string" ? { code: record.code } : {}),
+  ...(typeof record.recoverable === "boolean"
+    ? { recoverable: record.recoverable }
+    : {}),
   ...(typeof record.retryable === "boolean" ? { retryable: record.retryable } : {}),
+  ...(isValidationRecoveryAction(record.recoveryAction)
+    ? { recoveryAction: record.recoveryAction }
+    : {}),
   ...(typeof record.parameter === "string" ? { parameter: record.parameter } : {}),
   ...(typeof record.operationName === "string"
     ? { operationName: record.operationName }
@@ -499,6 +558,7 @@ const copyKnownErrorFields = (
   ...(typeof record.reason === "string" ? { reason: record.reason } : {}),
   ...(typeof record.expected === "string" ? { expected: record.expected } : {}),
   ...("actual" in record ? { actual: record.actual } : {}),
+  ...(isRecord(record.exampleInput) ? { exampleInput: record.exampleInput } : {}),
 });
 
 export const serializeDartyError = (error: unknown): DartySerializedError => {
@@ -564,7 +624,11 @@ export const createDartyToolset = (
       if (!isRecord(input)) {
         return {
           ok: false,
-          error: createInvalidInputValidationFailure(name, input, exampleInput),
+          error: createInvalidInputValidationFailure(
+            definition.name,
+            input,
+            exampleInput,
+          ),
         };
       }
 
@@ -572,7 +636,7 @@ export const createDartyToolset = (
     } catch (error) {
       return {
         ok: false,
-        error: toValidationFailure(error, name, exampleInput),
+        error: toValidationFailure(error, definition.name, exampleInput),
       };
     }
   };

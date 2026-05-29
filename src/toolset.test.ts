@@ -95,7 +95,13 @@ describe("Darty neutral toolset", () => {
         reason: "required",
         expected: "string_min_length_2",
         message: expect.stringContaining("companyName"),
+        recoveryHint: expect.any(String),
         exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+        recoverable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-company",
+        },
       },
     });
 
@@ -107,7 +113,13 @@ describe("Darty neutral toolset", () => {
         parameter: "input",
         reason: "invalid_type",
         actual: null,
+        recoveryHint: expect.stringContaining("getCommandHelp"),
         exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+        recoverable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-company",
+        },
       },
     });
 
@@ -119,6 +131,12 @@ describe("Darty neutral toolset", () => {
         parameter: "input",
         reason: "invalid_type",
         actual: null,
+        recoveryHint: expect.stringContaining("getCommandHelp"),
+        recoverable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "view-report",
+        },
       },
     });
 
@@ -134,6 +152,11 @@ describe("Darty neutral toolset", () => {
         code: "invalid_parameter",
         parameter: "companyCode",
         recoveryHint: expect.stringContaining("search-company"),
+        recoverable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-company-reports",
+        },
       },
     });
 
@@ -147,6 +170,12 @@ describe("Darty neutral toolset", () => {
         code: "unknown_parameter",
         operationName: "report-guide",
         parameter: "query",
+        recoveryHint: expect.stringContaining("getCommandHelp"),
+        recoverable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "report-guide",
+        },
       },
     });
   });
@@ -179,15 +208,23 @@ describe("Darty neutral toolset", () => {
       operationName: "search-body",
     });
 
-    expect(toolset.validateInput("not-a-command", {})).toMatchObject({
+    const unknownOperation = toolset.validateInput("not-a-command", {});
+
+    expect(unknownOperation).toMatchObject({
       ok: false,
       error: {
         code: "invalid_request",
         parameter: "name",
         reason: "unknown_operation",
         operationName: "not-a-command",
+        recoveryHint: expect.stringContaining("listOperations"),
+        recoverable: true,
+        recoveryAction: { kind: "inspect_tool_help" },
       },
     });
+    if (!unknownOperation.ok) {
+      expect(unknownOperation.error).not.toHaveProperty("retryable");
+    }
   });
 
   test("executes through the operation and preserves result envelope fields", async () => {
@@ -211,25 +248,37 @@ describe("Darty neutral toolset", () => {
     await expect(toolset.execute("search-company", {})).rejects.toMatchObject({
       name: "DartyToolsetValidationError",
       code: "validation_failed",
-      retryable: false,
       operationName: "search-company",
       parameter: "companyName",
       reason: "required",
       expected: "string_min_length_2",
+      recoverable: true,
+      recoveryAction: {
+        kind: "inspect_command_help",
+        operationName: "search-company",
+      },
     });
 
     try {
       await toolset.execute("search-company", {});
     } catch (error) {
       expect(error).toBeInstanceOf(DartyToolsetValidationError);
-      expect(toolset.serializeError(error)).toMatchObject({
+      const serialized = toolset.serializeError(error);
+
+      expect(serialized).toMatchObject({
         name: "DartyToolsetValidationError",
         code: "validation_failed",
-        retryable: false,
         operationName: "search-company",
         parameter: "companyName",
         reason: "required",
+        recoverable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "search-company",
+        },
+        exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
       });
+      expect(serialized).not.toHaveProperty("retryable");
     }
   });
 
@@ -270,6 +319,11 @@ describe("Darty neutral toolset", () => {
         reason: "invalid_type",
         expected: "object",
         actual: null,
+        recoverable: true,
+        recoveryAction: {
+          kind: "inspect_command_help",
+          operationName: "disclosure-types",
+        },
       },
     });
 
