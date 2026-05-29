@@ -2,6 +2,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const parseJsonArrayOption = (value, flag) => {
   try {
@@ -64,13 +65,14 @@ const usage = () => `Usage:
   node validate-tool-surface.mjs [package-dir] [options]
 
 Options:
-  --id <id>                    Expected package name or first CLI bin name.
-  --command <command-or-path>   CLI command/path to run for smoke checks.
-  --command-args <json-array>   Args inserted after --command before smoke-test args.
-  --run-cli                    Run CLI --help and invalid-command smoke checks.
-  --success-args <json-array>   Safe success invocation args to verify JSON stdout.
-  --invalid-args <json-array>   Invalid invocation args. Default: ["__validate_tool_surface_unknown__"].
-  -h, --help                   Show this help.
+  --id <id>                         Expected neutral toolset id.
+  --toolset-factory <exportName>     Explicit ./toolset factory export.
+  --command <command-or-path>        CLI command/path to run for smoke checks.
+  --command-args <json-array>        Args inserted after --command before smoke-test args.
+  --run-cli                         Run CLI --help and invalid-command smoke checks.
+  --success-args <json-array>        Safe success invocation args to verify JSON stdout.
+  --invalid-args <json-array>        Invalid invocation args. Default: ["__validate_tool_surface_unknown__"].
+  -h, --help                        Show this help.
 `;
 
 const isRecord = (value) =>
@@ -78,6 +80,24 @@ const isRecord = (value) =>
 
 const hasString = (value, key) =>
   isRecord(value) && typeof value[key] === "string";
+
+const hasFunction = (value, key) =>
+  isRecord(value) && typeof value[key] === "function";
+
+const isKebabCaseOperationName = (value) =>
+  typeof value === "string" && /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value);
+
+const descriptionHowToCuePatterns = [
+  /\b(?:action|command)\s*[:=]/i,
+  /\bcommand_help\b/i,
+  /\binputJson\b/i,
+  /\bwith\s+action\b/i,
+  /\b(?:use|call|invoke|execute|run)\s+(?:this\s+)?(?:tool\s+)?(?:with|using)\b/i,
+];
+
+const hasHowToDescriptionCue = (value) =>
+  typeof value === "string" &&
+  descriptionHowToCuePatterns.some((pattern) => pattern.test(value));
 
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
 
@@ -104,7 +124,7 @@ const createReporter = () => {
       }
     },
     print() {
-      console.log("# CLI tool surface validation\n");
+      console.log("# Tool surface validation\n");
 
       if (passes.length > 0) {
         console.log("## Passes");
@@ -134,6 +154,43 @@ const createReporter = () => {
       return failures.length > 0;
     },
   };
+};
+
+const getExportEntry = (pkg, subpath) => {
+  if (!isRecord(pkg.exports)) return undefined;
+  return pkg.exports[subpath];
+};
+
+const getImportTarget = (entry) => {
+  if (typeof entry === "string") return entry;
+  if (!isRecord(entry)) return undefined;
+  if (typeof entry.import === "string") return entry.import;
+  if (typeof entry.default === "string") return entry.default;
+  return undefined;
+};
+
+const resolvePackageTarget = (root, target) => {
+  if (typeof target !== "string") return undefined;
+  return resolve(root, target);
+};
+
+const importPackageTarget = async (path) => import(pathToFileURL(path).href);
+
+const detectFactory = (module, explicitName, pattern) => {
+  if (explicitName !== undefined) {
+    return typeof module[explicitName] === "function"
+      ? { name: explicitName, factory: module[explicitName] }
+      : undefined;
+  }
+
+  const candidates = Object.entries(module).filter(
+    ([name, value]) => pattern.test(name) && typeof value === "function",
+  );
+
+  if (candidates.length !== 1) return undefined;
+
+  const [[name, factory]] = candidates;
+  return { name, factory };
 };
 
 const getBinEntries = (pkg) => {
@@ -199,6 +256,30 @@ const parseSingleJsonObject = (stdout) => {
   return { ok: true, value: parsed };
 };
 
+const expectValidationFailureShape = (reporter, value, label) => {
+  reporter.check(isRecord(value), `${label} returns an object`);
+  if (!isRecord(value)) return;
+
+  reporter.check(value.ok === false, `${label} has ok:false`);
+  reporter.check(isRecord(value.error), `${label} includes error object`);
+
+  if (isRecord(value.error)) {
+    reporter.check(typeof value.error.code === "string", `${label} error has code`);
+    reporter.check(typeof value.error.message === "string", `${label} error has message`);
+    reporter.check(
+      typeof value.error.retryable === "boolean",
+      `${label} error has retryable flag`,
+    );
+
+    if (value.error.retryable === true) {
+      reporter.check(
+        isRecord(value.error.recoveryAction) || typeof value.error.recoveryHint === "string",
+        `${label} retryable error has recovery metadata`,
+      );
+    }
+  }
+};
+
 const checkStructuredFailure = (reporter, value, label) => {
   if (!isRecord(value)) return;
 
@@ -260,23 +341,167 @@ const checkStructuredSuccess = (reporter, value, label) => {
   }
 };
 
+const validateOperationSpec = (reporter, spec, name) => {
+  reporter.check(isRecord(spec), `operation ${name} help returns an object`);
+  if (!isRecord(spec)) return;
+
+  reporter.check(spec.name === name, `operation ${name} help preserves name`);
+  reporter.check(
+    isKebabCaseOperationName(spec.name),
+    `operation ${name} uses kebab-case canonical name`,
+  );
+  reporter.check(typeof spec.label === "string", `operation ${name} has label`);
+  reporter.check(typeof spec.description === "string", `operation ${name} has description`);
+  reporter.check(isRecord(spec.inputJsonSchema), `operation ${name} has object inputJsonSchema`);
+  reporter.check(isRecord(spec.resultJsonSchema), `operation ${name} has object resultJsonSchema`);
+  reporter.check(Array.isArray(spec.requiredInputKeys), `operation ${name} has requiredInputKeys array`);
+  reporter.check(Array.isArray(spec.examples), `operation ${name} has examples array`);
+  reporter.check(Array.isArray(spec.limitations), `operation ${name} has limitations array`);
+  reporter.check(typeof spec.resultSummary === "string", `operation ${name} has resultSummary`);
+};
+
+const validateToolset = async (reporter, toolsetModule, args) => {
+  const detected = detectFactory(
+    toolsetModule,
+    args["toolset-factory"],
+    /^create[A-Z].*Toolset$/,
+  );
+
+  reporter.check(
+    detected !== undefined,
+    args["toolset-factory"] === undefined
+      ? "./toolset has exactly one create*Toolset factory export"
+      : `./toolset exports ${args["toolset-factory"]}`,
+  );
+
+  if (detected === undefined) return undefined;
+
+  const toolset = await detected.factory();
+  reporter.pass(`loaded neutral toolset via ${detected.name}()`);
+
+  reporter.check(hasString(toolset, "id"), "toolset has id string");
+  reporter.check(hasString(toolset, "label"), "toolset has label string");
+  reporter.check(hasString(toolset, "description"), "toolset has description string");
+  if (hasString(toolset, "description")) {
+    reporter.check(
+      !hasHowToDescriptionCue(toolset.description),
+      "top-level toolset description is purpose-only, not usage instructions",
+    );
+  }
+
+  if (args.id !== undefined && hasString(toolset, "id")) {
+    reporter.check(toolset.id === args.id, `toolset id is ${args.id}`);
+  }
+
+  for (const method of [
+    "help",
+    "listOperations",
+    "getCommandHelp",
+    "validateInput",
+    "execute",
+    "serializeError",
+  ]) {
+    reporter.check(hasFunction(toolset, method), `toolset has ${method}()`);
+  }
+
+  if (!hasFunction(toolset, "help") || !hasFunction(toolset, "listOperations")) {
+    return toolset;
+  }
+
+  const help = toolset.help();
+  reporter.check(isRecord(help), "toolset help() returns an object");
+  reporter.check(hasString(help, "id"), "toolset help has id");
+  reporter.check(Array.isArray(help.operations), "toolset help has operations array");
+
+  const operations = toolset.listOperations();
+  reporter.check(Array.isArray(operations), "listOperations() returns an array");
+  reporter.check(
+    Array.isArray(operations) && operations.length > 0,
+    "listOperations() returns at least one operation",
+  );
+
+  if (!Array.isArray(operations)) return toolset;
+
+  for (const operation of operations) {
+    reporter.check(isRecord(operation), "operation summary is an object");
+    if (!isRecord(operation)) continue;
+
+    reporter.check(
+      typeof operation.name === "string" && operation.name.length > 0,
+      "operation summary has name",
+    );
+    reporter.check(
+      isKebabCaseOperationName(operation.name),
+      `operation ${operation.name ?? "<unknown>"} summary name is kebab-case`,
+    );
+    reporter.check(
+      typeof operation.label === "string" && operation.label.length > 0,
+      `operation ${operation.name ?? "<unknown>"} has label`,
+    );
+    reporter.check(
+      typeof operation.description === "string" && operation.description.length > 0,
+      `operation ${operation.name ?? "<unknown>"} has description`,
+    );
+
+    if (typeof operation.name !== "string" || !hasFunction(toolset, "getCommandHelp")) {
+      continue;
+    }
+
+    const spec = toolset.getCommandHelp(operation.name);
+    validateOperationSpec(reporter, spec, operation.name);
+
+    if (
+      isRecord(spec) &&
+      Array.isArray(spec.examples) &&
+      spec.examples.length > 0 &&
+      hasFunction(toolset, "validateInput")
+    ) {
+      const validation = toolset.validateInput(operation.name, spec.examples[0]);
+      reporter.check(
+        isRecord(validation) && validation.ok === true && isRecord(validation.input),
+        `operation ${operation.name} first example validates`,
+      );
+    }
+  }
+
+  if (hasFunction(toolset, "validateInput")) {
+    expectValidationFailureShape(
+      reporter,
+      toolset.validateInput("__validate_tool_surface_unknown__", {}),
+      "unknown operation validation",
+    );
+  }
+
+  if (hasFunction(toolset, "serializeError")) {
+    const serialized = toolset.serializeError(new Error("validation smoke"));
+    reporter.check(isRecord(serialized), "serializeError() returns an object");
+    reporter.check(hasString(serialized, "name"), "serialized error has name");
+    reporter.check(hasString(serialized, "message"), "serialized error has message");
+  }
+
+  return toolset;
+};
+
 const validatePackageShape = (reporter, root, pkg, args) => {
   reporter.check(hasString(pkg, "name"), "package has name");
 
   const binEntries = getBinEntries(pkg);
   reporter.check(binEntries.length > 0, "package has at least one CLI bin");
 
-  if (args.id !== undefined) {
-    const binNames = binEntries.map(([name]) => name);
-    reporter.check(
-      pkg.name === args.id || binNames.includes(args.id),
-      `package name or CLI bin matches --id ${args.id}`,
-    );
-  }
-
   for (const [, target] of binEntries) {
     reporter.check(existsSync(resolve(root, target)), `CLI bin file exists: ${target}`);
   }
+
+  const toolsetEntry = getExportEntry(pkg, "./toolset");
+  const toolsetTarget = resolvePackageTarget(root, getImportTarget(toolsetEntry));
+
+  reporter.check(toolsetEntry !== undefined, "package exports ./toolset");
+  reporter.check(
+    toolsetTarget !== undefined && existsSync(toolsetTarget),
+    "./toolset import target exists",
+  );
+
+  return toolsetTarget;
 };
 
 const validateCli = (reporter, root, resolved, args) => {
@@ -329,7 +554,7 @@ const validateCli = (reporter, root, resolved, args) => {
   }
 };
 
-const main = () => {
+const main = async () => {
   const args = parseArgs(process.argv.slice(2));
 
   if (args.help) {
@@ -341,13 +566,23 @@ const main = () => {
   const reporter = createReporter();
   const pkgPath = join(root, "package.json");
   let pkg;
+  let toolsetTarget;
 
   if (existsSync(pkgPath)) {
     reporter.pass("package.json exists");
     pkg = readJson(pkgPath);
-    validatePackageShape(reporter, root, pkg, args);
+    toolsetTarget = validatePackageShape(reporter, root, pkg, args);
   } else {
-    reporter.warn("package.json not found; package bin checks skipped. Pass --command to run CLI smoke checks.");
+    reporter.fail("package.json exists");
+  }
+
+  if (toolsetTarget !== undefined && existsSync(toolsetTarget)) {
+    try {
+      const toolsetModule = await importPackageTarget(toolsetTarget);
+      await validateToolset(reporter, toolsetModule, args);
+    } catch (error) {
+      reporter.fail(`failed to import/validate ./toolset: ${error.stack ?? error}`);
+    }
   }
 
   const resolved = resolveCommand(root, pkg, args);
@@ -361,9 +596,7 @@ const main = () => {
   process.exitCode = reporter.failed ? 1 : 0;
 };
 
-try {
-  main();
-} catch (error) {
+main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
-}
+});
