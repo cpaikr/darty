@@ -43,7 +43,8 @@ export const viewDsae001CompanyDetail = (request: CompanyDetailRequest) =>
   );
 
 export const dsae001CompanyDetailProvider: CompanyDetailProvider = {
-  detail: (request) => Effect.runPromise(viewDsae001CompanyDetail(request)),
+  detail: (request, context) =>
+    Effect.runPromise(viewDsae001CompanyDetail(request), { signal: context?.signal }),
 };
 
 export const toDsae001CompanyDetailProviderError = (

@@ -2,6 +2,7 @@ import type {
   ReportGuideRawInput,
   ReportGuideResult,
 } from "../capabilities/report-guide/contract.ts";
+import type { DartyExecutionContext } from "../capabilities/types.ts";
 import { executeReportGuide } from "../capabilities/report-guide/execute.ts";
 import {
   reportGuideInputJsonSchema,
@@ -15,6 +16,7 @@ export type ReportGuideOperation = {
   readonly resultJsonSchema: typeof reportGuideResultJsonSchema;
   readonly execute: (
     input: Partial<ReportGuideRawInput> & Record<string, unknown>,
+    context?: DartyExecutionContext,
   ) => Promise<ReportGuideResult>;
 };
 

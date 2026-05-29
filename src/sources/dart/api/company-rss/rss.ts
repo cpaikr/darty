@@ -41,7 +41,8 @@ export const fetchDartCompanyRss = (request: CompanyRssRequest) =>
   );
 
 export const dartCompanyRssProvider: CompanyRssProvider = {
-  rss: (request) => Effect.runPromise(fetchDartCompanyRss(request)),
+  rss: (request, context) =>
+    Effect.runPromise(fetchDartCompanyRss(request), { signal: context?.signal }),
 };
 
 export const toCompanyRssProviderError = (

@@ -2,6 +2,7 @@ import type {
   ViewReportRawInput,
   ViewReportResult,
 } from "../capabilities/view-report/contract.ts";
+import type { DartyExecutionContext } from "../capabilities/types.ts";
 import { executeViewReport } from "../capabilities/view-report/execute.ts";
 import type { ViewReportProvider } from "../capabilities/view-report/provider.ts";
 import {
@@ -17,6 +18,7 @@ export type ViewReportOperation = {
   readonly resultJsonSchema: typeof viewReportResultJsonSchema;
   readonly execute: (
     input: Partial<ViewReportRawInput> & Record<string, unknown>,
+    context?: DartyExecutionContext,
   ) => Promise<ViewReportResult>;
 };
 
@@ -26,7 +28,7 @@ export const createViewReportOperation = (
   name: viewReportOperationName,
   inputJsonSchema: viewReportInputJsonSchema,
   resultJsonSchema: viewReportResultJsonSchema,
-  execute: (input) => executeViewReport(input, provider),
+  execute: (input, context) => executeViewReport(input, provider, context),
 });
 
 export const defaultViewReportOperation = createViewReportOperation(

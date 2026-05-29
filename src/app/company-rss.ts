@@ -2,6 +2,7 @@ import type {
   CompanyRssRawInput,
   CompanyRssResult,
 } from "../capabilities/company-rss/contract.ts";
+import type { DartyExecutionContext } from "../capabilities/types.ts";
 import { executeCompanyRss } from "../capabilities/company-rss/execute.ts";
 import type { CompanyRssProvider } from "../capabilities/company-rss/provider.ts";
 import {
@@ -17,6 +18,7 @@ export type CompanyRssOperation = {
   readonly resultJsonSchema: typeof companyRssResultJsonSchema;
   readonly execute: (
     input: Partial<CompanyRssRawInput> & Record<string, unknown>,
+    context?: DartyExecutionContext,
   ) => Promise<CompanyRssResult>;
 };
 
@@ -26,7 +28,7 @@ export const createCompanyRssOperation = (
   name: companyRssOperationName,
   inputJsonSchema: companyRssInputJsonSchema,
   resultJsonSchema: companyRssResultJsonSchema,
-  execute: (input) => executeCompanyRss(input, provider),
+  execute: (input, context) => executeCompanyRss(input, provider, context),
 });
 
 export const defaultCompanyRssOperation = createCompanyRssOperation(

@@ -1,23 +1,25 @@
-# CLI-Only Surface Plan
+# Public Surface Plan
 
 ## Current Status
 
-Darty's public integration surface is the CLI. The package publishes the `darty` bin and does not export package API subpaths.
+Darty exposes two supported public surfaces over the same capability core:
+
+- `darty` CLI for humans, subprocess-capable agents, and desktop hosts that need a process boundary.
+- `@sjunepark/darty/toolset` for trusted JS/TS server hosts that execute Darty in-process behind their own runtime boundary.
 
 Completed in this pass:
 
-- narrowed `package.json` to CLI packaging only;
-- changed the build to emit only `dist/cli.js`;
-- updated package smoke tests to exercise only the installed `darty` command;
-- removed non-CLI eval scripts from the documented package commands;
-- deleted inactive package API definitions and matching non-CLI eval scaffolding;
-- updated README, architecture, release, spec, and eval docs to point agents at the CLI subprocess contract.
+- restored the transport-neutral toolset export without restoring Pi adapters;
+- kept the CLI stdout/stderr/exit-code contract intact;
+- updated package build and smoke tests so packed consumers can import `@sjunepark/darty/toolset`;
+- documented the CLI/toolset/Pi-adapter boundary in README and architecture docs.
 
 ## Boundary
 
-- Public: `darty` CLI, command help, stdout JSON envelopes, stderr diagnostics, and process exit codes.
-- Internal: capability contracts, app wiring, source adapters, and parser/provider tests.
+- Public CLI: `darty` command help, stdout JSON envelopes, stderr diagnostics, and process exit codes.
+- Public toolset: command discovery/help, validation metadata, validated execution, serialized errors, and `AbortSignal` cancellation for trusted JS/TS server hosts.
+- Non-goal: Pi, MCP, or runtime-specific package adapters without a separate product decision.
 
 ## Follow-ups
 
-- Add a dependency-light CLI surface validator script if package conformance starts drifting.
+- Add a dependency-light package surface validator script if package conformance starts drifting.

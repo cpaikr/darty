@@ -129,7 +129,8 @@ export const searchDsab007Contents = (
   );
 
 export const dsab007ContentsProvider: SearchBodyProvider = {
-  search: (request) => Effect.runPromise(searchDsab007Contents(request)),
+  search: (request, context) =>
+    Effect.runPromise(searchDsab007Contents(request), { signal: context?.signal }),
 };
 
 export const toDsab007ContentsProviderError = (

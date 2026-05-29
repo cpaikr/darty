@@ -66,7 +66,7 @@ These do not replace deterministic tests. They answer model/tool-use questions s
 - can a fixed live scenario return the expected structured envelope?
 - can a model use the provided local CLI runner with valid arguments?
 
-Non-CLI eval tracks are out of scope for the current CLI-only product boundary.
+Non-CLI eval tracks remain out of scope; the trusted-host toolset is covered by deterministic and package smoke tests rather than agent eval tracks.
 
 ## What To Run While Working
 

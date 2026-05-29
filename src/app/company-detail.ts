@@ -2,6 +2,7 @@ import type {
   CompanyDetailRawInput,
   CompanyDetailResult,
 } from "../capabilities/company-detail/contract.ts";
+import type { DartyExecutionContext } from "../capabilities/types.ts";
 import { executeCompanyDetail } from "../capabilities/company-detail/execute.ts";
 import type { CompanyDetailProvider } from "../capabilities/company-detail/provider.ts";
 import {
@@ -17,6 +18,7 @@ export type CompanyDetailOperation = {
   readonly resultJsonSchema: typeof companyDetailResultJsonSchema;
   readonly execute: (
     input: Partial<CompanyDetailRawInput> & Record<string, unknown>,
+    context?: DartyExecutionContext,
   ) => Promise<CompanyDetailResult>;
 };
 
@@ -26,7 +28,7 @@ export const createCompanyDetailOperation = (
   name: companyDetailOperationName,
   inputJsonSchema: companyDetailInputJsonSchema,
   resultJsonSchema: companyDetailResultJsonSchema,
-  execute: (input) => executeCompanyDetail(input, provider),
+  execute: (input, context) => executeCompanyDetail(input, provider, context),
 });
 
 export const defaultCompanyDetailOperation = createCompanyDetailOperation(

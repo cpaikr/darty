@@ -1,3 +1,4 @@
+import type { DartyExecutionContext } from "../../../../capabilities/types.ts";
 import type {
   ViewReportContent,
   ViewReportOutputFormat,
@@ -20,11 +21,12 @@ export const buildReportContent = async (input: {
   readonly maxBytes: number;
   readonly contentStartByte: number;
   readonly section?: SourceReportSection;
+  readonly context?: DartyExecutionContext;
 }): Promise<{
   readonly content: ViewReportContent;
   readonly warning?: ViewReportWarning;
 }> => {
-  const sourceContent = await input.source.fetchContent(input.locator);
+  const sourceContent = await input.source.fetchContent(input.locator, input.context);
   const value =
     input.outputFormat === "markdown"
       ? convertReportHtmlToMarkdown(sourceContent.html)

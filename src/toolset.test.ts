@@ -1,0 +1,326 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  createDartyToolset,
+  DartyToolsetError,
+  DartyToolsetValidationError,
+  type DartyOperationName,
+} from "./toolset.ts";
+
+const expectedOperationNames: readonly DartyOperationName[] = [
+  "search-body",
+  "search-company",
+  "search-company-reports",
+  "company-detail",
+  "company-rss",
+  "disclosure-types",
+  "report-guide",
+  "view-report",
+];
+
+describe("Darty neutral toolset", () => {
+  test("lists stable canonical operation names", () => {
+    const toolset = createDartyToolset();
+
+    expect(toolset.id).toBe("darty");
+    expect(toolset.listOperations().map((operation) => operation.name)).toEqual(
+      [...expectedOperationNames],
+    );
+    expect(
+      toolset
+        .listOperations()
+        .every(
+          (operation) => operation.label.length > 0 && operation.description.length > 0,
+        ),
+    ).toBe(true);
+  });
+
+  test("returns operation details with help, schemas, examples, and required keys", () => {
+    const toolset = createDartyToolset();
+    const searchCompany = toolset.getOperation("search-company");
+
+    expect(searchCompany).toMatchObject({
+      name: "search-company",
+      inputJsonSchema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["companyName"],
+      },
+      resultJsonSchema: {
+        type: "object",
+        required: ["result", "metadata", "references", "warnings"],
+      },
+      requiredInputKeys: ["companyName"],
+      examples: [{ companyName: "삼성전자", page: 1, pageSize: 15 }],
+      resultSummary: expect.stringContaining("search-company"),
+    });
+    expect(searchCompany?.description).toContain("DART");
+    expect(toolset.getCommandHelp("search-company")).toEqual(searchCompany);
+    expect(toolset.getCommandHelp("report-guide")).toMatchObject({
+      name: "report-guide",
+      examples: [{}],
+      resultSummary: expect.stringContaining("Markdown guide"),
+    });
+    expect(toolset.getOperation("darty_search_company")).toBeUndefined();
+  });
+
+  test("returns source-level help without host-owned command copy", () => {
+    const toolset = createDartyToolset();
+    const help = toolset.help();
+
+    expect(help.id).toBe("darty");
+    expect(help.label).toBe("Darty");
+    expect(help.operations.map((operation) => operation.name)).toContain("search-body");
+    expect(help.limitations.join("\n")).toContain("OpenDART");
+    expect(help.citationGuidance.join("\n")).toContain("references");
+    expect(help.usage).toContain("validateInput");
+  });
+
+  test("validates and prepares input without executing DART lookups", () => {
+    const toolset = createDartyToolset();
+
+    expect(
+      toolset.validateInput("search-company", { companyName: " 삼성전자 " }),
+    ).toEqual({
+      ok: true,
+      input: { companyName: "삼성전자", page: 1, pageSize: 15 },
+    });
+
+    expect(toolset.validateInput("search-company", {})).toMatchObject({
+      ok: false,
+      error: {
+        code: "missing_parameter",
+        operationName: "search-company",
+        parameter: "companyName",
+        reason: "required",
+        expected: "string_min_length_2",
+        message: expect.stringContaining("companyName"),
+        exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+      },
+    });
+
+    expect(toolset.validateInput("search-company", null)).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        operationName: "search-company",
+        parameter: "input",
+        reason: "invalid_type",
+        actual: null,
+        exampleInput: { companyName: "삼성전자", page: 1, pageSize: 15 },
+      },
+    });
+
+    expect(toolset.validateInput("view-report", null)).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        operationName: "view-report",
+        parameter: "input",
+        reason: "invalid_type",
+        actual: null,
+      },
+    });
+
+    expect(
+      toolset.validateInput("search-company-reports", {
+        companyCode: "삼성전자",
+        startDate: "20260501",
+        endDate: "20260531",
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        parameter: "companyCode",
+        recoveryHint: expect.stringContaining("search-company"),
+      },
+    });
+
+    expect(toolset.validateInput("report-guide", {})).toEqual({
+      ok: true,
+      input: {},
+    });
+    expect(toolset.validateInput("report-guide", { query: "사업보고서" })).toMatchObject({
+      ok: false,
+      error: {
+        code: "unknown_parameter",
+        operationName: "report-guide",
+        parameter: "query",
+      },
+    });
+  });
+
+  test("serializes errors structurally across class boundaries", () => {
+    const toolset = createDartyToolset();
+    const error = new Error("Mock source failure") as Error & {
+      code: string;
+      retryable: boolean;
+      parameter: string;
+      sourceUrl: string;
+      recoveryHint: string;
+      operationName: string;
+    };
+    error.code = "source_unavailable";
+    error.retryable = true;
+    error.parameter = "keyword";
+    error.sourceUrl = "mock://dart/search";
+    error.recoveryHint = "Try again later.";
+    error.operationName = "search-body";
+
+    expect(toolset.serializeError(error)).toEqual({
+      name: "Error",
+      message: "Mock source failure",
+      code: "source_unavailable",
+      retryable: true,
+      parameter: "keyword",
+      sourceUrl: "mock://dart/search",
+      recoveryHint: "Try again later.",
+      operationName: "search-body",
+    });
+
+    expect(toolset.validateInput("not-a-command", {})).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_request",
+        parameter: "name",
+        reason: "unknown_operation",
+        operationName: "not-a-command",
+      },
+    });
+  });
+
+  test("executes through the operation and preserves result envelope fields", async () => {
+    const toolset = createDartyToolset();
+    const result = await toolset.execute("disclosure-types", { query: "사업보고서" });
+
+    expect(result).toMatchObject({
+      result: {
+        request: { query: "사업보고서" },
+      },
+    });
+    expect(result).toHaveProperty("metadata");
+    expect(result).toHaveProperty("references");
+    expect(result).toHaveProperty("warnings");
+    expect(Array.isArray((result as { warnings?: unknown }).warnings)).toBe(true);
+  });
+
+  test("validates execute input before running the operation", async () => {
+    const toolset = createDartyToolset();
+
+    await expect(toolset.execute("search-company", {})).rejects.toMatchObject({
+      name: "DartyToolsetValidationError",
+      code: "validation_failed",
+      retryable: false,
+      operationName: "search-company",
+      parameter: "companyName",
+      reason: "required",
+      expected: "string_min_length_2",
+    });
+
+    try {
+      await toolset.execute("search-company", {});
+    } catch (error) {
+      expect(error).toBeInstanceOf(DartyToolsetValidationError);
+      expect(toolset.serializeError(error)).toMatchObject({
+        name: "DartyToolsetValidationError",
+        code: "validation_failed",
+        retryable: false,
+        operationName: "search-company",
+        parameter: "companyName",
+        reason: "required",
+      });
+    }
+  });
+
+  test("delegates custom operations for host tests without DART access", async () => {
+    let receivedSignal: AbortSignal | undefined;
+    const controller = new AbortController();
+    const toolset = createDartyToolset({
+      operations: [
+        {
+          name: "disclosure-types" as DartyOperationName,
+          label: "Mock disclosure types",
+          description: "Mock operation",
+          operation: {
+            name: "disclosure-types",
+            inputJsonSchema: { type: "object" },
+            resultJsonSchema: { type: "object" },
+            execute: async (input, context) => {
+              receivedSignal = context?.signal;
+
+              return {
+                result: { request: input, items: [] },
+                metadata: { source: "mock" },
+                references: { sourceUrl: "mock://darty" },
+                warnings: [],
+              };
+            },
+          },
+        },
+      ],
+    });
+
+    expect(toolset.validateInput("disclosure-types", null)).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_parameter",
+        operationName: "disclosure-types",
+        parameter: "input",
+        reason: "invalid_type",
+        expected: "object",
+        actual: null,
+      },
+    });
+
+    expect(toolset.validateInput("disclosure-types", { category: "A" })).toEqual({
+      ok: true,
+      input: { category: "A" },
+    });
+
+    await expect(
+      toolset.execute(
+        "disclosure-types",
+        { category: "A" },
+        { signal: controller.signal },
+      ),
+    ).resolves.toMatchObject({
+      result: { request: { category: "A" }, items: [] },
+      references: { sourceUrl: "mock://darty" },
+      warnings: [],
+    });
+    expect(receivedSignal).toBe(controller.signal);
+  });
+
+  test("rejects aborted executions with a typed error", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const toolset = createDartyToolset();
+
+    await expect(
+      toolset.execute("disclosure-types", {}, { signal: controller.signal }),
+    ).rejects.toMatchObject({
+      name: "DartyToolsetError",
+      code: "aborted",
+      retryable: true,
+      operationName: "disclosure-types",
+    });
+  });
+
+  test("throws a typed error for unknown operations", async () => {
+    const toolset = createDartyToolset();
+
+    await expect(toolset.execute("not-a-darty-operation", {})).rejects.toMatchObject({
+      name: "DartyToolsetError",
+      code: "unknown_operation",
+      retryable: false,
+      operationName: "not-a-darty-operation",
+    });
+
+    try {
+      await toolset.execute("not-a-darty-operation", {});
+    } catch (error) {
+      expect(error).toBeInstanceOf(DartyToolsetError);
+    }
+  });
+});

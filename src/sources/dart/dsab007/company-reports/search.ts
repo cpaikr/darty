@@ -139,7 +139,8 @@ export const searchDsab007CompanyReports = (
   );
 
 export const dsab007CompanyReportsProvider: SearchCompanyReportsProvider = {
-  search: (request) => Effect.runPromise(searchDsab007CompanyReports(request)),
+  search: (request, context) =>
+    Effect.runPromise(searchDsab007CompanyReports(request), { signal: context?.signal }),
 };
 
 export const toDsab007CompanyReportsProviderError = (

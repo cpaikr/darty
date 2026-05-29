@@ -2,10 +2,12 @@ import {
   chmodSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 
 const defaultOutfile = "dist/cli.js";
 
@@ -50,6 +52,25 @@ const writeNodeCliHeader = (outfile: string): void => {
   chmodSync(outfile, 0o755);
 };
 
+const rewriteDeclarationImports = (directory: string): void => {
+  for (const entry of readdirSync(directory)) {
+    const path = join(directory, entry);
+    const stats = statSync(path);
+
+    if (stats.isDirectory()) {
+      rewriteDeclarationImports(path);
+      continue;
+    }
+
+    if (!entry.endsWith(".d.ts")) {
+      continue;
+    }
+
+    const source = readFileSync(path, "utf8");
+    writeFileSync(path, source.replaceAll(/(["']\.[^"']+)\.ts(["'])/g, "$1.js$2"));
+  }
+};
+
 const outfile = parseOutfile(Bun.argv.slice(2));
 const outdir = dirname(outfile);
 
@@ -71,4 +92,8 @@ run([
 ]);
 writeNodeCliHeader(outfile);
 
+run(["bun", "run", "tsc", "-p", "tsconfig.build.json", "--outDir", outdir]);
+rewriteDeclarationImports(outdir);
+
 console.log(`Built Node-compatible CLI at ${outfile}`);
+console.log(`Built shared ESM toolset modules in ${outdir}`);

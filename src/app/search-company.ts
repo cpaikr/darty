@@ -2,6 +2,7 @@ import type {
   SearchCompanyRawInput,
   SearchCompanyResult,
 } from "../capabilities/search-company/contract.ts";
+import type { DartyExecutionContext } from "../capabilities/types.ts";
 import { executeSearchCompany } from "../capabilities/search-company/execute.ts";
 import type { SearchCompanyProvider } from "../capabilities/search-company/provider.ts";
 import {
@@ -17,6 +18,7 @@ export type SearchCompanyOperation = {
   readonly resultJsonSchema: typeof searchCompanyResultJsonSchema;
   readonly execute: (
     input: Partial<SearchCompanyRawInput> & Record<string, unknown>,
+    context?: DartyExecutionContext,
   ) => Promise<SearchCompanyResult>;
 };
 
@@ -26,7 +28,7 @@ export const createSearchCompanyOperation = (
   name: searchCompanyOperationName,
   inputJsonSchema: searchCompanyInputJsonSchema,
   resultJsonSchema: searchCompanyResultJsonSchema,
-  execute: (input) => executeSearchCompany(input, provider),
+  execute: (input, context) => executeSearchCompany(input, provider, context),
 });
 
 export const defaultSearchCompanyOperation = createSearchCompanyOperation(

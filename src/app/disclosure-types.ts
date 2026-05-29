@@ -2,6 +2,7 @@ import type {
   DisclosureTypesRawInput,
   DisclosureTypesResult,
 } from "../capabilities/disclosure-types/contract.ts";
+import type { DartyExecutionContext } from "../capabilities/types.ts";
 import { executeDisclosureTypes } from "../capabilities/disclosure-types/execute.ts";
 import {
   disclosureTypesInputJsonSchema,
@@ -15,6 +16,7 @@ export type DisclosureTypesOperation = {
   readonly resultJsonSchema: typeof disclosureTypesResultJsonSchema;
   readonly execute: (
     input: Partial<DisclosureTypesRawInput> & Record<string, unknown>,
+    context?: DartyExecutionContext,
   ) => Promise<DisclosureTypesResult>;
 };
 

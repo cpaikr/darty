@@ -1,3 +1,4 @@
+import type { DartyExecutionContext } from "../../../../capabilities/types.ts";
 import {
   fetchReportContent,
   fetchReportShell,
@@ -18,9 +19,11 @@ export type Dsaf001ReportSource = {
   readonly fetchShell: (
     receiptNumber: string,
     documentQuery?: string,
+    context?: DartyExecutionContext,
   ) => Promise<SourceReportShell>;
   readonly fetchContent: (
     locator: SourceReportLocator,
+    context?: DartyExecutionContext,
   ) => Promise<SourceReportContent>;
 };
 

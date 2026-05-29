@@ -1,16 +1,18 @@
 # Runtime Flows
 
-The main runtime flow is a capability request that enters through CLI flags, converges in the shared app/capability layers, and then calls a DART source adapter.
+The main runtime flow is a capability request that enters through either CLI flags or the trusted-host toolset, converges in the shared app/capability layers, and then calls a DART source adapter.
 
-## One Core, Current CLI Transport
+## One Core, Current Public Transports
 
 ```text
-CLI argv
-   |
-   v
-src/cli/commands/...
-   |
-   v
+CLI argv                @sjunepark/darty/toolset
+   |                             |
+   v                             v
+src/cli/commands/...        src/toolset.ts
+   |                             |
+   +-------------+---------------+
+                 |
+                 v
 src/app/<capability>.ts
    |
    v
@@ -23,7 +25,7 @@ src/sources/dart/...
 DART web endpoint
 ```
 
-The important point: the CLI parses process input, then delegates. It does not implement DART search or view-report behavior itself. The `src/app/` seam is internal composition, not a public package API.
+The important point: transports parse or validate host input, then delegate. They do not implement DART search or view-report behavior themselves. The `src/app/` seam remains shared composition behind the public CLI and toolset surfaces.
 
 ## CLI Flow
 

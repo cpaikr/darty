@@ -14,20 +14,22 @@ company overview search/detail, DART company RSS, and `dsaf001` report viewing.
 The `disclosure-types` and `report-guide` helpers are static and have no live
 DART adapter.
 
-The public design goal is one CLI surface over reusable capability code. The
-active public transport is the CLI; do not add another public integration surface
-without an explicit product decision.
+The public design goal is a reusable capability core with narrowly justified
+integration surfaces. The active public surfaces are the CLI and the
+trusted-host `@sjunepark/darty/toolset` package export; Pi adapters remain out
+of scope.
 
 ## Layer Overview
 
-The CLI is not the real app. The capability layer is: a semantic request
-contract, a provider interface, and an execution path that normalizes errors
-and shapes results. CLI is the current transport host over that core.
+The CLI and toolset are not the real app. The capability layer is: a semantic
+request contract, a provider interface, and an execution path that normalizes
+errors and shapes results. Public transports stay thin over that core.
 
 ```mermaid
 graph TD
-    subgraph Transport["Transport Adapter"]
+    subgraph Transport["Transport Adapters"]
         CLI["CLI · src/cli/"]
+        TOOLSET["Toolset · src/toolset.ts"]
     end
 
     subgraph App["Shared Composition · src/app/"]
@@ -43,6 +45,7 @@ graph TD
     end
 
     CLI --> APP
+    TOOLSET --> APP
     APP --> CAP
     CAP --> SRC
     SRC --> DART[("dart.fss.or.kr")]
@@ -50,7 +53,7 @@ graph TD
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Transport** | `src/cli.ts`, `src/cli/program.ts`, `src/cli/` | Parse CLI input, own command UX, call the shared operation, and serialize process output |
+| **Transport** | `src/cli.ts`, `src/cli/program.ts`, `src/cli/`, `src/toolset.ts` | Own public host contracts, call the shared operation, and serialize process/toolset output |
 | **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
 | **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
 | **Source** | `src/sources/dart/` | DART replay/viewer fields, form POST or viewer GETs, HTML parsing, source models, and error mapping |
@@ -122,6 +125,9 @@ graph TD
   execution through an injected command runner. Most command successes and all
   command failures serialize as JSON to stdout; `report-guide` success output
   and help remain human-readable.
+- **`src/toolset.ts`** — Trusted JS/TS server-host adapter. Exposes command
+  discovery/help, source-owned validation metadata, serialized errors,
+  validated execution, and `AbortSignal` cancellation without Pi runtime types.
 - **`src/app/`** — Shared operation wiring. Exposes internal operation names,
   JSON Schemas, and capability executors with the default DART providers already
   attached.

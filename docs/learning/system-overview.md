@@ -6,16 +6,16 @@
 
 The executable slice is intentionally narrow:
 
-- public CLI commands for company search/detail/RSS, filing search, body search, disclosure-type discovery, report guidance, and report viewing
+- public CLI commands and a trusted-host JS/TS toolset for company search/detail/RSS, filing search, body search, disclosure-type discovery, report guidance, and report viewing
 - DART source adapters for `dsab007`, `dsae001`, company RSS, and `dsaf001` report viewing
 - structured result envelopes with request echo, metadata, references, and warnings
 - deterministic tests plus opt-in live and agentic CLI eval tracks
 
 The broader product direction is in [VISION](../../VISION.md). Do not infer the full product scope from the current capabilities; the repo explicitly treats current code as the first slice of a larger DART querying/searching tool.
 
-## Why The CLI Is The Public Surface
+## Why The CLI Is Still The Default Surface
 
-A common first impression is that this is only command-line argument parsing around DART. The architecture is different: reusable capability code owns semantic behavior, and the CLI is the single public adapter over that core.
+A common first impression is that this is only command-line argument parsing around DART. The architecture is different: reusable capability code owns semantic behavior, while the CLI and trusted-host toolset are thin public adapters over that core.
 
 ```text
                  +-------------------+
@@ -23,13 +23,16 @@ A common first impression is that this is only command-line argument parsing aro
                  +---------+---------+
                            |
                            |
-                    +------v------+
-                    | CLI adapter |
-                    | user flags  |
-                    +-------------+
+          +----------------+----------------+
+          |                                 |
+          v                                 v
+   +-------------+                  +---------------+
+   | CLI adapter |                  | toolset export |
+   | user flags  |                  | server hosts   |
+   +-------------+                  +---------------+
 ```
 
-This keeps the semantic contract reusable inside the package without exposing extra public package APIs. The CLI remains the public surface.
+This keeps semantic behavior in the shared capability layer. Use the CLI for humans, subprocess agents, and desktop process boundaries; use `@sjunepark/darty/toolset` only for trusted JS/TS server hosts.
 
 ## Current Product Shape
 

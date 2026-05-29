@@ -45,7 +45,7 @@ For each tool, decide which of these adapters are justified:
 
 Do not fork logic between adapters. Adapters should mostly validate input, call the core, and serialize output.
 
-Current repo stance: CLI is the only active adapter. Its subprocess I/O contract is defined in [../specs/cli-transport-v1.md](../specs/cli-transport-v1.md): command success and command failure both emit one JSON envelope to stdout, while help remains human-readable. The early MCP adapter is archived at git tag `archive/mcp-before-removal`; reintroduce MCP only when the core contract and agent-runtime need justify it.
+Current repo stance: the CLI is the default public adapter, and `@sjunepark/darty/toolset` is the supported in-process adapter for trusted JS/TS server hosts. The CLI subprocess I/O contract is defined in [../specs/cli-transport-v1.md](../specs/cli-transport-v1.md): command success and command failure both emit one JSON envelope to stdout, while help remains human-readable. The package intentionally does not expose Pi or MCP adapters; reintroduce ecosystem-specific adapters only when the core contract and agent-runtime need justify them.
 
 ## Why CLI First Often Wins
 

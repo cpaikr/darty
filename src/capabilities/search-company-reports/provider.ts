@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import type { DartyExecutionContext } from "../types.ts";
 import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { includesSourceEvidence } from "../response-detail.ts";
 import {
@@ -48,6 +49,7 @@ export class SearchCompanyReportsProviderError extends Schema.TaggedError<Search
 export type SearchCompanyReportsProvider = {
   readonly search: (
     request: SearchCompanyReportsRequest,
+    context?: DartyExecutionContext,
   ) => Promise<SearchCompanyReportsProviderResult>;
 };
 

@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import type { DartyExecutionContext } from "../types.ts";
 import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import type {
   CompanyDetailInfo,
@@ -36,6 +37,7 @@ export class CompanyDetailProviderError extends Schema.TaggedError<CompanyDetail
 export type CompanyDetailProvider = {
   readonly detail: (
     request: CompanyDetailRequest,
+    context?: DartyExecutionContext,
   ) => Promise<CompanyDetailProviderResult>;
 };
 

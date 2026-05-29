@@ -1,3 +1,4 @@
+import type { DartyExecutionContext } from "../../../../capabilities/types.ts";
 import type {
   ViewReportDocument,
   ViewReportRequest,
@@ -74,8 +75,13 @@ const selectShell = async (
   receiptNumber: string,
   documentId: string | undefined,
   initialDocumentQuery: string | undefined,
+  context: DartyExecutionContext | undefined,
 ): Promise<SourceReportShell> => {
-  const initialShell = await source.fetchShell(receiptNumber, initialDocumentQuery);
+  const initialShell = await source.fetchShell(
+    receiptNumber,
+    initialDocumentQuery,
+    context,
+  );
 
   if (documentId === undefined || initialShell.selectedDocument.id === documentId) {
     return initialShell;
@@ -96,12 +102,13 @@ const selectShell = async (
     });
   }
 
-  return source.fetchShell(receiptNumber, document.query);
+  return source.fetchShell(receiptNumber, document.query, context);
 };
 
 const viewReport = async (
   request: ViewReportRequest,
   source: Dsaf001ReportSource,
+  context?: DartyExecutionContext,
 ): Promise<ViewReportProviderResult> => {
   const receiptNumber = extractReceiptNumber(request.receipt);
 
@@ -119,6 +126,7 @@ const viewReport = async (
     receiptNumber,
     request.documentId,
     extractInitialDocumentQuery(request.receipt, receiptNumber),
+    context,
   );
   const contentPlan = resolveReportContentPlan({
     shell,
@@ -141,6 +149,7 @@ const viewReport = async (
           ...(contentPlan.kind === "section"
             ? { section: contentPlan.section }
             : {}),
+          ...(context === undefined ? {} : { context }),
         });
 
   if (contentResult?.warning !== undefined) {
@@ -194,9 +203,9 @@ const viewReport = async (
 export const createDsaf001ViewReportProvider = (
   source: Dsaf001ReportSource = defaultDsaf001ReportSource,
 ): ViewReportProvider => ({
-  view: async (request) => {
+  view: async (request, context) => {
     try {
-      return await viewReport(request, source);
+      return await viewReport(request, source, context);
     } catch (error) {
       throw toDsaf001ReportProviderError(error);
     }

@@ -17,7 +17,7 @@ The target experience should be closer to `yfinance` than browser automation:
 - predictable structured results
 - stable identifiers and references
 - easy local scripting for humans
-- easy use by agents through the CLI subprocess contract
+- easy use by agents through the CLI subprocess contract, and by trusted server hosts through a transport-neutral JS/TS toolset
 
 ## Why This Exists
 
@@ -50,7 +50,7 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - `structured over prose`: return typed records, not generated explanations
 - `source-explicit`: state whether a result came from DART search HTML, viewer HTML, RSS, or a fallback
 - `dart-shaped first`: keep low-level DART search details explicit before adding higher-level wrappers
-- `CLI-first`: keep one reusable core behind a discoverable subprocess contract; add other transports only after they are justified
+- `CLI-first`: keep one reusable core behind a discoverable subprocess contract; expose in-process toolsets only for justified trusted-host boundaries
 - `public-read first`: v1 should target read-only access
 
 ## v1 Boundaries
@@ -60,7 +60,7 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - read-only search and retrieval
 - stable references to companies, filings, documents, and sections where possible
 - enough metadata to verify origin, completeness, and source URL
-- a reusable core capability that backs the current CLI without exposing extra public tool surfaces before they are justified
+- a reusable core capability that backs the CLI and the trusted-host JS/TS toolset without adding ecosystem-specific adapters prematurely
 
 ### Out Of Scope
 

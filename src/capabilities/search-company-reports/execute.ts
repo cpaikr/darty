@@ -6,6 +6,7 @@ import {
   getExecutionFailureRecoveryHint,
   getInvalidRequestRecoveryHint,
 } from "../recovery-hints.ts";
+import type { DartyExecutionContext } from "../types.ts";
 import { searchCompanyReportsFailureCopy } from "./copy.ts";
 import {
   InvalidSearchCompanyReportsRequest,
@@ -65,10 +66,11 @@ const toSearchCompanyReportsFailure = (
 export const executeSearchCompanyReports = async (
   input: Partial<SearchCompanyReportsRawInput> & Record<string, unknown>,
   provider: SearchCompanyReportsProvider,
+  context?: DartyExecutionContext,
 ): Promise<SearchCompanyReportsResult> => {
   try {
     const request = resolveSearchCompanyReportsRequest(input);
-    const providerResult = await provider.search(request);
+    const providerResult = await provider.search(request, context);
 
     return buildSearchCompanyReportsResult(request, providerResult);
   } catch (error) {

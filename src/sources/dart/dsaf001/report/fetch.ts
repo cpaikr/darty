@@ -1,3 +1,4 @@
+import type { DartyExecutionContext } from "../../../../capabilities/types.ts";
 import { createCauseDiagnostics, mergeErrorDiagnostics } from "../../../../error-diagnostics.ts";
 import { ParseFailure, SourceUnavailable } from "../../errors.ts";
 import { toWebResponseDiagnostics } from "../../http-diagnostics.ts";
@@ -31,7 +32,10 @@ const charsetFromContentType = (contentType: string | null): string => {
   return "utf-8";
 };
 
-const fetchDecodedHtml = async (url: string): Promise<DartSourceTextResponse> => {
+const fetchDecodedHtml = async (
+  url: string,
+  context?: DartyExecutionContext,
+): Promise<DartSourceTextResponse> => {
   let response: Response;
 
   try {
@@ -39,6 +43,7 @@ const fetchDecodedHtml = async (url: string): Promise<DartSourceTextResponse> =>
       headers: {
         "user-agent": chromeDesktopUserAgent,
       },
+      ...(context?.signal === undefined ? {} : { signal: context.signal }),
     });
   } catch (error) {
     throw new SourceUnavailable({
@@ -112,19 +117,21 @@ export const buildReportViewerUrl = (locator: SourceReportLocator): string => {
 export const fetchReportShell = async (
   receiptNumber: string,
   documentQuery?: string,
+  context?: DartyExecutionContext,
 ): Promise<SourceReportShell> => {
   const query = documentQuery ?? `rcpNo=${encodeURIComponent(receiptNumber)}`;
   const sourceUrl = buildReportShellUrl(query);
-  const response = await fetchDecodedHtml(sourceUrl);
+  const response = await fetchDecodedHtml(sourceUrl, context);
 
   return parseReportShell(response);
 };
 
 export const fetchReportContent = async (
   locator: SourceReportLocator,
+  context?: DartyExecutionContext,
 ): Promise<SourceReportContent> => {
   const sourceUrl = buildReportViewerUrl(locator);
-  const response = await fetchDecodedHtml(sourceUrl);
+  const response = await fetchDecodedHtml(sourceUrl, context);
 
   return {
     sourceUrl,

@@ -7,13 +7,16 @@ This repo now has two layers:
 
 ## Big Picture
 
-The CLI is the only public integration surface. Behind it, the capability layer
-is: a semantic request contract, a provider interface, and an execution path
-that normalizes errors and shapes results. The core stays transport-neutral
-internally, but external agents and host apps should discover and run Darty
-through the `darty` command only.
+Darty has two public integration surfaces over the same capability core:
 
-The current core has eight CLI capabilities: `search-body` for DART body search,
+- `darty` CLI for humans, subprocess-capable agents, and desktop hosts such as Creo.
+- `@sjunepark/darty/toolset` for trusted JS/TS server hosts that execute Darty in-process behind their own runtime boundary.
+
+Behind those surfaces, the capability layer is a semantic request contract, a
+provider interface, and an execution path that normalizes errors and shapes
+results. Pi adapters are intentionally not part of the package surface.
+
+The current core has eight capabilities: `search-body` for DART body search,
 `search-company` for DART company overview company-name search,
 `search-company-reports` for company-code based filing search, `company-detail`
 for company overview detail lookup, `company-rss` for company-specific RSS,
@@ -27,7 +30,7 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 ## Document Ownership
 
 - [README.md](README.md)
-  Minimal public/package orientation that points users to CLI help as the usage source of truth.
+  Minimal public/package orientation for the CLI and trusted-host toolset surfaces.
 - [VISION.md](VISION.md)
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)

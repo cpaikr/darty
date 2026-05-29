@@ -2,6 +2,7 @@ import type {
   SearchBodyRawInput,
   SearchBodyResult,
 } from "../capabilities/search-body/contract.ts";
+import type { DartyExecutionContext } from "../capabilities/types.ts";
 import { executeSearchBody } from "../capabilities/search-body/execute.ts";
 import type { SearchBodyProvider } from "../capabilities/search-body/provider.ts";
 import {
@@ -23,6 +24,7 @@ export type SearchBodyOperation = {
   readonly resultJsonSchema: typeof searchBodyResultJsonSchema;
   readonly execute: (
     input: Partial<SearchBodyRawInput> & Record<string, unknown>,
+    context?: DartyExecutionContext,
   ) => Promise<SearchBodyResult>;
 };
 
@@ -32,7 +34,7 @@ export const createSearchBodyOperation = (
   name: searchBodyOperationName,
   inputJsonSchema: searchBodyInputJsonSchema,
   resultJsonSchema: searchBodyResultJsonSchema,
-  execute: (input) => executeSearchBody(input, provider),
+  execute: (input, context) => executeSearchBody(input, provider, context),
 });
 
 export const defaultSearchBodyOperation = createSearchBodyOperation(

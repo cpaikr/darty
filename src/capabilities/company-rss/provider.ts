@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import type { DartyExecutionContext } from "../types.ts";
 import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { normalizeResponseDetail } from "../response-detail.ts";
 import type {
@@ -36,7 +37,10 @@ export class CompanyRssProviderError extends Schema.TaggedError<CompanyRssProvid
 ) {}
 
 export type CompanyRssProvider = {
-  readonly rss: (request: CompanyRssRequest) => Promise<CompanyRssProviderResult>;
+  readonly rss: (
+    request: CompanyRssRequest,
+    context?: DartyExecutionContext,
+  ) => Promise<CompanyRssProviderResult>;
 };
 
 const projectCompanyRssChannel = (

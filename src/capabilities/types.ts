@@ -1,5 +1,9 @@
 import { JSONSchema, type Schema } from "effect";
 
+export type DartyExecutionContext = {
+  readonly signal?: AbortSignal;
+};
+
 /**
  * Exposes a capability-owned Effect schema as JSON Schema for transports or
  * tooling that need a machine-readable contract.

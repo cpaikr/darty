@@ -12,10 +12,14 @@
     "darty": "dist/cli.js"
   },
   "exports": {
+    "./toolset": {
+      "types": "./dist/toolset.d.ts",
+      "import": "./dist/toolset.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "dist/cli.js",
+    "dist",
     "README.md",
     "LICENSE.md"
   ],

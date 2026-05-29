@@ -90,11 +90,15 @@ describe("packed package exports", () => {
         `const help = spawnSync("./node_modules/.bin/darty", ["--help"], { cwd: process.cwd(), encoding: "utf8" });\n` +
         `assert.equal(help.status, 0, help.stderr);\n` +
         `assert.match(help.stdout, /Usage: darty/);\n` +
+        `import { createDartyToolset } from "@sjunepark/darty/toolset";\n` +
         `const failure = spawnSync("./node_modules/.bin/darty", ["not-a-command"], { cwd: process.cwd(), encoding: "utf8" });\n` +
         `assert.notEqual(failure.status, 0);\n` +
         `const failureJson = JSON.parse(failure.stdout);\n` +
         `assert.equal(failureJson.result, null);\n` +
-        `assert.equal(failureJson.error.code, "invalid_request");\n`,
+        `assert.equal(failureJson.error.code, "invalid_request");\n` +
+        `const toolset = createDartyToolset();\n` +
+        `assert.equal(toolset.id, "darty");\n` +
+        `assert.ok(toolset.getCommandHelp("report-guide"));\n`,
     );
   }, 60_000);
 
@@ -102,19 +106,27 @@ describe("packed package exports", () => {
     rmSync(workDir, { force: true, recursive: true });
   });
 
-  test("exposes only the CLI public surface", () => {
+  test("exposes the CLI and trusted-host toolset public surfaces", () => {
     run([nodeRuntime, "smoke.mjs"], consumerDir);
   });
 
-  test("packs only CLI package contents", () => {
+  test("packs the CLI bundle and toolset modules", () => {
     const packageDir = join(consumerDir, "node_modules", "@sjunepark", "darty");
+    const packageFiles = listPackageFiles(packageDir).sort();
+    const packedPackageJson = JSON.parse(
+      readFileSync(join(packageDir, "package.json"), "utf8"),
+    ) as { exports?: Record<string, unknown>; pi?: unknown };
 
-    expect(listPackageFiles(packageDir).sort()).toEqual([
-      "LICENSE.md",
-      "README.md",
-      "dist/cli.js",
-      "package.json",
-    ]);
+    expect(packageFiles).toContain("LICENSE.md");
+    expect(packageFiles).toContain("README.md");
+    expect(packageFiles).toContain("dist/cli.js");
+    expect(packageFiles).toContain("dist/toolset.js");
+    expect(packageFiles).toContain("dist/toolset.d.ts");
+    expect(packageFiles).not.toContain("dist/pi.js");
+    expect(packageFiles).not.toContain("dist/pi.d.ts");
+    expect(Object.hasOwn(packedPackageJson.exports ?? {}, "./toolset")).toBe(true);
+    expect(Object.hasOwn(packedPackageJson.exports ?? {}, "./pi")).toBe(false);
+    expect(packedPackageJson.pi).toBeUndefined();
     expect(
       readFileSync(join(packageDir, "dist", "cli.js"), "utf8").startsWith(
         "#!/usr/bin/env node",

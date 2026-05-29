@@ -6,6 +6,7 @@ import {
   getExecutionFailureRecoveryHint,
   getInvalidRequestRecoveryHint,
 } from "../recovery-hints.ts";
+import type { DartyExecutionContext } from "../types.ts";
 import { companyRssFailureCopy } from "./copy.ts";
 import {
   CompanyRssFailure,
@@ -63,10 +64,11 @@ const toCompanyRssFailure = (error: unknown): CompanyRssFailure => {
 export const executeCompanyRss = async (
   input: Partial<CompanyRssRawInput> & Record<string, unknown>,
   provider: CompanyRssProvider,
+  context?: DartyExecutionContext,
 ): Promise<CompanyRssResult> => {
   try {
     const request = resolveCompanyRssRequest(input);
-    const providerResult = await provider.rss(request);
+    const providerResult = await provider.rss(request, context);
 
     return buildCompanyRssResult(request, providerResult);
   } catch (error) {

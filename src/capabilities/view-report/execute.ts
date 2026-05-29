@@ -7,6 +7,7 @@ import {
   getInvalidRequestRecoveryHint,
   getViewReportNotFoundRecoveryHint,
 } from "../recovery-hints.ts";
+import type { DartyExecutionContext } from "../types.ts";
 import { viewReportFailureCopy } from "./copy.ts";
 import {
   InvalidViewReportRequest,
@@ -78,10 +79,11 @@ const toViewReportFailure = (error: unknown): ViewReportFailure => {
 export const executeViewReport = async (
   input: Partial<ViewReportRawInput> & Record<string, unknown>,
   provider: ViewReportProvider,
+  context?: DartyExecutionContext,
 ): Promise<ViewReportResult> => {
   try {
     const request = resolveViewReportRequest(input);
-    const providerResult = await provider.view(request);
+    const providerResult = await provider.view(request, context);
 
     return buildViewReportResult(request, providerResult);
   } catch (error) {

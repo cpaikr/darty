@@ -88,7 +88,7 @@ It does not own required-field validation, enum validation, date-format validati
 
 ### Public surface boundary
 
-The active public surface is the CLI. `src/app/` and `src/capabilities/` are internal seams that keep DART source internals out of command handling.
+The active public surfaces are the CLI and `@sjunepark/darty/toolset`. `src/app/` and `src/capabilities/` are shared seams that keep DART source internals out of transport handling.
 
 ## Test And Eval Areas
 

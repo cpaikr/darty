@@ -95,7 +95,8 @@ export const searchDsae001Company = (request: SearchCompanyRequest) =>
   );
 
 export const dsae001CompanyProvider: SearchCompanyProvider = {
-  search: (request) => Effect.runPromise(searchDsae001Company(request)),
+  search: (request, context) =>
+    Effect.runPromise(searchDsae001Company(request), { signal: context?.signal }),
 };
 
 export const toDsae001CompanyProviderError = (

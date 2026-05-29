@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 
+import type { DartyExecutionContext } from "../types.ts";
 import { DartyErrorDiagnosticsSchema } from "../../error-diagnostics.ts";
 import { normalizeResponseDetail } from "../response-detail.ts";
 import type {
@@ -47,7 +48,10 @@ export class ViewReportProviderError extends Schema.TaggedError<ViewReportProvid
 ) {}
 
 export type ViewReportProvider = {
-  readonly view: (request: ViewReportRequest) => Promise<ViewReportProviderResult>;
+  readonly view: (
+    request: ViewReportRequest,
+    context?: DartyExecutionContext,
+  ) => Promise<ViewReportProviderResult>;
 };
 
 const shouldIncludeLocators = (request: ViewReportRequest): boolean =>

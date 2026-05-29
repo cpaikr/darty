@@ -7,6 +7,7 @@ import {
   getExecutionFailureRecoveryHint,
   getInvalidRequestRecoveryHint,
 } from "../recovery-hints.ts";
+import type { DartyExecutionContext } from "../types.ts";
 import { companyDetailFailureCopy } from "./copy.ts";
 import {
   CompanyDetailFailure,
@@ -77,10 +78,11 @@ const toCompanyDetailFailure = (error: unknown): CompanyDetailFailure => {
 export const executeCompanyDetail = async (
   input: Partial<CompanyDetailRawInput> & Record<string, unknown>,
   provider: CompanyDetailProvider,
+  context?: DartyExecutionContext,
 ): Promise<CompanyDetailResult> => {
   try {
     const request = resolveCompanyDetailRequest(input);
-    const providerResult = await provider.detail(request);
+    const providerResult = await provider.detail(request, context);
 
     return buildCompanyDetailResult(request, providerResult);
   } catch (error) {
