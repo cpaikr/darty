@@ -126,7 +126,7 @@ export const validateDartyCliArgv = (
     const options = parseSearchBodyCommandArgs([...commandArgv]);
     return {
       ok: true,
-      parsed: { kind: "search-body", argv: commandArgv, options },
+      parsed: { kind: "search-body", argv: commandArgv, options: options.request },
     };
   } catch (error) {
     return {
