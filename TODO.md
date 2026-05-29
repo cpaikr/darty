@@ -1,9 +1,5 @@
 # TODO
 
-## Now
-
-- Add structured validation recovery metadata to `@sjunepark/darty/toolset`. See `docs/tickets/add-toolset-validation-recovery-metadata.md`.
-
 ## Later
 
 - Add held-out CLI workflow eval cases for amended reports or multiple similar company names, stale `sectionId` recovery, and truncated section continuation after the baseline multi-step workflow evals produce transcripts.
