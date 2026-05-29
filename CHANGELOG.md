@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.4](https://github.com/sjunepark/darty/compare/v0.3.3...v0.3.4) (2026-05-28)
+
+
+### Features
+
+* **evals:** add Pi single-tool evaluation suites ([620dd95](https://github.com/sjunepark/darty/commit/620dd9545aa807c565179f85b9d5b3686ba24d82))
+* preserve DART source response diagnostics ([55554b5](https://github.com/sjunepark/darty/commit/55554b5f047185efe882799a09f998834e6a1af7))
+* preserve Darty execution diagnostics ([0fe5857](https://github.com/sjunepark/darty/commit/0fe58579799af078582aebeab401839389b725b8))
+
 ## [0.3.3](https://github.com/sjunepark/darty/compare/v0.3.2...v0.3.3) (2026-05-25)
 
 
