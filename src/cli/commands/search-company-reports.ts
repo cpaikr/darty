@@ -16,7 +16,8 @@ import { toSearchCompanyReportsCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
   configureCliTransport,
-  createCliVerboseOutputOptions,
+  createAgentOption,
+  createCliAgentOutputOptions,
   createPrettyOption,
   createRegisteredOption,
   createVerboseOption,
@@ -26,17 +27,21 @@ import {
   renderInvalidRequestCliErrorMessage,
   splitCliCommandOptions,
   type CliOptions as SharedCliOptions,
-  type CliVerboseOutputOptions,
+  type CliAgentOutputOptions,
   type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof SearchCompanyReportsRawInput | "pretty" | "verbose";
+type CliOptionKey =
+  | keyof SearchCompanyReportsRawInput
+  | "pretty"
+  | "verbose"
+  | "agent";
 
 export type CliOptions = SharedCliOptions<CliOptionKey>;
 export type SearchCompanyReportsCliCommand = ParsedCliCommand<
   SearchCompanyReportsRawInput,
-  CliVerboseOutputOptions
+  CliAgentOutputOptions
 >;
 
 export type SearchCompanyReportsCommandExecutor = {
@@ -144,6 +149,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
   createVerboseOption(
     "Include source evidence and diagnostic fields omitted from the default CLI output. If --detail is omitted, request detail=raw.",
   ),
+  createAgentOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -190,11 +196,11 @@ const toSearchCompanyReportsCliCommand = (
   return splitCliCommandOptions<
     SearchCompanyReportsRawInput,
     CliOptionKey,
-    CliVerboseOutputOptions
+    CliAgentOutputOptions
   >(
     requestOptions,
-    ["pretty", "verbose"],
-    createCliVerboseOutputOptions(options),
+    ["pretty", "verbose", "agent"],
+    createCliAgentOutputOptions(options),
   );
 };
 
@@ -230,7 +236,7 @@ const buildSearchCompanyReportsCommand = (
 
 const renderSearchCompanyReportsResult = (
   result: SearchCompanyReportsResult,
-  output: CliVerboseOutputOptions,
+  output: CliAgentOutputOptions,
 ): string =>
   renderCliJson(toSearchCompanyReportsCliResult(result, output), output);
 

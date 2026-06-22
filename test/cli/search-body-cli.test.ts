@@ -60,18 +60,27 @@ const expectJsonFailure = (
 };
 
 describe("search-body CLI subprocess", () => {
-  test("prints root help to stdout when no command is passed", () => {
+  test("prints a compact JSON home view when no command is passed", () => {
     const result = runCli([]);
     const stdout = decode(result.stdout);
     const stderr = decode(result.stderr);
+    const envelope = JSON.parse(stdout) as {
+      readonly result: {
+        readonly name: string;
+        readonly operations: readonly { readonly name: string }[];
+      };
+      readonly metadata: { readonly output: string };
+      readonly help: readonly string[];
+    };
 
     expect(result.exitCode).toBe(0);
-    expect(stdout).toContain("Usage: darty [options] [command]");
-    expect(stdout).toContain("Tool-friendly DART search and retrieval commands.");
-    expect(stdout).toContain("search-body [options]");
-    expect(stdout).toContain("Display help.");
-    expect(stdout).not.toContain("display help for command");
     expect(stderr).toBe("");
+    expect(envelope.result.name).toBe("darty");
+    expect(envelope.result.operations.map((operation) => operation.name)).toContain(
+      "search-body",
+    );
+    expect(envelope.metadata.output).toBe("home");
+    expect(envelope.help).toContain("Run darty --help for full human-readable command help.");
   });
 
   test("prints root help to stdout", () => {

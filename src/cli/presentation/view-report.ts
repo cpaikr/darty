@@ -1,5 +1,8 @@
 import type { ViewReportResult } from "../../capabilities/view-report/contract.ts";
-import type { CliVerboseOutputOptions } from "../command-helpers.ts";
+import {
+  quoteCliValue,
+  type CliVerboseOutputOptions,
+} from "../command-helpers.ts";
 
 export type ViewReportCliVerboseOutputOptions = CliVerboseOutputOptions & {
   readonly tocDepth?: number;
@@ -14,9 +17,13 @@ export type ViewReportSectionCompactCliResult = Omit<
   readonly result: Omit<ViewReportResult["result"], "documents" | "toc">;
 };
 
+type ViewReportCliResultWithHelp<Result> = Result & {
+  readonly help: readonly string[];
+};
+
 export type ViewReportCliResult =
-  | ViewReportResult
-  | ViewReportSectionCompactCliResult;
+  | ViewReportCliResultWithHelp<ViewReportResult>
+  | ViewReportCliResultWithHelp<ViewReportSectionCompactCliResult>;
 
 const limitTocDepth = (
   nodes: readonly ViewReportTocNode[],
@@ -30,6 +37,59 @@ const limitTocDepth = (
     ...node,
     children: limitTocDepth(node.children, remainingDepth - 1),
   }));
+};
+
+const toViewReportHelp = (result: ViewReportResult): readonly string[] => {
+  const request = result.result.request;
+  const content = result.result.content;
+
+  if (content?.window.hasMore === true) {
+    return [
+      `Continue content: darty view-report --receipt ${quoteCliValue(request.receipt)} --content-start-byte ${content.window.nextStartByte} --max-bytes ${request.maxBytes} --output-format ${quoteCliValue(request.outputFormat)}${
+        request.documentId === undefined
+          ? ""
+          : ` --document-id ${quoteCliValue(request.documentId)}`
+      }${
+        request.sectionId === undefined
+          ? ""
+          : ` --section-id ${quoteCliValue(request.sectionId)}`
+      }`,
+    ];
+  }
+
+  if (request.sectionId !== undefined) {
+    const navigation = result.result.navigation;
+    const nextSection = navigation?.next;
+    const previousSection = navigation?.previous;
+
+    return [
+      ...(nextSection === undefined
+        ? []
+        : [
+            `Read next section: darty view-report --receipt ${quoteCliValue(request.receipt)} --section-id ${quoteCliValue(nextSection.id)}`,
+          ]),
+      ...(previousSection === undefined
+        ? []
+        : [
+            `Read previous section: darty view-report --receipt ${quoteCliValue(request.receipt)} --section-id ${quoteCliValue(previousSection.id)}`,
+          ]),
+      "Rerun with --toc-depth <number> when you need nearby TOC context.",
+    ];
+  }
+
+  const firstSection = result.result.toc?.[0];
+
+  if (firstSection !== undefined) {
+    return [
+      `Read first section: darty view-report --receipt ${quoteCliValue(request.receipt)} --section-id ${quoteCliValue(firstSection.id)}`,
+      "Choose a different returned toc[].id to read another section.",
+      "Use --toc-depth <number> to limit TOC output depth in the CLI.",
+    ];
+  }
+
+  return [
+    "This document has no returned TOC. Use the returned content.window fields to continue if content is truncated.",
+  ];
 };
 
 export const toViewReportCliResult = (
@@ -57,8 +117,12 @@ export const toViewReportCliResult = (
     return {
       ...cliResult,
       result: sectionResult,
+      help: toViewReportHelp(result),
     };
   }
 
-  return cliResult;
+  return {
+    ...cliResult,
+    help: toViewReportHelp(result),
+  };
 };

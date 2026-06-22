@@ -65,6 +65,8 @@ darty <command> --help
 
 정상 조회 명령은 표준 출력에 단일 JSON 응답 객체를 출력합니다. 실패도 표준 출력에 단일 JSON 실패 객체를 출력하고 non-zero로 종료합니다. 진행 로그와 디버그 진단은 표준 에러를 사용해 stdout JSON 파싱을 방해하지 않습니다.
 
+검색 계열 명령은 `--agent`를 지원합니다. 이 모드는 후속 호출에 필요한 식별자와 출처 참조를 유지하면서 기본 결과보다 작은 JSON과 `help[]` 다음 단계 힌트를 출력합니다.
+
 ## JS/TS 서버 toolset
 
 서버 호스트에서 subprocess wrapper 없이 Darty 기능을 실행해야 한다면 toolset export를 import하세요.

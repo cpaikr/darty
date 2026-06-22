@@ -117,6 +117,32 @@ describe("CLI entrypoints", () => {
     expect(stdout).toContain("Usage: darty [options] [command]");
   });
 
+  test("bundled CLI renders bare invocation as a JSON home view", () => {
+    const result = runEntrypoint(nodeRuntime, builtEntrypoint, []);
+    const stdout = decode(result.stdout);
+    const stderr = decode(result.stderr);
+    const envelope = JSON.parse(stdout) as {
+      readonly result: {
+        readonly name: string;
+        readonly operations: readonly { readonly name: string }[];
+      };
+      readonly metadata: { readonly cliTransportVersion: string; readonly output: string };
+      readonly help: readonly string[];
+    };
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(envelope.result.name).toBe("darty");
+    expect(envelope.result.operations.map((operation) => operation.name)).toContain(
+      "view-report",
+    );
+    expect(envelope.metadata).toEqual({
+      cliTransportVersion: "1",
+      output: "home",
+    });
+    expect(envelope.help.some((hint) => hint.includes("search-company"))).toBe(true);
+  });
+
   test("bundled CLI renders unknown commands as JSON failures", () => {
     const result = runEntrypoint(nodeRuntime, builtEntrypoint, ["missing-command"]);
     const stdout = decode(result.stdout);

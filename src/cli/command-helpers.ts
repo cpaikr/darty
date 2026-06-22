@@ -30,6 +30,10 @@ export type CliVerboseOutputOptions = CliJsonOptions & {
   readonly verbose: boolean;
 };
 
+export type CliAgentOutputOptions = CliVerboseOutputOptions & {
+  readonly agent: boolean;
+};
+
 export type ParsedCliCommand<
   RequestInput,
   OutputOptions extends CliJsonOptions = CliJsonOptions,
@@ -59,6 +63,16 @@ export const parseIntegerCliOption = (
   }
 
   return Number.parseInt(value, 10);
+};
+
+const safeCliTokenPattern = /^[A-Za-z0-9_./:@%+=,-]+$/;
+
+export const quoteCliValue = (value: string | number | boolean): string => {
+  const text = String(value);
+
+  return safeCliTokenPattern.test(text)
+    ? text
+    : `'${text.replaceAll("'", "'\\''")}'`;
 };
 
 export const createRegisteredOption = <Key extends string>(
@@ -147,6 +161,11 @@ export const createVerboseOption = (
 ): RegisteredOption<"verbose"> =>
   createRegisteredOption("verbose", "--verbose", description);
 
+export const createAgentOption = (
+  description = "Print compact agent-focused JSON with contextual next-step help.",
+): RegisteredOption<"agent"> =>
+  createRegisteredOption("agent", "--agent", description);
+
 export const createCliJsonOptions = (
   options: Record<string, unknown>,
 ): CliJsonOptions => ({
@@ -158,6 +177,13 @@ export const createCliVerboseOutputOptions = (
 ): CliVerboseOutputOptions => ({
   ...createCliJsonOptions(options),
   verbose: options.verbose === true,
+});
+
+export const createCliAgentOutputOptions = (
+  options: Record<string, unknown>,
+): CliAgentOutputOptions => ({
+  ...createCliVerboseOutputOptions(options),
+  agent: options.agent === true,
 });
 
 export const splitCliCommandOptions = <

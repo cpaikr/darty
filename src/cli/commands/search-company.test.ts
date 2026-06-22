@@ -23,6 +23,7 @@ describe("parseSearchCompanyCommandArgs", () => {
       "--page-size",
       "20",
       "--verbose",
+      "--agent",
     ]);
 
     expect(options).toEqual({
@@ -31,14 +32,14 @@ describe("parseSearchCompanyCommandArgs", () => {
         page: 2,
         pageSize: 20,
       },
-      output: { pretty: false, verbose: true },
+      output: { pretty: false, verbose: true, agent: true },
     });
   });
 
   test("parses transport syntax without enforcing required fields", () => {
     expect(parseSearchCompanyCommandArgs([])).toEqual({
       request: {},
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: false, agent: false },
     });
   });
 
@@ -61,6 +62,7 @@ describe("parseSearchCompanyCommandArgs", () => {
     expect(searchCompanyUsage).toContain("companyCode");
     expect(searchCompanyUsage).toContain("--pretty");
     expect(searchCompanyUsage).toContain("--verbose");
+    expect(searchCompanyUsage).toContain("--agent");
     expect(searchCompanyUsage).not.toContain("--include-evidence");
     expect(searchCompanyUsage).not.toContain("업종별");
   });
@@ -101,7 +103,7 @@ describe("parseSearchCompanyCommandArgs", () => {
         companyName: "삼성전자",
         page: 2,
       },
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: false, agent: false },
     });
   });
 
@@ -123,7 +125,7 @@ describe("parseSearchCompanyCommandArgs", () => {
       await executeSearchCompanyCommand(
         {
           request: {},
-          output: { pretty: false, verbose: false },
+          output: { pretty: false, verbose: false, agent: false },
         },
         {
           runOperation: (input) =>

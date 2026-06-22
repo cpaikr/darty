@@ -21,6 +21,7 @@ This directory holds scenario evals for Darty task usefulness and CLI-based agen
 | Surface | Current evals | Purpose |
 |---|---|---|
 | CLI fixed command | `eval:cli:search-body` | Live stdout envelope sanity for known commands. |
+| CLI workflow | `eval:workflow:cli` | Live multi-step handoff from company lookup to section retrieval. |
 | Agent CLI runner | `eval:agent-cli:search-body` | Whether a model can invoke the CLI runner with matching argv. |
 
 
@@ -30,6 +31,7 @@ Fixed CLI eval, no OpenAI key required:
 
 ```bash
 bun run eval:cli:search-body
+bun run eval:workflow:cli
 ```
 
 Model-in-the-loop evals require `OPENAI_API_KEY` (usually through `.env.local` and `varlock`):

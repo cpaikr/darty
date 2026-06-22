@@ -16,7 +16,8 @@ import { toSearchBodyCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
   configureCliTransport,
-  createCliVerboseOutputOptions,
+  createAgentOption,
+  createCliAgentOutputOptions,
   createPrettyOption,
   createRegisteredOption,
   createVerboseOption,
@@ -26,12 +27,12 @@ import {
   renderInvalidRequestCliErrorMessage,
   splitCliCommandOptions,
   type CliOptions as SharedCliOptions,
-  type CliVerboseOutputOptions,
+  type CliAgentOutputOptions,
   type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof SearchBodyRawInput | "pretty" | "verbose";
+type CliOptionKey = keyof SearchBodyRawInput | "pretty" | "verbose" | "agent";
 
 /**
  * Commander returns only the flags the caller provided. This partial shape lets
@@ -41,7 +42,7 @@ type CliOptionKey = keyof SearchBodyRawInput | "pretty" | "verbose";
 export type CliOptions = SharedCliOptions<CliOptionKey>;
 export type SearchBodyCliCommand = ParsedCliCommand<
   SearchBodyRawInput,
-  CliVerboseOutputOptions
+  CliAgentOutputOptions
 >;
 
 export type SearchBodyCommandExecutor = {
@@ -112,6 +113,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
   createVerboseOption(
     "Include source evidence and diagnostic fields omitted from the default CLI output. If --detail is omitted, request detail=raw.",
   ),
+  createAgentOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -156,11 +158,11 @@ const toSearchBodyCliCommand = (options: CliOptions): SearchBodyCliCommand => {
   return splitCliCommandOptions<
     SearchBodyRawInput,
     CliOptionKey,
-    CliVerboseOutputOptions
+    CliAgentOutputOptions
   >(
     requestOptions,
-    ["pretty", "verbose"],
-    createCliVerboseOutputOptions(options),
+    ["pretty", "verbose", "agent"],
+    createCliAgentOutputOptions(options),
   );
 };
 
@@ -194,7 +196,7 @@ const buildSearchBodyCommand = (
 
 const renderSearchBodyResult = (
   result: SearchBodyResult,
-  output: CliVerboseOutputOptions,
+  output: CliAgentOutputOptions,
 ): string => renderCliJson(toSearchBodyCliResult(result, output), output);
 
 /**

@@ -180,6 +180,91 @@ Cautions:
   - It does not guarantee accuracy. You are responsible for how you use the information, and this tool provides no warranty.
 `;
 
+type DartyCliHomeView = {
+  readonly result: {
+    readonly name: "darty";
+    readonly description: string;
+    readonly operations: readonly {
+      readonly name: string;
+      readonly summary: string;
+    }[];
+  };
+  readonly metadata: {
+    readonly cliTransportVersion: "1";
+    readonly output: "home";
+  };
+  readonly references: Record<string, never>;
+  readonly warnings: readonly {
+    readonly code: "source_notice" | "verification_notice";
+    readonly message: string;
+  }[];
+  readonly help: readonly string[];
+};
+
+const createDartyCliHomeView = (): DartyCliHomeView => ({
+  result: {
+    name: "darty",
+    description: "Read-only Korean DART disclosure search and retrieval CLI.",
+    operations: [
+      {
+        name: "search-company",
+        summary: "Resolve a company name to an 8-digit DART company code.",
+      },
+      {
+        name: "search-company-reports",
+        summary: "List filings for one DART company code and date window.",
+      },
+      {
+        name: "search-body",
+        summary: "Search submitted filing body text by keyword.",
+      },
+      {
+        name: "view-report",
+        summary: "Fetch a filing TOC or a selected report section.",
+      },
+      {
+        name: "disclosure-types",
+        summary: "Find DART detailed disclosure-type filter codes.",
+      },
+      {
+        name: "company-detail",
+        summary: "Fetch DART company overview details.",
+      },
+      {
+        name: "company-rss",
+        summary: "Fetch a company-specific DART disclosure RSS feed.",
+      },
+      {
+        name: "report-guide",
+        summary: "Print a Markdown guide to report families.",
+      },
+    ],
+  },
+  metadata: {
+    cliTransportVersion: "1",
+    output: "home",
+  },
+  references: {},
+  warnings: [
+    {
+      code: "source_notice",
+      message:
+        "Darty reads public DART web pages in read-only mode; it is not the official OpenDART API.",
+    },
+    {
+      code: "verification_notice",
+      message:
+        "Check returned source references before using results for important decisions.",
+    },
+  ],
+  help: [
+    "Run darty --help for full human-readable command help.",
+    "Start with: darty search-company --company-name 삼성전자 --agent",
+    "Then search filings: darty search-company-reports --company-code 00126380 --start-date YYYYMMDD --end-date YYYYMMDD --agent",
+    "Then inspect a filing: darty view-report --receipt <receiptNumber-or-viewerUrl>",
+  ],
+});
+
 export const createDartyCliProgram = (): Command =>
   configureCliTransport(new Command())
     .name("darty")
@@ -290,7 +375,7 @@ export const runDartyCli = async (
   const parseArgv = stripDebugFlag(argv);
 
   if (parseArgv.length <= 2) {
-    program.outputHelp();
+    writeStdout(JSON.stringify(createDartyCliHomeView()));
     return;
   }
 

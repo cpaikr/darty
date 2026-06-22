@@ -160,6 +160,7 @@ describe("search CLI presentation", () => {
     });
 
     expect("evidence" in compact.result.items[0]!).toBe(false);
+    expect(compact.help[0]).toContain("search-company-reports");
   });
 
   test("omits item evidence from compact search-body output", () => {
@@ -169,6 +170,7 @@ describe("search CLI presentation", () => {
     });
 
     expect("evidence" in compact.result.items[0]!).toBe(false);
+    expect(compact.help[0]).toContain("view-report");
   });
 
   test("omits item evidence from compact search-company-reports output", () => {
@@ -178,20 +180,172 @@ describe("search CLI presentation", () => {
     });
 
     expect("evidence" in compact.result.items[0]!).toBe(false);
+    expect(compact.help[0]).toContain("view-report");
   });
 
   test("keeps full capability results in verbose output", () => {
-    expect(
-      toSearchCompanyCliResult(companyResult, { pretty: false, verbose: true }),
-    ).toBe(companyResult);
-    expect(toSearchBodyCliResult(bodyResult, { pretty: false, verbose: true })).toBe(
-      bodyResult,
+    const verboseCompany = toSearchCompanyCliResult(companyResult, {
+      pretty: false,
+      verbose: true,
+    });
+    const verboseBody = toSearchBodyCliResult(bodyResult, {
+      pretty: false,
+      verbose: true,
+    });
+    const verboseReports = toSearchCompanyReportsCliResult(companyReportsResult, {
+      pretty: false,
+      verbose: true,
+    });
+
+    expect(verboseCompany.result).toBe(companyResult.result);
+    expect(verboseBody.result).toBe(bodyResult.result);
+    expect(verboseReports.result).toBe(companyReportsResult.result);
+    expect(verboseCompany.help[0]).toContain("search-company-reports");
+    expect(verboseBody.help[0]).toContain("view-report");
+    expect(verboseReports.help[0]).toContain("view-report");
+  });
+
+  test("prints compact agent-focused search-company output", () => {
+    const agent = toSearchCompanyCliResult(companyResult, {
+      pretty: false,
+      verbose: false,
+      agent: true,
+    });
+
+    expect(agent.metadata).toEqual({
+      output: "agent",
+      source: companyResult.metadata.source,
+      completeness: "complete",
+    });
+    expect(agent.result.items).toEqual([
+      {
+        companyCode: "00126380",
+        companyName: "삼성전자",
+        marketKind: "kospi",
+        detailEndpoint:
+          "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00126380",
+      },
+    ]);
+    expect(agent.help[0]).toContain("search-company-reports");
+  });
+
+  test("prints compact agent-focused search-body output", () => {
+    const agent = toSearchBodyCliResult(bodyResult, {
+      pretty: false,
+      verbose: false,
+      agent: true,
+    });
+
+    expect(agent.result.items).toEqual([
+      {
+        companyName: "삼성전자",
+        receiptNumber: "20260331004166",
+        reportTitle: "사업보고서",
+        receiptDate: "20260331",
+        snippetText: "배당 관련 내용",
+        viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+      },
+    ]);
+    expect(agent.help[0]).toBe(
+      "Inspect filing TOC: darty view-report --receipt 20260331004166",
     );
-    expect(
-      toSearchCompanyReportsCliResult(companyReportsResult, {
+  });
+
+  test("keeps a quoted next-page hint for empty search-body pages", () => {
+    const emptyPage = toSearchBodyCliResult(
+      {
+        ...bodyResult,
+        result: {
+          ...bodyResult.result,
+          request: {
+            ...bodyResult.result.request,
+            keyword: "foo&bar;baz",
+            presenterName: "Bob's Burgers",
+          },
+          pagination: {
+            currentPage: 1,
+            totalPages: 2,
+            totalCount: 1,
+            returnedCount: 0,
+          },
+          items: [],
+        },
+      },
+      {
         pretty: false,
-        verbose: true,
-      }),
-    ).toBe(companyReportsResult);
+        verbose: false,
+        agent: true,
+      },
+    );
+    const continueHint = emptyPage.help.find((entry) =>
+      entry.startsWith("Continue search page:"),
+    );
+
+    expect(continueHint).toContain("--keyword 'foo&bar;baz'");
+    expect(continueHint).toContain("--presenter-name 'Bob'\\''s Burgers'");
+    expect(continueHint).toContain("--page 2 --agent");
+    expect(continueHint).not.toContain("--sort-by date");
+    expect(continueHint).not.toContain("--sort-direction desc");
+  });
+
+  test("prints compact agent-focused search-company-reports output", () => {
+    const agent = toSearchCompanyReportsCliResult(companyReportsResult, {
+      pretty: false,
+      verbose: false,
+      agent: true,
+    });
+
+    expect(agent.result.items).toEqual([
+      {
+        companyCode: "00126380",
+        companyName: "삼성전자",
+        receiptNumber: "20260331004166",
+        reportTitle: "사업보고서",
+        receiptDate: "20260331",
+        viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+      },
+    ]);
+    expect(agent.help[0]).toContain("view-report");
+  });
+
+  test("keeps a quoted next-page hint for empty search-company-reports pages", () => {
+    const emptyPage = toSearchCompanyReportsCliResult(
+      {
+        ...companyReportsResult,
+        result: {
+          ...companyReportsResult.result,
+          request: {
+            ...companyReportsResult.result.request,
+            disclosureTypes: ["A001", "I001"],
+            reportName: "분기&보고서",
+            includeAllReports: true,
+          },
+          pagination: {
+            currentPage: 1,
+            totalPages: 2,
+            totalCount: 1,
+            returnedCount: 0,
+          },
+          items: [],
+        },
+      },
+      {
+        pretty: false,
+        verbose: false,
+        agent: true,
+      },
+    );
+    const continueHint = emptyPage.help.find((entry) =>
+      entry.startsWith("Continue search page:"),
+    );
+
+    expect(continueHint).toContain("--disclosure-type A001 --disclosure-type I001");
+    expect(continueHint).toContain("--report-name '분기&보고서'");
+    expect(continueHint).toContain("--include-all-reports --page 2 --agent");
+    expect(continueHint).not.toContain("--page-size 15");
+    expect(continueHint).not.toContain("--sort-direction desc");
+    expect(continueHint).not.toContain("--industry-code all");
+    expect(continueHint).not.toContain("--corporation-type all");
+    expect(continueHint).not.toContain("--closing-accounts-month all");
   });
 });

@@ -35,6 +35,7 @@ describe("parseSearchBodyCommandArgs", () => {
       "--report-name",
       "정기주주총회결과",
       "--verbose",
+      "--agent",
     ]);
 
     expect(options).toEqual({
@@ -50,14 +51,14 @@ describe("parseSearchBodyCommandArgs", () => {
         detail: "raw",
         reportName: "정기주주총회결과",
       },
-      output: { pretty: false, verbose: true },
+      output: { pretty: false, verbose: true, agent: true },
     });
   });
 
   test("parses transport syntax without enforcing required fields", () => {
     expect(parseSearchBodyCommandArgs([])).toEqual({
       request: {},
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: false, agent: false },
     });
   });
 
@@ -88,6 +89,7 @@ describe("parseSearchBodyCommandArgs", () => {
     expect(searchBodyUsage).toContain("--report-name <text>");
     expect(searchBodyUsage).toContain("--pretty");
     expect(searchBodyUsage).toContain("--verbose");
+    expect(searchBodyUsage).toContain("--agent");
     expect(searchBodyUsage).toContain("Source evidence");
     expect(searchBodyUsage).toContain("raw DART row text or snippet HTML");
     expect(searchBodyUsage).toContain("Use --verbose with the CLI to see");
@@ -201,7 +203,7 @@ describe("parseSearchBodyCommandArgs", () => {
         page: 2,
         sortDirection: "asc",
       },
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: false, agent: false },
     });
   });
 
@@ -227,7 +229,7 @@ describe("parseSearchBodyCommandArgs", () => {
             startDate: "20250331",
             endDate: "20260331",
           },
-          output: { pretty: false, verbose: false },
+          output: { pretty: false, verbose: false, agent: false },
         },
         {
           runOperation: (input) =>
