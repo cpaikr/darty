@@ -44,6 +44,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
       "12",
       "--include-all-reports",
       "--verbose",
+      "--agent",
     ]);
 
     expect(options).toEqual({
@@ -63,14 +64,14 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         includeAllReports: true,
         detail: "raw",
       },
-      output: { pretty: false, verbose: true },
+      output: { pretty: false, verbose: true, agent: true },
     });
   });
 
   test("parses transport syntax without enforcing required fields", () => {
     expect(parseSearchCompanyReportsCommandArgs([])).toEqual({
       request: {},
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: false, agent: false },
     });
   });
 
@@ -109,6 +110,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
     expect(searchCompanyReportsUsage).toContain("--include-all-reports");
     expect(searchCompanyReportsUsage).toContain("--pretty");
     expect(searchCompanyReportsUsage).toContain("--verbose");
+    expect(searchCompanyReportsUsage).toContain("--agent");
     expect(searchCompanyReportsUsage).toContain("Source evidence");
     expect(searchCompanyReportsUsage).toContain("raw DART row text or snippet HTML");
     expect(searchCompanyReportsUsage).toContain("Use --verbose with the CLI to see evidence");
@@ -219,7 +221,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
           endDate: "20260507",
           includeAllReports: true,
         },
-        output: { pretty: false, verbose: false },
+        output: { pretty: false, verbose: false, agent: false },
       },
       {
         runOperation: async (input) => {
@@ -265,7 +267,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
         startDate: "20250507",
         endDate: "20260507",
       },
-      output: { pretty: false, verbose: false },
+      output: { pretty: false, verbose: false, agent: false },
     });
   });
 
@@ -355,7 +357,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
           startDate: "20250507",
           endDate: "20260507",
         },
-        output: { pretty: false, verbose: false },
+        output: { pretty: false, verbose: false, agent: false },
       },
       {
         runOperation: async (input) => {
@@ -382,7 +384,7 @@ describe("parseSearchCompanyReportsCommandArgs", () => {
             startDate: "20250507",
             endDate: "20260507",
           },
-          output: { pretty: false, verbose: false },
+          output: { pretty: false, verbose: false, agent: false },
         },
         {
           runOperation: (input) =>

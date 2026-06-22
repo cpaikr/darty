@@ -15,13 +15,22 @@ For command executions that run or attempt to run a capability:
 - stderr is empty by default
 - `--pretty` pretty-prints both success and failure JSON
 
-Help paths are the exception: `darty --help`, `darty <command> --help`, and a
-command invoked with no options print human-readable help to stdout and exit `0`.
+Help and home paths are exceptions:
+
+- `darty --help` and `darty <command> --help` print human-readable help to stdout
+  and exit `0`
+- bare `darty` prints a compact JSON home envelope to stdout and exits `0`
+- a command invoked with no required options attempts to run the capability,
+  prints a JSON `invalid_request` failure envelope, and exits `1`
 
 ## Success Envelope
 
 Success output is the capability result envelope, possibly transformed by CLI
-presentation options such as `--verbose` or `--toc-depth`.
+presentation options such as `--verbose`, `--agent`, or `--toc-depth`. CLI
+success output may include a top-level `help` array of concrete next-step hints.
+`--agent` is a compact projection intended for subprocess agents; it preserves
+follow-up identifiers and source references while omitting lower-benefit
+diagnostic detail.
 
 Common shape:
 
@@ -30,7 +39,8 @@ Common shape:
   "result": {},
   "metadata": {},
   "references": {},
-  "warnings": []
+  "warnings": [],
+  "help": []
 }
 ```
 

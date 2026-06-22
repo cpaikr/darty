@@ -15,7 +15,8 @@ import { toSearchCompanyCliResult } from "../presentation/search.ts";
 import {
   buildCliNameByOptionKey,
   configureCliTransport,
-  createCliVerboseOutputOptions,
+  createAgentOption,
+  createCliAgentOutputOptions,
   createPrettyOption,
   createRegisteredOption,
   createVerboseOption,
@@ -25,17 +26,17 @@ import {
   renderInvalidRequestCliErrorMessage,
   splitCliCommandOptions,
   type CliOptions as SharedCliOptions,
-  type CliVerboseOutputOptions,
+  type CliAgentOutputOptions,
   type ParsedCliCommand,
   type RegisteredOption,
 } from "../command-helpers.ts";
 
-type CliOptionKey = keyof SearchCompanyRawInput | "pretty" | "verbose";
+type CliOptionKey = keyof SearchCompanyRawInput | "pretty" | "verbose" | "agent";
 
 export type CliOptions = SharedCliOptions<CliOptionKey>;
 export type SearchCompanyCliCommand = ParsedCliCommand<
   SearchCompanyRawInput,
-  CliVerboseOutputOptions
+  CliAgentOutputOptions
 >;
 
 export type SearchCompanyCommandExecutor = {
@@ -72,6 +73,7 @@ const buildRegisteredOptions = (): readonly RegisteredOption<CliOptionKey>[] => 
   ),
   createPrettyOption(),
   createVerboseOption(),
+  createAgentOption(),
 ];
 
 const cliNameByOptionKey = buildCliNameByOptionKey(buildRegisteredOptions());
@@ -111,11 +113,11 @@ const toSearchCompanyCliCommand = (
   splitCliCommandOptions<
     SearchCompanyRawInput,
     CliOptionKey,
-    CliVerboseOutputOptions
+    CliAgentOutputOptions
   >(
     options,
-    ["pretty", "verbose"],
-    createCliVerboseOutputOptions(options),
+    ["pretty", "verbose", "agent"],
+    createCliAgentOutputOptions(options),
   );
 
 const buildSearchCompanyCommand = (
@@ -148,7 +150,7 @@ const buildSearchCompanyCommand = (
 
 const renderSearchCompanyResult = (
   result: SearchCompanyResult,
-  output: CliVerboseOutputOptions,
+  output: CliAgentOutputOptions,
 ): string => renderCliJson(toSearchCompanyCliResult(result, output), output);
 
 export const executeSearchCompanyCommand = (

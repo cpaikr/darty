@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 const runSearchScript = async (args: readonly string[]) => {
-  const subprocess = Bun.spawn(["./scripts/search.ts", ...args], {
+  const subprocess = Bun.spawn([process.execPath, "scripts/search.ts", ...args], {
     stdout: "pipe",
     stderr: "pipe",
   });

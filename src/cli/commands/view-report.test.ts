@@ -264,7 +264,16 @@ describe("parseViewReportCommandArgs", () => {
     );
 
     expect(receivedInput).toEqual({ receipt: "20260331004166" });
-    expect(writes).toEqual([JSON.stringify(result)]);
+    expect(writes).toHaveLength(1);
+    expect(JSON.parse(writes[0]!)).toMatchObject({
+      result: JSON.parse(JSON.stringify(result.result)) as unknown,
+      metadata: result.metadata,
+      references: result.references,
+      warnings: result.warnings,
+      help: [
+        "This document has no returned TOC. Use the returned content.window fields to continue if content is truncated.",
+      ],
+    });
   });
 
   test("pretty prints JSON when requested", async () => {
@@ -283,7 +292,14 @@ describe("parseViewReportCommandArgs", () => {
       },
     );
 
-    expect(writes).toEqual([JSON.stringify(result, undefined, 2)]);
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toContain('\n  "help": [');
+    expect(JSON.parse(writes[0]!)).toMatchObject({
+      result: JSON.parse(JSON.stringify(result.result)) as unknown,
+      help: [
+        "This document has no returned TOC. Use the returned content.window fields to continue if content is truncated.",
+      ],
+    });
   });
 
   test("prints a section JSON payload with the capability result", async () => {
