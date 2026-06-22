@@ -66,7 +66,8 @@ const bodyResult = {
         },
         match: { snippetText: "배당 관련 내용" },
         references: {
-          viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+          viewerUrl:
+            "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166&dcmNo=10203040",
         },
         evidence: {
           reportNameRaw: "사업보고서",
@@ -243,11 +244,15 @@ describe("search CLI presentation", () => {
         reportTitle: "사업보고서",
         receiptDate: "20260331",
         snippetText: "배당 관련 내용",
-        viewerUrl: "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166",
+        viewerUrl:
+          "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166&dcmNo=10203040",
       },
     ]);
     expect(agent.help[0]).toBe(
-      "Inspect filing TOC: darty view-report --receipt 20260331004166",
+      "Inspect filing TOC: darty view-report --receipt 'https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166&dcmNo=10203040'",
+    );
+    expect(agent.help[1]).toBe(
+      "Read a returned section: darty view-report --receipt 'https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331004166&dcmNo=10203040' --section-id <toc[].id>",
     );
   });
 
