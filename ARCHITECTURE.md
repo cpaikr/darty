@@ -41,6 +41,8 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
   Onboarding-oriented explanations for new readers. These pages are secondary learning material, not the source of truth for implementation behavior, product decisions, or project policy.
 - [docs/release.md](docs/release.md)
   Release automation setup for npm publishing.
+- [docs/upstreams/](docs/upstreams/axi.md)
+  Pinned external project baselines, including AXI compatibility drift checks.
 - [docs/tools/](docs/tools/)
   Canonical home for single-tool design.
 - [docs/specs/](docs/specs/)

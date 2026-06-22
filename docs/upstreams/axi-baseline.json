@@ -1,0 +1,37 @@
+{
+  "name": "AXI",
+  "repository": "https://github.com/kunchenguid/axi",
+  "owner": "kunchenguid",
+  "repo": "axi",
+  "branch": "main",
+  "baselineCommit": "8447811bd42da136759454e2e710cb03d7ccadf7",
+  "observedAt": "2026-06-22",
+  "upstreamVersion": {
+    "axi-sdk-js": "0.1.7"
+  },
+  "complianceScope": {
+    "summary": "Darty's agent-facing CLI is AXI-informed at this upstream commit. It intentionally keeps the CLI Transport v1 JSON envelope instead of AXI's preferred TOON stdout format.",
+    "localEvidence": [
+      "README.md",
+      "docs/specs/cli-transport-v1.md",
+      "evals/workflows/README.md",
+      "src/cli/presentation/search.ts",
+      "src/cli/presentation/view-report.ts"
+    ],
+    "upstreamEvidence": [
+      "README.md",
+      ".agents/skills/axi/SKILL.md",
+      "packages/axi-sdk-js/README.md",
+      "packages/axi-sdk-js/package.json"
+    ]
+  },
+  "watchedPaths": [
+    "README.md",
+    "CONTRIBUTING.md",
+    ".agents/skills/axi/SKILL.md",
+    "packages/axi-sdk-js/README.md",
+    "packages/axi-sdk-js/package.json",
+    "packages/axi-sdk-js/src/",
+    "packages/axi-sdk-js/test/"
+  ]
+}
