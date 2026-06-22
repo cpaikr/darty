@@ -58,15 +58,35 @@ const firstRecord = (items: readonly unknown[] | undefined): JsonRecord | undefi
   return isRecord(first) ? first : undefined;
 };
 
+const formatFailedStep = (
+  name: string,
+  exitCode: number,
+  stdout: string,
+  stderr: string,
+): string => {
+  const details = [`${name} exited with ${exitCode}.`];
+
+  if (stdout.length > 0) {
+    try {
+      details.push(`stdoutJson=${JSON.stringify(parseJsonObject(stdout))}`);
+    } catch {
+      details.push(`stdout=${stdout}`);
+    }
+  } else {
+    details.push("stdout=<empty>");
+  }
+
+  details.push(`stderr=${stderr || "<empty>"}`);
+  return details.join(" ");
+};
+
 const runStep = (name: string, argv: readonly string[]): JsonRecord => {
   const result = runFixedDartyCli({ repoRoot, argv });
   const stdout = decoder.decode(result.stdout).trim();
   const stderr = decoder.decode(result.stderr).trim();
 
   if (result.exitCode !== 0) {
-    throw new Error(
-      `${name} exited with ${result.exitCode}. stderr=${stderr || "<empty>"}`,
-    );
+    throw new Error(formatFailedStep(name, result.exitCode, stdout, stderr));
   }
 
   const envelope = parseJsonObject(stdout);

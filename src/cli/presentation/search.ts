@@ -274,9 +274,11 @@ const toSearchBodyHelp = (result: SearchBodyResult): readonly string[] => {
     ];
   }
 
+  const viewerReceipt = quoteCliValue(item.references.viewerUrl);
+
   return [
-    `Inspect filing TOC: darty view-report --receipt ${item.filing.receiptNumber}`,
-    `Read a returned section: darty view-report --receipt ${item.filing.receiptNumber} --section-id <toc[].id>`,
+    `Inspect filing TOC: darty view-report --receipt ${viewerReceipt}`,
+    `Read a returned section: darty view-report --receipt ${viewerReceipt} --section-id <toc[].id>`,
     ...nextPage,
   ];
 };

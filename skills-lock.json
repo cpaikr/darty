@@ -1,6 +1,13 @@
 {
   "version": 1,
   "skills": {
+    "release-please-release": {
+      "source": "sjunepark/agent-scripts",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/release-please-release/SKILL.md",
+      "computedHash": "63434646a4b6d8dc1c586bba556e66c2955fd35b61047eed3e0b6429ceca3d1f"
+    },
     "tool-surface-spec": {
       "source": "open-creo/skills",
       "ref": "main",
