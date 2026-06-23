@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0](https://github.com/sjunepark/darty/compare/v0.4.0...v0.5.0) (2026-06-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Bare `darty` now prints a JSON home envelope instead of human help, and commands missing required options now return JSON `invalid_request` failures with exit code 1 instead of help text.
+
+### Features
+
+* add agent-oriented CLI workflow output ([1141658](https://github.com/sjunepark/darty/commit/1141658116cc8b9ca73967ec061b5bfa57c4f881))
+* add agent-oriented CLI workflow output ([abcf727](https://github.com/sjunepark/darty/commit/abcf7279752d466629ec82c33eac92adce74d6bf))
+* add agent-oriented CLI workflow output ([3ca90fb](https://github.com/sjunepark/darty/commit/3ca90fbad71141d49d33900d18c15e22eb055bcf))
+
+
+### Bug Fixes
+
+* preserve search follow-up diagnostics ([69bf74a](https://github.com/sjunepark/darty/commit/69bf74a58e8c9a887ff82fd406d21eb8ce6311c7))
+
 ## [0.4.0](https://github.com/sjunepark/darty/compare/v0.3.4...v0.4.0) (2026-05-29)
 
 
