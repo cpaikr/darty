@@ -35,6 +35,7 @@
     "prepublishOnly": "bun run typecheck && bun test",
     "env:check": "varlock load",
     "check:axi": "bun run scripts/check-axi-upstream.ts",
+    "check:dart-wire": "bun run scripts/check-dart-wire.mjs && bun run scripts/check-dart-fixture-conformance.ts",
     "eval:search-body:cli": "bun run evals/search-body/cli/run-eval.ts",
     "eval:search-body:agent:cli": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
     "eval:cli:search-body": "bun run evals/search-body/cli/run-eval.ts",
@@ -56,6 +57,7 @@
     "sanitize-html": "^2.17.3"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "12.1.0",
     "@types/bun": "^1.3.1",
     "@types/sanitize-html": "^2.16.1",
     "typescript": "^5.9.0",

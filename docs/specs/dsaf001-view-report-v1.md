@@ -86,11 +86,12 @@ accepts any absolute URL containing a 14-digit `rcpNo`; this is a preserved
 compatibility quirk, not permission for rewrite implementations to broaden the
 documented URL contract further.
 
-## Source Basis
+## Source and Wire Ownership
 
-Implemented against observed DART viewer behavior in
-[`docs/research/dart-source-map.md`](../research/dart-source-map.md):
-
-- entry shell: `/dsaf001/main.do?rcpNo={receiptNumber}`
-- body iframe: `/report/viewer.do?rcpNo=...&dcmNo=...&eleId=...&offset=...&length=...&dtd=...`
-- TOC data: shell-embedded `treeData`
+The supported shell and content requests are canonical in OpenAPI operations
+`fetchReportShell` and `fetchReportContent` in
+[`dart-wire-v1.openapi.yaml`](dart-wire-v1.openapi.yaml). Decoding, document
+selection, `treeData`, `viewDoc`, and shell-to-viewer locator rules are
+canonical in [`dart-html-viewer-v1.md`](dart-html-viewer-v1.md). Observation
+history and unknown locator units remain non-normative in the
+[`DART source map`](../research/dart-source-map.md).

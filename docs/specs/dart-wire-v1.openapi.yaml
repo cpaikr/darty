@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: Darty supported DART wire subset
+  version: 1.0.0
+  description: >-
+    Canonical HTTP authority for the four upstream calls used by the
+    search-company -> search-company-reports -> view-report vertical workflow.
+    HTML structure, decoding, and viewer replay rules are owned by
+    dart-html-viewer-v1.md.
+  x-darty-authority-version: dart-wire-v1
+  x-darty-provenance: observed-and-project-bounded
+servers:
+  - url: https://dart.fss.or.kr
+    description: DART website origin; this is not the OpenDART API.
+tags:
+  - name: company-search
+  - name: filing-search
+  - name: report-viewer
+paths:
+  /dsae001/search.ax:
+    post:
+      operationId: searchCompanyFragment
+      tags: [company-search]
+      summary: Search company-overview rows by company name
+      parameters:
+        - $ref: '#/components/parameters/UserAgent'
+        - $ref: '#/components/parameters/CompanySearchReferer'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            x-darty-content-type: application/x-www-form-urlencoded; charset=UTF-8
+            schema:
+              $ref: '#/components/schemas/CompanySearchForm'
+            encoding:
+              corpType:
+                style: form
+                explode: true
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlFragment'
+        default:
+          $ref: '#/components/responses/UnexpectedSourceResponse'
+  /dsab007/detailSearch.ax:
+    post:
+      operationId: searchCompanyReportsFragment
+      tags: [filing-search]
+      summary: Search filing rows for one resolved DART company code
+      parameters:
+        - $ref: '#/components/parameters/UserAgent'
+        - $ref: '#/components/parameters/CompanyReportsReferer'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            x-darty-content-type: application/x-www-form-urlencoded; charset=UTF-8
+            schema:
+              $ref: '#/components/schemas/CompanyReportsSearchForm'
+            encoding:
+              publicType:
+                style: form
+                explode: true
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlFragment'
+        default:
+          $ref: '#/components/responses/UnexpectedSourceResponse'
+  /dsaf001/main.do:
+    get:
+      operationId: fetchReportShell
+      tags: [report-viewer]
+      summary: Resolve the selected report document and viewer table of contents
+      parameters:
+        - $ref: '#/components/parameters/UserAgent'
+        - $ref: '#/components/parameters/ReceiptNumber'
+        - $ref: '#/components/parameters/OptionalDocumentNumber'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlDocument'
+        default:
+          $ref: '#/components/responses/UnexpectedSourceResponse'
+  /report/viewer.do:
+    get:
+      operationId: fetchReportContent
+      tags: [report-viewer]
+      summary: Fetch the report content selected by a shell-provided locator
+      parameters:
+        - $ref: '#/components/parameters/UserAgent'
+        - $ref: '#/components/parameters/ReceiptNumber'
+        - $ref: '#/components/parameters/DocumentNumber'
+        - $ref: '#/components/parameters/ElementId'
+        - $ref: '#/components/parameters/ViewerOffset'
+        - $ref: '#/components/parameters/ViewerLength'
+        - $ref: '#/components/parameters/ViewerDtd'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlDocument'
+        default:
+          $ref: '#/components/responses/UnexpectedSourceResponse'
+components:
+  parameters:
+    UserAgent:
+      name: User-Agent
+      in: header
+      required: true
+      description: Non-empty client identification selected by Darty transport policy.
+      schema:
+        type: string
+        minLength: 1
+    CompanySearchReferer:
+      name: Referer
+      in: header
+      required: true
+      schema:
+        type: string
+        enum: [https://dart.fss.or.kr/dsae001/main.do]
+    CompanyReportsReferer:
+      name: Referer
+      in: header
+      required: true
+      schema:
+        type: string
+        enum: ['https://dart.fss.or.kr/dsab007/main.do?option=corp']
+    ReceiptNumber:
+      name: rcpNo
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/ReceiptNumber'
+    OptionalDocumentNumber:
+      name: dcmNo
+      in: query
+      required: false
+      description: Present only when selecting a shell-listed attachment document.
+      schema:
+        $ref: '#/components/schemas/DocumentNumber'
+    DocumentNumber:
+      name: dcmNo
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/DocumentNumber'
+    ElementId:
+      name: eleId
+      in: query
+      required: true
+      schema:
+        type: string
+        pattern: '^\d+$'
+    ViewerOffset:
+      name: offset
+      in: query
+      required: true
+      description: Opaque nonnegative locator copied from the report shell.
+      schema:
+        type: string
+        pattern: '^\d+$'
+    ViewerLength:
+      name: length
+      in: query
+      required: true
+      description: Opaque nonnegative locator copied from the report shell.
+      schema:
+        type: string
+        pattern: '^\d+$'
+    ViewerDtd:
+      name: dtd
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        pattern: '^[A-Za-z0-9._-]+$'
+  responses:
+    HtmlFragment:
+      description: Successful DART HTML fragment; parse rules are in dart-html-viewer-v1.md.
+      content:
+        text/html:
+          schema:
+            type: string
+    HtmlDocument:
+      description: Successful DART HTML document; parse rules are in dart-html-viewer-v1.md.
+      content:
+        text/html:
+          schema:
+            type: string
+    UnexpectedSourceResponse:
+      description: Non-200 source response; Darty maps it to a sanitized source failure.
+  schemas:
+    ReceiptNumber:
+      type: string
+      pattern: '^\d{14}$'
+    DocumentNumber:
+      type: string
+      pattern: '^\d+$'
+    CompanyCode:
+      type: string
+      pattern: '^\d{8}$'
+    EmptyString:
+      type: string
+      maxLength: 0
+    CompanySearchForm:
+      type: object
+      additionalProperties: false
+      required:
+        - currentPage
+        - maxResults
+        - maxLinks
+        - sort
+        - series
+        - gubun
+        - selectKey
+        - searchIndex
+        - textCrpCik
+        - autoSearch
+        - businessCode
+        - bsnRgsNo
+        - corpTypeAll
+        - autoSearchCorp
+        - searchType
+        - textCrpNm
+        - bsnRgsNo_1
+        - bsnRgsNo_2
+        - bsnRgsNo_3
+        - crpRgsNo
+        - corpType
+      properties:
+        currentPage:
+          type: integer
+          minimum: 1
+          maximum: 100
+        maxResults:
+          type: integer
+          minimum: 1
+          maximum: 45
+        maxLinks:
+          type: integer
+          enum: [10]
+        sort: { $ref: '#/components/schemas/EmptyString' }
+        series: { $ref: '#/components/schemas/EmptyString' }
+        gubun: { $ref: '#/components/schemas/EmptyString' }
+        selectKey: { $ref: '#/components/schemas/EmptyString' }
+        searchIndex: { $ref: '#/components/schemas/EmptyString' }
+        textCrpCik: { $ref: '#/components/schemas/EmptyString' }
+        autoSearch:
+          type: string
+          enum: ['true']
+        businessCode:
+          type: string
+          enum: [all]
+        bsnRgsNo: { $ref: '#/components/schemas/EmptyString' }
+        corpTypeAll:
+          type: string
+          enum: [all]
+        autoSearchCorp:
+          type: string
+          enum: [Y]
+        searchType:
+          type: string
+          enum: ['1']
+        textCrpNm:
+          type: string
+          minLength: 2
+        bsnRgsNo_1: { $ref: '#/components/schemas/EmptyString' }
+        bsnRgsNo_2: { $ref: '#/components/schemas/EmptyString' }
+        bsnRgsNo_3: { $ref: '#/components/schemas/EmptyString' }
+        crpRgsNo: { $ref: '#/components/schemas/EmptyString' }
+        corpType:
+          type: array
+          minItems: 4
+          maxItems: 4
+          uniqueItems: true
+          items:
+            type: string
+            enum: [P, A, X, E]
+    CompanyReportsSearchForm:
+      type: object
+      additionalProperties: false
+      description: >-
+        Darty serializes maxLinks as 10, copies reportName to reportName2, and
+        sends businessNm as "전체" exactly when businessCode is "all" (empty
+        otherwise). These coupled values are part of the supported request.
+      x-darty-equal-fields:
+        - [reportName, reportName2]
+      x-darty-conditional-fields:
+        - when: { field: businessCode, equals: all }
+          then: { field: businessNm, equals: 전체 }
+          otherwise: { field: businessNm, equals: '' }
+      required:
+        - currentPage
+        - maxResults
+        - maxLinks
+        - sort
+        - series
+        - option
+        - textCrpNm
+        - textCrpNm2
+        - textCrpCik
+        - textPresenterNm
+        - reportName
+        - reportName2
+        - startDate
+        - endDate
+        - finalReport
+        - businessCode
+        - businessNm
+        - corporationType
+        - closingAccountsMonth
+        - autoSearch
+        - autoSearchCorp
+      properties:
+        currentPage:
+          type: integer
+          minimum: 1
+          maximum: 100
+        maxResults:
+          type: integer
+          enum: [15, 30, 50, 100]
+        maxLinks:
+          type: integer
+          enum: [10]
+        sort:
+          type: string
+          enum: [date]
+        series:
+          type: string
+          enum: [asc, desc]
+        option:
+          type: string
+          enum: [corp]
+        textCrpNm: { $ref: '#/components/schemas/EmptyString' }
+        textCrpNm2: { $ref: '#/components/schemas/EmptyString' }
+        textCrpCik: { $ref: '#/components/schemas/CompanyCode' }
+        textPresenterNm:
+          type: string
+        reportName:
+          type: string
+        reportName2:
+          type: string
+        publicType:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^[A-Z]\d{3}$'
+        startDate:
+          type: string
+          pattern: '^\d{8}$'
+        endDate:
+          type: string
+          pattern: '^\d{8}$'
+        finalReport:
+          type: string
+          enum: ['', recent]
+        businessCode:
+          type: string
+          pattern: '^(all|ROOT\d{4}|\d{2,5})$'
+        businessNm:
+          type: string
+        corporationType:
+          type: string
+          enum: [all, P, A, N, E]
+        closingAccountsMonth:
+          type: string
+          pattern: '^(all|0[1-9]|1[0-2])$'
+        autoSearch:
+          type: string
+          enum: [N]
+        autoSearchCorp:
+          type: string
+          enum: [Y]

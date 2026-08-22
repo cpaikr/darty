@@ -30,21 +30,26 @@ _None._
 
 ### Completed included results
 
-_None._
+- Recoverable compatibility baseline and mutation-tested parity judge — merged
+  through PR #19 at `ff8770c`; locally marked by the annotated non-release tag
+  `archive/rust-rewrite-baseline`.
 
 ### Current in-scope result
 
-Recoverable compatibility baseline and mutation-tested parity judge.
+Canonical DART wire authority and discarded Rust feasibility slice.
 
 ### Next in-scope action
 
-Commit and deliver the independently reviewed compatibility-baseline slice through PR feedback completion before starting source authority.
+Deliver the canonical authority and discarded feasibility evidence through the
+PR 2 review lifecycle. Do not start the retained candidate until PR 2 is merged.
 
 ### Evidence and blockers
 
 - Initialization boundary: the temporary `codex/rust-vertical-workflow` integration branch is necessary for the contract's sequential PR lifecycle and terminal metadata commit.
 - Remote direct-push preflight for the integration branch succeeded on 2026-08-22.
-- The integration base includes commit `795bf59`, which established the accepted rewrite plan and project queue; no Rust implementation work has started.
+- At initialization, the integration base included commit `795bf59`, which
+  established the accepted rewrite plan and project queue; no retained Rust
+  candidate implementation had started.
 - PR 1 candidate adds a 21-scenario process-isolated CLI v1 corpus: 9 scenarios are tagged `full`, 12 are tagged `vertical`, the full judge runs all 21, and the vertical judge runs the 12 vertical scenarios. It also adds a disposable-bundle mutation proof without editing `src/` or changing active package exports or `bin`.
 - Baseline reconciliation records the three implemented vertical contracts, compatibility aliases and quirks, empty-result differences, opaque viewer locators, and evidence classifications.
 - Untouched TypeScript baseline validation at dispatch: typecheck, 338 tests passed with 23 live skips, npm CLI build, and npm pack dry-run succeeded.
@@ -52,3 +57,61 @@ Commit and deliver the independently reviewed compatibility-baseline slice throu
 - Independent review completed on 2026-08-22. Its two safe findings were applied by asserting every vertical help option and adding deterministic pretty-success coverage; targeted parity, mutation, package dry-run, and diff checks passed afterward.
 - PR feedback tightened help parity to exact option sets plus normalized semantic copy, clarified the company-detail locator, and pinned the new Node action. CI exposed pre-existing `.js`/ESM mismatches in temporary smoke and mutation artifacts at the declared Node 20 minimum; naming both artifacts `.mjs` restored all 338 tests and the mutation proof under Node 20.18.1. The proof now forwards `process.execPath`, so its subject uses the same runtime as the proof itself.
 - Additional fixture-backed vertical success and `--agent` scenarios are not yet in the manifest. They remain intentionally assigned to canonical wire authority and must join the judge before candidate acceptance.
+- PR #19 passed repository CI and completed the required review lifecycle with all four review threads resolved and no pending or outside-diff feedback. Its three commits were preserved by merge commit `ff8770c` on 2026-08-22.
+- PR 2 authority candidate defines exactly four upstream operations in OpenAPI,
+  25 stable HTML/viewer/transport rules, 17 independently fictional fixture
+  cases with language-neutral expected outcomes, and 10 exact transport fault
+  recipes covering redirects, media type, every deadline phase, and all three
+  byte caps. `bun run check:dart-wire` validates
+  exact operation triples, schema-conforming serialized requests and coupled
+  form invariants, fixture hashes and provenance, CP949-only and malformed-byte
+  behavior through every accepted alias, qualification completeness, and the
+  authority lock. Fourteen fixture cases conform through the unchanged active
+  TypeScript parsers, and nine POST cases exercise the active serializers.
+- Five bounded metadata-only live probes on 2026-08-22 returned HTTP 200 without
+  authentication or redirects: company search (7,315 bytes), filing search
+  (18,514), report shell (71,132), UTF-8 section (4,753), and MS949 no-TOC
+  content (47,703). No live body was retained.
+- Independent PR 2 review found and prompted fixes for retryability ownership,
+  exact operation enumeration, serialized request constraints, typed fixture
+  expectations, all byte-limit boundaries, CP949-extension and malformed-byte
+  decoding, unsupported-charset rejection, viewer selection fallback, and a
+  stale research link. Focused re-review found no remaining actionable issues.
+  Authority/conformance,
+  frozen install, typecheck, all 338 tests (23 live skips), build, all 21 CLI
+  judge cases, mutation proof, package dry-run, and diff checks pass.
+- The canonical authority was committed and pushed as `8e7b30b` after two
+  focused re-reviews reported no remaining actionable findings.
+- A private disposable Rust crate outside the repository proved the exact
+  four-request handoff, three parser boundaries, UTF-8/CP949/malformed decoding,
+  redirect/status/type/charset failures, all three streamed byte caps, total
+  and idle deadline classifications, and cancellation selection. Its request
+  assertions covered the representative default workflow, not the complete
+  OpenAPI form surface. Rust format, Clippy with
+  warnings denied, and five locked integration tests passed on Rust/Cargo
+  1.92.0 for `aarch64-apple-darwin`.
+- The feasibility crate, lockfile, source, and build directory were deleted.
+  Repository absence checks found no `.rs`, `Cargo.toml`, `Cargo.lock`, or
+  `target`, and `src`, `package.json`, and `test/compat` remained unchanged.
+  Only [`docs/research/rust-feasibility-v1.md`](../docs/research/rust-feasibility-v1.md)
+  retains the evidence and candidate implications.
+- Final independent feasibility review narrowed request-serialization claims
+  to the representative default workflow, required numeric timeout and
+  cancellation configurations plus their measurement limits, and corrected
+  the initialization wording. Re-review found no remaining actionable issue.
+- PR #20 received four CodeRabbit and six Codex findings. The review follow-up
+  adds successful partial-row cases, an attachment-selected shell case, exact
+  nested TOC and document projections, active POST serializer conformance with
+  repeated fields, redirect and media-type failures, and distinct connect,
+  idle-read, and total deadline recipes. It also hardens missing-request and
+  reference-cycle handling, exercises raw OpenAPI references before validation,
+  and makes fault-set comparison independent of object key order.
+- The review-strengthened authority passes 17 fictional fixture cases and 10
+  exact fault recipes. Fourteen cases conform through unchanged active
+  TypeScript parsers, and nine POST cases conform through unchanged active
+  serializers. Frozen install, wire checks, typecheck, 338 tests with 23 live
+  skips, build, all 21 compatibility cases, both mutation sentinels, package
+  dry-run, active-TypeScript diff checks, and whitespace checks pass.
+- An independent post-fix review classified every PR #20 finding as resolved,
+  found no remaining correctness or design issue, and confirmed that no active
+  TypeScript, package, lockfile, compatibility-test, or CI file changed.

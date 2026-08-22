@@ -14,7 +14,8 @@ This capability implements only the `회사별` slice of DART `기업개황`.
 
 It should:
 
-- search companies by company name through `https://dart.fss.or.kr/dsae001/search.ax`
+- search companies by company name through canonical OpenAPI operation
+  `searchCompanyFragment`
 - parse the returned HTML fragment into structured company rows
 - expose the 8-digit DART company code from each result row
 - include the 6-digit stock code when DART displays one
@@ -34,16 +35,17 @@ Observed UI entrypoint:
 - URL: `https://dart.fss.or.kr/dsae001/main.do`
 - implemented tab: `회사별`
 
-Implemented input mapping:
+Public input mapping. Upstream form fields are canonical in OpenAPI operation
+`searchCompanyFragment` and are intentionally not repeated here.
 
-| Korean DART UI | Public input | Internal `/dsae001/search.ax` replay field | Status |
-|---|---|---|---|
-| tab `회사별` | fixed capability choice | form defaults for company search | implemented; not caller-configurable |
-| `검색조건 선택=회사명` | fixed capability choice | `searchType=1` | implemented; not caller-configurable |
-| `검색어입력` | `companyName` | `textCrpNm` | implemented and required |
-| result page | `page` | `currentPage` | implemented; default `1` |
-| result page size | `pageSize` | `maxResults` | implemented; default `15`, max `45` |
-| company-type checkboxes `유가`, `코스닥`, `코넥스`, `기타` | fixed all-company search | `corpType=P/A/X/E`, `corpTypeAll=all` | implemented as all selected; not caller-configurable |
+| Korean DART UI | Public input | Status |
+|---|---|---|
+| tab `회사별` | fixed capability choice | implemented; not caller-configurable |
+| `검색조건 선택=회사명` | fixed capability choice | implemented; not caller-configurable |
+| `검색어입력` | `companyName` | implemented and required |
+| result page | `page` | implemented; default `1` |
+| result page size | `pageSize` | implemented; default `15`, max `45` |
+| company-type checkboxes `유가`, `코스닥`, `코넥스`, `기타` | fixed all-company search | implemented as all selected; not caller-configurable |
 
 Implemented output mapping:
 
@@ -112,32 +114,19 @@ Failures:
 
 Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as correcting page or page-size values.
 
-## 6. Source Replay Notes
+## 6. Source and Wire Ownership
 
-Observed POST endpoint:
-
-- `https://dart.fss.or.kr/dsae001/search.ax`
-
-Observed company-name replay fields:
-
-- `currentPage`
-- `maxResults`
-- `maxLinks=10`
-- `searchType=1`
-- `textCrpNm={companyName}`
-- `businessCode=all`
-- `corpTypeAll=all`
-- `corpType=P`, `A`, `X`, `E`
-- supporting empty fields such as `selectKey`, `searchIndex`, `textCrpCik`, `bsnRgsNo`, and `crpRgsNo`
-
-Observed row-selection transport:
-
-- `POST /dsae001/select.ax` with `selectKey={companyCode}`
+The supported request is canonical in OpenAPI operation
+`searchCompanyFragment` in
+[`dart-wire-v1.openapi.yaml`](dart-wire-v1.openapi.yaml). Company-row and
+pagination grammar is canonical in
+[`dart-html-viewer-v1.md`](dart-html-viewer-v1.md). Investigation history and
+adjacent routes remain non-normative in the
+[`DART source map`](../research/dart-source-map.md).
 
 Implemented reference behavior constructs an absolute
 `/dsae001/select.ax?selectKey={companyCode}` `detailEndpoint`. It is a locator,
-not a contract that consumers can fetch with `GET`: observed row selection uses
-`POST /dsae001/select.ax` with `selectKey={companyCode}`. The search operation
-does not fetch or normalize that table. Use the separate `company-detail`
-command for supported detail retrieval and normalization; `company-rss` remains
-responsible for company RSS.
+not a fetch contract in `dart-wire-v1`, and the search operation does not fetch
+or normalize that table. Use the separate `company-detail` command for
+supported detail retrieval and normalization; `company-rss` remains responsible
+for company RSS.

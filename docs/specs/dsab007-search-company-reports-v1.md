@@ -15,7 +15,8 @@ This capability targets the `회사명` mode on DART `공시통합검색`, but e
 
 It does:
 
-- search filings for a selected DART company through `https://dart.fss.or.kr/dsab007/detailSearch.ax`
+- search filings for a selected DART company through canonical OpenAPI
+  operation `searchCompanyReportsFragment`
 - require the 8-digit DART company code as the public company identifier
 - parse the returned filing-result fragment into structured filing rows
 - return filing references usable by `view-report`
@@ -48,29 +49,32 @@ Observed browser flow for `케이티` on 2026-05-07:
 
 Direct replay finding:
 
-- `POST /dsab007/detailSearch.ax` can bypass the popup when `textCrpCik={companyCode}` is supplied.
-- Replaying selected `케이티` with `textCrpCik=00190321` and empty `textCrpNm` still returned the same filing result set.
+- Code-first replay can bypass the popup when the resolved company code is
+  supplied without company-name text.
+- Replaying selected `케이티` by company code alone returned the same filing
+  result set.
 - Therefore the public operation is code-first: the popup is source evidence for how the UI resolves names, not part of this operation's stable contract.
 
-Implemented input mapping:
+Public input mapping. Upstream form fields are canonical in OpenAPI operation
+`searchCompanyReportsFragment` and are intentionally not repeated here.
 
-| Korean DART UI | Public input | Internal replay field | Status |
-|---|---|---|---|
-| search selector `회사명` | fixed capability choice | `option=corp` | implemented; not caller-configurable |
-| popup-selected company | `companyCode` | `textCrpCik` | implemented and required |
-| `검색시작일` | `startDate` | `startDate` | implemented and required |
-| `검색종료일` | `endDate` | `endDate` | implemented and required |
-| result page | `page` | `currentPage` | implemented; default `1` |
-| page-size dropdown `15/30/50/100` | `pageSize` | `maxResults` | implemented; default `15`; public compatibility aliases `5` and `10` normalize to `15` |
-| result sort `접수일자` | fixed internal default | `sort=date` | implemented; replay-observed; not caller-configurable in v1 |
-| sort direction | `sortDirection=asc\|desc` | `series=asc\|desc` | implemented; default `desc` |
-| `제출인명` | `presenterName` | `textPresenterNm` | implemented; optional |
-| `보고서명` | `reportName` | `reportName`, `reportName2` | implemented; optional |
-| `공시유형` detailed checkboxes | `disclosureTypes[]` | repeated `publicType` | implemented; DART detail codes such as `A001`, `I001` |
-| `업종` | `industryCode` | `businessCode` | implemented; default `all`; DART industry tree code such as `612` |
-| `법인유형` | `corporationType` | `corporationType` | implemented; default `all`; values `P`, `A`, `N`, `E` |
-| `결산유형` | `closingAccountsMonth` | `closingAccountsMonth` | implemented; default `all`; canonical values `01` through `12`; CLI aliases `1` through `9` normalize to `01` through `09` |
-| `최종보고서` filter opt-out | `includeAllReports` | omit/blank `finalReport` when true; otherwise `finalReport=recent` | implemented; default `false` |
+| Korean DART UI | Public input | Status |
+|---|---|---|
+| search selector `회사명` | fixed capability choice | implemented; not caller-configurable |
+| popup-selected company | `companyCode` | implemented and required |
+| `검색시작일` | `startDate` | implemented and required |
+| `검색종료일` | `endDate` | implemented and required |
+| result page | `page` | implemented; default `1` |
+| page-size dropdown `15/30/50/100` | `pageSize` | implemented; default `15`; public compatibility aliases `5` and `10` normalize to `15` |
+| result sort `접수일자` | fixed internal default | implemented; replay-observed; not caller-configurable in v1 |
+| sort direction | `sortDirection=asc\|desc` | implemented; default `desc` |
+| `제출인명` | `presenterName` | implemented; optional |
+| `보고서명` | `reportName` | implemented; optional |
+| `공시유형` detailed checkboxes | `disclosureTypes[]` | implemented; DART detail codes such as `A001`, `I001` |
+| `업종` | `industryCode` | implemented; default `all`; DART industry tree code such as `612` |
+| `법인유형` | `corporationType` | implemented; default `all`; values `P`, `A`, `N`, `E` |
+| `결산유형` | `closingAccountsMonth` | implemented; default `all`; canonical values `01` through `12`; CLI aliases `1` through `9` normalize to `01` through `09` |
+| `최종보고서` filter opt-out | `includeAllReports` | implemented; default `false` |
 
 Observed but not included in the first public contract:
 
@@ -86,7 +90,8 @@ Observed but not included in the first public contract:
 Rationale:
 
 - DART company names are ambiguous; `케이티` maps to at least two DART company codes.
-- The filing replay endpoint accepts the selected company code directly through `textCrpCik`, so the browser popup can be bypassed.
+- The filing replay operation accepts the selected company code directly, so
+  the browser popup can be bypassed.
 - The repo already has `search-company`, which resolves company names to 8-digit DART company codes.
 - Keeping this operation code-first avoids a result type that sometimes returns filings and sometimes returns candidate companies.
 
@@ -135,7 +140,8 @@ Output envelope:
 - `result.pagination`: current page, total pages, total count, returned count
 - `result.items[]`: filing rows
 - `metadata`: source endpoint, fetched time, observed source behavior, completeness, dropped row count
-- `references.searchUrl`: `https://dart.fss.or.kr/dsab007/detailSearch.ax`
+- `references.searchUrl`: canonical upstream URL for OpenAPI operation
+  `searchCompanyReportsFragment`
 - `warnings`: recoverable notices such as partial row drops or ambiguous per-row disclosure-type attribution
 
 Result item fields:
@@ -158,8 +164,9 @@ Empty result sets are successful searches, not failures. When DART returns a rec
 The result also includes a `no_results` warning.
 
 The accepted disclosure, industry, corporation, and closing-account code sets
-are project decisions bounded by documented DART code families. The source
-evidence below proves representative values, not every accepted value.
+are project decisions bounded by documented DART code families. The
+[`dart-source-map.md`](../research/dart-source-map.md) evidence proves
+representative values, not every accepted value.
 
 Failures:
 
@@ -175,117 +182,17 @@ Typed failures may include optional `recoveryHint` with a concise next action fo
 
 For caller-facing DART filter code examples and labels, see [`dart-filter-codes.md`](dart-filter-codes.md). For detailed disclosure-type discovery, use `darty disclosure-types --query <검색어>`.
 
-## 6. Source Replay Notes
+## 6. Source and Wire Ownership
 
-Observed company lookup endpoint used by the browser popup:
+The supported request is canonical in OpenAPI operation
+`searchCompanyReportsFragment` in
+[`dart-wire-v1.openapi.yaml`](dart-wire-v1.openapi.yaml). Filing-row and
+pagination grammar is canonical in
+[`dart-html-viewer-v1.md`](dart-html-viewer-v1.md). Browser popup behavior,
+filter probes, date-window evidence, result examples, and adjacent routes remain
+non-normative in the [`DART source map`](../research/dart-source-map.md).
 
-- `POST https://dart.fss.or.kr/corp/searchCorp.ax`
-
-This popup endpoint is source evidence only for this operation. Public
-company-name resolution remains in `search-company` unless a separate
-convenience wrapper is intentionally added later.
-
-Observed popup fields for the `케이티` UI flow:
-
-- `currentPage=1`
-- `maxResults=15`
-- `maxLinks=10`
-- `textCrpNm=케이티`
-- `histYn=Y`
-- repeated `corpType=P`, `A`, `X`, `E`
-
-Observed popup row evidence:
-
-```html
-<input type='hidden' name='hiddenCikCD1' value='00190321'>
-<input type='hidden' name='hiddenCikNM1' value='케이티'>
-<td class="tL ellipsis" title="회사명 :케이티 ... 업종 :전기 통신업">
-  <span class="tagCom_kospi" title="유가증권시장">유</span>케이티
-</td>
-<td>030200</td>
-```
-
-Observed filing search endpoint:
-
-- `POST https://dart.fss.or.kr/dsab007/detailSearch.ax`
-
-Observed filing replay fields after selecting `유 케이티`:
-
-- `currentPage=1`
-- `maxResults=15`
-- `maxLinks=10`
-- `sort=date`
-- `series=desc`
-- `option=corp`
-- `textCrpNm=케이티`
-- `textCrpNm2=케이티`
-- `textCrpCik=00190321`
-- optional `textPresenterNm`
-- optional `reportName` and `reportName2`
-- repeated optional `publicType`
-- `startDate=20250507`
-- `endDate=20260507`
-- `finalReport=recent`
-- `businessCode=all`
-- `businessNm=전체`
-- `corporationType=all`
-- `closingAccountsMonth=all`
-- `autoSearch=N`
-- `autoSearchCorp=Y`
-
-Observed sort behavior:
-
-- `sort=date` and `series=desc` were replay-observed for the selected `케이티` search.
-- The public v1 contract keeps `sort=date` internal and exposes only `sortDirection`.
-- The UI exposes sort anchors for `접수일자`, `회사명`, and `보고서명`; their anchor IDs suggest `date`, `crp`, and `rpt`.
-- `crp` and `rpt` remain outside the public contract until direct replay proves
-  they are honored and the product chooses to expose a sort-field option.
-
-Observed code-first replay variation:
-
-- `textCrpCik=00190321`
-- `textCrpNm=` empty
-- `textCrpNm2=` empty
-- same date, sort, and filter fields as above
-- result still returned 15 rows and pager `[1/12] [총 169건]`
-
-Observed advanced filter behavior on 2026-05-08 for `textCrpCik=00190321`, `20250507..20260507`:
-
-- `textPresenterNm=케이티` reduced the result set from 169 to 63 rows.
-- `reportName=사업보고서` and `reportName2=사업보고서` returned 1 row.
-- `publicType=I001` returned 20 rows; `publicType=A001` returned 1 row.
-- `businessCode=612` matched the baseline company result set, while unrelated `businessCode=011` returned no rows.
-- `corporationType=P` matched the baseline company result set, while `corporationType=A` returned no rows.
-- `closingAccountsMonth=12` matched the baseline company result set, while `closingAccountsMonth=11` returned no rows.
-
-Observed date-window limit on 2026-05-24 for `textCrpCik=00571818`, `reportName=감사보고서`, and `publicType=F001`:
-
-- `20160524..20260524` returned rows.
-- `20160523..20260524` and wider ranges returned the normal no-result placeholder even though known receipt `20260402001821` was inside the range.
-- The public contract therefore rejects windows longer than 10 years instead of treating DART's silent empty response as an authoritative no-result search.
-
-Observed result row shape:
-
-```html
-<span class="tagCom_kospi" title="유가증권시장">유</span>
-<a href="javascript:openCorpInfoNew('00190321', 'winCorpInfo', '/dsae001/selectPopup.ax');">
-  케이티
-</a>
-<a href="/dsaf001/main.do?rcpNo=20260504800404"
-   onclick="openReportViewer('20260504800404',''); return false;">
-  기업설명회(IR)개최(안내공시)
-</a>
-<td class="tL ellipsis" title="케이티">케이티</td>
-<td>2026.05.04</td>
-<td><span class="tagCom_kospi_other" title="본 공시사항은 한국거래소 유가증권시장본부 소관임">유</span></td>
-```
-
-Observed page-size behavior for selected `케이티` on 2026-05-07:
-
-- `maxResults=15` returned 15 rows and `[1/12] [총 169건]`
-- `maxResults=30` returned 30 rows and `[1/6] [총 169건]`
-- `maxResults=50` returned 50 rows and `[1/4] [총 169건]`
-- `maxResults=100` returned 100 rows and `[1/2] [총 169건]`
-- `maxResults=2` fell back to 15 rows. The public contract exposes upstream
-  choices plus the established `5` and `10` compact-agent compatibility aliases,
-  both normalized to `15` before replay.
+The public v1 contract keeps receipt-date sorting internal and exposes only
+`sortDirection`. It rejects date windows longer than ten years and preserves
+the page-size compatibility aliases described above; those are product
+decisions rather than additional wire fields.

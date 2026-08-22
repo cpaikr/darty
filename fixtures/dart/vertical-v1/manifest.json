@@ -1,0 +1,469 @@
+{
+  "schemaVersion": 1,
+  "authorityVersion": "dart-wire-v1",
+  "description": "Cross-language fictional evidence for the four-operation DART wire workflow.",
+  "selectionRule": "Match method, path, required headers, and complete form or query. Never select by case id alone.",
+  "cases": [
+    {
+      "id": "company-populated",
+      "operationId": "searchCompanyFragment",
+      "rules": ["COMPANY-TABLE-1", "COMPANY-ROW-1", "COMPANY-PAGE-1"],
+      "request": {
+        "method": "POST",
+        "path": "/dsae001/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "referer": "https://dart.fss.or.kr/dsae001/main.do",
+          "user-agent": { "present": true }
+        },
+        "form": {
+          "currentPage": "1",
+          "maxResults": "15",
+          "maxLinks": "10",
+          "sort": "",
+          "series": "",
+          "gubun": "",
+          "selectKey": "",
+          "searchIndex": "",
+          "textCrpCik": "",
+          "autoSearch": "true",
+          "businessCode": "all",
+          "bsnRgsNo": "",
+          "corpTypeAll": "all",
+          "autoSearchCorp": "Y",
+          "searchType": "1",
+          "textCrpNm": "가람",
+          "bsnRgsNo_1": "",
+          "bsnRgsNo_2": "",
+          "bsnRgsNo_3": "",
+          "crpRgsNo": "",
+          "corpType": ["P", "A", "X", "E"]
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-populated.utf8.html",
+        "sha256": "02aa1d81703e40d5383bc74c4ed1f44dbf3486c9b418b1a653df5bee5e8b9007"
+      },
+      "expected": {
+        "kind": "success", "parser": "company-search", "rows": 2, "droppedRows": 0,
+        "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 2, "returnedCount": 2 },
+        "first": { "companyCode": "00000001", "companyName": "가람전자", "stockCode": "123456", "marketKind": "kospi" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "company-empty",
+      "operationId": "searchCompanyFragment",
+      "rules": ["COMPANY-TABLE-1", "COMPANY-PAGE-1"],
+      "request": { "matchRequestFrom": "company-populated", "formOverrides": { "textCrpNm": "빈회사" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-empty.utf8.html",
+        "sha256": "87a8b7a5aed98160e90f6727e791dc0b1b1db815f026640104439b9188474893"
+      },
+      "expected": { "kind": "success", "parser": "company-search", "rows": 0, "droppedRows": 0, "pagination": { "currentPage": 1, "totalPages": 0, "totalCount": 0, "returnedCount": 0 } },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "company-partial",
+      "operationId": "searchCompanyFragment",
+      "rules": ["COMPANY-TABLE-1", "COMPANY-ROW-1", "COMPANY-PAGE-1", "COMPANY-PARTIAL-1"],
+      "request": { "matchRequestFrom": "company-populated", "formOverrides": { "textCrpNm": "부분회사" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-partial.utf8.html",
+        "sha256": "1c003ece68119c1ba6e413e9804188111ed0871950d511889d11be173620cbe3"
+      },
+      "expected": {
+        "kind": "success", "parser": "company-search", "rows": 1, "droppedRows": 1,
+        "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 2, "returnedCount": 1 },
+        "first": { "companyCode": "00000001", "companyName": "가람전자", "stockCode": "123456", "marketKind": "kospi" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "company-changed",
+      "operationId": "searchCompanyFragment",
+      "rules": ["COMPANY-PARTIAL-1"],
+      "request": { "matchRequestFrom": "company-populated", "formOverrides": { "textCrpNm": "변경회사" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-changed.utf8.html",
+        "sha256": "1ecfa3cb4d7d05aa635de3d5efc0c1ea870caab686346159470afe3c26209b40"
+      },
+      "expected": { "kind": "error", "parser": "company-search", "classification": "source_changed" },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "reports-populated",
+      "operationId": "searchCompanyReportsFragment",
+      "rules": ["REPORTS-TABLE-1", "REPORTS-ROW-1", "REPORTS-PAGE-1"],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/detailSearch.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "referer": "https://dart.fss.or.kr/dsab007/main.do?option=corp",
+          "user-agent": { "present": true }
+        },
+        "form": {
+          "currentPage": "1",
+          "maxResults": "15",
+          "maxLinks": "10",
+          "sort": "date",
+          "series": "desc",
+          "option": "corp",
+          "textCrpNm": "",
+          "textCrpNm2": "",
+          "textCrpCik": "00000001",
+          "textPresenterNm": "",
+          "reportName": "",
+          "reportName2": "",
+          "publicType": [],
+          "startDate": "20250101",
+          "endDate": "20260101",
+          "finalReport": "recent",
+          "businessCode": "all",
+          "businessNm": "전체",
+          "corporationType": "all",
+          "closingAccountsMonth": "all",
+          "autoSearch": "N",
+          "autoSearchCorp": "Y"
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/reports-populated.utf8.html",
+        "sha256": "815cb02f402f56901907261a8fbd28dda8fc9ecd33aa4f8c7c6eda3b01eaf439"
+      },
+      "expected": {
+        "kind": "success", "parser": "company-reports", "rows": 1, "droppedRows": 0,
+        "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 1, "returnedCount": 1 },
+        "first": { "companyCode": "00000001", "reportTitle": "[기재정정]사업보고서", "receiptNumber": "20260101000001", "receiptDate": "2026-01-01" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "reports-advanced-filters",
+      "operationId": "searchCompanyReportsFragment",
+      "rules": ["REPORTS-TABLE-1", "REPORTS-ROW-1", "REPORTS-PAGE-1"],
+      "request": {
+        "matchRequestFrom": "reports-populated",
+        "formOverrides": {
+          "reportName": "연차보고서", "reportName2": "연차보고서",
+          "publicType": ["A001", "A002"], "businessCode": "ROOT0001", "businessNm": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/reports-populated.utf8.html",
+        "sha256": "815cb02f402f56901907261a8fbd28dda8fc9ecd33aa4f8c7c6eda3b01eaf439"
+      },
+      "expected": {
+        "kind": "success", "parser": "company-reports", "rows": 1, "droppedRows": 0,
+        "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 1, "returnedCount": 1 },
+        "first": { "companyCode": "00000001", "reportTitle": "[기재정정]사업보고서", "receiptNumber": "20260101000001", "receiptDate": "2026-01-01" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "reports-empty",
+      "operationId": "searchCompanyReportsFragment",
+      "rules": ["REPORTS-TABLE-1", "REPORTS-PAGE-1"],
+      "request": { "matchRequestFrom": "reports-populated", "formOverrides": { "textCrpCik": "00000003" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/reports-empty.utf8.html",
+        "sha256": "33bedccf37aa12f4085f46182f8b11d0e223c1fab343a81c350f442fb4dcb3d9"
+      },
+      "expected": { "kind": "success", "parser": "company-reports", "rows": 0, "droppedRows": 0, "pagination": { "currentPage": 1, "totalPages": 0, "totalCount": 0, "returnedCount": 0 } },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "reports-partial",
+      "operationId": "searchCompanyReportsFragment",
+      "rules": ["REPORTS-TABLE-1", "REPORTS-ROW-1", "REPORTS-PAGE-1", "REPORTS-PARTIAL-1"],
+      "request": { "matchRequestFrom": "reports-populated", "formOverrides": { "textCrpCik": "00000001" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/reports-partial.utf8.html",
+        "sha256": "413758789010562ab6677bb47ca22ec4d8a598a9c41eb3525f4fdc2202fe3725"
+      },
+      "expected": {
+        "kind": "success", "parser": "company-reports", "rows": 1, "droppedRows": 1,
+        "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 2, "returnedCount": 1 },
+        "first": { "companyCode": "00000001", "reportTitle": "[기재정정]사업보고서", "receiptNumber": "20260101000001", "receiptDate": "2026-01-01" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "reports-changed",
+      "operationId": "searchCompanyReportsFragment",
+      "rules": ["REPORTS-PARTIAL-1"],
+      "request": { "matchRequestFrom": "reports-populated", "formOverrides": { "textCrpCik": "00000004" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/reports-changed.utf8.html",
+        "sha256": "2423afeb3a1ac36ea1558a1e4e2fdaac2c19ef166dce5025febefb79d0d9f5d7"
+      },
+      "expected": { "kind": "error", "parser": "company-reports", "classification": "source_changed" },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-shell-toc",
+      "operationId": "fetchReportShell",
+      "rules": ["SHELL-DOCUMENTS-1", "SHELL-TREE-1", "SHELL-INITIAL-1"],
+      "request": { "method": "GET", "path": "/dsaf001/main.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000001" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-shell-toc.utf8.html",
+        "sha256": "3a0f8deab886ee97d7b5d4b1163a2fb0b47e045dfdec03375d10a6c8914a5fe7"
+      },
+      "expected": {
+        "kind": "success", "parser": "report-shell", "documentCount": 2,
+        "selectedQuery": "rcpNo=20260101000001", "selectedWasExplicit": true,
+        "tocRoots": 1,
+        "documents": [
+          { "title": "가람전자 사업보고서", "kind": "body", "selected": true, "query": "rcpNo=20260101000001" },
+          { "title": "2026.01.01 감사보고서", "kind": "attachment", "selected": false, "query": "rcpNo=20260101000001&dcmNo=10000002" }
+        ],
+        "toc": [
+          {
+            "title": "I. 회사의 개요",
+            "locator": { "rcpNo": "20260101000001", "dcmNo": "10000001", "eleId": "1", "offset": "100", "length": "900", "dtd": "dart4.xsd", "tocNo": "1" },
+            "children": [
+              {
+                "title": "1. 배당에 관한 사항",
+                "locator": { "rcpNo": "20260101000001", "dcmNo": "10000001", "eleId": "2", "offset": "200", "length": "300", "dtd": "dart4.xsd", "tocNo": "2" },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "initialLocator": { "rcpNo": "20260101000001", "dcmNo": "10000001", "eleId": "1", "offset": "100", "length": "900", "dtd": "dart4.xsd", "tocNo": "" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-shell-attachment",
+      "operationId": "fetchReportShell",
+      "rules": ["SHELL-DOCUMENTS-1", "SHELL-TREE-1", "SHELL-INITIAL-1", "SHELL-SELECTION-1"],
+      "request": { "method": "GET", "path": "/dsaf001/main.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000001", "dcmNo": "10000002" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-shell-attachment.utf8.html",
+        "sha256": "46b53750b566dae155179e873a49ecfa0a8c0fe03ae452b7f0273c3ca08c5eb5"
+      },
+      "expected": {
+        "kind": "success", "parser": "report-shell", "documentCount": 2,
+        "selectedQuery": "rcpNo=20260101000001&dcmNo=10000002", "selectedWasExplicit": true,
+        "tocRoots": 1,
+        "documents": [
+          { "title": "가람전자 사업보고서", "kind": "body", "selected": false, "query": "rcpNo=20260101000001" },
+          { "title": "가람전자 감사보고서", "kind": "attachment", "selected": true, "query": "rcpNo=20260101000001&dcmNo=10000002" }
+        ],
+        "toc": [
+          {
+            "title": "감사보고서 본문",
+            "locator": { "rcpNo": "20260101000001", "dcmNo": "10000002", "eleId": "10", "offset": "1000", "length": "500", "dtd": "dart4.xsd", "tocNo": "10" },
+            "children": []
+          }
+        ],
+        "initialLocator": { "rcpNo": "20260101000001", "dcmNo": "10000002", "eleId": "10", "offset": "1000", "length": "500", "dtd": "dart4.xsd", "tocNo": "10" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-shell-no-toc",
+      "operationId": "fetchReportShell",
+      "rules": ["SHELL-DOCUMENTS-1", "SHELL-NO-TOC-1", "SHELL-INITIAL-1"],
+      "request": { "method": "GET", "path": "/dsaf001/main.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000002" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-shell-no-toc.utf8.html",
+        "sha256": "a3914c16ea7e1adab2a0707625fb019a9b02569904a482619ebcd9cef56283dc"
+      },
+      "expected": {
+        "kind": "success", "parser": "report-shell", "documentCount": 1,
+        "selectedQuery": "rcpNo=20260101000002", "selectedWasExplicit": true,
+        "tocRoots": 0,
+        "initialLocator": { "rcpNo": "20260101000002", "dcmNo": "10000003", "eleId": "0", "offset": "0", "length": "0", "dtd": "HTML", "tocNo": "" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-shell-no-selected",
+      "operationId": "fetchReportShell",
+      "rules": ["SHELL-DOCUMENTS-1", "SHELL-NO-TOC-1", "SHELL-INITIAL-1"],
+      "request": { "method": "GET", "path": "/dsaf001/main.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000004" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-shell-no-selected.utf8.html",
+        "sha256": "0524c467ff4e25eed631393fe622eba146d739a434639968567406baa4584ee8"
+      },
+      "expected": {
+        "kind": "success", "parser": "report-shell", "documentCount": 2,
+        "selectedQuery": "rcpNo=20260101000004", "selectedWasExplicit": false,
+        "tocRoots": 0,
+        "initialLocator": { "rcpNo": "20260101000004", "dcmNo": "10000004", "eleId": "0", "offset": "0", "length": "0", "dtd": "HTML", "tocNo": "" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-shell-changed",
+      "operationId": "fetchReportShell",
+      "rules": ["SHELL-CHANGED-1"],
+      "request": { "method": "GET", "path": "/dsaf001/main.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000003" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-shell-changed.utf8.html",
+        "sha256": "924810ae9bcae8d6fee8db523892602a01b7ac8d4c187896a2a361b569e20498"
+      },
+      "expected": { "kind": "error", "parser": "report-shell", "classification": "source_changed" },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-content-utf8",
+      "operationId": "fetchReportContent",
+      "rules": ["DECODE-CHARSET-2", "VIEWER-LOCATOR-1", "VIEWER-CONTENT-1"],
+      "request": { "method": "GET", "path": "/report/viewer.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000001", "dcmNo": "10000001", "eleId": "2", "offset": "200", "length": "300", "dtd": "dart4.xsd" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-section.utf8.html",
+        "sha256": "6d9447a0733fb8ad5f66d05cc8208acfc432046c7041b962bb6085fc6d1829a0"
+      },
+      "expected": { "kind": "success", "parser": "report-content", "decodedSha256": "6d9447a0733fb8ad5f66d05cc8208acfc432046c7041b962bb6085fc6d1829a0", "requiredText": "CP949 확장 음절 갂", "replacementCount": 0 },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-content-ms949",
+      "operationId": "fetchReportContent",
+      "rules": ["DECODE-CHARSET-1", "DECODE-CHARSET-2", "VIEWER-LOCATOR-1", "VIEWER-CONTENT-1"],
+      "request": { "method": "GET", "path": "/report/viewer.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000002", "dcmNo": "10000003", "eleId": "0", "offset": "0", "length": "0", "dtd": "HTML" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=MS949",
+        "charsetAliases": ["MS949", "EUC-KR", "KS_C_5601-1987"],
+        "bodyPath": "bodies/report-section.ms949.bin",
+        "decodedBodyPath": "bodies/report-section.utf8.html",
+        "sha256": "afa51a424a19c9339842c149751978627932dc951cc235a7f550ce189f8f2ff6"
+      },
+      "expected": { "kind": "success", "parser": "report-content", "decodedSha256": "6d9447a0733fb8ad5f66d05cc8208acfc432046c7041b962bb6085fc6d1829a0", "requiredText": "CP949 확장 음절 갂", "replacementCount": 0 },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-content-malformed",
+      "operationId": "fetchReportContent",
+      "rules": ["DECODE-CHARSET-2", "DECODE-MALFORMED-1", "VIEWER-CONTENT-1"],
+      "request": { "matchRequestFrom": "report-content-ms949", "queryOverrides": { "rcpNo": "20260101000004", "dcmNo": "10000004" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=KS_C_5601-1987",
+        "charsetAliases": ["MS949", "EUC-KR", "KS_C_5601-1987"],
+        "bodyEncoding": "hex",
+        "bodyPath": "bodies/report-section-malformed.hex",
+        "sha256": "13528f30e66ffa8fad100f756fac5d26f54d94e1dc314bbc3b7691c7250e3d73"
+      },
+      "expected": { "kind": "success", "parser": "report-content", "decodedSha256": "120d080feb030bc7887ca94d69ec8c7903d0af44528e814481f57d171bbcd16c", "requiredText": "fictional malformed:", "replacementCount": 1 },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    }
+  ],
+  "faults": [
+    {
+      "id": "source-http-503",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "status": 503, "contentType": "text/html; charset=UTF-8", "bodyBytes": 0 },
+      "rule": "WIRE-STATUS-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-redirect",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "status": 302, "location": "https://example.invalid/outside-dart", "bodyBytes": 0, "followRedirects": false },
+      "rule": "WIRE-REDIRECT-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-connect-timeout",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "stallDuringConnectMilliseconds": 5001, "timeoutMilliseconds": 5000 },
+      "rule": "WIRE-TIMEOUT-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-idle-read-timeout",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "status": 200, "contentType": "text/html; charset=UTF-8", "initialBodyBytes": 1, "stallAfterBodyMilliseconds": 10001, "timeoutMilliseconds": 10000 },
+      "rule": "WIRE-TIMEOUT-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-total-timeout",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "stallAfterRequestMilliseconds": 30001, "timeoutMilliseconds": 30000 },
+      "rule": "WIRE-TIMEOUT-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-wrong-media-type",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "status": 200, "contentType": "application/json; charset=UTF-8", "bodyBytes": 2 },
+      "rule": "WIRE-CONTENT-TYPE-1",
+      "classification": "source_parse_failure",
+      "retryable": false
+    },
+    {
+      "id": "source-unsupported-charset",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "status": 200, "contentType": "text/html; charset=shift_jis", "bodyBytes": 0 },
+      "rule": "DECODE-CHARSET-2",
+      "classification": "source_parse_failure",
+      "retryable": false
+    },
+    {
+      "id": "source-oversized-search",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment"],
+      "recipe": { "seedPath": "bodies/oversized-seed.ascii.html", "seedSha256": "5c8ac83793eb8072733a315d138c4e93a1cb287ef4f8d3054b384b80b789cea9", "repeatToBytes": 8388609 },
+      "rule": "WIRE-SIZE-1",
+      "classification": "source_parse_failure",
+      "retryable": false
+    },
+    {
+      "id": "source-oversized-shell",
+      "operationIds": ["fetchReportShell"],
+      "recipe": { "seedPath": "bodies/oversized-seed.ascii.html", "seedSha256": "5c8ac83793eb8072733a315d138c4e93a1cb287ef4f8d3054b384b80b789cea9", "repeatToBytes": 16777217 },
+      "rule": "WIRE-SIZE-1",
+      "classification": "source_parse_failure",
+      "retryable": false
+    },
+    {
+      "id": "source-oversized-content",
+      "operationIds": ["fetchReportContent"],
+      "recipe": { "seedPath": "bodies/oversized-seed.ascii.html", "seedSha256": "5c8ac83793eb8072733a315d138c4e93a1cb287ef4f8d3054b384b80b789cea9", "repeatToBytes": 67108865 },
+      "rule": "WIRE-SIZE-1",
+      "classification": "source_parse_failure",
+      "retryable": false
+    }
+  ]
+}

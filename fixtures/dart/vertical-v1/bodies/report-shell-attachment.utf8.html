@@ -1,0 +1,26 @@
+<!doctype html>
+<html><body>
+<script>
+var treeData = [];
+var node1 = {};
+node1['text'] = "감사보고서 본문";
+node1['rcpNo'] = "20260101000001";
+node1['dcmNo'] = "10000002";
+node1['eleId'] = "10";
+node1['offset'] = "1000";
+node1['length'] = "500";
+node1['dtd'] = "dart4.xsd";
+node1['tocNo'] = "10";
+node1['children'] = [];
+treeData.push(node1);
+viewDoc("20260101000001", "10000002", "10", "1000", "500", "dart4.xsd", "10");
+</script>
+<select id="family">
+  <option value="null">+본문선택+</option>
+  <option value="rcpNo=20260101000001" title="가람전자 사업보고서">2026.01.01 사업보고서</option>
+</select>
+<select id="att">
+  <option value="null">+첨부선택+</option>
+  <option value="rcpNo=20260101000001&amp;dcmNo=10000002" selected title="가람전자 감사보고서">2026.01.01 감사보고서</option>
+</select>
+</body></html>

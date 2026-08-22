@@ -13,7 +13,12 @@ Method:
   `/dsab007/detailSearch.ax`
 - replayed viewer-shell and report-content GET requests
 
-This document records source evidence for the DART site. It is not yet the public tool spec.
+This document records non-normative source evidence and provenance for the DART
+site. It is never the supported wire authority. The vertical HTTP subset is
+canonical in [`dart-wire-v1.openapi.yaml`](../specs/dart-wire-v1.openapi.yaml),
+and decoding plus HTML/viewer grammar is canonical in
+[`dart-html-viewer-v1.md`](../specs/dart-html-viewer-v1.md). Exact replay lists
+below remain observations unless those contracts promote them.
 
 ## Surface Map
 
@@ -408,6 +413,9 @@ These may be useful for lightweight feed operations, but they are supporting sur
 
 ## Current Contract Implications
 
+- The canonical vertical wire subset contains only the four operations named in
+  `dart-wire-v1`; adjacent routes in this research map are not implicitly
+  supported.
 - Public IDs prefer filing and company identifiers that survive UI changes.
 - Opaque viewer offsets and lengths remain internal.
 - Search and retrieval remain separate operations.
