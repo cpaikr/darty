@@ -5,6 +5,11 @@ baseline and rewrite candidates. It runs a supplied command in a fresh process
 for every scenario and compares exit status, stdout framing and value, and
 stderr without importing product code.
 
+Help expectations compare the exact long-option set plus hand-authored,
+whitespace-normalized semantic fragments. This preserves descriptions,
+defaults, examples, and cautions without coupling a later Clap implementation
+to Commander's line wrapping.
+
 The checked-in expectations were authored from
 [`docs/specs/cli-transport-v1.md`](../../../docs/specs/cli-transport-v1.md), the
 capability specs, and the reviewed inventory below. There is intentionally no

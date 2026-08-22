@@ -135,7 +135,9 @@ Observed row-selection transport:
 - `POST /dsae001/select.ax` with `selectKey={companyCode}`
 
 Implemented reference behavior constructs an absolute
-`/dsae001/select.ax?selectKey={companyCode}` `detailEndpoint`; the search
-operation does not fetch or normalize the detail table. Use the separate
-`company-detail` command for detail normalization and `company-rss` for company
-RSS.
+`/dsae001/select.ax?selectKey={companyCode}` `detailEndpoint`. It is a locator,
+not a contract that consumers can fetch with `GET`: observed row selection uses
+`POST /dsae001/select.ax` with `selectKey={companyCode}`. The search operation
+does not fetch or normalize that table. Use the separate `company-detail`
+command for supported detail retrieval and normalization; `company-rss` remains
+responsible for company RSS.

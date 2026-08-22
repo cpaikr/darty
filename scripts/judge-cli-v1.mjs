@@ -93,6 +93,24 @@ const validateGolden = (golden, path) => {
   ) {
     throw new Error(`Malformed JSON golden: ${path}`);
   }
+  if (
+    golden.kind === "text" &&
+    golden.requiredNormalizedFragments !== undefined &&
+    (!Array.isArray(golden.requiredNormalizedFragments) ||
+      !golden.requiredNormalizedFragments.every(
+        (fragment) => typeof fragment === "string",
+      ))
+  ) {
+    throw new Error(`Malformed normalized text golden: ${path}`);
+  }
+  if (
+    golden.kind === "text" &&
+    golden.longOptions !== undefined &&
+    (!Array.isArray(golden.longOptions) ||
+      !golden.longOptions.every((option) => /^--[a-z][a-z0-9-]*$/.test(option)))
+  ) {
+    throw new Error(`Malformed help-option golden: ${path}`);
+  }
 };
 
 const firstDifference = (actual, expected, path = "") => {
@@ -162,6 +180,7 @@ const checkJsonGolden = (stdout, golden) => {
 
 const checkTextGolden = (stdout, golden) => {
   const failures = [];
+  const normalizedStdout = stdout.replace(/\s+/g, " ").trim();
 
   for (const fragment of golden.requiredFragments ?? []) {
     if (!stdout.includes(fragment)) {
@@ -172,6 +191,31 @@ const checkTextGolden = (stdout, golden) => {
   for (const fragment of golden.forbiddenFragments ?? []) {
     if (stdout.includes(fragment)) {
       failures.push(`stdout contains forbidden fragment ${JSON.stringify(fragment)}`);
+    }
+  }
+
+  for (const fragment of golden.requiredNormalizedFragments ?? []) {
+    const normalizedFragment = fragment.replace(/\s+/g, " ").trim();
+    if (!normalizedStdout.includes(normalizedFragment)) {
+      failures.push(
+        `stdout is missing normalized semantic fragment ${JSON.stringify(fragment)}`,
+      );
+    }
+  }
+
+  if (golden.longOptions !== undefined) {
+    const optionsSection = stdout.match(
+      /(?:^|\n)Options:\n([\s\S]*?)(?:\n\n|$)/,
+    )?.[1];
+    const actualOptions = [
+      ...new Set(optionsSection?.match(/--[a-z][a-z0-9-]*/g) ?? []),
+    ].sort();
+    const expectedOptions = [...golden.longOptions].sort();
+
+    if (!isDeepStrictEqual(actualOptions, expectedOptions)) {
+      failures.push(
+        `help long options differ: expected ${JSON.stringify(expectedOptions)}, got ${JSON.stringify(actualOptions)}`,
+      );
     }
   }
 
