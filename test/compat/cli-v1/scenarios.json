@@ -92,6 +92,36 @@
       "golden": "goldens/view-report-rejects-negative-window.json"
     },
     {
+      "id": "candidate-search-company-success",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람"],
+      "golden": "goldens/candidate-search-company-success.json"
+    },
+    {
+      "id": "candidate-search-company-agent-success",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람", "--agent"],
+      "golden": "goldens/candidate-search-company-agent-success.json"
+    },
+    {
+      "id": "candidate-search-company-reports-agent-success",
+      "profiles": ["candidate"],
+      "argv": ["search-company-reports", "--company-code", "00000001", "--start-date", "20250101", "--end-date", "20260101", "--agent"],
+      "golden": "goldens/candidate-search-company-reports-agent-success.json"
+    },
+    {
+      "id": "candidate-view-report-toc-success",
+      "profiles": ["candidate"],
+      "argv": ["view-report", "--receipt", "20260101000001", "--toc-depth", "1"],
+      "golden": "goldens/candidate-view-report-toc-success.json"
+    },
+    {
+      "id": "candidate-view-report-section-success",
+      "profiles": ["candidate"],
+      "argv": ["view-report", "--receipt", "20260101000001", "--section-id", "section:1.1", "--max-bytes", "1000"],
+      "golden": "goldens/candidate-view-report-section-success.json"
+    },
+    {
       "id": "search-body-missing-input",
       "profiles": ["full"],
       "argv": ["search-body"],

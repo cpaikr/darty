@@ -5,7 +5,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +32,7 @@ const parseArguments = (argv) => {
     index += 1;
   }
 
-  if (profile !== "vertical" && profile !== "full") {
+  if (profile !== "vertical" && profile !== "candidate" && profile !== "full") {
     throw new Error(`Unknown profile: ${profile}`);
   }
   if (command.length === 0) {
@@ -67,7 +67,9 @@ const validateManifest = (manifest) => {
       typeof scenario.id !== "string" ||
       ids.has(scenario.id) ||
       !Array.isArray(scenario.profiles) ||
-      !scenario.profiles.every((profile) => profile === "vertical" || profile === "full") ||
+      !scenario.profiles.every(
+        (profile) => profile === "vertical" || profile === "candidate" || profile === "full",
+      ) ||
       !Array.isArray(scenario.argv) ||
       !scenario.argv.every((argument) => typeof argument === "string") ||
       typeof scenario.golden !== "string"
@@ -229,7 +231,7 @@ const checkTextGolden = (stdout, golden) => {
   return failures;
 };
 
-const runScenario = ({ command, scenario, golden, cwd }) => {
+const runScenario = ({ command, scenario, golden, cwd, fixtureOrigin }) => {
   const result = spawnSync(command[0], [...command.slice(1), ...scenario.argv], {
     cwd,
     encoding: "utf8",
@@ -241,6 +243,12 @@ const runScenario = ({ command, scenario, golden, cwd }) => {
       LANG: "C.UTF-8",
       LC_ALL: "C.UTF-8",
       NO_COLOR: "1",
+      ...(fixtureOrigin === undefined
+        ? {}
+        : {
+            DARTY_FIXTURE_ORIGIN: fixtureOrigin,
+            DARTY_FIXTURE_FETCHED_AT: "2026-08-22T00:00:00.000Z",
+          }),
     },
   });
   const failures = [];
@@ -285,12 +293,35 @@ if (parsed !== undefined) {
   validateManifest(manifest);
   const command = resolveCommandPaths(parsed.command);
   const isolatedCwd = mkdtempSync(join(tmpdir(), "darty-cli-v1-"));
+  const readyPath = join(isolatedCwd, "fixture-origin");
+  const fixtureServer =
+    parsed.profile === "candidate"
+      ? spawn(process.execPath, [join(scriptDir, "serve-dart-fixture.mjs"), readyPath], {
+          cwd: repoRoot,
+          stdio: "ignore",
+        })
+      : undefined;
+  let fixtureOrigin;
   let checked = 0;
 
   try {
+    if (fixtureServer !== undefined) {
+      const deadline = Date.now() + 5_000;
+      while (!existsSync(readyPath) && Date.now() < deadline) {
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+      }
+      if (!existsSync(readyPath)) throw new Error("Fixture server did not become ready.");
+      fixtureOrigin = readFileSync(readyPath, "utf8");
+    }
     for (const scenario of manifest.scenarios) {
       const selected =
-        parsed.profile === "full" || scenario.profiles.includes(parsed.profile);
+        (parsed.profile === "full" &&
+          scenario.profiles.some((profile) => profile === "full" || profile === "vertical")) ||
+        (parsed.profile === "candidate" &&
+          scenario.profiles.some(
+            (profile) => profile === "candidate" || profile === "vertical",
+          )) ||
+        scenario.profiles.includes(parsed.profile);
       if (!selected) {
         continue;
       }
@@ -299,7 +330,13 @@ if (parsed !== undefined) {
       const goldenPath = join(dirname(manifestPath), scenario.golden);
       const golden = readJson(goldenPath);
       validateGolden(golden, goldenPath);
-      const failures = runScenario({ command, scenario, golden, cwd: isolatedCwd });
+      const failures = runScenario({
+        command,
+        scenario,
+        golden,
+        cwd: isolatedCwd,
+        fixtureOrigin,
+      });
 
       if (failures.length === 0) {
         console.log(`PASS ${scenario.id}`);
@@ -310,6 +347,7 @@ if (parsed !== undefined) {
       }
     }
   } finally {
+    fixtureServer?.kill("SIGTERM");
     rmSync(isolatedCwd, { force: true, recursive: true });
   }
 

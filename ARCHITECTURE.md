@@ -5,6 +5,12 @@ This repo now has two layers:
 - root docs that hold product and source-contract decisions
 - a small implementation slice under `src/` plus opt-in live checks under `test/` for DART source behavior
 
+It also contains an isolated, non-active rewrite candidate. `crates/darty`
+owns the retained three-operation Rust SDK, `crates/darty-cli` and
+`crates/darty-node` are thin adapters, and `candidate/npm/` holds the proposed
+root and current-host package shapes. None of these paths changes the active
+root npm exports or `bin`; the atomic cutover remains later roadmap work.
+
 ## Big Picture
 
 Darty has two public integration surfaces over the same capability core:
@@ -63,6 +69,13 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
   Agent task evals where a model uses local tools to complete user-like tasks.
 - `src/`
   Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
+- `crates/`
+  Retained Rust rewrite candidate: one SDK core plus thin CLI and Node-API
+  adapters for the reviewed vertical workflow.
+- `candidate/npm/`
+  Unpublished npm package candidates. The root facade exposes the asynchronous
+  Node SDK and a forwarding-only launcher; the current-host optional package
+  receives generated native artifacts only during acceptance packaging.
 - `test/`
   Opt-in live or broader integration checks that should stay separate from module-local fixture tests.
   Use `test/live/` for live DART coverage and `test/cli/` for subprocess CLI smoke tests.
