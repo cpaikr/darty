@@ -35,18 +35,22 @@ _None._
   `archive/rust-rewrite-baseline`.
 - Canonical DART wire authority and discarded Rust feasibility slice — merged
   through PR #20 at `de663c6` after all ten review threads were resolved.
+- Retained three-operation Rust SDK workflow, async Node SDK candidate, Clap
+  CLI, forwarding npm launcher, current-host native package, and vertical
+  acceptance — merged into the integration branch through PR #21 at `b7fd635`
+  after independent review and all 21 feedback threads were resolved.
 
 ### Current in-scope result
 
-Retained company-search → filing-search → report-viewing candidate through the
-Rust SDK, async Node SDK, Clap CLI, forwarding npm launcher, and current-host
-native package, followed by vertical acceptance and independent review.
+Terminal metadata reconciliation and integration-branch delivery to `main`.
+No additional product capability is included in this final delivery boundary.
 
 ### Next in-scope action
 
-Commit and push the independently reviewed PR #21 feedback fixes, then reply to
-and resolve every review thread, audit automatic checks and incremental review,
-and complete the final implementation PR lifecycle when all gates are clear.
+Commit the terminal metadata, deliver the complete sequential integration branch
+through one final PR to `main`, and finish that PR's validation, review, and
+feedback lifecycle. Porting the remaining five operations begins only under a
+separate goal after this delivery completes.
 
 ### Evidence and blockers
 
@@ -243,3 +247,11 @@ and complete the final implementation PR lifecycle when all gates are clear.
   `bun.lock`, and GitHub workflows remain unchanged.
 - Clean packaged-consumer acceptance and the fixture-enabled Rust CLI candidate
   judge pass after the final review fixes; all 17 candidate scenarios match.
+- Review fixes were committed as `62cbc30` and pushed once. Every one of the 21
+  inline findings received a disposition with regression evidence or a frozen
+  contract citation, and every review thread is resolved. CodeRabbit confirmed
+  the addressed findings and withdrew the page-size suggestion after verifying
+  the specification; no new root or outside-diff feedback appeared.
+- PR #21's final head passed repository CI, GitGuardian, and CodeRabbit checks
+  and was cleanly mergeable. Its three implementation commits were preserved by
+  merge commit `b7fd635` on 2026-08-22.

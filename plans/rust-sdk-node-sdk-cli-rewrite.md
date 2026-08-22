@@ -31,8 +31,11 @@ implementation and `@sjunepark/darty/toolset` surface are removed.
   inferred replay findings, project decisions, implemented compatibility
   behavior, and known quirks.
 - The current npm-only release process and TypeScript architecture remain in
-  force until cutover. No Rust workspace, Node-API binding, native artifact
-  matrix, Rust SDK release contract, or rewrite branch exists yet.
+  force until cutover. Phase 2 now supplies an isolated, reviewed Rust workspace,
+  asynchronous Node-API candidate, Clap CLI, forwarding npm launcher, and one
+  current-host native package for the three-operation vertical workflow. These
+  candidate surfaces are not active package entry points and make no supported
+  platform or publication claim.
 
 ## Decisions
 
@@ -223,7 +226,7 @@ implementation and `@sjunepark/darty/toolset` surface are removed.
 
 ## Next action
 
-Deliver the canonical DART wire authority and discarded Rust feasibility
-evidence through PR 2 before implementing the retained vertical candidate.
-Keep fixture-backed vertical success and `--agent` cases ready to join
-candidate acceptance without changing the active TypeScript product.
+Begin phase 3 by contracting and porting `search-body`, `company-detail`,
+`company-rss`, `disclosure-types`, and `report-guide` through the Rust SDK,
+Node SDK, and CLI. Preserve the active TypeScript product until complete
+eight-operation parity and the phase 4 atomic-cutover gates are ready.
