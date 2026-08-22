@@ -14,7 +14,7 @@ const mutationValue = 'cliTransportVersion:"2"';
 const runJudge = (entrypoint) =>
   spawnSync(
     process.execPath,
-    [judge, "--profile", "vertical", "--", "node", entrypoint],
+    [judge, "--profile", "vertical", "--", process.execPath, entrypoint],
     { cwd: repoRoot, encoding: "utf8" },
   );
 
@@ -27,7 +27,7 @@ if (pristine.status !== 0) {
 }
 
 const temporaryDirectory = mkdtempSync(join(tmpdir(), "darty-cli-mutant-"));
-const mutant = join(temporaryDirectory, "cli.js");
+const mutant = join(temporaryDirectory, "cli.mjs");
 
 try {
   copyFileSync(baseline, mutant);
