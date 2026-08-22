@@ -1,6 +1,6 @@
 # Goal: Deliver the Rust vertical workflow candidate
 
-Status: active
+Status: terminal delivery; complete when PR #22 is merged to `main`
 Planning scope: ROADMAP.md
 
 ## Original contract
@@ -42,16 +42,17 @@ _None._
 
 ### Current in-scope result
 
-Final PR #22 feedback resolution and integration-branch delivery to `main`.
-No additional product capability is included in this terminal delivery boundary.
+PR #22 is the terminal delivery vehicle. Commit `d161fe2` contains the reviewed
+result, every feedback thread is resolved, and every automatic gate passes. No
+additional product capability or repository-content change remains in this
+delivery boundary.
 
 ### Next in-scope action
 
-Commit and push the reviewed PR #22 feedback patch once, resolve every review
-thread with evidence or the governing frozen contract, verify the automatic
-checks and feedback state, merge the integration branch to `main`, and confirm
-the terminal repository state. Porting the remaining five operations begins
-only under a separate goal after this delivery completes.
+Terminal lifecycle: merge PR #22 to `main` with its commits preserved, verify
+the recorded merge and terminal repository state, and close this goal. Porting
+the remaining five operations begins only under a separate goal after this
+delivery completes.
 
 ### Evidence and blockers
 
@@ -286,3 +287,11 @@ only under a separate goal after this delivery completes.
   scoping, signed and nonnumeric values, semantic parameters, rejected values,
   and repeated disclosure codes. Its focused re-review found no actionable
   issue in the complete PR #22 feedback diff.
+- The complete PR #22 feedback patch was committed as `d161fe2` and pushed
+  once. All 25 inline findings received a disposition with regression evidence
+  or a governing frozen-contract citation, and every review thread is resolved.
+- PR #22 head `d161fe2` passes the active TypeScript validation job, the Rust
+  1.88 formatting/test/Clippy/docs/audit/cargo-deny job, the dependent Darwin
+  ARM64 clean-package and candidate-compatibility job, CodeRabbit, and
+  GitGuardian. GitHub reports the head cleanly mergeable, and no unresolved or
+  outside-diff feedback remains.
