@@ -44,8 +44,9 @@ native package, followed by vertical acceptance and independent review.
 
 ### Next in-scope action
 
-Commit and push the independently reviewed candidate, then deliver the final
-implementation PR through its complete review and feedback lifecycle.
+Commit and push the independently reviewed PR #21 feedback fixes, then reply to
+and resolve every review thread, audit automatic checks and incremental review,
+and complete the final implementation PR lifecycle when all gates are clear.
 
 ### Evidence and blockers
 
@@ -197,3 +198,48 @@ implementation PR through its complete review and feedback lifecycle.
   active TypeScript product passes frozen install, wire checks, typecheck, all
   338 tests with 23 live skips, build, all 21 frozen CLI cases, both mutation
   sentinels, and npm package dry-run.
+- Final implementation PR #21 is open from `codex/rust-vertical-candidate` to
+  `codex/rust-vertical-workflow`. Its initial CI, GitGuardian, and CodeRabbit
+  checks passed before review feedback.
+- The PR #21 feedback audit classified 16 findings as actionable and five as
+  incompatible with or already satisfied by the frozen contracts. The local
+  post-review patch now preserves selected attachment URLs, confirms requested
+  receipt document numbers, distinguishes all-dropped pages from recognized
+  empty results, rejects malformed stock rows, preserves all specified remark
+  forms, safely decodes escaped shell titles, bounds TOC DAG expansion,
+  rewrites safe relative report URLs while rejecting protocol-relative URLs,
+  preserves Markdown indentation, removes the panicking client default, uses
+  safe disclosure slicing, reports the actual rejected CLI window value, and
+  bounds fixture-server shutdown. Static parser regexes and selectors are now
+  compiled once.
+- Focused post-review validation passes 22 SDK unit tests, 14 public fixture
+  workflow tests, the CLI regression, workspace Clippy with warnings denied,
+  warning-free documentation, clean packaged-consumer acceptance, and all 17
+  candidate compatibility scenarios. Regression evidence also proves the
+  existing camel-case error serialization and missing-optional-field behavior.
+- The all-dropped distinction now applies consistently to company and filing
+  searches: both preserve positive source pagination, report partial
+  completeness and dropped rows, and omit `no_results`; recognized empty
+  shapes retain their operation-specific frozen pagination contracts.
+- A focused independent re-review found three final issues: main-body receipt
+  URLs without a selected `dcmNo` incorrectly rejected the already validated
+  initial document number, WHATWG URL parsing could reinterpret backslashes as
+  an origin escape, and the JavaScript line-continuation decoder was unreachable
+  without dot-all assignment matching. The fixes preserve strict document
+  confirmation through the validated initial locator, require joined relative
+  URLs to remain on the exact HTTPS DART origin, and parse multiline shell
+  assignments. Dedicated regressions cover each boundary.
+- The independent reviewer found no actionable issue in the complete final
+  feedback diff after those fixes. It confirmed the three findings are resolved,
+  `git diff --check` passes, and active TypeScript, root package, lockfile, and
+  workflow paths remain unchanged.
+- The final post-feedback matrix passes on Rust 1.88: formatting, 38 workspace
+  tests (22 SDK unit, 14 public fixture, one CLI, one Node), Clippy with warnings
+  denied, warning-free docs, and locked release builds. RustSec and cargo-deny
+  pass with only the established duplicate-`syn` warning. The unchanged active
+  TypeScript baseline passes frozen install, wire checks, typecheck, 338 tests
+  with 23 live skips, build, all 21 full-profile compatibility cases, both
+  mutation sentinels, and npm package dry-run; `src/`, root `package.json`,
+  `bun.lock`, and GitHub workflows remain unchanged.
+- Clean packaged-consumer acceptance and the fixture-enabled Rust CLI candidate
+  judge pass after the final review fixes; all 17 candidate scenarios match.

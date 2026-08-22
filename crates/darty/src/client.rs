@@ -89,7 +89,9 @@ impl DartyClient {
         let page = crate::parsers::company_page(&source.text, request.page).map_err(|reason| {
             DartyError::source(ErrorCode::SourceChanged, reason, &source.canonical_url)
         })?;
-        let warnings = search_warnings(page.dropped, page.items.is_empty(), "company");
+        let recognized_empty =
+            page.items.is_empty() && page.dropped == 0 && page.pagination.total_count == 0;
+        let warnings = search_warnings(page.dropped, recognized_empty, "company");
         Ok(SearchCompanyResponse {
             result: SearchCompanyPayload {
                 request,
@@ -146,7 +148,9 @@ impl DartyClient {
                 .map_err(|reason| {
                     DartyError::source(ErrorCode::SourceChanged, reason, &source.canonical_url)
                 })?;
-        if page.items.is_empty() {
+        let recognized_empty =
+            page.items.is_empty() && page.dropped == 0 && page.pagination.total_count == 0;
+        if recognized_empty {
             page.pagination.current_page = 1;
             page.pagination.total_pages = 1;
         }
@@ -157,7 +161,7 @@ impl DartyClient {
                 item.matched_disclosure_type = Some(disclosure.clone());
             }
         }
-        let mut warnings = search_warnings(page.dropped, page.items.is_empty(), "filing");
+        let mut warnings = search_warnings(page.dropped, recognized_empty, "filing");
         if request.disclosure_types.len() > 1 && !page.items.is_empty() {
             warnings.push(Warning {
                 code: "matched_disclosure_type_ambiguous".to_owned(),
@@ -268,7 +272,10 @@ impl DartyClient {
                 toc_source: if has_toc { "dart" } else { "none" }.to_owned(),
             },
             references: ViewReportReferences {
-                viewer_url: format!("{REPORT_SHELL_URL}?rcpNo={receipt_number}"),
+                viewer_url: format!(
+                    "{REPORT_SHELL_URL}?{}",
+                    shell.documents[shell.selected_document_index].query
+                ),
             },
             warnings: rendered.warnings,
         })
@@ -397,6 +404,18 @@ impl DartyClient {
                 source.canonical_url,
             ));
         }
+        let selected_document_number = query_value(
+            &shell.documents[shell.selected_document_index].query,
+            "dcmNo",
+        )
+        .unwrap_or_else(|| shell.initial_locator.document_number.clone());
+        if document_number.is_some_and(|expected| selected_document_number != expected) {
+            return Err(DartyError::source(
+                ErrorCode::SourceChanged,
+                "DART did not select the requested report document.",
+                REPORT_SHELL_URL,
+            ));
+        }
         Ok(shell)
     }
 
@@ -421,12 +440,6 @@ impl DartyClient {
                 byte_cap: CONTENT_CAP,
             })
             .await
-    }
-}
-
-impl Default for DartyClient {
-    fn default() -> Self {
-        Self::new().expect("static DART transport configuration")
     }
 }
 
@@ -578,7 +591,7 @@ const fn completeness(dropped: u32) -> Completeness {
 }
 
 fn disclosure_type(code: &str) -> MatchedDisclosureType {
-    let category = &code[..1];
+    let category = code.get(..1).unwrap_or("");
     let category_label = match category {
         "A" => "정기공시",
         "B" => "주요사항보고",

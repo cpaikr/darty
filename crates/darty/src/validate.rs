@@ -1,5 +1,4 @@
 use chrono::{Datelike, Months, NaiveDate};
-use regex::Regex;
 
 use crate::{DartyError, SearchCompanyReportsRequest, SearchCompanyRequest, ViewReportRequest};
 
@@ -42,8 +41,7 @@ pub(crate) fn search_company(
 pub(crate) fn search_company_reports(
     mut request: SearchCompanyReportsRequest,
 ) -> Result<SearchCompanyReportsRequest, DartyError> {
-    let company_code = Regex::new(r"^\d{8}$").expect("static company-code regex");
-    if !company_code.is_match(&request.company_code) {
+    if !is_ascii_digits(&request.company_code, 8, 8) {
         return Err(DartyError::invalid(
             "companyCode must be an 8-digit DART company code.",
             "companyCode",
@@ -114,8 +112,13 @@ fn validate_report_filters(request: &mut SearchCompanyReportsRequest) -> Result<
         ));
     }
 
-    let industry = Regex::new(r"^(all|ROOT\d{4}|\d{2,5})$").expect("static industry regex");
-    if !industry.is_match(&request.industry_code) {
+    let valid_industry = request.industry_code == "all"
+        || request
+            .industry_code
+            .strip_prefix("ROOT")
+            .is_some_and(|value| is_ascii_digits(value, 4, 4))
+        || is_ascii_digits(&request.industry_code, 2, 5);
+    if !valid_industry {
         return Err(DartyError::invalid(
             "industryCode must be all, ROOTdddd, or a 2-5 digit DART industry code.",
             "industryCode",
@@ -198,8 +201,7 @@ pub(crate) fn view_report(mut request: ViewReportRequest) -> Result<ViewReportRe
 }
 
 pub(crate) fn extract_receipt(receipt: &str) -> Option<(String, Option<String>)> {
-    let bare = Regex::new(r"^\d{14}$").expect("static receipt regex");
-    if bare.is_match(receipt) {
+    if is_ascii_digits(receipt, 14, 14) {
         return Some((receipt.to_owned(), None));
     }
     let url = url::Url::parse(receipt).ok()?;
@@ -214,7 +216,7 @@ pub(crate) fn extract_receipt(receipt: &str) -> Option<(String, Option<String>)>
     let mut document_number = None;
     for (key, value) in url.query_pairs() {
         match key.as_ref() {
-            "rcpNo" if receipt_number.is_none() && bare.is_match(&value) => {
+            "rcpNo" if receipt_number.is_none() && is_ascii_digits(&value, 14, 14) => {
                 receipt_number = Some(value.into_owned());
             }
             "dcmNo"
@@ -229,6 +231,11 @@ pub(crate) fn extract_receipt(receipt: &str) -> Option<(String, Option<String>)>
     }
     let receipt_number = receipt_number?;
     Some((receipt_number, document_number))
+}
+
+fn is_ascii_digits(value: &str, min_length: usize, max_length: usize) -> bool {
+    (min_length..=max_length).contains(&value.len())
+        && value.bytes().all(|byte| byte.is_ascii_digit())
 }
 
 fn parse_date(value: &str, parameter: &str) -> Result<NaiveDate, DartyError> {

@@ -1,7 +1,8 @@
-use std::fmt::Write as _;
+use std::{borrow::Cow, fmt::Write as _, sync::LazyLock};
 
 use ego_tree::NodeRef;
 use scraper::{Html, node::Node};
+use url::Url;
 
 use crate::{ContentWindow, OutputFormat, ReportContent};
 
@@ -26,8 +27,26 @@ fn sanitize(source_html: &str) -> String {
     builder
         .add_tags(["table", "thead", "tbody", "tfoot", "tr", "th", "td"])
         .add_tag_attributes("td", ["colspan", "rowspan"])
-        .add_tag_attributes("th", ["colspan", "rowspan"]);
+        .add_tag_attributes("th", ["colspan", "rowspan"])
+        .url_relative(ammonia::UrlRelative::Custom(Box::new(
+            rewrite_dart_relative_url,
+        )));
     builder.clean(source_html).to_string()
+}
+
+fn rewrite_dart_relative_url(value: &str) -> Option<Cow<'_, str>> {
+    static DART_ORIGIN: LazyLock<Url> = LazyLock::new(|| {
+        Url::parse("https://dart.fss.or.kr/").expect("static DART origin is valid")
+    });
+    if value.starts_with("//") {
+        return None;
+    }
+    DART_ORIGIN.join(value).ok().and_then(|url| {
+        (url.scheme() == "https"
+            && url.host_str() == Some("dart.fss.or.kr")
+            && url.port().is_none())
+        .then(|| Cow::Owned(url.into()))
+    })
 }
 
 fn markdown(sanitized_html: &str) -> String {
@@ -161,10 +180,10 @@ fn normalize_markdown(value: &str) -> String {
         if !normalized.is_empty() {
             normalized.push('\n');
         }
-        normalized.push_str(line.trim_start_matches([' ', '\t']));
+        normalized.push_str(line);
         previous_blank = blank;
     }
-    normalized.trim().to_owned()
+    normalized.trim_matches('\n').to_owned()
 }
 
 fn window(
@@ -228,6 +247,43 @@ mod tests {
         assert!(content.body.contains("<table>"));
         assert!(content.body.contains("colspan=\"2\""));
         assert!(!content.body.contains("style"));
+    }
+
+    #[test]
+    fn sanitizer_rewrites_dart_relative_urls_and_rejects_protocol_relative_urls() {
+        let content = render_content(
+            r#"<p><a href="/report">report</a><img src="images/logo.png"><a href="//evil.example/report">evil</a><img src="//evil.example/logo.png"><a href="\\evil.example/backslash">backslash</a></p>"#,
+            OutputFormat::Html,
+            0,
+            10_000,
+            "document",
+            None,
+        );
+        assert!(
+            content
+                .body
+                .contains("href=\"https://dart.fss.or.kr/report\"")
+        );
+        assert!(
+            content
+                .body
+                .contains("src=\"https://dart.fss.or.kr/images/logo.png\"")
+        );
+        assert!(!content.body.contains("evil.example"));
+    }
+
+    #[test]
+    fn markdown_preserves_nested_list_and_preformatted_indentation() {
+        let content = render_content(
+            "<ul><li>outer<ul><li>inner</li></ul></li></ul><pre><code>  indented\n    deeper</code></pre>",
+            OutputFormat::Markdown,
+            0,
+            10_000,
+            "document",
+            None,
+        );
+        assert!(content.body.contains("  - inner"));
+        assert!(content.body.contains("  indented\n    deeper"));
     }
 
     #[test]

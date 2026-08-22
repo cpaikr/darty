@@ -127,10 +127,21 @@ async fn company_to_section_workflow_uses_exact_wire_and_opaque_ids() {
 
 #[tokio::test]
 async fn empty_partial_and_filter_projection_follow_public_semantics() {
+    let all_dropped_companies = String::from_utf8(COMPANY_BODY.to_vec())
+        .unwrap()
+        .replace("select('00000001')", "select('invalid-1')")
+        .replace("select('00000002')", "select('invalid-2')")
+        .replace("[1/1] [총 2건]", "[2/3] [총 7건]");
+    let all_dropped_reports = String::from_utf8(REPORTS_BODY.to_vec())
+        .unwrap()
+        .replace("20260101000001", "invalid-receipt")
+        .replace("[1/1] [총 1건]", "[2/3] [총 7건]");
     let fixture = FixtureServer::spawn(vec![
         Reply::company_page("빈회사", 7, COMPANY_EMPTY_BODY),
         Reply::company("부분회사", COMPANY_PARTIAL_BODY),
+        Reply::company_page("깨진회사", 2, all_dropped_companies.as_bytes()),
         Reply::reports("00000003", REPORTS_EMPTY_BODY),
+        Reply::reports_page("00000001", 2, all_dropped_reports.as_bytes()),
         Reply::advanced_reports(REPORTS_BODY),
     ])
     .await;
@@ -150,6 +161,27 @@ async fn empty_partial_and_filter_projection_follow_public_semantics() {
     assert_eq!(partial.metadata.completeness, Completeness::Partial);
     assert_eq!(partial.metadata.dropped_item_count, 1);
 
+    let mut dropped_company_request = SearchCompanyRequest::new("깨진회사");
+    dropped_company_request.page = 2;
+    let all_dropped_companies = client
+        .search_company(dropped_company_request)
+        .await
+        .unwrap();
+    assert_eq!(all_dropped_companies.result.pagination.current_page, 2);
+    assert_eq!(all_dropped_companies.result.pagination.total_pages, 3);
+    assert_eq!(all_dropped_companies.result.pagination.total_count, 7);
+    assert_eq!(
+        all_dropped_companies.metadata.completeness,
+        Completeness::Partial
+    );
+    assert_eq!(all_dropped_companies.metadata.dropped_item_count, 2);
+    assert!(
+        all_dropped_companies
+            .warnings
+            .iter()
+            .all(|warning| warning.code != "no_results")
+    );
+
     let empty_reports = client
         .search_company_reports(SearchCompanyReportsRequest::new(
             "00000003", "20250101", "20260101",
@@ -158,6 +190,24 @@ async fn empty_partial_and_filter_projection_follow_public_semantics() {
         .unwrap();
     assert_eq!(empty_reports.result.pagination.current_page, 1);
     assert_eq!(empty_reports.result.pagination.total_pages, 1);
+
+    let mut dropped_request = SearchCompanyReportsRequest::new("00000001", "20250101", "20260101");
+    dropped_request.page = 2;
+    let all_dropped = client
+        .search_company_reports(dropped_request)
+        .await
+        .unwrap();
+    assert_eq!(all_dropped.result.pagination.current_page, 2);
+    assert_eq!(all_dropped.result.pagination.total_pages, 3);
+    assert_eq!(all_dropped.result.pagination.total_count, 7);
+    assert_eq!(all_dropped.metadata.completeness, Completeness::Partial);
+    assert_eq!(all_dropped.metadata.dropped_item_count, 1);
+    assert!(
+        all_dropped
+            .warnings
+            .iter()
+            .all(|warning| warning.code != "no_results")
+    );
 
     let mut advanced = SearchCompanyReportsRequest::new("00000001", "20250101", "20260101");
     advanced.report_name = Some(" 연차보고서 ".to_owned());
@@ -365,6 +415,62 @@ async fn requested_document_must_keep_its_upstream_identity_after_refetch() {
 }
 
 #[tokio::test]
+async fn selected_attachment_reference_reopens_the_selected_document() {
+    let fixture = FixtureServer::spawn(vec![
+        Reply::shell("20260101000001", None, SHELL_BODY),
+        Reply::shell("20260101000001", Some("10000002"), ATTACHMENT_SHELL_BODY),
+    ])
+    .await;
+    let mut request = ViewReportRequest::new("20260101000001");
+    request.document_id = Some("document:attachment:1".to_owned());
+    let response = fixture.client().view_report(request).await.unwrap();
+    assert_eq!(response.result.document.id, "document:attachment:1");
+    assert_eq!(
+        response.references.viewer_url,
+        "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260101000001&dcmNo=10000002"
+    );
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn receipt_url_document_number_must_be_selected_by_dart() {
+    let fixture = FixtureServer::spawn(vec![Reply::shell(
+        "20260101000001",
+        Some("10000002"),
+        SHELL_BODY,
+    )])
+    .await;
+    let error = fixture
+        .client()
+        .view_report(ViewReportRequest::new(
+            "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260101000001&dcmNo=10000002",
+        ))
+        .await
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::SourceChanged);
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn receipt_url_document_number_can_match_the_main_body_locator() {
+    let fixture = FixtureServer::spawn(vec![Reply::shell(
+        "20260101000001",
+        Some("10000001"),
+        SHELL_BODY,
+    )])
+    .await;
+    let response = fixture
+        .client()
+        .view_report(ViewReportRequest::new(
+            "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260101000001&dcmNo=10000001",
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.result.document.id, "document:body:1");
+    fixture.finish().await;
+}
+
+#[tokio::test]
 async fn client_serializes_in_flight_requests() {
     let fixture = FixtureServer::spawn(vec![
         Reply::company("가람", COMPANY_BODY).delayed(Duration::from_millis(350)),
@@ -503,7 +609,10 @@ impl FixtureServer {
     }
 
     async fn finish(self) {
-        self.task.await.unwrap();
+        tokio::time::timeout(Duration::from_secs(10), self.task)
+            .await
+            .expect("fixture server did not finish")
+            .unwrap();
     }
 }
 
@@ -524,7 +633,7 @@ impl Reply {
         Self::company_page(company_name, 1, body)
     }
 
-    fn company_page(company_name: &str, page: u32, body: &'static [u8]) -> Self {
+    fn company_page(company_name: &str, page: u32, body: &[u8]) -> Self {
         Self {
             method: "POST",
             path: "/dsae001/search.ax",
@@ -570,13 +679,22 @@ impl Reply {
     }
 
     fn reports(company_code: &str, body: &'static [u8]) -> Self {
+        Self::reports_page(company_code, 1, body)
+    }
+
+    fn reports_page(company_code: &str, page: u32, body: &[u8]) -> Self {
+        let mut form = reports_form(company_code, "", &[], "all");
+        form.iter_mut()
+            .find(|(name, _)| *name == "currentPage")
+            .expect("reports form has currentPage")
+            .1 = page.to_string();
         Self {
             method: "POST",
             path: "/dsab007/detailSearch.ax",
             query: Vec::new(),
-            form: reports_form(company_code, "", &[], "all"),
+            form,
             status: 200,
-            body: body.to_vec(),
+            body: body.to_owned(),
             content_type: Some("text/html; charset=UTF-8"),
             extra_headers: Vec::new(),
             response_delay: Duration::ZERO,

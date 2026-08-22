@@ -1,4 +1,8 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    str::Chars,
+    sync::LazyLock,
+};
 
 use regex::Regex;
 use scraper::{ElementRef, Html, Selector};
@@ -9,6 +13,70 @@ use crate::{
     FilingEvidence, FilingItemReferences, MarketKind, Pagination, Remark, ReportDocument,
     ResponseDetail, SearchCompanyItem, SearchCompanyReportsItem,
 };
+
+const MAX_TOC_EXPANSIONS: usize = 10_000;
+
+static COMPANY_LINK: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"select\(['\"](?P<code>\d{8})['\"]\)"#).expect("static company-link regex")
+});
+static STOCK_CODE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^\d{6}$").expect("static stock regex"));
+static REPORT_COMPANY_LINK: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"openCorpInfoNew\(['\"](?P<code>\d{8})['\"]"#)
+        .expect("static report company-link regex")
+});
+static RECEIPT_NUMBER: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^\d{14}$").expect("static receipt regex"));
+static RECEIPT_DATE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").expect("static receipt-date regex"));
+static SHELL_ASSIGNMENT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r#"(?ms)(node\d+)\[['\"](?P<field>[A-Za-z]+)['\"]\]\s*=\s*(?:\"(?P<double>(?:\\.|[^\"\\])*)\"|'(?P<single>(?:\\.|[^'\\])*)')\s*;"#,
+    )
+    .expect("static shell assignment regex")
+});
+static SHELL_CHILD: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?m)(node\d+)\[['\"]children['\"]\]\.push\((node\d+)\)\s*;"#)
+        .expect("static shell child regex")
+});
+static SHELL_ROOT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?m)treeData\.push\((node\d+)\)\s*;").expect("static shell root regex")
+});
+static VIEW_DOC: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r#"viewDoc\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"](?:\s*,\s*['\"]([^'\"]*)['\"])?\s*\)"#,
+    )
+    .expect("static viewDoc regex")
+});
+static PAGINATION: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\[(\d+)/(\d+)\]\s*\[총\s*([\d,]+)건\]").expect("static pagination regex")
+});
+static COMPANY_TABLE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#corpTable tbody").expect("static selector"));
+static COMPANY_ROWS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#corpTable tbody > tr").expect("static selector"));
+static COMPANY_NO_DATA: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("tr.noData").expect("static selector"));
+static REPORTS_TABLE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("table.tbList tbody").expect("static selector"));
+static REPORTS_ROWS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("table.tbList tbody > tr").expect("static selector"));
+static REPORTS_NO_DATA: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("td.no_data, td[colspan]").expect("static selector"));
+static LINK: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a[href]").expect("static selector"));
+static CELLS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("td").expect("static selector"));
+static TITLED: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("[title]").expect("static selector"));
+static SPANS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("span").expect("static selector"));
+static FAMILY_OPTIONS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#family > option").expect("static selector"));
+static ATTACHMENT_OPTIONS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#att > option").expect("static selector"));
+static PAGE_INFO: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse(".pageInfo").expect("static selector"));
 
 #[derive(Debug)]
 pub(crate) struct ParsedCompanyPage {
@@ -63,16 +131,13 @@ pub(crate) fn company_page(
     requested_page: u32,
 ) -> Result<ParsedCompanyPage, &'static str> {
     let document = Html::parse_fragment(html);
-    let table = Selector::parse("#corpTable tbody").expect("static selector");
-    let row = Selector::parse("#corpTable tbody > tr").expect("static selector");
-    if document.select(&table).next().is_none() {
+    if document.select(&COMPANY_TABLE).next().is_none() {
         return Err("company table is missing");
     }
-    let no_data = Selector::parse("tr.noData").expect("static selector");
-    let rows = document.select(&row).collect::<Vec<_>>();
+    let rows = document.select(&COMPANY_ROWS).collect::<Vec<_>>();
     let recognized_empty =
         rows.iter()
-            .any(|entry| entry.select(&no_data).next().is_some())
+            .any(|entry| entry.select(&COMPANY_NO_DATA).next().is_some())
             || rows.iter().any(|entry| {
                 entry.value().attr("class").is_some_and(|classes| {
                     classes.split_whitespace().any(|class| class == "noData")
@@ -111,35 +176,32 @@ pub(crate) fn company_page(
 }
 
 fn company_row(row: ElementRef<'_>) -> Option<SearchCompanyItem> {
-    let link_selector = Selector::parse("a[href]").expect("static selector");
-    let link = row.select(&link_selector).find(|link| {
+    let link = row.select(&LINK).find(|link| {
         link.value()
             .attr("href")
             .is_some_and(|href| href.contains("select("))
     })?;
     let href = link.value().attr("href")?.to_owned();
-    let code = Regex::new(r#"select\(['\"](?P<code>\d{8})['\"]\)"#)
-        .expect("static company-link regex")
-        .captures(&href)?["code"]
-        .to_owned();
+    let code = COMPANY_LINK.captures(&href)?["code"].to_owned();
     let name = collapsed_text(link);
     if name.is_empty() {
         return None;
     }
 
-    let cell_selector = Selector::parse("td").expect("static selector");
-    let cells = row.select(&cell_selector).collect::<Vec<_>>();
+    let cells = row.select(&CELLS).collect::<Vec<_>>();
     let stock_text = cells
         .get(1)
         .map_or_else(String::new, |cell| collapsed_text(*cell));
-    let stock_code = Regex::new(r"^\d{6}$")
-        .expect("static stock regex")
-        .is_match(&stock_text)
-        .then_some(stock_text);
+    let stock_code = if stock_text.is_empty() {
+        None
+    } else if STOCK_CODE.is_match(&stock_text) {
+        Some(stock_text)
+    } else {
+        return None;
+    };
 
-    let badge_selector = Selector::parse("[title]").expect("static selector");
     let badge = row
-        .select(&badge_selector)
+        .select(&TITLED)
         .find(|element| element.value().name() != "a");
     let market_label = badge
         .and_then(|element| element.value().attr("title"))
@@ -171,15 +233,12 @@ pub(crate) fn reports_page(
     detail: ResponseDetail,
 ) -> Result<ParsedReportsPage, &'static str> {
     let document = Html::parse_fragment(html);
-    let table = Selector::parse("table.tbList tbody").expect("static selector");
-    let row = Selector::parse("table.tbList tbody > tr").expect("static selector");
-    if document.select(&table).next().is_none() {
+    if document.select(&REPORTS_TABLE).next().is_none() {
         return Err("reports table is missing");
     }
-    let rows = document.select(&row).collect::<Vec<_>>();
-    let empty_selector = Selector::parse("td.no_data, td[colspan]").expect("static selector");
+    let rows = document.select(&REPORTS_ROWS).collect::<Vec<_>>();
     let recognized_empty = rows.iter().any(|entry| {
-        entry.select(&empty_selector).any(|cell| {
+        entry.select(&REPORTS_NO_DATA).any(|cell| {
             cell.value()
                 .attr("class")
                 .is_some_and(|classes| classes.split_whitespace().any(|class| class == "no_data"))
@@ -222,22 +281,17 @@ fn reports_row(
     requested_company_code: &str,
     detail: ResponseDetail,
 ) -> Option<SearchCompanyReportsItem> {
-    let cell_selector = Selector::parse("td").expect("static selector");
-    let cells = row.select(&cell_selector).collect::<Vec<_>>();
+    let cells = row.select(&CELLS).collect::<Vec<_>>();
     if cells.len() != 6 {
         return None;
     }
-    let link_selector = Selector::parse("a[href]").expect("static selector");
-    let company_link = cells[1].select(&link_selector).next()?;
+    let company_link = cells[1].select(&LINK).next()?;
     let company_href = company_link.value().attr("href")?;
-    let company_code = Regex::new(r#"openCorpInfoNew\(['\"](?P<code>\d{8})['\"]"#)
-        .expect("static company-link regex")
-        .captures(company_href)?["code"]
-        .to_owned();
+    let company_code = REPORT_COMPANY_LINK.captures(company_href)?["code"].to_owned();
     if company_code != requested_company_code {
         return None;
     }
-    let report_link = cells[2].select(&link_selector).find(|link| {
+    let report_link = cells[2].select(&LINK).find(|link| {
         link.value()
             .attr("href")
             .is_some_and(|href| href.starts_with("/dsaf001/main.do"))
@@ -250,37 +304,38 @@ fn reports_row(
     let receipt_number = report_url
         .query_pairs()
         .find_map(|(key, value)| (key == "rcpNo").then(|| value.into_owned()))?;
-    if !Regex::new(r"^\d{14}$")
-        .expect("static receipt regex")
-        .is_match(&receipt_number)
-    {
+    if !RECEIPT_NUMBER.is_match(&receipt_number) {
         return None;
     }
     let receipt_date = collapsed_text(cells[4]).replace('.', "-");
-    if !Regex::new(r"^\d{4}-\d{2}-\d{2}$")
-        .expect("static receipt-date regex")
-        .is_match(&receipt_date)
-    {
+    if !RECEIPT_DATE.is_match(&receipt_date) {
         return None;
     }
 
-    let badge_selector = Selector::parse("[title]").expect("static selector");
     let market_label = cells[1]
-        .select(&badge_selector)
+        .select(&TITLED)
         .next()
         .and_then(|element| element.value().attr("title"))
         .map(str::to_owned);
-    let remark_selector = Selector::parse("span").expect("static selector");
-    let remarks = cells[5]
-        .select(&remark_selector)
+    let mut remarks = cells[5]
+        .select(&SPANS)
         .filter_map(|span| {
             let text = collapsed_text(span);
-            (!text.is_empty()).then(|| Remark {
-                text,
-                title: span.value().attr("title").map(str::to_owned),
-            })
+            let title = span
+                .value()
+                .attr("title")
+                .map(str::split_whitespace)
+                .map(|parts| parts.collect::<Vec<_>>().join(" "))
+                .filter(|value| !value.is_empty());
+            (!text.is_empty() || title.is_some()).then_some(Remark { text, title })
         })
-        .collect();
+        .collect::<Vec<_>>();
+    if remarks.is_empty() {
+        let text = collapsed_text(cells[5]);
+        if !text.is_empty() {
+            remarks.push(Remark { text, title: None });
+        }
+    }
     let raw_row_text = collapsed_text(row);
 
     Some(SearchCompanyReportsItem {
@@ -310,13 +365,13 @@ pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, &'static str> {
     let mut documents = Vec::new();
     parse_document_options(
         &document,
-        "#family > option",
+        &FAMILY_OPTIONS,
         DocumentKind::Body,
         &mut documents,
     );
     parse_document_options(
         &document,
-        "#att > option",
+        &ATTACHMENT_OPTIONS,
         DocumentKind::Attachment,
         &mut documents,
     );
@@ -361,13 +416,12 @@ pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, &'static str> {
 
 fn parse_document_options(
     document: &Html,
-    selector: &str,
+    selector: &Selector,
     kind: DocumentKind,
     documents: &mut Vec<ParsedDocument>,
 ) {
-    let selector = Selector::parse(selector).expect("static selector");
     let mut kind_index = 0_u32;
-    for option in document.select(&selector) {
+    for option in document.select(selector) {
         let Some(query) = option.value().attr("value") else {
             continue;
         };
@@ -404,45 +458,47 @@ struct ScriptNode {
 }
 
 fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator), &'static str> {
-    let assignment = Regex::new(
-        r#"(?m)(node\d+)\[['\"](?P<field>[A-Za-z]+)['\"]\]\s*=\s*['\"](?P<value>[^'\"]*)['\"]\s*;"#,
-    )
-    .expect("static shell assignment regex");
-    let child = Regex::new(r#"(?m)(node\d+)\[['\"]children['\"]\]\.push\((node\d+)\)\s*;"#)
-        .expect("static shell child regex");
-    let root = Regex::new(r"(?m)treeData\.push\((node\d+)\)\s*;").expect("static shell root regex");
-    let view_doc = Regex::new(
-        r#"viewDoc\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"](?:\s*,\s*['\"]([^'\"]*)['\"])?\s*\)"#,
-    )
-    .expect("static viewDoc regex");
-
     let mut nodes: BTreeMap<String, ScriptNode> = BTreeMap::new();
-    for captures in assignment.captures_iter(html) {
+    for captures in SHELL_ASSIGNMENT.captures_iter(html) {
+        let encoded = captures
+            .name("double")
+            .or_else(|| captures.name("single"))
+            .expect("one shell string branch matched")
+            .as_str();
+        let value = decode_js_string(encoded).ok_or("report shell has an invalid string escape")?;
         nodes
             .entry(captures[1].to_owned())
             .or_default()
             .fields
-            .insert(captures["field"].to_owned(), captures["value"].to_owned());
+            .insert(captures["field"].to_owned(), value);
     }
-    for captures in child.captures_iter(html) {
+    for captures in SHELL_CHILD.captures_iter(html) {
         nodes
             .entry(captures[1].to_owned())
             .or_default()
             .children
             .push(captures[2].to_owned());
     }
-    let roots = root
+    let roots = SHELL_ROOT
         .captures_iter(html)
         .map(|captures| captures[1].to_owned())
         .collect::<Vec<_>>();
     let mut toc = Vec::new();
     let mut visiting = BTreeSet::new();
+    let mut expansions = 0;
     for (index, name) in roots.iter().enumerate() {
-        if let Some(node) = build_toc(name, &(index + 1).to_string(), &nodes, &mut visiting, 0)? {
+        if let Some(node) = build_toc(
+            name,
+            &(index + 1).to_string(),
+            &nodes,
+            &mut visiting,
+            &mut expansions,
+            0,
+        )? {
             toc.push(node);
         }
     }
-    let initial = view_doc
+    let initial = VIEW_DOC
         .captures_iter(html)
         .map(|captures| ViewerLocator {
             receipt_number: captures[1].to_owned(),
@@ -463,6 +519,7 @@ fn build_toc(
     position: &str,
     nodes: &BTreeMap<String, ScriptNode>,
     visiting: &mut BTreeSet<String>,
+    expansions: &mut usize,
     depth: u8,
 ) -> Result<Option<ParsedTocNode>, &'static str> {
     if depth >= 64 {
@@ -470,6 +527,10 @@ fn build_toc(
     }
     if !visiting.insert(name.to_owned()) {
         return Err("report shell TOC contains a cycle");
+    }
+    *expansions += 1;
+    if *expansions > MAX_TOC_EXPANSIONS {
+        return Err("report shell TOC exceeds the supported size");
     }
     let Some(node) = nodes.get(name) else {
         visiting.remove(name);
@@ -514,6 +575,7 @@ fn build_toc(
             &format!("{position}.{}", index + 1),
             nodes,
             visiting,
+            expansions,
             depth + 1,
         )? {
             children.push(child);
@@ -555,16 +617,70 @@ fn is_digits(value: &str) -> bool {
     !value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit())
 }
 
+fn decode_js_string(value: &str) -> Option<String> {
+    let mut chars = value.chars();
+    let mut decoded = String::with_capacity(value.len());
+    while let Some(character) = chars.next() {
+        if character != '\\' {
+            decoded.push(character);
+            continue;
+        }
+        match chars.next()? {
+            '\'' => decoded.push('\''),
+            '"' => decoded.push('"'),
+            '\\' => decoded.push('\\'),
+            '/' => decoded.push('/'),
+            'b' => decoded.push('\u{0008}'),
+            'f' => decoded.push('\u{000c}'),
+            'n' => decoded.push('\n'),
+            'r' => decoded.push('\r'),
+            't' => decoded.push('\t'),
+            'v' => decoded.push('\u{000b}'),
+            '0' => decoded.push('\0'),
+            'x' => decoded.push(char::from_u32(take_hex(&mut chars, 2)?)?),
+            'u' => {
+                let first = take_hex(&mut chars, 4)?;
+                let scalar = if (0xD800..=0xDBFF).contains(&first) {
+                    if chars.next()? != '\\' || chars.next()? != 'u' {
+                        return None;
+                    }
+                    let second = take_hex(&mut chars, 4)?;
+                    if !(0xDC00..=0xDFFF).contains(&second) {
+                        return None;
+                    }
+                    0x1_0000 + ((first - 0xD800) << 10) + (second - 0xDC00)
+                } else {
+                    first
+                };
+                decoded.push(char::from_u32(scalar)?);
+            }
+            '\n' => {}
+            '\r' => {
+                if chars.clone().next() == Some('\n') {
+                    chars.next();
+                }
+            }
+            escaped => decoded.push(escaped),
+        }
+    }
+    Some(decoded)
+}
+
+fn take_hex(chars: &mut Chars<'_>, digits: usize) -> Option<u32> {
+    let mut value = 0;
+    for _ in 0..digits {
+        value = value * 16 + chars.next()?.to_digit(16)?;
+    }
+    Some(value)
+}
+
 fn parse_pagination(document: &Html) -> Option<Pagination> {
-    let selector = Selector::parse(".pageInfo").expect("static selector");
     let text = document
-        .select(&selector)
+        .select(&PAGE_INFO)
         .map(collapsed_text)
         .collect::<Vec<_>>()
         .join(" ");
-    let captures = Regex::new(r"\[(\d+)/(\d+)\]\s*\[총\s*([\d,]+)건\]")
-        .expect("static pagination regex")
-        .captures(&text)?;
+    let captures = PAGINATION.captures(&text)?;
     Some(Pagination {
         current_page: captures[1].parse().ok()?,
         total_pages: captures[2].parse().ok()?,
@@ -677,6 +793,17 @@ mod tests {
     }
 
     #[test]
+    fn drops_company_rows_with_malformed_nonempty_stock_codes() {
+        let malformed =
+            include_str!("../../../fixtures/dart/vertical-v1/bodies/company-populated.utf8.html")
+                .replacen("<td>123456</td>", "<td>12A456</td>", 1);
+        let page = company_page(&malformed, 1).unwrap();
+        assert_eq!(page.items.len(), 1);
+        assert_eq!(page.dropped, 1);
+        assert_eq!(page.items[0].company_code, "00000002");
+    }
+
+    #[test]
     fn parses_reports_fixture() {
         let page = reports_page(
             include_str!("../../../fixtures/dart/vertical-v1/bodies/reports-populated.utf8.html"),
@@ -689,11 +816,59 @@ mod tests {
     }
 
     #[test]
+    fn preserves_title_only_and_plain_text_report_remarks() {
+        let fixture =
+            include_str!("../../../fixtures/dart/vertical-v1/bodies/reports-populated.utf8.html");
+        let title_only = fixture.replace(
+            r#"<span class="tagCom_kospi_other" title="가상 시장 비고">유</span>"#,
+            r#"<span title="  제목만   있는 비고  "></span>"#,
+        );
+        let page = reports_page(&title_only, "00000001", ResponseDetail::Concise).unwrap();
+        assert_eq!(page.items[0].remarks[0].text, "");
+        assert_eq!(
+            page.items[0].remarks[0].title.as_deref(),
+            Some("제목만 있는 비고")
+        );
+
+        let plain = fixture.replace(
+            r#"<span class="tagCom_kospi_other" title="가상 시장 비고">유</span>"#,
+            "일반 텍스트 비고",
+        );
+        let page = reports_page(&plain, "00000001", ResponseDetail::Concise).unwrap();
+        assert_eq!(page.items[0].remarks[0].text, "일반 텍스트 비고");
+        assert!(page.items[0].remarks[0].title.is_none());
+    }
+
+    #[test]
     fn parses_shell_tree_and_opaque_ids() {
         let shell = report_shell(SHELL).unwrap();
         assert_eq!(shell.documents[0].public.id, "document:body:1");
         assert_eq!(shell.documents[1].public.kind, DocumentKind::Attachment);
         assert_eq!(shell.toc[0].children[0].id, "section:1.1");
+    }
+
+    #[test]
+    fn decodes_escaped_shell_titles() {
+        let escaped = SHELL.replace(
+            r#"node1['text'] = "I. 회사의 개요";"#,
+            r"node1['text'] = 'Director\'s \uBCF4\uACE0';",
+        );
+        assert_eq!(
+            report_shell(&escaped).unwrap().toc[0].title,
+            "Director's 보고"
+        );
+    }
+
+    #[test]
+    fn decodes_shell_title_line_continuations() {
+        let continued = SHELL.replace(
+            r#"node1['text'] = "I. 회사의 개요";"#,
+            "node1['text'] = \"Director\\\nReport\";",
+        );
+        assert_eq!(
+            report_shell(&continued).unwrap().toc[0].title,
+            "DirectorReport"
+        );
     }
 
     #[test]
@@ -757,6 +932,31 @@ mod tests {
         assert_eq!(
             report_shell(&shell).unwrap_err(),
             "report shell TOC exceeds the supported depth"
+        );
+    }
+
+    #[test]
+    fn rejects_toc_dag_expansion_beyond_the_size_bound() {
+        let mut script = String::new();
+        for index in 1..=15 {
+            use std::fmt::Write as _;
+            write!(
+                script,
+                "var node{index} = {{}};\nnode{index}['text'] = \"Section {index}\";\nnode{index}['rcpNo'] = \"20260101000001\";\nnode{index}['dcmNo'] = \"10000001\";\nnode{index}['eleId'] = \"{index}\";\nnode{index}['offset'] = \"0\";\nnode{index}['length'] = \"1\";\nnode{index}['dtd'] = \"dart4.xsd\";\nnode{index}['children'] = [];\n"
+            )
+            .unwrap();
+            if index > 1 {
+                writeln!(script, "node{}['children'].push(node{index});", index - 1).unwrap();
+                writeln!(script, "node{}['children'].push(node{index});", index - 1).unwrap();
+            }
+        }
+        script.push_str("treeData.push(node1);\n");
+        let shell = format!(
+            "<script>{script}viewDoc(\"20260101000001\", \"10000001\", \"1\", \"0\", \"1\", \"dart4.xsd\");</script><select id=\"family\"><option value=\"rcpNo=20260101000001\" selected>body</option></select><select id=\"att\"></select>"
+        );
+        assert_eq!(
+            report_shell(&shell).unwrap_err(),
+            "report shell TOC exceeds the supported size"
         );
     }
 

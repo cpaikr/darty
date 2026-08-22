@@ -500,9 +500,9 @@ fn present_search<T: Serialize>(
         && let Some(items) = value["result"]["items"].as_array_mut()
     {
         for item in items {
-            item.as_object_mut()
-                .expect("item object")
-                .remove("evidence");
+            if let Some(item) = item.as_object_mut() {
+                item.remove("evidence");
+            }
         }
     }
     if agent {
@@ -647,13 +647,14 @@ fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
             pretty,
         ));
     }
-    if argv
-        .windows(2)
-        .any(|pair| pair[0] == "--content-start-byte" && pair[1].starts_with('-'))
-    {
+    if let Some(rejected) = argv.windows(2).find_map(|pair| {
+        (pair[0] == "--content-start-byte" && pair[1].starts_with('-')).then_some(&pair[1])
+    }) {
         return Some(CliFailure::new(
             failure(
-                "error: option '--content-start-byte <number>' argument '-1' is invalid. Expected an integer greater than or equal to 0.",
+                format!(
+                    "error: option '--content-start-byte <number>' argument '{rejected}' is invalid. Expected an integer greater than or equal to 0."
+                ),
                 Some("--content-start-byte"),
                 "Run darty view-report --help for options and examples.",
             ),
@@ -714,4 +715,26 @@ fn client() -> Result<DartyClient, DartyError> {
         return DartyClient::for_fixture_origin(origin, fetched_at);
     }
     DartyClient::new()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::preparse_failure;
+
+    #[test]
+    fn negative_window_error_reports_the_rejected_argument() {
+        let argv = [
+            "view-report".to_owned(),
+            "--content-start-byte".to_owned(),
+            "-27".to_owned(),
+        ];
+        let failure = preparse_failure(&argv).expect("negative argument is rejected");
+        assert!(
+            failure.value["error"]["message"]
+                .as_str()
+                .unwrap()
+                .contains("'-27'")
+        );
+        assert_eq!(failure.value["error"]["parameter"], "--content-start-byte");
+    }
 }

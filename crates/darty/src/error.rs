@@ -62,3 +62,34 @@ impl DartyError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{DartyError, ErrorCode};
+
+    #[test]
+    fn error_json_is_camel_case_and_missing_optional_fields_are_none() {
+        let error = DartyError {
+            code: ErrorCode::SourceChanged,
+            message: "changed".to_owned(),
+            retryable: false,
+            parameter: None,
+            source_url: Some("https://dart.fss.or.kr/example".to_owned()),
+            recovery_hint: Some("retry the lookup".to_owned()),
+        };
+        let serialized = serde_json::to_value(&error).unwrap();
+        assert_eq!(serialized["sourceUrl"], "https://dart.fss.or.kr/example");
+        assert_eq!(serialized["recoveryHint"], "retry the lookup");
+        assert!(serialized.get("source_url").is_none());
+
+        let minimal: DartyError = serde_json::from_value(serde_json::json!({
+            "code": "invalid_request",
+            "message": "invalid",
+            "retryable": false
+        }))
+        .unwrap();
+        assert!(minimal.parameter.is_none());
+        assert!(minimal.source_url.is_none());
+        assert!(minimal.recovery_hint.is_none());
+    }
+}
