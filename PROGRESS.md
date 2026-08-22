@@ -1,5 +1,8 @@
 # AXI Agent UX Progress
 
+> Historical completed record. Active project work is routed through
+> [ROADMAP.md](ROADMAP.md).
+
 ## Objective
 
 Implement the agreed AXI-aligned improvements:

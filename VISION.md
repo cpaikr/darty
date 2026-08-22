@@ -3,7 +3,7 @@
 ## Product
 
 - `name`: `darty`
-- `status`: vision
+- `status`: accepted target; not yet implemented
 - `domain`: Korean corporate disclosures, filing metadata, and document sections from DART
 - `users`: LLM agents, agent developers, investors, researchers, and internal automation that need reliable DART access
 
@@ -17,7 +17,9 @@ The target experience should be closer to `yfinance` than browser automation:
 - predictable structured results
 - stable identifiers and references
 - easy local scripting for humans
-- easy use by agents through the CLI subprocess contract, and by trusted server hosts through a transport-neutral JS/TS toolset
+- an idiomatic Rust SDK for Rust callers
+- an idiomatic Node SDK backed by the same Rust implementation
+- easy use by humans and agents through the versioned `darty` CLI subprocess contract
 
 ## Why This Exists
 
@@ -31,6 +33,32 @@ Generic browsing is a poor interface for disclosure research:
 This is worth standardizing because DART work is repetitive, citation-sensitive, and driven by a few recurring workflows.
 
 ## Product Shape
+
+The accepted rewrite target has three public surfaces over one Rust-owned DART
+implementation:
+
+- a Rust SDK;
+- a Node SDK exposed through a narrow asynchronous Node-API binding; and
+- a separate Rust `darty` executable built with `clap`, depending on the Rust
+  SDK and preserving the current CLI v1 process contract.
+
+The Rust implementation owns DART request construction, transport policy,
+bounds, parsing, domain normalization, and source failures. The Node binding
+owns only cross-runtime translation and Node ergonomics. The Rust CLI owns
+argument parsing, help, validation presentation, stdout, stderr, and exit
+behavior while reusing the SDK instead of becoming a second DART
+implementation.
+
+The `@sjunepark/darty` npm package exposes the Node SDK at its root and retains
+the `darty` package `bin` for `npx` and npm consumers. That bin is a tiny
+platform-selection launcher: it selects and executes the packaged Rust CLI but
+owns no argument parsing, help, validation, output shaping, or DART behavior.
+Platform-specific optional packages carry the matching Rust executable and
+Node-API addon. The Rust SDK may therefore be compiled into both artifacts,
+while source and behavior remain single-owned.
+
+Pi adapters, MCP servers, runtime-specific toolsets, and a
+`@sjunepark/darty/toolset` compatibility surface are not target products.
 
 The product should eventually support a narrow set of agent-facing capabilities:
 
@@ -50,7 +78,10 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - `structured over prose`: return typed records, not generated explanations
 - `source-explicit`: state whether a result came from DART search HTML, viewer HTML, RSS, or a fallback
 - `dart-shaped first`: keep low-level DART search details explicit before adding higher-level wrappers
-- `CLI-first`: keep one reusable core behind a discoverable subprocess contract; expose in-process toolsets only for justified trusted-host boundaries
+- `one conformer`: keep DART wire behavior in the Rust SDK and expose it through the Node SDK and separate Rust CLI without a second protocol implementation
+- `CLI-stable`: preserve the discoverable CLI v1 subprocess contract across the rewrite
+- `SDK-idiomatic`: let Rust and Node callers use language-appropriate APIs while sharing operation semantics, identifiers, references, and failures
+- `launcher-only`: keep the npm bin limited to native artifact selection and process forwarding
 - `public-read first`: v1 should target read-only access
 
 ## v1 Boundaries
@@ -60,7 +91,7 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - read-only search and retrieval
 - stable references to companies, filings, documents, and sections where possible
 - enough metadata to verify origin, completeness, and source URL
-- a reusable core capability that backs the CLI and the trusted-host JS/TS toolset without adding ecosystem-specific adapters prematurely
+- one Rust-owned capability implementation that backs the Rust SDK, Node SDK, and CLI
 
 ### Out Of Scope
 
@@ -88,6 +119,10 @@ The product is successful when an agent can reliably:
 - retrieve the exact document or section needed for an answer
 - cite the filing and section reference in its output
 - compare related filings with low tool-call overhead
+
+The rewrite is successful when the same supported operations are also usable
+through idiomatic Rust and Node SDKs, the CLI v1 contract remains compatible,
+and no superseded TypeScript DART implementation or toolset surface remains.
 
 ## Open Questions
 
