@@ -223,7 +223,7 @@ implementation and `@sjunepark/darty/toolset` surface are removed.
 
 ## Next action
 
-Establish the canonical DART wire authority and complete and discard the
-bounded Rust feasibility slice before implementing the retained vertical
-candidate. Keep fixture-backed vertical success and `--agent` cases ready to
-join candidate acceptance without changing the active TypeScript product.
+Deliver the canonical DART wire authority and discarded Rust feasibility
+evidence through PR 2 before implementing the retained vertical candidate.
+Keep fixture-backed vertical success and `--agent` cases ready to join
+candidate acceptance without changing the active TypeScript product.

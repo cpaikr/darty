@@ -39,6 +39,9 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 - [docs/research/dart-provider-qualification.md](docs/research/dart-provider-qualification.md)
   Operational access, pacing, retention, monitoring, and withdrawal evidence
   for bounded use of the DART website.
+- [docs/research/rust-feasibility-v1.md](docs/research/rust-feasibility-v1.md)
+  Completed and discarded Rust feasibility evidence for the reviewed vertical
+  wire workflow; it does not own retained candidate dependencies or APIs.
 - [docs/research/dart-report-guide.md](docs/research/dart-report-guide.md)
   Practical map of what information appears in major DART report families.
 - [docs/learning/](docs/learning/INDEX.md)

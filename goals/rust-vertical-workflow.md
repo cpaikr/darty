@@ -40,15 +40,16 @@ Canonical DART wire authority and discarded Rust feasibility slice.
 
 ### Next in-scope action
 
-Build, validate, document, and discard the bounded three-operation Rust
-feasibility probe against the reviewed authority and fictional corpus. Retain
-only evidence; do not add a Rust workspace or candidate implementation yet.
+Deliver the canonical authority and discarded feasibility evidence through the
+PR 2 review lifecycle. Do not start the retained candidate until PR 2 is merged.
 
 ### Evidence and blockers
 
 - Initialization boundary: the temporary `codex/rust-vertical-workflow` integration branch is necessary for the contract's sequential PR lifecycle and terminal metadata commit.
 - Remote direct-push preflight for the integration branch succeeded on 2026-08-22.
-- The integration base includes commit `795bf59`, which established the accepted rewrite plan and project queue; no Rust implementation work has started.
+- At initialization, the integration base included commit `795bf59`, which
+  established the accepted rewrite plan and project queue; no retained Rust
+  candidate implementation had started.
 - PR 1 candidate adds a 21-scenario process-isolated CLI v1 corpus: 9 scenarios are tagged `full`, 12 are tagged `vertical`, the full judge runs all 21, and the vertical judge runs the 12 vertical scenarios. It also adds a disposable-bundle mutation proof without editing `src/` or changing active package exports or `bin`.
 - Baseline reconciliation records the three implemented vertical contracts, compatibility aliases and quirks, empty-result differences, opaque viewer locators, and evidence classifications.
 - Untouched TypeScript baseline validation at dispatch: typecheck, 338 tests passed with 23 live skips, npm CLI build, and npm pack dry-run succeeded.
@@ -78,3 +79,22 @@ only evidence; do not add a Rust workspace or candidate implementation yet.
   Authority/conformance,
   frozen install, typecheck, all 338 tests (23 live skips), build, all 21 CLI
   judge cases, mutation proof, package dry-run, and diff checks pass.
+- The canonical authority was committed and pushed as `8e7b30b` after two
+  focused re-reviews reported no remaining actionable findings.
+- A private disposable Rust crate outside the repository proved the exact
+  four-request handoff, three parser boundaries, UTF-8/CP949/malformed decoding,
+  redirect/status/type/charset failures, all three streamed byte caps, total
+  and idle deadline classifications, and cancellation selection. Its request
+  assertions covered the representative default workflow, not the complete
+  OpenAPI form surface. Rust format, Clippy with
+  warnings denied, and five locked integration tests passed on Rust/Cargo
+  1.92.0 for `aarch64-apple-darwin`.
+- The feasibility crate, lockfile, source, and build directory were deleted.
+  Repository absence checks found no `.rs`, `Cargo.toml`, `Cargo.lock`, or
+  `target`, and `src`, `package.json`, and `test/compat` remained unchanged.
+  Only [`docs/research/rust-feasibility-v1.md`](../docs/research/rust-feasibility-v1.md)
+  retains the evidence and candidate implications.
+- Final independent feasibility review narrowed request-serialization claims
+  to the representative default workflow, required numeric timeout and
+  cancellation configurations plus their measurement limits, and corrected
+  the initialization wording. Re-review found no remaining actionable issue.
