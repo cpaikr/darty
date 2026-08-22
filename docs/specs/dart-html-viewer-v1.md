@@ -1,0 +1,138 @@
+# DART HTML and Viewer Companion v1
+
+Status: canonical upstream companion contract for `dart-wire-v1`.
+
+This document owns the language-neutral response-decoding, HTML-fragment, and
+viewer-shell rules that OpenAPI cannot express. The HTTP methods, routes,
+headers, form fields, and query parameters are owned only by
+[`dart-wire-v1.openapi.yaml`](dart-wire-v1.openapi.yaml). Public request,
+result, identifier, projection, and error-envelope behavior remains in the
+three capability specs.
+
+Research and fictional fixtures are evidence for this contract, not competing
+authorities. Every source claim below is labeled `observed`, `inferred`,
+`project decision`, or `unknown`.
+
+## Scope and transport policy
+
+- `WIRE-SCOPE-1` — **Project decision.** The authority covers exactly
+  `searchCompanyFragment`, `searchCompanyReportsFragment`, `fetchReportShell`,
+  and `fetchReportContent`. Company detail, RSS, body search, PDF, XBRL, popup
+  lookup, and every other DART route are excluded.
+- `WIRE-STATUS-1` — **Project decision.** Only HTTP 200 is parsed. Network
+  failures, timeouts, redirects, and non-200 responses become sanitized,
+  retryable `source_unavailable` failures. The client performs no automatic
+  retry.
+- `WIRE-REDIRECT-1` — **Project decision.** Automatic redirects are disabled.
+  This prevents a locator from silently crossing the DART origin.
+- `WIRE-TIMEOUT-1` — **Project decision.** Connect timeout is 5 seconds, idle
+  read timeout is 10 seconds, and total request deadline is 30 seconds.
+  Cancellation must stop an in-flight request promptly; public cancellation
+  projection is owned by each SDK surface rather than this wire contract.
+- `WIRE-SIZE-1` — **Project decision.** Raw response bytes are capped before
+  decoding: 8 MiB for each search fragment, 16 MiB for a report shell, and
+  64 MiB for report content. A stream that reaches cap + 1 fails without
+  parsing as `source_parse_failure`.
+- `WIRE-CONTENT-TYPE-1` — **Project decision, based on observed responses.** A
+  successful response must have media type `text/html`, compared
+  case-insensitively and ignoring parameters. Missing or different media types
+  fail as `source_parse_failure`.
+
+## Decoding
+
+- `DECODE-CHARSET-1` — **Observed.** DART report content has returned both
+  `charset=utf-8` and `charset=MS949`.
+- `DECODE-CHARSET-2` — **Project decision.** Charset tokens `ms949`, `euc-kr`,
+  and `ks_c_5601-1987`, compared case-insensitively, select the WHATWG EUC-KR
+  decoder. `utf-8`, `utf8`, or a missing charset selects UTF-8. Any other
+  declared charset fails as `source_parse_failure`.
+- `DECODE-MALFORMED-1` — **Project decision for TypeScript compatibility.**
+  Decoding replaces malformed byte sequences. Required parser grammar still
+  has to validate; replacement characters do not relax structural checks.
+
+## Company-search fragment
+
+These rules consume `searchCompanyFragment`.
+
+- `COMPANY-TABLE-1` — **Observed.** Result rows are direct `tr` descendants of
+  `#corpTable tbody`. A recognized empty response contains
+  `#corpTable tbody tr.noData`.
+- `COMPANY-ROW-1` — **Observed.** A usable row contains a company link whose
+  `href` matches `select('<eight digits>')`; its collapsed link text is the
+  company name. The first titled badge supplies optional market label and
+  badge evidence. The second direct `td` contains either an empty value or a
+  six-digit stock code.
+- `COMPANY-PAGE-1` — **Observed.** Non-empty pagination text matches
+  `[current/total] [총 count건]`, allowing commas in `count`. The empty shape has
+  zero total pages and count while preserving the requested current page.
+- `COMPANY-PARTIAL-1` — **Project decision.** Unusable result rows are dropped
+  and counted. A response with recognized table and pagination grammar may
+  still succeed with a partial-row warning. Missing required table/pagination
+  grammar is `source_changed`.
+
+## Company-report fragment
+
+These rules consume `searchCompanyReportsFragment`.
+
+- `REPORTS-TABLE-1` — **Observed.** Result rows are direct `tr` descendants of
+  `table.tbList tbody`. A recognized empty response contains a `td.no_data` or
+  a spanning `td` whose collapsed text is `조회 결과가 없습니다.`.
+- `REPORTS-ROW-1` — **Observed.** A usable row has six cells. Cell 2 contains a
+  company link whose `href` includes `openCorpInfoNew('<eight digits>', ...)`.
+  Cell 3 contains a report link beginning `/dsaf001/main.do` and a 14-digit
+  `rcpNo` query. Cells 4 and 5 supply presenter and dotted receipt date. Cell 6
+  supplies zero or more remark spans; title text is retained when present.
+- `REPORTS-PAGE-1` — **Observed.** Non-empty pagination uses the same
+  `[current/total] [총 count건]` grammar as company search. The upstream empty
+  source model has zero total pages and count; public normalization is owned by
+  the capability spec.
+- `REPORTS-PARTIAL-1` — **Project decision.** Unusable result rows are dropped
+  and counted. Recognized table and pagination grammar may still succeed with
+  a partial-row warning. Missing required grammar is `source_changed`.
+
+## Report shell and viewer replay
+
+These rules consume `fetchReportShell` and produce the only locators accepted
+by `fetchReportContent`.
+
+- `SHELL-DOCUMENTS-1` — **Observed.** Non-placeholder options under `#family`
+  are body documents; options under `#att` are attachments. An option value is
+  a query containing `rcpNo` and, for attachments, optionally `dcmNo`.
+  The first selectable option carrying `selected` identifies the current
+  document; when none carries it, the first selectable body or attachment
+  option in parse order is current. The title attribute wins over collapsed
+  option text when non-empty.
+- `SHELL-TREE-1` — **Observed.** The shell initializes `treeData` through
+  JavaScript statements that create `nodeN = {}`, assign string fields, push
+  child nodes, and push roots into `treeData`. Required section fields are
+  `text`, `rcpNo`, `dcmNo`, `eleId`, `offset`, `length`, and `dtd`; `tocNo` is
+  optional metadata. Incomplete nodes are not addressable sections.
+- `SHELL-INITIAL-1` — **Observed.** The initial selected locator is the first
+  syntactically valid `viewDoc(rcpNo, dcmNo, eleId, offset, length, dtd[, tocNo])`
+  call. `tocNo` is shell metadata and is not sent to `fetchReportContent`.
+- `SHELL-NO-TOC-1` — **Observed.** A shell may have no TOC and an initial
+  locator with `eleId=0`, `offset=0`, and `length=0`; that locator retrieves the
+  selected full HTML document.
+- `SHELL-SELECTION-1` — **Project decision.** Callers may select only a query
+  returned by a parsed document option. Raw viewer locators remain internal.
+- `SHELL-CHANGED-1` — **Project decision.** A shell without a receipt number
+  and at least one selectable document is `source_changed`. Invalid string
+  decoding or an otherwise undecodable source model is `source_parse_failure`.
+- `VIEWER-LOCATOR-1` — **Observed.** `rcpNo`, `dcmNo`, `eleId`, `offset`,
+  `length`, and `dtd` are copied verbatim from the selected shell locator into
+  `fetchReportContent`. Offset and length units remain **unknown**.
+- `VIEWER-CONTENT-1` — **Project decision.** Viewer content is decoded before
+  sanitization. HTML sanitization, Markdown conversion, public content windows,
+  and opaque public document/section IDs are capability behavior, not wire
+  grammar, and are tested in the retained candidate.
+
+## Evidence and conformance
+
+The cross-language corpus at [`../../fixtures/dart/vertical-v1/`](../../fixtures/dart/vertical-v1/)
+is independently fictional evidence. Its manifest points to OpenAPI operation
+IDs and the stable rule IDs above. Conformers must match actual method, path,
+headers, form/query fields, and response bytes; selecting a fixture by scenario
+name alone is not conformance.
+
+Provider access and operational suitability are recorded separately in
+[`../research/dart-provider-qualification.md`](../research/dart-provider-qualification.md).

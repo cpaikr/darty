@@ -30,15 +30,19 @@ _None._
 
 ### Completed included results
 
-_None._
+- Recoverable compatibility baseline and mutation-tested parity judge — merged
+  through PR #19 at `ff8770c`; locally marked by the annotated non-release tag
+  `archive/rust-rewrite-baseline`.
 
 ### Current in-scope result
 
-Recoverable compatibility baseline and mutation-tested parity judge.
+Canonical DART wire authority and discarded Rust feasibility slice.
 
 ### Next in-scope action
 
-Commit and deliver the independently reviewed compatibility-baseline slice through PR feedback completion before starting source authority.
+Build, validate, document, and discard the bounded three-operation Rust
+feasibility probe against the reviewed authority and fictional corpus. Retain
+only evidence; do not add a Rust workspace or candidate implementation yet.
 
 ### Evidence and blockers
 
@@ -52,3 +56,25 @@ Commit and deliver the independently reviewed compatibility-baseline slice throu
 - Independent review completed on 2026-08-22. Its two safe findings were applied by asserting every vertical help option and adding deterministic pretty-success coverage; targeted parity, mutation, package dry-run, and diff checks passed afterward.
 - PR feedback tightened help parity to exact option sets plus normalized semantic copy, clarified the company-detail locator, and pinned the new Node action. CI exposed pre-existing `.js`/ESM mismatches in temporary smoke and mutation artifacts at the declared Node 20 minimum; naming both artifacts `.mjs` restored all 338 tests and the mutation proof under Node 20.18.1. The proof now forwards `process.execPath`, so its subject uses the same runtime as the proof itself.
 - Additional fixture-backed vertical success and `--agent` scenarios are not yet in the manifest. They remain intentionally assigned to canonical wire authority and must join the judge before candidate acceptance.
+- PR #19 passed repository CI and completed the required review lifecycle with all four review threads resolved and no pending or outside-diff feedback. Its three commits were preserved by merge commit `ff8770c` on 2026-08-22.
+- PR 2 authority candidate defines exactly four upstream operations in OpenAPI,
+  25 stable HTML/viewer/transport rules, 14 independently fictional fixture
+  cases with language-neutral expected outcomes, and 6 exact transport fault
+  recipes covering all three byte caps. `bun run check:dart-wire` validates
+  exact operation triples, schema-conforming serialized requests and coupled
+  form invariants, fixture hashes and provenance, CP949-only and malformed-byte
+  behavior through every accepted alias, qualification completeness, and the
+  authority lock. Eleven fixture cases also conform through the unchanged
+  active TypeScript parsers.
+- Five bounded metadata-only live probes on 2026-08-22 returned HTTP 200 without
+  authentication or redirects: company search (7,315 bytes), filing search
+  (18,514), report shell (71,132), UTF-8 section (4,753), and MS949 no-TOC
+  content (47,703). No live body was retained.
+- Independent PR 2 review found and prompted fixes for retryability ownership,
+  exact operation enumeration, serialized request constraints, typed fixture
+  expectations, all byte-limit boundaries, CP949-extension and malformed-byte
+  decoding, unsupported-charset rejection, viewer selection fallback, and a
+  stale research link. Focused re-review found no remaining actionable issues.
+  Authority/conformance,
+  frozen install, typecheck, all 338 tests (23 live skips), build, all 21 CLI
+  judge cases, mutation proof, package dry-run, and diff checks pass.

@@ -34,7 +34,11 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 - [VISION.md](VISION.md)
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
-  Durable source investigation notes for `dsab007` search, `dsae001` company overview search, and the report viewer.
+  Non-normative source investigation and provenance for `dsab007` search,
+  `dsae001` company overview search, and the report viewer.
+- [docs/research/dart-provider-qualification.md](docs/research/dart-provider-qualification.md)
+  Operational access, pacing, retention, monitoring, and withdrawal evidence
+  for bounded use of the DART website.
 - [docs/research/dart-report-guide.md](docs/research/dart-report-guide.md)
   Practical map of what information appears in major DART report families.
 - [docs/learning/](docs/learning/INDEX.md)
@@ -46,7 +50,12 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 - [docs/tools/](docs/tools/)
   Canonical home for single-tool design.
 - [docs/specs/](docs/specs/)
-  Stable, evidence-backed capability specs once the contract is ready.
+  Stable, evidence-backed capability specs. The `dart-wire-v1` OpenAPI owns the
+  supported upstream HTTP subset and its HTML/viewer companion owns grammar
+  that OpenAPI cannot express.
+- `fixtures/dart/`
+  Independently fictional cross-language source evidence. Fixtures test the
+  canonical contracts but never replace them as authority.
 - `evals/`
   Agent task evals where a model uses local tools to complete user-like tasks.
 - `src/`
@@ -68,7 +77,9 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 ## Invariants
 
 - Keep product vision at the repo root, not mixed into specs or plans.
-- Keep source investigation notes outside `docs/specs/`; only promote stable contract decisions into specs.
+- Keep source investigation notes outside `docs/specs/`; only promote stable
+  contract decisions into specs. Research replay lists remain non-normative
+  once a supported route enters `dart-wire-v1`.
 - Keep tool contract rules in [docs/tools/contracts.md](docs/tools/contracts.md), not in project notes.
 - Prefer links to canonical guidance over repeating the same rule in multiple files.
 - Mark source observations as observed, inferred, or unverified; do not blur them together.
