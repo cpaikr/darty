@@ -22,12 +22,14 @@ implementation and `@sjunepark/darty/toolset` surface are removed.
   boundary for stdout, stderr, exit status, help, home output, typed failures,
   and agent projections. The company lookup -> filing search -> report TOC ->
   report section workflow is the strongest existing end-to-end product proof.
-- Existing deterministic tests, subprocess tests, live checks, and workflow
-  evals provide implementation evidence, but there is no implementation-neutral
-  black-box parity judge or independently reviewed rewrite corpus yet.
-- Some source-map and capability-spec current-state claims predate implemented
-  company-report search and report viewing. They must be reconciled before they
-  can define rewrite acceptance.
+- The process-isolated CLI v1 judge under `test/compat/cli-v1/` now freezes the
+  specified transport, help, validation, and network-free behavior through
+  independently authored expectations. Its mutation proof changes only a
+  disposable built bundle and demonstrates that the judge rejects drift.
+- The source map and the three vertical capability specs have been reconciled
+  with current code and tests. They distinguish observed source behavior,
+  inferred replay findings, project decisions, implemented compatibility
+  behavior, and known quirks.
 - The current npm-only release process and TypeScript architecture remain in
   force until cutover. No Rust workspace, Node-API binding, native artifact
   matrix, Rust SDK release contract, or rewrite branch exists yet.
@@ -221,8 +223,6 @@ implementation and `@sjunepark/darty/toolset` surface are removed.
 
 ## Next action
 
-Deliver the first company-search -> filing-search -> report-viewing workflow
-through the Rust SDK, Node SDK, and candidate CLI. Treat baseline
-reconciliation, the mutation-tested CLI judge, source authority, and the
-bounded feasibility slice as required prerequisites within that outcome rather
-than as a foundation-only stopping point.
+Finish review and delivery of the compatibility-baseline PR. Then establish the
+canonical DART wire authority and complete and discard the bounded Rust
+feasibility slice before implementing the retained vertical candidate.

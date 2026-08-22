@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Missing required option \"--company-name\". Expected string with at least 2 characters.",
+      "retryable": false,
+      "parameter": "companyName",
+      "recoveryHint": "Run darty search-company --help for options and examples."
+    }
+  }
+}

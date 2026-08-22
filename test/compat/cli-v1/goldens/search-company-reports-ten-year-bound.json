@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "search-company-reports search period is limited to 10 years. startDate=20150101, endDate=20260102; the earliest allowed startDate for this endDate is 20160102. Split longer periods into windows of 10 years or less.",
+      "retryable": false,
+      "parameter": "startDate",
+      "recoveryHint": "Because of DART behavior, call search-company-reports with date windows of 10 years or less."
+    }
+  }
+}

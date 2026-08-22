@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "pretty",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Option \"--company-name\" must be at least 2 characters long.",
+      "retryable": false,
+      "parameter": "companyName",
+      "recoveryHint": "Run darty search-company --help for options and examples."
+    }
+  }
+}

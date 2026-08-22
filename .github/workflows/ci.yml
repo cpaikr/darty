@@ -17,6 +17,11 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v5
 
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 20.18.1
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
@@ -31,3 +36,9 @@ jobs:
 
       - name: Build npm CLI bundle
         run: bun run build
+
+      - name: Check CLI v1 compatibility baseline
+        run: node scripts/judge-cli-v1.mjs --profile full -- node dist/cli.js
+
+      - name: Prove CLI parity mutation sensitivity
+        run: node scripts/prove-cli-v1-mutation.mjs
