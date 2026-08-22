@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Option \"--start-date\" must be a real date in YYYYMMDD format. \"20250230\" is not a valid date.",
+      "retryable": false,
+      "parameter": "startDate",
+      "recoveryHint": "Dates must be real YYYYMMDD dates, and startDate cannot be after endDate."
+    }
+  }
+}

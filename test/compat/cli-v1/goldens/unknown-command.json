@@ -1,0 +1,17 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "error: unknown command 'missing-command'",
+      "retryable": false,
+      "recoveryHint": "Run darty --help to list commands."
+    }
+  }
+}

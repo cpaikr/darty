@@ -1,0 +1,37 @@
+<!doctype html>
+<html><body>
+<script>
+var treeData = [];
+var node1 = {};
+node1['text'] = "I. 회사의 개요";
+node1['rcpNo'] = "20260101000001";
+node1['dcmNo'] = "10000001";
+node1['eleId'] = "1";
+node1['offset'] = "100";
+node1['length'] = "900";
+node1['dtd'] = "dart4.xsd";
+node1['tocNo'] = "1";
+node1['children'] = [];
+var node2 = {};
+node2['text'] = "1. 배당에 관한 사항";
+node2['rcpNo'] = "20260101000001";
+node2['dcmNo'] = "10000001";
+node2['eleId'] = "2";
+node2['offset'] = "200";
+node2['length'] = "300";
+node2['dtd'] = "dart4.xsd";
+node2['tocNo'] = "2";
+node2['children'] = [];
+node1['children'].push(node2);
+treeData.push(node1);
+viewDoc("20260101000001", "10000001", "1", "100", "900", "dart4.xsd", "");
+</script>
+<select id="family">
+  <option value="null">+본문선택+</option>
+  <option value="rcpNo=20260101000001" selected title="가람전자 사업보고서">2026.01.01 사업보고서</option>
+</select>
+<select id="att">
+  <option value="null">+첨부선택+</option>
+  <option value="rcpNo=20260101000001&amp;dcmNo=10000002">2026.01.01 감사보고서</option>
+</select>
+</body></html>

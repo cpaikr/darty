@@ -1,15 +1,24 @@
 # DART Source Map
 
-Initially captured on 2026-03-31. Updated with replay-contract probes on 2026-04-01 and receipt-viewer probes on 2026-05-05.
+Initially captured on 2026-03-31. Updated through company-report filter and
+date-window probes on 2026-05-24.
 
 Method:
 
 - inspected the live home page and search page in a browser session
 - replayed representative pages with `curl`
 - inspected the report viewer HTML and embedded viewer state
-- replayed direct POST requests to `/dsab007/search.ax`
+- replayed direct POST requests to `/dsae001/search.ax`,
+  `/corp/searchCorp.ax`, `/dsab007/search.ax`, and
+  `/dsab007/detailSearch.ax`
+- replayed viewer-shell and report-content GET requests
 
-This document records source evidence for the DART site. It is not yet the public tool spec.
+This document records non-normative source evidence and provenance for the DART
+site. It is never the supported wire authority. The vertical HTTP subset is
+canonical in [`dart-wire-v1.openapi.yaml`](../specs/dart-wire-v1.openapi.yaml),
+and decoding plus HTML/viewer grammar is canonical in
+[`dart-html-viewer-v1.md`](../specs/dart-html-viewer-v1.md). Exact replay lists
+below remain observations unless those contracts promote them.
 
 ## Surface Map
 
@@ -64,13 +73,17 @@ Observed in the HTML for `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=202603310
 - `eleId`
   Element id used for section targeting inside the document tree. Example: `1`, `17`, `53`.
 - `offset`
-  Byte or character offset used by `/report/viewer.do`. Example: `972`, `124828`.
+  Opaque offset used by `/report/viewer.do`. Example: `972`, `124828`. Its unit
+  is unknown; the current evidence does not establish bytes versus characters.
 - `length`
-  Span length paired with `offset`. Example: `4495`, `328537`.
+  Opaque span paired with `offset`. Example: `4495`, `328537`. Its unit is also
+  unknown.
 - `tocNo`
   Viewer table-of-contents sequence number.
 - `atocId`
-  Alternate or editor-side TOC id. The source explicitly notes that `eleId` and `tocNo` are not always identical.
+  Additional TOC identifier. Its alternate/editor-side role is inferred from
+  source context; the only observed semantic statement is that `eleId` and
+  `tocNo` are not always identical.
 - `dtd`
   Viewer document type descriptor. Example: `dart4.xsd`.
 
@@ -113,7 +126,7 @@ Observed document selection behavior:
 - The `첨부` selector values include both `rcpNo={rcpNo}` and `dcmNo={dcmNo}`. Reopening the shell with those parameters selects that attachment and embeds a new TOC/request set for the attachment document.
 - The download button calls `/pdf/download/main.do?rcp_no={rcpNo}&dcm_no={dcmNo}` for the currently selected document.
 
-Current implication:
+Implemented behavior derived from these observations:
 
 - Receipt rendering can start from public `receiptNumber` by first fetching `/dsaf001/main.do?rcpNo={receiptNumber}` and parsing the selected document context.
 - Direct report-body retrieval should use `/report/viewer.do` only after the shell provides `dcmNo`, `dtd`, and, for sectioned documents, the TOC section parameters.
@@ -144,7 +157,10 @@ The visible page title is `공시통합검색`. The main selector presents these
 - `본문내용`
 - `고급검색` in the header search selector; the main selector observed for this page exposed the first five modes
 
-The current implementation covers only the `본문내용` mode (`option=contents`). Other modes remain observed UI, not implemented capability.
+The active TypeScript product implements `option=contents` as `search-body` and
+`option=corp` through `/dsab007/detailSearch.ax` as
+`search-company-reports`. Report-name, TOC-name, all, and advanced modes remain
+observed UI rather than implemented capabilities.
 
 When `본문내용` is selected, the UI shows these relevant controls:
 
@@ -223,7 +239,9 @@ Observed result shape:
 Observed page-size, sort, and filter behavior for selected `유 케이티`:
 
 - `maxResults=15`, `30`, `50`, and `100` were honored and matched the UI dropdown
-- `maxResults=2` fell back to 15 rows, so arbitrary page sizes should not be exposed as a public contract
+- `maxResults=2` fell back to 15 rows, so the upstream evidence does not support
+  arbitrary page sizes. The public contract separately preserves 5 and 10 as
+  compatibility aliases normalized to 15.
 - `sort=date` with `series=desc` was replay-observed
 - the UI exposes `회사명` and `보고서명` sort anchors whose IDs suggest `sort=crp` and `sort=rpt`, but those replay values were not verified in this investigation
 - on 2026-05-08, `textPresenterNm=케이티`, `reportName=사업보고서`, repeated `publicType`, `businessCode`, `corporationType`, and `closingAccountsMonth` were replay-observed as honored filters
@@ -231,14 +249,18 @@ Observed page-size, sort, and filter behavior for selected `유 케이티`:
 - observed business/corporation/closing filters matched or excluded the seeded company as expected: `businessCode=612`, `corporationType=P`, and `closingAccountsMonth=12` matched the baseline; unrelated values returned no rows
 - on 2026-05-24, `textCrpCik=00571818`, `reportName=감사보고서`, and `publicType=F001` showed a 10-year date-window limit: `20160524..20260524` returned rows, while `20160523..20260524` and wider windows returned the normal no-result placeholder even though receipt `20260402001821` was inside the range
 
-Current implication:
+Evidence classification:
 
-- integrated company-name filing search is replayable without browser automation
-- the public `search-company-reports` contract should be code-first and require the resolved 8-digit DART company code
-- callers that only know a company name should use the existing `search-company` capability first, then pass the selected `companyCode` to `search-company-reports`
-- callers should keep `search-company-reports` date windows at 10 years or less; the implementation rejects wider windows because DART can otherwise return a misleading empty result set
-- `/corp/searchCorp.ax` remains useful source evidence for the browser UI's chooser, but it should not be part of this operation unless a separate convenience wrapper is intentionally added later
-- the draft target spec is `docs/specs/dsab007-search-company-reports-v1.md`
+- **Observed:** integrated company-name filing search is replayable without
+  browser automation, and DART can return a misleading empty result for windows
+  wider than 10 years.
+- **Inferred from replay:** supplying the resolved 8-digit company code makes
+  the popup unnecessary for this operation.
+- **Project decision:** `search-company-reports` is code-first, callers resolve
+  names through `search-company`, and the public operation rejects date windows
+  wider than 10 years.
+- **Implemented contract:**
+  [`dsab007-search-company-reports-v1.md`](../specs/dsab007-search-company-reports-v1.md).
 
 ### Official DART Search Guide
 
@@ -307,11 +329,14 @@ Observed no-result behavior:
 - on 2026-03-31, the placeholder appeared as a bare `td colspan="3">조회 결과가 없습니다.</td>` directly under `tbody`
 - on 2026-03-31, the no-result fragment omitted the `.pageInfo` pagination block entirely
 
-Current implication:
+Evidence classification:
 
-- body-content search is replayable today without browser automation
-- the response still needs HTML parsing, but the implementation should keep `dsab007` field semantics explicit instead of normalizing too early
-- v1 should start with one mode, but under a shared `dsab007` search core rather than a one-off body-search module
+- **Observed:** body-content search is replayable without browser automation and
+  returns HTML that requires parsing.
+- **Implemented:** `search-body` keeps its mode-specific replay fields explicit.
+- **Superseded project direction:** the earlier recommendation to begin with one
+  shared `dsab007` mode no longer governs the product; the accepted rewrite plan
+  and `VISION.md` own current architecture decisions.
 
 ## Company Overview Search Surface Notes
 
@@ -370,12 +395,12 @@ Observed page-size behavior:
 - `maxResults=10`, `15`, and `20` were honored in tested requests.
 - `maxResults=50` still returned 45 rows, so the implemented public maximum is 45.
 
-Current implication:
+Evidence classification:
 
-- `dsae001` company-name search is replayable without browser automation.
-- The result list is enough to resolve company names to DART company codes.
-- Full company detail normalization is handled by the separate `company-detail` command through `/dsae001/select.ax`.
-- Company-specific RSS is handled by the separate `company-rss` command through `/api/companyRSS.xml?crpCd={companyCode}`.
+- **Observed:** `dsae001` company-name search is replayable without browser
+  automation, and its rows expose DART company codes.
+- **Implemented:** `search-company` resolves those rows; `company-detail` and
+  `company-rss` own the separate detail and RSS retrieval paths.
 
 ## Adjacent Feeds And Supporting Surfaces
 
@@ -386,14 +411,17 @@ Observed in the report viewer source:
 
 These may be useful for lightweight feed operations, but they are supporting surfaces, not yet the primary contract.
 
-## Current v1 Recommendation
+## Current Contract Implications
 
-Treat body-content search as the first-class v1 entrypoint:
-
-- public ids should prefer filing identifiers and search inputs that survive UI changes
-- section byte ranges and low-level viewer offsets should stay internal unless proven necessary
-- keep search and retrieval separate
-- keep XBRL as an explicit extension point, not an assumed v1 dependency
+- The canonical vertical wire subset contains only the four operations named in
+  `dart-wire-v1`; adjacent routes in this research map are not implicitly
+  supported.
+- Public IDs prefer filing and company identifiers that survive UI changes.
+- Opaque viewer offsets and lengths remain internal.
+- Search and retrieval remain separate operations.
+- XBRL remains an explicit future extension rather than an assumed dependency.
+- Product direction and rewrite architecture are owned by `VISION.md` and the
+  active plan, not this research record.
 
 ## Follow-Ups
 

@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Option \"--disclosure-type\" contains unknown DART 공시상세유형 detailed code(s): A999, B999. Common codes include A001=사업보고서, A002=반기보고서, A003=분기보고서, F001=감사보고서, and I001=수시공시. If you do not know the code, use the disclosure-types operation or darty disclosure-types --query, and put report-title text in reportName.",
+      "retryable": false,
+      "parameter": "disclosureTypes",
+      "recoveryHint": "Pass known DART 공시상세유형 detailed codes (A001=사업보고서, A002=반기보고서, A003=분기보고서, I001=수시공시, etc.) as an array. If you do not know the code, use the disclosure-types operation or darty disclosure-types --query <term>, and put report-title text in reportName."
+    }
+  }
+}

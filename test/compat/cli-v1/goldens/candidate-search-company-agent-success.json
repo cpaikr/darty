@@ -1,0 +1,53 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "help": [
+      "Search filings: darty search-company-reports --company-code 00000001 --start-date YYYYMMDD --end-date YYYYMMDD --agent"
+    ],
+    "metadata": {
+      "completeness": "complete",
+      "output": "agent",
+      "source": {
+        "endpoint": "https://dart.fss.or.kr/dsae001/search.ax",
+        "surface": "dsae001",
+        "system": "dart"
+      }
+    },
+    "references": {
+      "searchUrl": "https://dart.fss.or.kr/dsae001/search.ax"
+    },
+    "result": {
+      "items": [
+        {
+          "companyCode": "00000001",
+          "companyName": "가람전자",
+          "detailEndpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000001",
+          "marketKind": "kospi",
+          "marketLabel": "유가증권시장",
+          "stockCode": "123456"
+        },
+        {
+          "companyCode": "00000002",
+          "companyName": "가람물류",
+          "detailEndpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000002",
+          "marketKind": "etc",
+          "marketLabel": "기타법인"
+        }
+      ],
+      "pagination": {
+        "currentPage": 1,
+        "returnedCount": 2,
+        "totalCount": 2,
+        "totalPages": 1
+      },
+      "request": {
+        "companyName": "가람",
+        "page": 1,
+        "pageSize": 15
+      }
+    },
+    "warnings": []
+  }
+}

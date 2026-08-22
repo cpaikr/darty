@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Missing required option \"--keyword\". Expected non-empty string.",
+      "retryable": false,
+      "parameter": "keyword",
+      "recoveryHint": "Run darty search-body --help for options and examples."
+    }
+  }
+}

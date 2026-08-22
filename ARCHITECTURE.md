@@ -5,6 +5,12 @@ This repo now has two layers:
 - root docs that hold product and source-contract decisions
 - a small implementation slice under `src/` plus opt-in live checks under `test/` for DART source behavior
 
+It also contains an isolated, non-active rewrite candidate. `crates/darty`
+owns the retained three-operation Rust SDK, `crates/darty-cli` and
+`crates/darty-node` are thin adapters, and `candidate/npm/` holds the proposed
+root and current-host package shapes. None of these paths changes the active
+root npm exports or `bin`; the atomic cutover remains later roadmap work.
+
 ## Big Picture
 
 Darty has two public integration surfaces over the same capability core:
@@ -34,7 +40,14 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 - [VISION.md](VISION.md)
   Product-level goal, scope, and non-goals for the current project.
 - [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
-  Durable source investigation notes for `dsab007` search, `dsae001` company overview search, and the report viewer.
+  Non-normative source investigation and provenance for `dsab007` search,
+  `dsae001` company overview search, and the report viewer.
+- [docs/research/dart-provider-qualification.md](docs/research/dart-provider-qualification.md)
+  Operational access, pacing, retention, monitoring, and withdrawal evidence
+  for bounded use of the DART website.
+- [docs/research/rust-feasibility-v1.md](docs/research/rust-feasibility-v1.md)
+  Completed and discarded Rust feasibility evidence for the reviewed vertical
+  wire workflow; it does not own retained candidate dependencies or APIs.
 - [docs/research/dart-report-guide.md](docs/research/dart-report-guide.md)
   Practical map of what information appears in major DART report families.
 - [docs/learning/](docs/learning/INDEX.md)
@@ -46,11 +59,23 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 - [docs/tools/](docs/tools/)
   Canonical home for single-tool design.
 - [docs/specs/](docs/specs/)
-  Stable, evidence-backed capability specs once the contract is ready.
+  Stable, evidence-backed capability specs. The `dart-wire-v1` OpenAPI owns the
+  supported upstream HTTP subset and its HTML/viewer companion owns grammar
+  that OpenAPI cannot express.
+- `fixtures/dart/`
+  Independently fictional cross-language source evidence. Fixtures test the
+  canonical contracts but never replace them as authority.
 - `evals/`
   Agent task evals where a model uses local tools to complete user-like tasks.
 - `src/`
   Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
+- `crates/`
+  Retained Rust rewrite candidate: one SDK core plus thin CLI and Node-API
+  adapters for the reviewed vertical workflow.
+- `candidate/npm/`
+  Unpublished npm package candidates. The root facade exposes the asynchronous
+  Node SDK and a forwarding-only launcher; the current-host optional package
+  receives generated native artifacts only during acceptance packaging.
 - `test/`
   Opt-in live or broader integration checks that should stay separate from module-local fixture tests.
   Use `test/live/` for live DART coverage and `test/cli/` for subprocess CLI smoke tests.
@@ -68,7 +93,9 @@ For layer diagrams, the schema derivation chain, and the runtime pipeline, see
 ## Invariants
 
 - Keep product vision at the repo root, not mixed into specs or plans.
-- Keep source investigation notes outside `docs/specs/`; only promote stable contract decisions into specs.
+- Keep source investigation notes outside `docs/specs/`; only promote stable
+  contract decisions into specs. Research replay lists remain non-normative
+  once a supported route enters `dart-wire-v1`.
 - Keep tool contract rules in [docs/tools/contracts.md](docs/tools/contracts.md), not in project notes.
 - Prefer links to canonical guidance over repeating the same rule in multiple files.
 - Mark source observations as observed, inferred, or unverified; do not blur them together.

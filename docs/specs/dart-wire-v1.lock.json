@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "authorityVersion": "dart-wire-v1",
+  "purpose": "Fail validation when canonical wire documents or their evidence change without refreshing the reviewed authority lock.",
+  "files": [
+    {
+      "path": "docs/specs/dart-wire-v1.openapi.yaml",
+      "sha256": "ceaf60e18818a7a2be225f86ea26f14830dae5119a0195ea2f0dc83cc121ef18"
+    },
+    {
+      "path": "docs/specs/dart-html-viewer-v1.md",
+      "sha256": "dc0150c3a54b001d42eed17f84871f689d2286e50401a9dd47fb30cb0d226bb1"
+    },
+    {
+      "path": "docs/research/dart-provider-qualification.md",
+      "sha256": "960d7d79dd4ea7fc0b1a181d0040b6e3b56064b57a30622119b82d9a7abfddd9"
+    },
+    {
+      "path": "fixtures/dart/vertical-v1/manifest.json",
+      "sha256": "e18efb11973f4708f9d5c2340652c6160a7d03461bfa167f9140285848e09563"
+    },
+    {
+      "path": "scripts/check-dart-wire.mjs",
+      "sha256": "24460fc840f04be26bc30a918db13ccc60d2ed66877e18a643955163d980cd97"
+    },
+    {
+      "path": "scripts/check-dart-fixture-conformance.ts",
+      "sha256": "1a49af9288ada263bb3763f54d7264058fd301d08356df3c31bd907fa7913324"
+    }
+  ]
+}

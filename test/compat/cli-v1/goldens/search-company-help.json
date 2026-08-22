@@ -1,0 +1,36 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "Usage: darty search-company [options]",
+    "--company-name <text>",
+    "--page <number>",
+    "--page-size <number>",
+    "--agent",
+    "--verbose",
+    "--pretty"
+  ],
+  "requiredNormalizedFragments": [
+    "Search companies through DART 기업개황 `회사별` mode and return DART 8-digit company codes plus 6-digit stock codes when present.",
+    "--company-name <text> [required] Company-name search term for DART 기업개황 회사별 search. Use at least 2 characters.",
+    "--page <number> [default: 1] DART 기업개황 company-search result page, starting at 1.",
+    "--page-size <number> [default: 15] Number of companies to request per page (maximum 45).",
+    "--pretty Print human-readable indented JSON.",
+    "--verbose Include diagnostic/source fields omitted from the default output.",
+    "--agent Print compact agent-focused JSON with contextual next-step help.",
+    "Find an 8-digit DART company code by company name. darty search-company --company-name 삼성전자",
+    "Fetch the next page for a broad company-name search. darty search-company --company-name 삼성 --page 2 --page-size 20",
+    "companyCode is DART's 8-digit company identifier embedded in company links such as select('00126380').",
+    "stockCode is a 6-digit listed-company stock code shown only for listed companies; it is not the DART company code."
+  ],
+  "longOptions": [
+    "--agent",
+    "--company-name",
+    "--help",
+    "--page",
+    "--page-size",
+    "--pretty",
+    "--verbose"
+  ],
+  "forbiddenFragments": ["--company-code"]
+}

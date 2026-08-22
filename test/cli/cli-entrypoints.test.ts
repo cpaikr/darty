@@ -38,7 +38,7 @@ describe("CLI entrypoints", () => {
 
   beforeAll(() => {
     buildDir = mkdtempSync(join(tmpdir(), "darty-cli-"));
-    builtEntrypoint = join(buildDir, "cli.js");
+    builtEntrypoint = join(buildDir, "cli.mjs");
 
     const result = Bun.spawnSync({
       cmd: [

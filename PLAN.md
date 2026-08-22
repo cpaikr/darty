@@ -1,5 +1,8 @@
 # Public Surface Plan
 
+> Historical completed plan. Active project work is routed through
+> [ROADMAP.md](ROADMAP.md).
+
 ## Current Status
 
 Darty exposes two supported public surfaces over the same capability core:

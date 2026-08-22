@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "error: option '--content-start-byte <number>' argument '-1' is invalid. Expected an integer greater than or equal to 0.",
+      "retryable": false,
+      "parameter": "--content-start-byte",
+      "recoveryHint": "Run darty view-report --help for options and examples."
+    }
+  }
+}

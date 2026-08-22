@@ -21,8 +21,13 @@ Required:
 
 Optional:
 
-- `documentId`: a returned `documents[].id`; defaults to the selected body document
-- `sectionId`: a returned `toc[].id`; used only to fetch one TOC section. Section IDs are assigned per report, so callers must not reuse them across years, amendments, or receipt numbers.
+- `documentId`: a returned `documents[].id`; defaults to the document selected by
+  a receipt URL containing `dcmNo`, otherwise to the selected body document.
+  A top-level raw `dcmNo` input remains invalid; embedding it in a returned DART
+  viewer URL is the only supported exception.
+- `sectionId`: a returned `toc[].id`; used only to fetch one TOC section. Section
+  IDs are scoped to the same receipt and selected document, so callers must not
+  reuse them across documents, years, amendments, or receipt numbers.
 - `outputFormat`: `html` or `markdown`, default `markdown`
 - `maxBytes`: maximum returned content-window bytes, default `50000`, range `1000` to `1000000`. Raising this value can substantially increase CLI output and agent context use for long sections.
 - `contentStartByte`: UTF-8 byte offset into the rendered `content.body` format, default `0`. This is not DART's raw viewer `offset`; use `content.window.nextStartByte` with the same `receipt`, `documentId`, `sectionId`, and `outputFormat` to continue reading.
@@ -44,6 +49,9 @@ Optional:
   `html`), not the DART viewer source. If a caller gives a byte offset inside a
   multibyte character, the implementation advances to the next valid UTF-8
   boundary and reports the actual `window.startByte`.
+- A nonnegative `contentStartByte` at or beyond the rendered body size succeeds
+  with an empty body, `startByte` and `endByte` equal to the body size, and
+  `hasMore: false`.
 - `markdown` output is best-effort. Common headings, paragraphs, emphasis,
   links, code blocks, and lists are converted; complex or unknown structures may
   be simplified. Tables are preserved as sanitized HTML inside the Markdown so
@@ -69,11 +77,21 @@ Optional:
 
 Typed failures may include optional `recoveryHint` with a concise next action. For stale `documentId` or `sectionId`, it should tell callers to rerun `view-report` for the same receipt and use returned IDs. For continuation windows, it should point to `content.window.nextStartByte` instead of raw DART `offset` or `length` values.
 
-## Source Basis
+Returned document and section IDs are opaque echo-only locators. The current
+implementation renders positional values such as `document:body:1`,
+`document:attachment:1`, and `section:1.2`; callers must not synthesize them.
 
-Implemented against observed DART viewer behavior in
-[`docs/research/dart-source-map.md`](../research/dart-source-map.md):
+The semantic contract accepts DART viewer URLs. The TypeScript baseline also
+accepts any absolute URL containing a 14-digit `rcpNo`; this is a preserved
+compatibility quirk, not permission for rewrite implementations to broaden the
+documented URL contract further.
 
-- entry shell: `/dsaf001/main.do?rcpNo={receiptNumber}`
-- body iframe: `/report/viewer.do?rcpNo=...&dcmNo=...&eleId=...&offset=...&length=...&dtd=...`
-- TOC data: shell-embedded `treeData`
+## Source and Wire Ownership
+
+The supported shell and content requests are canonical in OpenAPI operations
+`fetchReportShell` and `fetchReportContent` in
+[`dart-wire-v1.openapi.yaml`](dart-wire-v1.openapi.yaml). Decoding, document
+selection, `treeData`, `viewDoc`, and shell-to-viewer locator rules are
+canonical in [`dart-html-viewer-v1.md`](dart-html-viewer-v1.md). Observation
+history and unknown locator units remain non-normative in the
+[`DART source map`](../research/dart-source-map.md).

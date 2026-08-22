@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "scenarios": [
+    {
+      "id": "home",
+      "profiles": ["full"],
+      "argv": [],
+      "golden": "goldens/home.json"
+    },
+    {
+      "id": "root-help",
+      "profiles": ["full"],
+      "argv": ["--help"],
+      "golden": "goldens/root-help.json"
+    },
+    {
+      "id": "unknown-command",
+      "profiles": ["full"],
+      "argv": ["missing-command"],
+      "golden": "goldens/unknown-command.json"
+    },
+    {
+      "id": "search-company-help",
+      "profiles": ["vertical"],
+      "argv": ["search-company", "--help"],
+      "golden": "goldens/search-company-help.json"
+    },
+    {
+      "id": "search-company-missing-input",
+      "profiles": ["vertical"],
+      "argv": ["search-company"],
+      "golden": "goldens/search-company-missing-input.json"
+    },
+    {
+      "id": "search-company-page-size-bound",
+      "profiles": ["vertical"],
+      "argv": ["search-company", "--company-name", "삼성", "--page-size", "46"],
+      "golden": "goldens/search-company-page-size-bound.json"
+    },
+    {
+      "id": "search-company-page-bound",
+      "profiles": ["vertical"],
+      "argv": ["search-company", "--company-name", "삼성", "--page", "101"],
+      "golden": "goldens/search-company-page-bound.json"
+    },
+    {
+      "id": "search-company-pretty-failure",
+      "profiles": ["vertical"],
+      "argv": ["search-company", "--company-name", "x", "--pretty"],
+      "golden": "goldens/search-company-pretty-failure.json"
+    },
+    {
+      "id": "search-company-reports-help",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--help"],
+      "golden": "goldens/search-company-reports-help.json"
+    },
+    {
+      "id": "search-company-reports-missing-input",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports"],
+      "golden": "goldens/search-company-reports-missing-input.json"
+    },
+    {
+      "id": "search-company-reports-rejects-stock-code",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "005930", "--start-date", "20250101", "--end-date", "20260101"],
+      "golden": "goldens/search-company-reports-rejects-stock-code.json"
+    },
+    {
+      "id": "search-company-reports-ten-year-bound",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20150101", "--end-date", "20260102"],
+      "golden": "goldens/search-company-reports-ten-year-bound.json"
+    },
+    {
+      "id": "search-company-reports-invalid-date",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250230", "--end-date", "20260101"],
+      "golden": "goldens/search-company-reports-invalid-date.json"
+    },
+    {
+      "id": "search-company-reports-invalid-industry",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250101", "--end-date", "20260101", "--industry-code", "bogus"],
+      "golden": "goldens/search-company-reports-invalid-industry.json"
+    },
+    {
+      "id": "search-company-reports-unknown-disclosure-type",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250101", "--end-date", "20260101", "--disclosure-type", "A999", "--disclosure-type", "B999", "--disclosure-type", "A999"],
+      "golden": "goldens/search-company-reports-unknown-disclosure-type.json"
+    },
+    {
+      "id": "search-company-reports-invalid-disclosure-type",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250101", "--end-date", "20260101", "--disclosure-type", "A1"],
+      "golden": "goldens/search-company-reports-invalid-disclosure-type.json"
+    },
+    {
+      "id": "view-report-help",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--help"],
+      "golden": "goldens/view-report-help.json"
+    },
+    {
+      "id": "view-report-missing-input",
+      "profiles": ["vertical"],
+      "argv": ["view-report"],
+      "golden": "goldens/view-report-missing-input.json"
+    },
+    {
+      "id": "view-report-rejects-raw-locator",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--dcm-no", "11213016"],
+      "golden": "goldens/view-report-rejects-raw-locator.json"
+    },
+    {
+      "id": "view-report-rejects-negative-window",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--content-start-byte", "-1"],
+      "golden": "goldens/view-report-rejects-negative-window.json"
+    },
+    {
+      "id": "view-report-rejects-zero-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth", "0"],
+      "golden": "goldens/view-report-rejects-zero-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-attached-zero-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth=0"],
+      "golden": "goldens/view-report-rejects-zero-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-signed-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth=+0"],
+      "golden": "goldens/view-report-rejects-signed-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-nonnumeric-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth", "abc"],
+      "golden": "goldens/view-report-rejects-nonnumeric-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-small-window",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--max-bytes", "999"],
+      "golden": "goldens/view-report-rejects-small-window.json"
+    },
+    {
+      "id": "candidate-search-company-success",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람"],
+      "golden": "goldens/candidate-search-company-success.json"
+    },
+    {
+      "id": "candidate-search-company-agent-success",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람", "--agent"],
+      "golden": "goldens/candidate-search-company-agent-success.json"
+    },
+    {
+      "id": "candidate-search-company-reports-agent-success",
+      "profiles": ["candidate"],
+      "argv": ["search-company-reports", "--company-code", "00000001", "--start-date", "20250101", "--end-date", "20260101", "--agent"],
+      "golden": "goldens/candidate-search-company-reports-agent-success.json"
+    },
+    {
+      "id": "candidate-view-report-toc-success",
+      "profiles": ["candidate"],
+      "argv": ["view-report", "--receipt", "20260101000001", "--toc-depth", "1"],
+      "golden": "goldens/candidate-view-report-toc-success.json"
+    },
+    {
+      "id": "candidate-view-report-section-success",
+      "profiles": ["candidate"],
+      "argv": ["view-report", "--receipt", "20260101000001", "--section-id", "section:1.1", "--max-bytes", "1000"],
+      "golden": "goldens/candidate-view-report-section-success.json"
+    },
+    {
+      "id": "search-body-missing-input",
+      "profiles": ["full"],
+      "argv": ["search-body"],
+      "golden": "goldens/search-body-missing-input.json"
+    },
+    {
+      "id": "company-detail-missing-input",
+      "profiles": ["full"],
+      "argv": ["company-detail"],
+      "golden": "goldens/company-code-missing-input.json"
+    },
+    {
+      "id": "company-rss-missing-input",
+      "profiles": ["full"],
+      "argv": ["company-rss"],
+      "golden": "goldens/company-code-missing-input.json"
+    },
+    {
+      "id": "disclosure-types-static-success",
+      "profiles": ["full"],
+      "argv": ["disclosure-types", "--query", "I001"],
+      "golden": "goldens/disclosure-types-static-success.json"
+    },
+    {
+      "id": "disclosure-types-pretty-success",
+      "profiles": ["full"],
+      "argv": ["disclosure-types", "--query", "I001", "--pretty"],
+      "golden": "goldens/disclosure-types-pretty-success.json"
+    },
+    {
+      "id": "report-guide-static-success",
+      "profiles": ["full"],
+      "argv": ["report-guide"],
+      "golden": "goldens/report-guide-static-success.json"
+    }
+  ]
+}
