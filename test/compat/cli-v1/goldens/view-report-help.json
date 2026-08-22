@@ -1,0 +1,18 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "Usage: darty view-report [options]",
+    "--receipt <receipt-or-url>",
+    "--document-id <id>",
+    "--section-id <id>",
+    "--output-format <html|markdown>",
+    "--max-bytes <number>",
+    "--content-start-byte <number>",
+    "--detail <concise|detailed|raw>",
+    "--toc-depth <number>",
+    "--verbose",
+    "--pretty"
+  ],
+  "forbiddenFragments": ["--dcm-no", "--offset", "--length"]
+}

@@ -42,6 +42,8 @@
     "eval:workflow:cli": "bun run evals/workflows/run-eval.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
+    "test:compat:cli": "bun run build && node scripts/judge-cli-v1.mjs --profile full -- node dist/cli.js",
+    "test:compat:cli:mutation": "bun run build && node scripts/prove-cli-v1-mutation.mjs",
     "test:live": "LIVE_DART_TESTS=1 bun test",
     "search": "bun run src/cli.ts search-body"
   },

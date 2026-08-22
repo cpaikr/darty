@@ -1,0 +1,14 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "Usage: darty search-company [options]",
+    "--company-name <text>",
+    "--page <number>",
+    "--page-size <number>",
+    "--agent",
+    "--verbose",
+    "--pretty"
+  ],
+  "forbiddenFragments": ["--company-code"]
+}

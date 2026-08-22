@@ -1,0 +1,24 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "Usage: darty search-company-reports [options]",
+    "--company-code <text>",
+    "--start-date <YYYYMMDD>",
+    "--end-date <YYYYMMDD>",
+    "--page <number>",
+    "--page-size <number>",
+    "--sort-direction <asc|desc>",
+    "--presenter-name <text>",
+    "--report-name <text>",
+    "--disclosure-type <code>",
+    "--industry-code <code>",
+    "--corporation-type <all|P|A|N|E>",
+    "--closing-accounts-month <all|1-12|01-12>",
+    "--include-all-reports",
+    "--detail <concise|detailed|raw>",
+    "--agent",
+    "--verbose",
+    "--pretty"
+  ]
+}

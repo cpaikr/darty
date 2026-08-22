@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Missing required option \"--company-code\". Expected 8-digit DART company code.",
+      "retryable": false,
+      "parameter": "companyCode",
+      "recoveryHint": "If you only know a company name or 6-digit stock code, first use search-company to find the 8-digit companyCode, then call this operation again."
+    }
+  }
+}

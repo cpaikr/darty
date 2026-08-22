@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "package": "@sjunepark/darty@0.5.0",
+  "implementationCommit": "6cfb6a90d92e7cd68e93e3318151a029224ee623",
+  "archiveMarker": "archive/rust-rewrite-baseline",
+  "archiveMarkerKind": "local-annotated-tag-not-for-release-or-push",
+  "transportSpec": "docs/specs/cli-transport-v1.md",
+  "profiles": ["vertical", "full"]
+}

@@ -1,0 +1,13 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "# DART report information guide",
+    "## Quick map",
+    "## Periodic reports:",
+    "## 주요사항보고서",
+    "## Issuance disclosures",
+    "## Ownership and insider reports"
+  ],
+  "sha256": "d7a0351e0fc964bc58cba4fa113f558c80c808f16f302eb8db80ac3ca0d8ab8f"
+}

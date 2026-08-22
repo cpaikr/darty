@@ -1,0 +1,46 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "result": {
+      "request": { "query": "I001" },
+      "totalCount": 1,
+      "categories": [
+        {
+          "category": "I",
+          "categoryLabel": "거래소공시",
+          "categoryDescription": "Exchange disclosure family, including 수시공시, 공정공시, market-measure notices, and bond disclosures.",
+          "items": [{ "code": "I001", "label": "수시공시" }]
+        }
+      ]
+    },
+    "metadata": {
+      "source": {
+        "system": "open-dart-docs",
+        "repository": "sjunepark/open-dart",
+        "commit": "85e7a07dee1d24cd810c705c1400c4ac3bbf6add",
+        "path": "src/docs/pblntf_detail_ty.md"
+      },
+      "categoryLabelSource": {
+        "system": "dart-fss-docs",
+        "url": "https://dart-fss.readthedocs.io/en/latest/dart_types.html",
+        "codeSet": "pblntf_ty"
+      },
+      "categoryDescriptionProvenance": {
+        "status": "implementation_authored_guidance",
+        "basis": "Human-authored summaries derived from pblntf_ty category labels and pblntf_detail_ty items."
+      },
+      "sourceBehavior": {
+        "codeSet": "pblntf_detail_ty",
+        "categoryCodeSet": "pblntf_ty",
+        "observationStatus": "source_material"
+      },
+      "completeness": "complete"
+    },
+    "references": {
+      "sourceUrl": "https://github.com/sjunepark/open-dart/blob/85e7a07dee1d24cd810c705c1400c4ac3bbf6add/src/docs/pblntf_detail_ty.md"
+    },
+    "warnings": []
+  }
+}

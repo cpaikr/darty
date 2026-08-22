@@ -76,9 +76,13 @@ The DART company code is the 8-digit identifier used by DART company popup/detai
 
 Inputs:
 
-- `companyName` (required): company-name query, minimum 2 characters
-- `page` (optional): 1-based page number, default `1`
+- `companyName` (required): trimmed company-name query, minimum 2 characters
+- `page` (optional): 1-based page number, default `1`, maximum `100`
 - `pageSize` (optional): number of rows to request, default `15`, maximum `45`
+
+The `pageSize` range is a project contract bounded by the observed source cap.
+Live probes established that 10, 15, and 20 are honored and 50 is capped at
+45; they did not prove every integer in the accepted range independently.
 
 Output envelope:
 
@@ -87,7 +91,14 @@ Output envelope:
 - `result.items[]`: company rows with `companyCode`, `companyName`, optional `stockCode`, market label/kind, detail references, and raw evidence
 - `metadata`: DART source endpoint, observed behavior, completeness, and dropped row count
 - `references.searchUrl`: source POST endpoint
-- `warnings`: partial row drops if parsing failed for individual rows
+- `warnings`: `partial_rows_dropped` when individual rows cannot be parsed and
+  `no_results` when a valid search returns no companies
+
+A recognized empty result is successful. It returns `items: []`, preserves the
+requested `currentPage`, reports `totalPages: 0`, `totalCount: 0`, and
+`returnedCount: 0`, and includes the `no_results` warning. This intentionally
+differs from the normalized page 1-of-1 empty shape used by
+`search-company-reports`.
 
 Failures:
 
@@ -119,8 +130,12 @@ Observed company-name replay fields:
 - `corpType=P`, `A`, `X`, `E`
 - supporting empty fields such as `selectKey`, `searchIndex`, `textCrpCik`, `bsnRgsNo`, and `crpRgsNo`
 
-Observed detail endpoint after selecting a row:
+Observed row-selection transport:
 
 - `POST /dsae001/select.ax` with `selectKey={companyCode}`
 
-The current public capability returns a `detailEndpoint` reference but does not fetch or normalize the detail table. Use the separate `company-detail` command for detail normalization and `company-rss` for company RSS.
+Implemented reference behavior constructs an absolute
+`/dsae001/select.ax?selectKey={companyCode}` `detailEndpoint`; the search
+operation does not fetch or normalize the detail table. Use the separate
+`company-detail` command for detail normalization and `company-rss` for company
+RSS.

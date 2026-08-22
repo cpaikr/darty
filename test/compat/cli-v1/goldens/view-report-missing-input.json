@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Missing required option \"--receipt\". Expected 14-digit DART receipt number or /dsaf001/main.do viewer URL containing rcpNo.",
+      "retryable": false,
+      "parameter": "receipt",
+      "recoveryHint": "Pass receiptNumber or viewerUrl from search-body/search-company-reports results as receipt."
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "Usage: darty [options] [command]",
+    "company-detail [options]",
+    "company-rss [options]",
+    "disclosure-types [options]",
+    "report-guide",
+    "search-body [options]",
+    "search-company [options]",
+    "search-company-reports [options]",
+    "view-report [options]",
+    "Common agent flow:",
+    "Commands print a JSON response object to stdout on success and failure",
+    "does not use DART's official OpenDART API"
+  ],
+  "forbiddenFragments": [
+    "contents-search [options]",
+    "report-view [options]"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Option \"--page-size\" must be between 1 and 45.",
+      "retryable": false,
+      "parameter": "pageSize",
+      "recoveryHint": "pageSize must be integer between 1 and 45."
+    }
+  }
+}
