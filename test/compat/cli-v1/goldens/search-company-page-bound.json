@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Option \"--page\" must be between 1 and 100.",
+      "retryable": false,
+      "parameter": "page",
+      "recoveryHint": "page must be integer between 1 and 100. If the page is out of range, retry with a smaller page number."
+    }
+  }
+}

@@ -4,7 +4,7 @@
   "jsonFormat": "compact",
   "value": {
     "help": [
-      "Use returned document and section IDs only with this report."
+      "Continue content: darty view-report --receipt 20260101000001 --content-start-byte 998 --max-bytes 1000 --output-format markdown --section-id section:1.1"
     ],
     "metadata": {
       "fetchedAt": "2026-08-22T00:00:00.000Z",
@@ -63,6 +63,7 @@
       },
       "request": {
         "contentStartByte": 0,
+        "detail": "concise",
         "maxBytes": 1000,
         "outputFormat": "markdown",
         "receipt": "20260101000001",

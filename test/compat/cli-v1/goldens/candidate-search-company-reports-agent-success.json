@@ -46,6 +46,7 @@
         "closingAccountsMonth": "all",
         "companyCode": "00000001",
         "corporationType": "all",
+        "detail": "concise",
         "disclosureTypes": [],
         "endDate": "20260101",
         "includeAllReports": false,

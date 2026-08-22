@@ -98,19 +98,28 @@ pub(crate) fn search_company_reports(
 fn validate_report_filters(request: &mut SearchCompanyReportsRequest) -> Result<(), DartyError> {
     trim_optional(&mut request.presenter_name, "presenterName")?;
     trim_optional(&mut request.report_name, "reportName")?;
-    request.disclosure_types.sort();
-    request.disclosure_types.dedup();
-    if let Some(code) = request
+    let mut unknown_codes = Vec::new();
+    for code in request
         .disclosure_types
         .iter()
-        .find(|code| !DISCLOSURE_TYPES.contains(&code.as_str()))
+        .filter(|code| !DISCLOSURE_TYPES.contains(&code.as_str()))
     {
+        if !unknown_codes.contains(&code.as_str()) {
+            unknown_codes.push(code.as_str());
+        }
+    }
+    if !unknown_codes.is_empty() {
         return Err(DartyError::invalid(
-            format!("Unsupported DART disclosure type code: {code}."),
+            format!(
+                "Unsupported DART disclosure type code: {}.",
+                unknown_codes.join(", ")
+            ),
             "disclosureTypes",
             "Use disclosure-types to find a supported detailed code.",
         ));
     }
+    request.disclosure_types.sort();
+    request.disclosure_types.dedup();
 
     let valid_industry = request.industry_code == "all"
         || request
@@ -270,7 +279,20 @@ fn trim_optional(value: &mut Option<String>, parameter: &str) -> Result<(), Dart
 
 #[cfg(test)]
 mod tests {
-    use super::extract_receipt;
+    use crate::SearchCompanyReportsRequest;
+
+    use super::{extract_receipt, search_company_reports};
+
+    #[test]
+    fn report_validation_preserves_unknown_disclosure_code_order() {
+        let mut request = SearchCompanyReportsRequest::new("00126380", "20250101", "20260101");
+        request.disclosure_types = vec!["A999".to_owned(), "B999".to_owned(), "A999".to_owned()];
+        let error = search_company_reports(request).expect_err("unknown codes are rejected");
+        assert_eq!(
+            error.message,
+            "Unsupported DART disclosure type code: A999, B999."
+        );
+    }
 
     #[test]
     fn receipt_accepts_only_bare_numbers_or_dart_viewer_urls() {

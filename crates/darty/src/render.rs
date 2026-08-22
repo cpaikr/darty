@@ -139,8 +139,13 @@ fn render_node(node: NodeRef<'_, Node>, output: &mut String, list_depth: usize) 
                 }
                 "blockquote" => {
                     ensure_blank_line(output);
-                    output.push_str("> ");
-                    render_children(node, output, list_depth);
+                    let mut rendered = String::new();
+                    render_children(node, &mut rendered, list_depth);
+                    for line in rendered.trim_matches('\n').lines() {
+                        output.push_str("> ");
+                        output.push_str(line);
+                        output.push('\n');
+                    }
                     ensure_blank_line(output);
                 }
                 _ => render_children(node, output, list_depth),
@@ -284,6 +289,19 @@ mod tests {
         );
         assert!(content.body.contains("  - inner"));
         assert!(content.body.contains("  indented\n    deeper"));
+    }
+
+    #[test]
+    fn markdown_prefixes_every_blockquote_line() {
+        let content = render_content(
+            "<blockquote><p>first paragraph</p><p>second<br>line</p></blockquote>",
+            OutputFormat::Markdown,
+            0,
+            10_000,
+            "document",
+            None,
+        );
+        assert_eq!(content.body, "> first paragraph\n>\n> second\n> line");
     }
 
     #[test]

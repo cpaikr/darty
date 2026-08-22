@@ -42,15 +42,16 @@ _None._
 
 ### Current in-scope result
 
-Terminal metadata reconciliation and integration-branch delivery to `main`.
-No additional product capability is included in this final delivery boundary.
+Final PR #22 feedback resolution and integration-branch delivery to `main`.
+No additional product capability is included in this terminal delivery boundary.
 
 ### Next in-scope action
 
-Commit the terminal metadata, deliver the complete sequential integration branch
-through one final PR to `main`, and finish that PR's validation, review, and
-feedback lifecycle. Porting the remaining five operations begins only under a
-separate goal after this delivery completes.
+Commit and push the reviewed PR #22 feedback patch once, resolve every review
+thread with evidence or the governing frozen contract, verify the automatic
+checks and feedback state, merge the integration branch to `main`, and confirm
+the terminal repository state. Porting the remaining five operations begins
+only under a separate goal after this delivery completes.
 
 ### Evidence and blockers
 
@@ -255,3 +256,33 @@ separate goal after this delivery completes.
 - PR #21's final head passed repository CI, GitGuardian, and CodeRabbit checks
   and was cleanly mergeable. Its three implementation commits were preserved by
   merge commit `b7fd635` on 2026-08-22.
+- Final integration PR #22 is open from `codex/rust-vertical-workflow` to
+  `main`. Its initial TypeScript CI, GitGuardian, and CodeRabbit checks passed
+  before review feedback.
+- PR #22 review exposed missing Rust candidate CI, CLI validation and
+  contextual-help parity, normalized request serialization, parser error and
+  quote handling, Markdown blockquote rendering, package acceptance gaps, a
+  duplicate fixture request, and wire/conformance validation weaknesses. The
+  feedback patch addresses those boundaries without changing active `src/`,
+  the root package manifest or lockfile, or `test/cli`.
+- The CI candidate now gates Rust 1.88 formatting, all-feature locked tests,
+  Clippy, warning-free docs, RustSec, cargo-deny, and a fixed Darwin ARM64
+  clean-package acceptance job. Both Bun setup uses are commit-pinned, and the
+  native-package job exercises the installed Node SDK's complete three-method
+  workflow plus all candidate CLI cases.
+- The frozen compatibility corpus now includes exact page, date, filter,
+  content-window, and TOC-depth failures, including attached, signed, and
+  nonnumeric TOC values. The active TypeScript subject passes 31 full-profile
+  cases; the Rust candidate passes 27 candidate-profile cases; both mutation
+  sentinels remain effective.
+- Final local validation after the feedback fixes passes 49 Rust workspace
+  tests on Rust 1.88, formatting, Clippy with warnings denied, warning-free
+  documentation, locked release builds, RustSec, and cargo-deny with only the
+  established duplicate-`syn` warning. Wire authority and all fictional
+  fixtures conform, all 338 active TypeScript tests pass with 23 live skips,
+  the active npm package dry run passes, and clean packaged-consumer validation
+  passes for the Rust CLI and asynchronous Node SDK candidate.
+- Independent final review drove complete CLI validation parity for command
+  scoping, signed and nonnumeric values, semantic parameters, rejected values,
+  and repeated disclosure codes. Its focused re-review found no actionable
+  issue in the complete PR #22 feedback diff.

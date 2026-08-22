@@ -176,7 +176,7 @@ pub struct SearchCompanyReportsRequest {
     pub closing_accounts_month: String,
     #[serde(default)]
     pub include_all_reports: bool,
-    #[serde(default, skip_serializing_if = "is_concise")]
+    #[serde(default)]
     pub detail: ResponseDetail,
 }
 
@@ -336,7 +336,7 @@ pub struct ViewReportRequest {
     pub max_bytes: u32,
     #[serde(default)]
     pub content_start_byte: u32,
-    #[serde(default, skip_serializing_if = "is_concise")]
+    #[serde(default)]
     pub detail: ResponseDetail,
 }
 
@@ -510,7 +510,28 @@ fn default_all() -> String {
     "all".to_owned()
 }
 
-#[allow(clippy::trivially_copy_pass_by_ref)]
-const fn is_concise(value: &ResponseDetail) -> bool {
-    matches!(value, ResponseDetail::Concise)
+#[cfg(test)]
+mod tests {
+    use super::{ResponseDetail, SearchCompanyReportsRequest, ViewReportRequest};
+
+    #[test]
+    fn normalized_concise_detail_is_serialized_for_report_requests() {
+        let reports = SearchCompanyReportsRequest::new("00000001", "20250101", "20260101");
+        let view = ViewReportRequest::new("20260101000001");
+
+        assert_eq!(serde_json::to_value(&reports).unwrap()["detail"], "concise");
+        assert_eq!(serde_json::to_value(&view).unwrap()["detail"], "concise");
+
+        let reports_without_detail = serde_json::json!({
+            "companyCode": "00000001",
+            "startDate": "20250101",
+            "endDate": "20260101"
+        });
+        let view_without_detail = serde_json::json!({"receipt": "20260101000001"});
+        let reports: SearchCompanyReportsRequest =
+            serde_json::from_value(reports_without_detail).unwrap();
+        let view: ViewReportRequest = serde_json::from_value(view_without_detail).unwrap();
+        assert_eq!(reports.detail, ResponseDetail::Concise);
+        assert_eq!(view.detail, ResponseDetail::Concise);
+    }
 }

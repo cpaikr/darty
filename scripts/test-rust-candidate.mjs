@@ -240,6 +240,22 @@ try {
   assert.ok(pending instanceof Promise, "Node SDK operation must return a Promise");
   const companies = await pending;
   assert.equal(companies.result.items[0].companyCode, "00000001");
+  const reports = await client.searchCompanyReports({
+    companyCode: "00000001",
+    startDate: "20250101",
+    endDate: "20260101",
+  });
+  assert.equal(reports.result.company.companyCode, "00000001");
+  assert.equal(reports.result.items[0].filing.receiptNumber, "20260101000001");
+  assert.equal(reports.result.items[0].filing.reportTitle, "[기재정정] 사업보고서");
+  const section = await client.viewReport({
+    receipt: "20260101000001",
+    sectionId: "section:1.1",
+  });
+  assert.equal(section.result.receipt.receiptNumber, "20260101000001");
+  assert.equal(section.result.content.section.id, "section:1.1");
+  assert.equal(section.result.content.format, "markdown");
+  assert.match(section.result.content.body, /CP949 확장 음절 갂/);
   const pacedClient = new sdk.DartyClient();
   const pacedAt = Date.now();
   await Promise.all([

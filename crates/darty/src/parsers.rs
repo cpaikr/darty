@@ -4,7 +4,7 @@ use std::{
     sync::LazyLock,
 };
 
-use regex::Regex;
+use regex::{Captures, Regex};
 use scraper::{ElementRef, Html, Selector};
 use url::Url;
 
@@ -17,12 +17,13 @@ use crate::{
 const MAX_TOC_EXPANSIONS: usize = 10_000;
 
 static COMPANY_LINK: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"select\(['\"](?P<code>\d{8})['\"]\)"#).expect("static company-link regex")
+    Regex::new(r#"select\((?:'(?P<single_code>\d{8})'|\"(?P<double_code>\d{8})\")\)"#)
+        .expect("static company-link regex")
 });
 static STOCK_CODE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\d{6}$").expect("static stock regex"));
 static REPORT_COMPANY_LINK: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"openCorpInfoNew\(['\"](?P<code>\d{8})['\"]"#)
+    Regex::new(r#"openCorpInfoNew\((?:'(?P<single_code>\d{8})'|\"(?P<double_code>\d{8})\")"#)
         .expect("static report company-link regex")
 });
 static RECEIPT_NUMBER: LazyLock<Regex> =
@@ -31,12 +32,12 @@ static RECEIPT_DATE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").expect("static receipt-date regex"));
 static SHELL_ASSIGNMENT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r#"(?ms)(node\d+)\[['\"](?P<field>[A-Za-z]+)['\"]\]\s*=\s*(?:\"(?P<double>(?:\\.|[^\"\\])*)\"|'(?P<single>(?:\\.|[^'\\])*)')\s*;"#,
+        r#"(?ms)(node\d+)(?:\['(?P<single_field>[A-Za-z]+)'\]|\[\"(?P<double_field>[A-Za-z]+)\"\])\s*=\s*(?:\"(?P<double>(?:\\.|[^\"\\])*)\"|'(?P<single>(?:\\.|[^'\\])*)')\s*;"#,
     )
     .expect("static shell assignment regex")
 });
 static SHELL_CHILD: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?m)(node\d+)\[['\"]children['\"]\]\.push\((node\d+)\)\s*;"#)
+    Regex::new(r#"(?m)(node\d+)(?:\['children'\]|\[\"children\"\])\.push\((node\d+)\)\s*;"#)
         .expect("static shell child regex")
 });
 static SHELL_ROOT: LazyLock<Regex> = LazyLock::new(|| {
@@ -44,7 +45,7 @@ static SHELL_ROOT: LazyLock<Regex> = LazyLock::new(|| {
 });
 static VIEW_DOC: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r#"viewDoc\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"](?:\s*,\s*['\"]([^'\"]*)['\"])?\s*\)"#,
+        r#"viewDoc\(\s*(?:'(?P<receipt_single>[^']+)'|\"(?P<receipt_double>[^\"]+)\")\s*,\s*(?:'(?P<document_single>[^']+)'|\"(?P<document_double>[^\"]+)\")\s*,\s*(?:'(?P<element_single>[^']+)'|\"(?P<element_double>[^\"]+)\")\s*,\s*(?:'(?P<offset_single>[^']+)'|\"(?P<offset_double>[^\"]+)\")\s*,\s*(?:'(?P<length_single>[^']+)'|\"(?P<length_double>[^\"]+)\")\s*,\s*(?:'(?P<dtd_single>[^']+)'|\"(?P<dtd_double>[^\"]+)\")(?:\s*,\s*(?:'(?P<toc_single>[^']*)'|\"(?P<toc_double>[^\"]*)\"))?\s*\)"#,
     )
     .expect("static viewDoc regex")
 });
@@ -182,7 +183,8 @@ fn company_row(row: ElementRef<'_>) -> Option<SearchCompanyItem> {
             .is_some_and(|href| href.contains("select("))
     })?;
     let href = link.value().attr("href")?.to_owned();
-    let code = COMPANY_LINK.captures(&href)?["code"].to_owned();
+    let captures = COMPANY_LINK.captures(&href)?;
+    let code = paired_capture(&captures, "single_code", "double_code")?.to_owned();
     let name = collapsed_text(link);
     if name.is_empty() {
         return None;
@@ -287,7 +289,8 @@ fn reports_row(
     }
     let company_link = cells[1].select(&LINK).next()?;
     let company_href = company_link.value().attr("href")?;
-    let company_code = REPORT_COMPANY_LINK.captures(company_href)?["code"].to_owned();
+    let captures = REPORT_COMPANY_LINK.captures(company_href)?;
+    let company_code = paired_capture(&captures, "single_code", "double_code")?.to_owned();
     if company_code != requested_company_code {
         return None;
     }
@@ -360,7 +363,41 @@ fn reports_row(
     })
 }
 
-pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, &'static str> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ShellParseErrorKind {
+    SourceChanged,
+    SourceParseFailure,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct ShellParseError {
+    pub(crate) kind: ShellParseErrorKind,
+    pub(crate) reason: &'static str,
+}
+
+impl ShellParseError {
+    const fn changed(reason: &'static str) -> Self {
+        Self {
+            kind: ShellParseErrorKind::SourceChanged,
+            reason,
+        }
+    }
+
+    const fn parse_failure(reason: &'static str) -> Self {
+        Self {
+            kind: ShellParseErrorKind::SourceParseFailure,
+            reason,
+        }
+    }
+}
+
+impl From<&'static str> for ShellParseError {
+    fn from(reason: &'static str) -> Self {
+        Self::changed(reason)
+    }
+}
+
+pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, ShellParseError> {
     let document = Html::parse_document(html);
     let mut documents = Vec::new();
     parse_document_options(
@@ -376,7 +413,9 @@ pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, &'static str> {
         &mut documents,
     );
     if documents.is_empty() {
-        return Err("report shell has no selectable document");
+        return Err(ShellParseError::changed(
+            "report shell has no selectable document",
+        ));
     }
     let selected_document_index = documents
         .iter()
@@ -394,16 +433,24 @@ pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, &'static str> {
         document_identity(&document.query)
             .is_none_or(|(document_receipt, _)| document_receipt != receipt_number)
     }) {
-        return Err("report shell document identity is inconsistent");
+        return Err(ShellParseError::changed(
+            "report shell document identity is inconsistent",
+        ));
     }
     if !valid_locator(&initial_locator, &receipt_number, None) {
-        return Err("report shell initial viewer locator is invalid");
+        return Err(ShellParseError::changed(
+            "report shell initial viewer locator is invalid",
+        ));
     }
     if selected_document_number.is_some_and(|value| value != initial_locator.document_number) {
-        return Err("report shell selected document locator is inconsistent");
+        return Err(ShellParseError::changed(
+            "report shell selected document locator is inconsistent",
+        ));
     }
     if !toc_locators_are_valid(&toc, &receipt_number, &initial_locator.document_number) {
-        return Err("report shell TOC locator identity is inconsistent");
+        return Err(ShellParseError::changed(
+            "report shell TOC locator identity is inconsistent",
+        ));
     }
     Ok(ParsedShell {
         receipt_number,
@@ -457,7 +504,7 @@ struct ScriptNode {
     children: Vec<String>,
 }
 
-fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator), &'static str> {
+fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator), ShellParseError> {
     let mut nodes: BTreeMap<String, ScriptNode> = BTreeMap::new();
     for captures in SHELL_ASSIGNMENT.captures_iter(html) {
         let encoded = captures
@@ -465,12 +512,19 @@ fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator),
             .or_else(|| captures.name("single"))
             .expect("one shell string branch matched")
             .as_str();
-        let value = decode_js_string(encoded).ok_or("report shell has an invalid string escape")?;
+        let value = decode_js_string(encoded).ok_or_else(|| {
+            ShellParseError::parse_failure("report shell has an invalid string escape")
+        })?;
         nodes
             .entry(captures[1].to_owned())
             .or_default()
             .fields
-            .insert(captures["field"].to_owned(), value);
+            .insert(
+                paired_capture(&captures, "single_field", "double_field")
+                    .expect("one shell field branch matched")
+                    .to_owned(),
+                value,
+            );
     }
     for captures in SHELL_CHILD.captures_iter(html) {
         nodes
@@ -500,18 +554,35 @@ fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator),
     }
     let initial = VIEW_DOC
         .captures_iter(html)
-        .map(|captures| ViewerLocator {
-            receipt_number: captures[1].to_owned(),
-            document_number: captures[2].to_owned(),
-            element_id: captures[3].to_owned(),
-            offset: captures[4].to_owned(),
-            length: captures[5].to_owned(),
-            dtd: captures[6].to_owned(),
-            toc_number: captures.get(7).map(|value| value.as_str().to_owned()),
+        .filter_map(|captures| {
+            Some(ViewerLocator {
+                receipt_number: paired_capture(&captures, "receipt_single", "receipt_double")?
+                    .to_owned(),
+                document_number: paired_capture(&captures, "document_single", "document_double")?
+                    .to_owned(),
+                element_id: paired_capture(&captures, "element_single", "element_double")?
+                    .to_owned(),
+                offset: paired_capture(&captures, "offset_single", "offset_double")?.to_owned(),
+                length: paired_capture(&captures, "length_single", "length_double")?.to_owned(),
+                dtd: paired_capture(&captures, "dtd_single", "dtd_double")?.to_owned(),
+                toc_number: paired_capture(&captures, "toc_single", "toc_double")
+                    .map(str::to_owned),
+            })
         })
         .find(|locator| valid_locator(locator, &locator.receipt_number, None))
         .ok_or("report shell has no valid initial viewer locator")?;
     Ok((toc, initial))
+}
+
+fn paired_capture<'input>(
+    captures: &Captures<'input>,
+    single: &str,
+    double: &str,
+) -> Option<&'input str> {
+    captures
+        .name(single)
+        .or_else(|| captures.name(double))
+        .map(|value| value.as_str())
 }
 
 fn build_toc(
@@ -872,13 +943,45 @@ mod tests {
     }
 
     #[test]
+    fn classifies_invalid_shell_string_decoding_as_parse_failure() {
+        let malformed = SHELL.replace(
+            r#"node1['text'] = "I. 회사의 개요";"#,
+            r#"node1['text'] = "Invalid \uZZZZ title";"#,
+        );
+        let failure = report_shell(&malformed).unwrap_err();
+        assert_eq!(failure.kind, super::ShellParseErrorKind::SourceParseFailure);
+        assert_eq!(failure.reason, "report shell has an invalid string escape");
+    }
+
+    #[test]
+    fn parser_patterns_reject_mismatched_javascript_quotes() {
+        assert!(super::COMPANY_LINK.is_match("select('00000001')"));
+        assert!(super::COMPANY_LINK.is_match(r#"select("00000001")"#));
+        assert!(!super::COMPANY_LINK.is_match(r#"select('00000001")"#));
+        assert!(super::REPORT_COMPANY_LINK.is_match(r#"openCorpInfoNew("00000001", 'window')"#));
+        assert!(!super::REPORT_COMPANY_LINK.is_match(r#"openCorpInfoNew('00000001", 'window')"#));
+        assert!(super::SHELL_ASSIGNMENT.is_match(r#"node1["text"] = 'title';"#));
+        assert!(!super::SHELL_ASSIGNMENT.is_match(r#"node1['text"] = "title";"#));
+        assert!(super::SHELL_CHILD.is_match(r#"node1["children"].push(node2);"#));
+        assert!(!super::SHELL_CHILD.is_match(r#"node1['children"].push(node2);"#));
+        assert!(
+            super::VIEW_DOC
+                .is_match(r#"viewDoc('20260101000001', "10000001", '1', "0", '1', "dart4.xsd")"#)
+        );
+        assert!(
+            !super::VIEW_DOC
+                .is_match(r#"viewDoc('20260101000001", "10000001", "1", "0", "1", "dart4.xsd")"#)
+        );
+    }
+
+    #[test]
     fn rejects_cyclic_toc_graphs() {
         let cyclic = SHELL.replace(
             "node1['children'].push(node2);",
             "node1['children'].push(node2);\nnode2['children'].push(node1);",
         );
         assert_eq!(
-            report_shell(&cyclic).unwrap_err(),
+            report_shell(&cyclic).unwrap_err().reason,
             "report shell TOC contains a cycle"
         );
     }
@@ -891,7 +994,7 @@ mod tests {
             1,
         );
         assert_eq!(
-            report_shell(&drifted).unwrap_err(),
+            report_shell(&drifted).unwrap_err().reason,
             "report shell TOC locator identity is inconsistent"
         );
     }
@@ -930,7 +1033,7 @@ mod tests {
             "<script>{script}viewDoc(\"20260101000001\", \"10000001\", \"1\", \"0\", \"1\", \"dart4.xsd\");</script><select id=\"family\"><option value=\"rcpNo=20260101000001\" selected>body</option></select><select id=\"att\"></select>"
         );
         assert_eq!(
-            report_shell(&shell).unwrap_err(),
+            report_shell(&shell).unwrap_err().reason,
             "report shell TOC exceeds the supported depth"
         );
     }
@@ -955,7 +1058,7 @@ mod tests {
             "<script>{script}viewDoc(\"20260101000001\", \"10000001\", \"1\", \"0\", \"1\", \"dart4.xsd\");</script><select id=\"family\"><option value=\"rcpNo=20260101000001\" selected>body</option></select><select id=\"att\"></select>"
         );
         assert_eq!(
-            report_shell(&shell).unwrap_err(),
+            report_shell(&shell).unwrap_err().reason,
             "report shell TOC exceeds the supported size"
         );
     }

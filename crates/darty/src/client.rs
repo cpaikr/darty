@@ -394,8 +394,14 @@ impl DartyClient {
                 byte_cap: SHELL_CAP,
             })
             .await?;
-        let shell = crate::parsers::report_shell(&source.text).map_err(|reason| {
-            DartyError::source(ErrorCode::SourceChanged, reason, &source.canonical_url)
+        let shell = crate::parsers::report_shell(&source.text).map_err(|failure| {
+            let code = match failure.kind {
+                crate::parsers::ShellParseErrorKind::SourceChanged => ErrorCode::SourceChanged,
+                crate::parsers::ShellParseErrorKind::SourceParseFailure => {
+                    ErrorCode::SourceParseFailure
+                }
+            };
+            DartyError::source(code, failure.reason, &source.canonical_url)
         })?;
         if shell.receipt_number != receipt_number {
             return Err(DartyError::source(

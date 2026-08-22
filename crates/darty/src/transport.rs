@@ -13,7 +13,11 @@ use url::Url;
 use crate::{DartyError, ErrorCode};
 
 const DART_ORIGIN: &str = "https://dart.fss.or.kr";
-const USER_AGENT_VALUE: &str = "darty/0.5.0 (+https://github.com/sjunepark/darty)";
+const USER_AGENT_VALUE: &str = concat!(
+    "darty/",
+    env!("CARGO_PKG_VERSION"),
+    " (+https://github.com/sjunepark/darty)"
+);
 const REQUEST_START_INTERVAL: Duration = Duration::from_millis(250);
 
 #[derive(Debug, Clone)]

@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "error: option '--toc-depth <number>' argument '0' is invalid. Expected an integer greater than or equal to 1.",
+      "retryable": false,
+      "parameter": "--toc-depth",
+      "recoveryHint": "Run darty view-report --help for options and examples."
+    }
+  }
+}

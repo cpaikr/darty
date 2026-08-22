@@ -1,0 +1,18 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "invalid_request",
+      "message": "Option \"--max-bytes\" is invalid. Expected integer between 1,000 and 1,000,000.",
+      "retryable": false,
+      "parameter": "maxBytes",
+      "recoveryHint": "maxBytes must be integer between 1,000 and 1,000,000. Start low and increase only when needed."
+    }
+  }
+}

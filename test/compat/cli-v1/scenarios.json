@@ -38,6 +38,12 @@
       "golden": "goldens/search-company-page-size-bound.json"
     },
     {
+      "id": "search-company-page-bound",
+      "profiles": ["vertical"],
+      "argv": ["search-company", "--company-name", "삼성", "--page", "101"],
+      "golden": "goldens/search-company-page-bound.json"
+    },
+    {
       "id": "search-company-pretty-failure",
       "profiles": ["vertical"],
       "argv": ["search-company", "--company-name", "x", "--pretty"],
@@ -68,6 +74,30 @@
       "golden": "goldens/search-company-reports-ten-year-bound.json"
     },
     {
+      "id": "search-company-reports-invalid-date",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250230", "--end-date", "20260101"],
+      "golden": "goldens/search-company-reports-invalid-date.json"
+    },
+    {
+      "id": "search-company-reports-invalid-industry",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250101", "--end-date", "20260101", "--industry-code", "bogus"],
+      "golden": "goldens/search-company-reports-invalid-industry.json"
+    },
+    {
+      "id": "search-company-reports-unknown-disclosure-type",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250101", "--end-date", "20260101", "--disclosure-type", "A999", "--disclosure-type", "B999", "--disclosure-type", "A999"],
+      "golden": "goldens/search-company-reports-unknown-disclosure-type.json"
+    },
+    {
+      "id": "search-company-reports-invalid-disclosure-type",
+      "profiles": ["vertical"],
+      "argv": ["search-company-reports", "--company-code", "00126380", "--start-date", "20250101", "--end-date", "20260101", "--disclosure-type", "A1"],
+      "golden": "goldens/search-company-reports-invalid-disclosure-type.json"
+    },
+    {
       "id": "view-report-help",
       "profiles": ["vertical"],
       "argv": ["view-report", "--help"],
@@ -90,6 +120,36 @@
       "profiles": ["vertical"],
       "argv": ["view-report", "--receipt", "20260331004166", "--content-start-byte", "-1"],
       "golden": "goldens/view-report-rejects-negative-window.json"
+    },
+    {
+      "id": "view-report-rejects-zero-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth", "0"],
+      "golden": "goldens/view-report-rejects-zero-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-attached-zero-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth=0"],
+      "golden": "goldens/view-report-rejects-zero-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-signed-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth=+0"],
+      "golden": "goldens/view-report-rejects-signed-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-nonnumeric-toc-depth",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--toc-depth", "abc"],
+      "golden": "goldens/view-report-rejects-nonnumeric-toc-depth.json"
+    },
+    {
+      "id": "view-report-rejects-small-window",
+      "profiles": ["vertical"],
+      "argv": ["view-report", "--receipt", "20260331004166", "--max-bytes", "999"],
+      "golden": "goldens/view-report-rejects-small-window.json"
     },
     {
       "id": "candidate-search-company-success",

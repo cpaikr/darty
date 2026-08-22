@@ -191,17 +191,17 @@
       "id": "reports-partial",
       "operationId": "searchCompanyReportsFragment",
       "rules": ["REPORTS-TABLE-1", "REPORTS-ROW-1", "REPORTS-PAGE-1", "REPORTS-PARTIAL-1"],
-      "request": { "matchRequestFrom": "reports-populated", "formOverrides": { "textCrpCik": "00000001" } },
+      "request": { "matchRequestFrom": "reports-populated", "formOverrides": { "textCrpCik": "00000002" } },
       "response": {
         "status": 200,
         "contentType": "text/html; charset=UTF-8",
         "bodyPath": "bodies/reports-partial.utf8.html",
-        "sha256": "413758789010562ab6677bb47ca22ec4d8a598a9c41eb3525f4fdc2202fe3725"
+        "sha256": "5de71d3986703aa4ec1e2bf43eef980a7dd6f5d429d1890aed88ead5bd5aaf15"
       },
       "expected": {
         "kind": "success", "parser": "company-reports", "rows": 1, "droppedRows": 1,
         "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 2, "returnedCount": 1 },
-        "first": { "companyCode": "00000001", "reportTitle": "[기재정정]사업보고서", "receiptNumber": "20260101000001", "receiptDate": "2026-01-01" }
+        "first": { "companyCode": "00000002", "reportTitle": "[기재정정]사업보고서", "receiptNumber": "20260101000001", "receiptDate": "2026-01-01" }
       },
       "provenance": { "kind": "fictional", "containsLiveResponseData": false }
     },

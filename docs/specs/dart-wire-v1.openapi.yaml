@@ -340,6 +340,7 @@ components:
         publicType:
           type: array
           uniqueItems: true
+          maxItems: 60
           items:
             type: string
             pattern: '^[A-Z]\d{3}$'

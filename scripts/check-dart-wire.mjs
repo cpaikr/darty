@@ -154,6 +154,17 @@ const sha256File = async (path) => sha256(await readFile(path));
 const sorted = (values) => [...values].sort();
 const sameSet = (left, right) =>
   JSON.stringify(sorted(left)) === JSON.stringify(sorted(right));
+const canonicalize = (value) => {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, child]) => [key, canonicalize(child)]),
+    );
+  }
+  return value;
+};
 
 const resolveSchema = (schema) => {
   if (schema?.$ref === undefined) return schema;
@@ -171,6 +182,15 @@ const resolveResponse = (response) => {
     fail(`unsupported response reference ${response.$ref}`);
   }
   return api.components.responses[name];
+};
+
+const resolveParameter = (parameter) => {
+  if (parameter?.$ref === undefined) return parameter;
+  const name = parameter.$ref.match(/^#\/components\/parameters\/([^/]+)$/)?.[1];
+  if (name === undefined || api.components?.parameters?.[name] === undefined) {
+    fail(`unsupported parameter reference ${parameter.$ref}`);
+  }
+  return api.components.parameters[name];
 };
 
 const validateScalar = (rawValue, rawSchema, field) => {
@@ -400,6 +420,7 @@ const resolveRequest = (fixtureCase, stack = []) => {
 };
 
 const seenOperations = new Set();
+const requestOwners = new Map();
 for (const fixtureCase of manifest.cases) {
   const expected = expectedOperations.get(fixtureCase.operationId);
   if (expected === undefined) fail(`${fixtureCase.id} uses unknown operationId`);
@@ -416,6 +437,12 @@ for (const fixtureCase of manifest.cases) {
   }
 
   const request = resolveRequest(fixtureCase);
+  const requestKey = JSON.stringify(canonicalize(request));
+  const existingOwner = requestOwners.get(requestKey);
+  if (existingOwner !== undefined) {
+    fail(`${fixtureCase.id} duplicates the resolved request owned by ${existingOwner}`);
+  }
+  requestOwners.set(requestKey, fixtureCase.id);
   if (request.method !== expected.method || request.path !== expected.path) {
     fail(`${fixtureCase.id} request does not match ${fixtureCase.operationId}`);
   }
@@ -431,10 +458,7 @@ for (const fixtureCase of manifest.cases) {
 
   const operation = api.paths[expected.path][expected.method.toLowerCase()];
   for (const rawParameter of operation.parameters ?? []) {
-    const parameterName = rawParameter.$ref?.match(/^#\/components\/parameters\/([^/]+)$/)?.[1];
-    const parameter = parameterName === undefined
-      ? rawParameter
-      : api.components.parameters[parameterName];
+    const parameter = resolveParameter(rawParameter);
     const key = parameter.name.toLowerCase();
     if (parameter.in === "header") {
       const header = request.headers?.[key];
@@ -456,10 +480,9 @@ for (const fixtureCase of manifest.cases) {
     }
     validateSerializedObject(request.form ?? {}, media.schema, fixtureCase.id);
   } else {
-    const queryParameters = (operation.parameters ?? []).map((rawParameter) => {
-      const name = rawParameter.$ref?.match(/^#\/components\/parameters\/([^/]+)$/)?.[1];
-      return name === undefined ? rawParameter : api.components.parameters[name];
-    }).filter(({ in: location }) => location === "query");
+    const queryParameters = (operation.parameters ?? [])
+      .map(resolveParameter)
+      .filter(({ in: location }) => location === "query");
     const allowed = queryParameters.map(({ name }) => name);
     const required = queryParameters.filter(({ required }) => required === true).map(({ name }) => name);
     if (!Object.keys(request.query ?? {}).every((key) => allowed.includes(key))) fail(`${fixtureCase.id} has an unknown query parameter`);

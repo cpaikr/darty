@@ -79,6 +79,11 @@ async fn company_to_section_workflow_uses_exact_wire_and_opaque_ids() {
         reports.result.items[0].filing.receipt_number,
         "20260101000001"
     );
+    assert_eq!(reports.result.request.detail, ResponseDetail::Concise);
+    assert_eq!(
+        serde_json::to_value(&reports).unwrap()["result"]["request"]["detail"],
+        "concise"
+    );
 
     let report = client
         .view_report(ViewReportRequest::new("20260101000001"))
@@ -89,6 +94,11 @@ async fn company_to_section_workflow_uses_exact_wire_and_opaque_ids() {
     assert_eq!(
         report.result.toc.as_ref().unwrap()[0].children[0].id,
         "section:1.1"
+    );
+    assert_eq!(report.result.request.detail, ResponseDetail::Concise);
+    assert_eq!(
+        serde_json::to_value(&report).unwrap()["result"]["request"]["detail"],
+        "concise"
     );
     let serialized = serde_json::to_string(&report).unwrap();
     assert!(!serialized.contains("dcmNo"));
@@ -126,6 +136,34 @@ async fn company_to_section_workflow_uses_exact_wire_and_opaque_ids() {
 }
 
 #[tokio::test]
+async fn invalid_shell_string_decoding_is_a_typed_parse_failure() {
+    let malformed = String::from_utf8(SHELL_BODY.to_vec()).unwrap().replace(
+        r#"node1['text'] = "I. 회사의 개요";"#,
+        r#"node1['text'] = "Invalid \uZZZZ title";"#,
+    );
+    let fixture = FixtureServer::spawn(vec![Reply::shell(
+        "20260101000001",
+        None,
+        malformed.as_bytes(),
+    )])
+    .await;
+
+    let error = fixture
+        .client()
+        .view_report(ViewReportRequest::new("20260101000001"))
+        .await
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::SourceParseFailure);
+    assert!(!error.retryable);
+    assert_eq!(
+        error.source_url.as_deref(),
+        Some("https://dart.fss.or.kr/dsaf001/main.do")
+    );
+
+    fixture.finish().await;
+}
+
+#[tokio::test]
 async fn empty_partial_and_filter_projection_follow_public_semantics() {
     let all_dropped_companies = String::from_utf8(COMPANY_BODY.to_vec())
         .unwrap()
@@ -140,7 +178,7 @@ async fn empty_partial_and_filter_projection_follow_public_semantics() {
         Reply::company_page("빈회사", 7, COMPANY_EMPTY_BODY),
         Reply::company("부분회사", COMPANY_PARTIAL_BODY),
         Reply::company_page("깨진회사", 2, all_dropped_companies.as_bytes()),
-        Reply::reports("00000003", REPORTS_EMPTY_BODY),
+        Reply::reports_page("00000003", 3, REPORTS_EMPTY_BODY),
         Reply::reports_page("00000001", 2, all_dropped_reports.as_bytes()),
         Reply::advanced_reports(REPORTS_BODY),
     ])
@@ -182,14 +220,21 @@ async fn empty_partial_and_filter_projection_follow_public_semantics() {
             .all(|warning| warning.code != "no_results")
     );
 
+    let mut empty_reports_request =
+        SearchCompanyReportsRequest::new("00000003", "20250101", "20260101");
+    empty_reports_request.page = 3;
     let empty_reports = client
-        .search_company_reports(SearchCompanyReportsRequest::new(
-            "00000003", "20250101", "20260101",
-        ))
+        .search_company_reports(empty_reports_request)
         .await
         .unwrap();
     assert_eq!(empty_reports.result.pagination.current_page, 1);
     assert_eq!(empty_reports.result.pagination.total_pages, 1);
+    assert!(
+        empty_reports
+            .warnings
+            .iter()
+            .any(|warning| warning.code == "no_results")
+    );
 
     let mut dropped_request = SearchCompanyReportsRequest::new("00000001", "20250101", "20260101");
     dropped_request.page = 2;
@@ -777,7 +822,14 @@ impl Reply {
         };
         assert_eq!(request.method, self.method);
         assert_eq!(request.target, expected_target);
-        assert!(request.headers.contains_key("user-agent"));
+        assert_eq!(
+            request.headers.get("user-agent").map(String::as_str),
+            Some(concat!(
+                "darty/",
+                env!("CARGO_PKG_VERSION"),
+                " (+https://github.com/sjunepark/darty)"
+            ))
+        );
         if self.method == "POST" {
             assert_eq!(
                 request.headers.get("content-type").map(String::as_str),

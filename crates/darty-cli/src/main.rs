@@ -5,8 +5,8 @@ use std::process::ExitCode;
 use chrono::{Months, NaiveDate};
 use clap::{Args, Parser, Subcommand, ValueEnum, error::ErrorKind};
 use darty::{
-    DartyClient, DartyError, OutputFormat, ResponseDetail, SearchCompanyReportsRequest,
-    SearchCompanyRequest, SortDirection, ViewReportRequest,
+    DartyClient, DartyError, ErrorCode, OutputFormat, ResponseDetail, SearchCompanyReportsRequest,
+    SearchCompanyRequest, SortDirection, ViewReportRequest, ViewReportResponse,
 };
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -213,7 +213,11 @@ struct ViewReportArgs {
     #[arg(long, value_name = "concise|detailed|raw")]
     detail: Option<DetailArg>,
     /// Include TOC entries to the specified depth. For section body output, this also enables TOC inclusion.
-    #[arg(long, value_name = "number")]
+    #[arg(
+        long,
+        value_name = "number",
+        value_parser = clap::value_parser!(u32).range(1..)
+    )]
     toc_depth: Option<u32>,
     /// Include locator fields (documents/toc) and diagnostics omitted from the default CLI output. If --detail is omitted, request detail=raw.
     #[arg(long)]
@@ -299,7 +303,7 @@ async fn run(cli: Cli) -> Result<(), CliFailure> {
         );
         return Ok(());
     };
-    let client = client().map_err(|error| CliFailure::sdk(&error, false))?;
+    let client = client().map_err(|error| CliFailure::sdk(&error, false, &[], &[]))?;
     match command {
         Command::SearchCompany(args) => run_company(&client, args).await,
         Command::SearchCompanyReports(args) => run_reports(&client, args).await,
@@ -344,7 +348,7 @@ async fn run_company(client: &DartyClient, args: SearchCompanyArgs) -> Result<()
     let response = client
         .search_company(request)
         .await
-        .map_err(|error| CliFailure::sdk(&error, args.pretty))?;
+        .map_err(|error| CliFailure::sdk(&error, args.pretty, COMPANY_CLI_PARAMETERS, &[]))?;
     let value = present_search(response, args.verbose, args.agent, SearchKind::Company);
     write_value(&value, args.pretty);
     Ok(())
@@ -395,7 +399,12 @@ async fn run_reports(
             ));
         }
     }
-    let mut request = SearchCompanyReportsRequest::new(company_code, start_date, end_date);
+    let validation_values = [
+        ("startDate", start_date.as_str()),
+        ("endDate", end_date.as_str()),
+    ];
+    let mut request =
+        SearchCompanyReportsRequest::new(company_code, start_date.clone(), end_date.clone());
     request.page = args.page;
     request.page_size = args.page_size;
     request.sort_direction = match args.sort_direction {
@@ -409,11 +418,25 @@ async fn run_reports(
     request.corporation_type = args.corporation_type;
     request.closing_accounts_month = args.closing_accounts_month;
     request.include_all_reports = args.include_all_reports;
-    request.detail = detail(args.detail, args.verbose);
+    request.detail = detail(
+        args.detail,
+        if args.verbose {
+            ResponseDetail::Raw
+        } else {
+            ResponseDetail::Concise
+        },
+    );
     let response = client
         .search_company_reports(request)
         .await
-        .map_err(|error| CliFailure::sdk(&error, args.pretty))?;
+        .map_err(|error| {
+            CliFailure::sdk(
+                &error,
+                args.pretty,
+                REPORTS_CLI_PARAMETERS,
+                &validation_values,
+            )
+        })?;
     let value = present_search(response, args.verbose, args.agent, SearchKind::Reports);
     write_value(&value, args.pretty);
     Ok(())
@@ -430,6 +453,16 @@ async fn run_view(client: &DartyClient, args: ViewReportArgs) -> Result<(), CliF
             args.pretty,
         ));
     };
+    if !(1_000..=1_000_000).contains(&args.max_bytes) {
+        return Err(CliFailure::new(
+            failure(
+                "Option \"--max-bytes\" is invalid. Expected integer between 1,000 and 1,000,000.",
+                Some("maxBytes"),
+                "maxBytes must be integer between 1,000 and 1,000,000. Start low and increase only when needed.",
+            ),
+            args.pretty,
+        ));
+    }
     let mut request = ViewReportRequest::new(receipt);
     request.document_id = args.document_id;
     request.section_id = args.section_id;
@@ -439,18 +472,28 @@ async fn run_view(client: &DartyClient, args: ViewReportArgs) -> Result<(), CliF
     };
     request.max_bytes = args.max_bytes;
     request.content_start_byte = args.content_start_byte;
-    request.detail = detail(args.detail, args.verbose || args.toc_depth.is_some());
+    request.detail = detail(
+        args.detail,
+        if args.verbose {
+            ResponseDetail::Raw
+        } else if args.toc_depth.is_some() {
+            ResponseDetail::Detailed
+        } else {
+            ResponseDetail::Concise
+        },
+    );
     let response = client
         .view_report(request)
         .await
-        .map_err(|error| CliFailure::sdk(&error, args.pretty))?;
+        .map_err(|error| CliFailure::sdk(&error, args.pretty, VIEW_CLI_PARAMETERS, &[]))?;
+    let help = view_help(&response);
     let mut value = serde_json::to_value(response).expect("SDK response serializes");
     if let Some(depth) = args.toc_depth
         && let Some(toc) = value["result"]["toc"].as_array_mut()
     {
         limit_toc(toc, depth);
     }
-    value["help"] = json!(["Use returned document and section IDs only with this report."]);
+    value["help"] = json!(help);
     write_value(&value, args.pretty);
     Ok(())
 }
@@ -473,12 +516,105 @@ fn required(
     })
 }
 
-fn detail(value: Option<DetailArg>, expanded_default: bool) -> ResponseDetail {
+fn detail(value: Option<DetailArg>, default: ResponseDetail) -> ResponseDetail {
     match value {
         Some(DetailArg::Detailed) => ResponseDetail::Detailed,
         Some(DetailArg::Raw) => ResponseDetail::Raw,
-        None if expanded_default => ResponseDetail::Raw,
-        Some(DetailArg::Concise) | None => ResponseDetail::Concise,
+        Some(DetailArg::Concise) => ResponseDetail::Concise,
+        None => default,
+    }
+}
+
+fn view_help(response: &ViewReportResponse) -> Vec<String> {
+    let request = &response.result.request;
+    if let Some(content) = response
+        .result
+        .content
+        .as_ref()
+        .filter(|content| content.window.has_more)
+        && let Some(next_start_byte) = content.window.next_start_byte
+    {
+        let format = match request.output_format {
+            OutputFormat::Html => "html",
+            OutputFormat::Markdown => "markdown",
+        };
+        let mut command = format!(
+            "Continue content: darty view-report --receipt {} --content-start-byte {next_start_byte} --max-bytes {} --output-format {format}",
+            quote_cli_value(&request.receipt),
+            request.max_bytes
+        );
+        if let Some(document_id) = &request.document_id {
+            command.push_str(" --document-id ");
+            command.push_str(&quote_cli_value(document_id));
+        }
+        if let Some(section_id) = &request.section_id {
+            command.push_str(" --section-id ");
+            command.push_str(&quote_cli_value(section_id));
+        }
+        return vec![command];
+    }
+
+    if request.section_id.is_some() {
+        let mut help = Vec::new();
+        if let Some(next) = response
+            .result
+            .navigation
+            .as_ref()
+            .and_then(|navigation| navigation.next.as_ref())
+        {
+            help.push(format!(
+                "Read next section: darty view-report --receipt {} --section-id {}",
+                quote_cli_value(&request.receipt),
+                quote_cli_value(&next.id)
+            ));
+        }
+        if let Some(previous) = response
+            .result
+            .navigation
+            .as_ref()
+            .and_then(|navigation| navigation.previous.as_ref())
+        {
+            help.push(format!(
+                "Read previous section: darty view-report --receipt {} --section-id {}",
+                quote_cli_value(&request.receipt),
+                quote_cli_value(&previous.id)
+            ));
+        }
+        help.push("Rerun with --toc-depth <number> when you need nearby TOC context.".to_owned());
+        return help;
+    }
+
+    if let Some(first) = response.result.toc.as_ref().and_then(|toc| toc.first()) {
+        return vec![
+            format!(
+                "Read first section: darty view-report --receipt {} --section-id {}",
+                quote_cli_value(&request.receipt),
+                quote_cli_value(&first.id)
+            ),
+            "Choose a different returned toc[].id to read another section.".to_owned(),
+            "Use --toc-depth <number> to limit TOC output depth in the CLI.".to_owned(),
+        ];
+    }
+
+    vec![
+        "This document has no returned TOC. Use the returned content.window fields to continue if content is truncated."
+            .to_owned(),
+    ]
+}
+
+fn quote_cli_value(value: &str) -> String {
+    if !value.is_empty()
+        && value.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric()
+                || matches!(
+                    byte,
+                    b'_' | b'.' | b'/' | b':' | b'@' | b'%' | b'+' | b'=' | b',' | b'-'
+                )
+        })
+    {
+        value.to_owned()
+    } else {
+        format!("'{}'", value.replace('\'', "'\\''"))
     }
 }
 
@@ -487,6 +623,38 @@ enum SearchKind {
     Company,
     Reports,
 }
+
+const COMPANY_CLI_PARAMETERS: &[(&str, &str)] = &[
+    ("companyName", "--company-name"),
+    ("page", "--page"),
+    ("pageSize", "--page-size"),
+];
+
+const REPORTS_CLI_PARAMETERS: &[(&str, &str)] = &[
+    ("companyCode", "--company-code"),
+    ("startDate", "--start-date"),
+    ("endDate", "--end-date"),
+    ("page", "--page"),
+    ("pageSize", "--page-size"),
+    ("presenterName", "--presenter-name"),
+    ("reportName", "--report-name"),
+    ("disclosureTypes", "--disclosure-type"),
+    ("industryCode", "--industry-code"),
+    ("corporationType", "--corporation-type"),
+    ("closingAccountsMonth", "--closing-accounts-month"),
+    ("includeAllReports", "--include-all-reports"),
+    ("detail", "--detail"),
+];
+
+const VIEW_CLI_PARAMETERS: &[(&str, &str)] = &[
+    ("receipt", "--receipt"),
+    ("documentId", "--document-id"),
+    ("sectionId", "--section-id"),
+    ("outputFormat", "--output-format"),
+    ("maxBytes", "--max-bytes"),
+    ("contentStartByte", "--content-start-byte"),
+    ("detail", "--detail"),
+];
 
 fn present_search<T: Serialize>(
     response: T,
@@ -637,7 +805,13 @@ fn limit_toc(nodes: &mut Vec<Value>, depth: u32) {
 
 fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
     let pretty = argv.iter().any(|value| value == "--pretty");
-    if argv.iter().any(|value| value == "--dcm-no") {
+    let command = argv.get(1).map(String::as_str).filter(|value| {
+        matches!(
+            *value,
+            "search-company" | "search-company-reports" | "view-report"
+        )
+    });
+    if command == Some("view-report") && argv.iter().any(|value| value == "--dcm-no") {
         return Some(CliFailure::new(
             failure(
                 "error: unknown option '--dcm-no'",
@@ -647,9 +821,62 @@ fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
             pretty,
         ));
     }
-    if let Some(rejected) = argv.windows(2).find_map(|pair| {
-        (pair[0] == "--content-start-byte" && pair[1].starts_with('-')).then_some(&pair[1])
+    if let Some((option, rejected)) = argv.iter().enumerate().find_map(|(index, value)| {
+        if value == "--toc-depth" {
+            return Some((value.as_str(), argv.get(index + 1).map(String::as_str)));
+        }
+        value
+            .strip_prefix("--toc-depth=")
+            .map(|argument| (value.as_str(), Some(argument)))
     }) {
+        if command != Some("view-report") {
+            let hint = command.map_or_else(
+                || "Run darty --help for options and commands.".to_owned(),
+                |command| format!("Run darty {command} --help for options and examples."),
+            );
+            return Some(CliFailure::new(
+                failure(
+                    format!("error: unknown option '{option}'"),
+                    Some(option),
+                    &hint,
+                ),
+                pretty,
+            ));
+        }
+        if let Some(rejected) = rejected {
+            let is_unsigned_integer =
+                !rejected.is_empty() && rejected.bytes().all(|byte| byte.is_ascii_digit());
+            if !is_unsigned_integer {
+                return Some(CliFailure::new(
+                    failure(
+                        format!(
+                            "error: option '--toc-depth <number>' argument '{rejected}' is invalid. Expected an integer but received \"{rejected}\"."
+                        ),
+                        Some("--toc-depth"),
+                        "Run darty view-report --help for options and examples.",
+                    ),
+                    pretty,
+                ));
+            }
+            if rejected.bytes().all(|byte| byte == b'0') {
+                return Some(CliFailure::new(
+                    failure(
+                        format!(
+                            "error: option '--toc-depth <number>' argument '{rejected}' is invalid. Expected an integer greater than or equal to 1."
+                        ),
+                        Some("--toc-depth"),
+                        "Run darty view-report --help for options and examples.",
+                    ),
+                    pretty,
+                ));
+            }
+        }
+    }
+    if command == Some("view-report")
+        && let Some(rejected) = argv.windows(2).find_map(|pair| {
+            (pair[0] == "--content-start-byte" && pair[1].starts_with('-')).then_some(&pair[1])
+        })
+    {
         return Some(CliFailure::new(
             failure(
                 format!(
@@ -681,11 +908,205 @@ impl CliFailure {
     const fn new(value: Value, pretty: bool) -> Self {
         Self { value, pretty }
     }
-    fn sdk(error: &DartyError, pretty: bool) -> Self {
+    fn sdk(
+        error: &DartyError,
+        pretty: bool,
+        parameters: &[(&str, &str)],
+        actuals: &[(&str, &str)],
+    ) -> Self {
+        let mut error = error.clone();
+        if error.code == ErrorCode::InvalidRequest
+            && let Some(parameter) = error.parameter.clone()
+            && let Some(flag) = parameters
+                .iter()
+                .find_map(|(semantic, flag)| (*semantic == parameter).then_some(*flag))
+        {
+            apply_cli_validation_copy(&mut error, &parameter, flag, actuals);
+        }
         Self::new(
             json!({"result": null, "metadata": {"cliTransportVersion": "1"}, "references": {}, "warnings": [], "error": error}),
             pretty,
         )
+    }
+}
+
+fn apply_cli_validation_copy(
+    error: &mut DartyError,
+    parameter: &str,
+    flag: &str,
+    actuals: &[(&str, &str)],
+) {
+    if apply_paging_and_date_copy(error, parameter, flag, actuals)
+        || apply_report_filter_copy(error, parameter, flag)
+        || apply_view_validation_copy(error, parameter, flag)
+    {
+        return;
+    }
+    error.message = error.message.replace(parameter, flag);
+}
+
+fn apply_paging_and_date_copy(
+    error: &mut DartyError,
+    parameter: &str,
+    flag: &str,
+    actuals: &[(&str, &str)],
+) -> bool {
+    let actual = |name: &str| {
+        actuals
+            .iter()
+            .find_map(|(parameter, value)| (*parameter == name).then_some(*value))
+            .unwrap_or("")
+    };
+    match parameter {
+        "page" => {
+            error.message = format!("Option \"{flag}\" must be between 1 and 100.");
+            error.recovery_hint = Some(
+                "page must be integer between 1 and 100. If the page is out of range, retry with a smaller page number."
+                    .to_owned(),
+            );
+            true
+        }
+        "pageSize" if error.message.contains("one of") => {
+            error.message = format!("Option \"{flag}\" must be one of: 5, 10, 15, 30, 50, 100.");
+            error.recovery_hint = Some("pageSize must be 5, 10, 15, 30, 50, 100.".to_owned());
+            true
+        }
+        "startDate" | "endDate" if error.message.contains("real date") => {
+            let value = actual(parameter);
+            error.message = if value.len() == 8 && value.bytes().all(|byte| byte.is_ascii_digit()) {
+                format!(
+                    "Option \"{flag}\" must be a real date in YYYYMMDD format. \"{value}\" is not a valid date."
+                )
+            } else {
+                format!("Option \"{flag}\" must use YYYYMMDD format.")
+            };
+            error.recovery_hint = Some(
+                "Dates must be real YYYYMMDD dates, and startDate cannot be after endDate."
+                    .to_owned(),
+            );
+            true
+        }
+        "startDate" if error.message.contains("on or before") => {
+            error.message = format!(
+                "startDate cannot be after endDate. startDate={}, endDate={}.",
+                actual("startDate"),
+                actual("endDate")
+            );
+            error.recovery_hint = Some(
+                "Dates must be real YYYYMMDD dates, and startDate cannot be after endDate."
+                    .to_owned(),
+            );
+            true
+        }
+        _ => false,
+    }
+}
+
+fn apply_report_filter_copy(error: &mut DartyError, parameter: &str, flag: &str) -> bool {
+    match parameter {
+        "presenterName" | "reportName" => {
+            error.message = format!("Option \"{flag}\" cannot be empty.");
+            error.recovery_hint = Some(
+                "Run darty search-company-reports --help for options and examples.".to_owned(),
+            );
+            true
+        }
+        "disclosureTypes" => {
+            let unknown_codes = error
+                .message
+                .strip_prefix("Unsupported DART disclosure type code: ")
+                .and_then(|value| value.strip_suffix('.'))
+                .map(|value| value.split(", ").collect::<Vec<_>>())
+                .filter(|values| {
+                    !values.is_empty()
+                        && values.iter().all(|value| {
+                            value.len() == 4
+                                && (b'A'..=b'J').contains(&value.as_bytes()[0])
+                                && value.as_bytes()[1..].iter().all(u8::is_ascii_digit)
+                        })
+                });
+            error.message = unknown_codes.map_or_else(
+                || format!(
+                    "Option \"{flag}\" must be an array of DART 공시상세유형 detailed codes, for example [\"A001\"](사업보고서), [\"A002\"](반기보고서), [\"A003\"](분기보고서), or [\"I001\"](수시공시). Use reportName for report-title text such as \"사업보고서\"."
+                ),
+                |codes| format!(
+                    "Option \"{flag}\" contains unknown DART 공시상세유형 detailed code(s): {}. Common codes include A001=사업보고서, A002=반기보고서, A003=분기보고서, F001=감사보고서, and I001=수시공시. If you do not know the code, use the disclosure-types operation or darty disclosure-types --query, and put report-title text in reportName.",
+                    codes.join(", ")
+                ),
+            );
+            error.recovery_hint = Some(
+                "Pass known DART 공시상세유형 detailed codes (A001=사업보고서, A002=반기보고서, A003=분기보고서, I001=수시공시, etc.) as an array. If you do not know the code, use the disclosure-types operation or darty disclosure-types --query <term>, and put report-title text in reportName."
+                    .to_owned(),
+            );
+            true
+        }
+        "industryCode" => {
+            error.message = format!(
+                "Option \"{flag}\" must be \"all\", a DART industry code such as 612=전기 통신업, or a ROOTdddd DART industry tree root. Use \"all\" if the industry is unknown."
+            );
+            error.recovery_hint = Some(
+                "Pass \"all\", a DART industry code such as 612=전기 통신업, or a ROOTdddd DART industry tree root. Use \"all\" if the industry is unknown."
+                    .to_owned(),
+            );
+            true
+        }
+        "corporationType" => {
+            error.message = format!(
+                "Option \"{flag}\" must be one of all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), or E(기타법인)."
+            );
+            error.recovery_hint = Some(
+                "Use one of all(전체), P(유가증권시장), A(코스닥시장), N(코넥스시장), or E(기타법인)."
+                    .to_owned(),
+            );
+            true
+        }
+        "closingAccountsMonth" => {
+            error.message = format!(
+                "Option \"{flag}\" must be all or a two-digit fiscal closing month code from 01 through 12. Example: January is \"01\", December is \"12\"."
+            );
+            error.recovery_hint = Some(
+                "Use all or a two-digit fiscal closing month code from 01 through 12. Example: January is 01."
+                    .to_owned(),
+            );
+            true
+        }
+        _ => false,
+    }
+}
+
+fn apply_view_validation_copy(error: &mut DartyError, parameter: &str, flag: &str) -> bool {
+    match parameter {
+        "receipt" => {
+            error.message = format!(
+                "Option \"{flag}\" is invalid. Expected 14-digit DART receipt number or /dsaf001/main.do viewer URL containing rcpNo."
+            );
+            error.recovery_hint = Some(
+                "Pass receiptNumber or viewerUrl from search-body/search-company-reports results as receipt."
+                    .to_owned(),
+            );
+            true
+        }
+        "documentId" => {
+            error.message = format!(
+                "Option \"{flag}\" is invalid. Expected documents[].id from a previous view-report response."
+            );
+            error.recovery_hint = Some(
+                "Call view-report again with the same receipt to get current documents[].id/toc[].id values, then use the returned value."
+                    .to_owned(),
+            );
+            true
+        }
+        "sectionId" => {
+            error.message = format!(
+                "Option \"{flag}\" is invalid. Expected toc[].id from a previous view-report response for the same receipt/documentId."
+            );
+            error.recovery_hint = Some(
+                "Call view-report again with the same receipt to get current documents[].id/toc[].id values, then use the returned value."
+                    .to_owned(),
+            );
+            true
+        }
+        _ => false,
     }
 }
 
@@ -719,11 +1140,14 @@ fn client() -> Result<DartyClient, DartyError> {
 
 #[cfg(test)]
 mod tests {
-    use super::preparse_failure;
+    use darty::{DartyError, ErrorCode, ResponseDetail};
+
+    use super::{CliFailure, DetailArg, VIEW_CLI_PARAMETERS, detail, preparse_failure};
 
     #[test]
     fn negative_window_error_reports_the_rejected_argument() {
         let argv = [
+            "darty".to_owned(),
             "view-report".to_owned(),
             "--content-start-byte".to_owned(),
             "-27".to_owned(),
@@ -736,5 +1160,105 @@ mod tests {
                 .contains("'-27'")
         );
         assert_eq!(failure.value["error"]["parameter"], "--content-start-byte");
+    }
+
+    #[test]
+    fn zero_toc_depth_uses_the_frozen_cli_failure() {
+        let argv = [
+            "darty".to_owned(),
+            "view-report".to_owned(),
+            "--toc-depth".to_owned(),
+            "0".to_owned(),
+        ];
+        let failure = preparse_failure(&argv).expect("zero depth is rejected");
+        assert_eq!(failure.value["error"]["parameter"], "--toc-depth");
+        assert_eq!(
+            failure.value["error"]["message"],
+            "error: option '--toc-depth <number>' argument '0' is invalid. Expected an integer greater than or equal to 1."
+        );
+    }
+
+    #[test]
+    fn attached_zero_toc_depth_uses_the_frozen_cli_failure() {
+        let argv = [
+            "darty".to_owned(),
+            "view-report".to_owned(),
+            "--toc-depth=0".to_owned(),
+        ];
+        let failure = preparse_failure(&argv).expect("zero depth is rejected");
+        assert_eq!(failure.value["error"]["parameter"], "--toc-depth");
+        assert_eq!(
+            failure.value["error"]["message"],
+            "error: option '--toc-depth <number>' argument '0' is invalid. Expected an integer greater than or equal to 1."
+        );
+    }
+
+    #[test]
+    fn toc_depth_is_unknown_outside_view_report() {
+        let root = ["darty".to_owned(), "--toc-depth".to_owned(), "0".to_owned()];
+        let failure = preparse_failure(&root).expect("root option is rejected");
+        assert_eq!(
+            failure.value["error"]["message"],
+            "error: unknown option '--toc-depth'"
+        );
+        assert_eq!(
+            failure.value["error"]["recoveryHint"],
+            "Run darty --help for options and commands."
+        );
+
+        let company = [
+            "darty".to_owned(),
+            "search-company".to_owned(),
+            "--toc-depth=0".to_owned(),
+        ];
+        let failure = preparse_failure(&company).expect("command option is rejected");
+        assert_eq!(
+            failure.value["error"]["message"],
+            "error: unknown option '--toc-depth=0'"
+        );
+        assert_eq!(failure.value["error"]["parameter"], "--toc-depth=0");
+    }
+
+    #[test]
+    fn detail_defaults_follow_cli_presentation_precedence() {
+        assert_eq!(
+            detail(None, ResponseDetail::Concise),
+            ResponseDetail::Concise
+        );
+        assert_eq!(
+            detail(None, ResponseDetail::Detailed),
+            ResponseDetail::Detailed
+        );
+        assert_eq!(detail(None, ResponseDetail::Raw), ResponseDetail::Raw);
+        assert_eq!(
+            detail(Some(DetailArg::Concise), ResponseDetail::Raw),
+            ResponseDetail::Concise
+        );
+        assert_eq!(
+            detail(Some(DetailArg::Detailed), ResponseDetail::Raw),
+            ResponseDetail::Detailed
+        );
+        assert_eq!(
+            detail(Some(DetailArg::Raw), ResponseDetail::Concise),
+            ResponseDetail::Raw
+        );
+    }
+
+    #[test]
+    fn sdk_validation_messages_use_flags_but_parameters_remain_semantic() {
+        let error = DartyError {
+            code: ErrorCode::InvalidRequest,
+            message: "maxBytes must be an integer between 1000 and 1000000.".to_owned(),
+            retryable: false,
+            parameter: Some("maxBytes".to_owned()),
+            source_url: None,
+            recovery_hint: Some("Use a bounded rendered-content window.".to_owned()),
+        };
+        let failure = CliFailure::sdk(&error, false, VIEW_CLI_PARAMETERS, &[]);
+        assert_eq!(
+            failure.value["error"]["message"],
+            "--max-bytes must be an integer between 1000 and 1000000."
+        );
+        assert_eq!(failure.value["error"]["parameter"], "maxBytes");
     }
 }

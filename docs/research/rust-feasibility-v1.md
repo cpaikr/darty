@@ -16,9 +16,10 @@ three parser boundaries, the identifier handoff, or async timeout and
 cancellation control. Complete OpenAPI request serialization, including
 advanced filters and repeated `publicType`, remains candidate-owned work.
 
-The probe and all Cargo artifacts were deleted after validation. The repository
-contains no Rust source, `Cargo.toml`, `Cargo.lock`, or `target` directory from
-this experiment.
+The temporary probe crate and all of its Cargo artifacts were deleted after
+validation. No Rust source, `Cargo.toml`, `Cargo.lock`, or `target` directory
+from that discarded probe was copied into the repository; the later retained
+candidate has its own separately reviewed Rust and Cargo files.
 
 ## Boundary and inputs
 

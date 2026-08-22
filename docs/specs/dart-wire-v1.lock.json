@@ -5,7 +5,7 @@
   "files": [
     {
       "path": "docs/specs/dart-wire-v1.openapi.yaml",
-      "sha256": "484edfdafb0892b4a77756a39111eb2e26a60f26f7ef02e5e482e30b36468293"
+      "sha256": "ceaf60e18818a7a2be225f86ea26f14830dae5119a0195ea2f0dc83cc121ef18"
     },
     {
       "path": "docs/specs/dart-html-viewer-v1.md",
@@ -17,15 +17,15 @@
     },
     {
       "path": "fixtures/dart/vertical-v1/manifest.json",
-      "sha256": "57251778728bec289c31ff38c2866e85267bb540d30f6d37d90a5a50b863311e"
+      "sha256": "e18efb11973f4708f9d5c2340652c6160a7d03461bfa167f9140285848e09563"
     },
     {
       "path": "scripts/check-dart-wire.mjs",
-      "sha256": "dcff26087459739f52c9c7b966edb18882a73b133d8f575ca014381757a33103"
+      "sha256": "24460fc840f04be26bc30a918db13ccc60d2ed66877e18a643955163d980cd97"
     },
     {
       "path": "scripts/check-dart-fixture-conformance.ts",
-      "sha256": "0d41c79cee9801e2629867b76b697a0ff2fe9fccd99f3ca4ace6be49186d20e0"
+      "sha256": "1a49af9288ada263bb3763f54d7264058fd301d08356df3c31bd907fa7913324"
     }
   ]
 }

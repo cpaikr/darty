@@ -6,12 +6,14 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deepStrictEqual, strictEqual } from "node:assert";
 
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 
 import { buildCompanySearchForm } from "../src/sources/dart/dsae001/company/build-form.ts";
 import { parseCompanySearchHtml } from "../src/sources/dart/dsae001/company/parse-html.ts";
+import { SourceCompanyReplayInput } from "../src/sources/dart/dsae001/company/replay-schema.ts";
 import { buildCompanyReportsSearchForm } from "../src/sources/dart/dsab007/company-reports/build-form.ts";
 import { parseCompanyReportsSearchHtml } from "../src/sources/dart/dsab007/company-reports/parse-html.ts";
+import { SourceCompanyReportsReplayInput } from "../src/sources/dart/dsab007/company-reports/replay-schema.ts";
 import { parseReportShell } from "../src/sources/dart/dsaf001/report/parse-shell.ts";
 import { createDartSourceTextResponse } from "../src/sources/dart/source-response.ts";
 
@@ -57,33 +59,69 @@ const classify = (error: unknown): string => {
   throw error;
 };
 
-const companyRequest = (form: Record<string, any>) => ({
-  currentPage: Number(form.currentPage),
-  maxResults: Number(form.maxResults),
-  searchType: form.searchType as "1",
-  textCrpNm: form.textCrpNm as string,
-});
+const stringField = (form: Record<string, any>, field: string): string => {
+  const value = form[field];
+  if (typeof value !== "string") {
+    throw new Error(`${field} must be a string in the fixture manifest`);
+  }
+  return value;
+};
 
-const reportsRequest = (form: Record<string, any>) => ({
-  option: form.option as "corp",
-  currentPage: Number(form.currentPage),
-  maxResults: Number(form.maxResults) as 15 | 30 | 50 | 100,
-  maxLinks: Number(form.maxLinks),
-  sort: form.sort as "date",
-  series: form.series as "asc" | "desc",
-  textCrpCik: form.textCrpCik as string,
-  ...(form.textPresenterNm === "" ? {} : { textPresenterNm: form.textPresenterNm }),
-  ...(form.reportName === "" ? {} : { reportName: form.reportName }),
-  publicTypes: form.publicType as string[],
-  businessCode: form.businessCode as string,
-  corporationType: form.corporationType as "all" | "P" | "A" | "N" | "E",
-  closingAccountsMonth: form.closingAccountsMonth as
-    | "all" | "01" | "02" | "03" | "04" | "05" | "06"
-    | "07" | "08" | "09" | "10" | "11" | "12",
-  startDate: form.startDate as string,
-  endDate: form.endDate as string,
-  finalReportOnly: form.finalReport === "recent",
-});
+const integerField = (form: Record<string, any>, field: string): number => {
+  const value = form[field];
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string" && /^\d+$/.test(value)
+      ? Number(value)
+      : Number.NaN;
+  if (!Number.isSafeInteger(parsed)) {
+    throw new Error(`${field} must be an integer in the fixture manifest`);
+  }
+  return parsed;
+};
+
+const stringArrayField = (form: Record<string, any>, field: string): string[] => {
+  const value = form[field];
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string")) {
+    throw new Error(`${field} must be a string array in the fixture manifest`);
+  }
+  return value;
+};
+
+const companyRequest = (form: Record<string, any>) =>
+  Schema.decodeUnknownSync(SourceCompanyReplayInput)({
+    currentPage: integerField(form, "currentPage"),
+    maxResults: integerField(form, "maxResults"),
+    searchType: stringField(form, "searchType"),
+    textCrpNm: stringField(form, "textCrpNm"),
+  });
+
+const reportsRequest = (form: Record<string, any>) => {
+  const presenterName = stringField(form, "textPresenterNm");
+  const reportName = stringField(form, "reportName");
+  const finalReport = stringField(form, "finalReport");
+  if (finalReport !== "" && finalReport !== "recent") {
+    throw new Error(`finalReport value ${finalReport} is outside its fixture contract`);
+  }
+  return Schema.decodeUnknownSync(SourceCompanyReportsReplayInput)({
+    option: stringField(form, "option"),
+    currentPage: integerField(form, "currentPage"),
+    maxResults: integerField(form, "maxResults"),
+    maxLinks: integerField(form, "maxLinks"),
+    sort: stringField(form, "sort"),
+    series: stringField(form, "series"),
+    textCrpCik: stringField(form, "textCrpCik"),
+    ...(presenterName === "" ? {} : { textPresenterNm: presenterName }),
+    ...(reportName === "" ? {} : { reportName }),
+    publicTypes: stringArrayField(form, "publicType"),
+    businessCode: stringField(form, "businessCode"),
+    corporationType: stringField(form, "corporationType"),
+    closingAccountsMonth: stringField(form, "closingAccountsMonth"),
+    startDate: stringField(form, "startDate"),
+    endDate: stringField(form, "endDate"),
+    finalReportOnly: finalReport === "recent",
+  });
+};
 
 const assertSerializedForm = (
   actual: URLSearchParams,
