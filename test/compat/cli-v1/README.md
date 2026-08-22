@@ -19,7 +19,9 @@ golden review.
 ## Profiles
 
 - `vertical` covers the candidate `search-company` →
-  `search-company-reports` → `view-report` surface.
+  `search-company-reports` → `view-report` help and validation surface.
+- `candidate` adds independently authored fixture-backed success, agent
+  projection, TOC, and section-window expectations to the vertical profile.
 - `full` also freezes the active root home, the other five operation entry
   paths, and the two deterministic static operations. It is the guard that the
   TypeScript comparison product remains unchanged while the candidate is built.
@@ -27,9 +29,10 @@ golden review.
 The current source adapters use fixed DART HTTPS endpoints. The deterministic
 baseline therefore covers process transport, help, semantic validation, and
 network-free operations without adding a test-only seam to the active product.
-Fixture-backed successful searches and the four-step report workflow join the
-vertical profile only after the canonical wire authority defines a
-runtime-neutral fake-upstream boundary.
+Fixture-backed successful searches and the four-step report workflow use the
+candidate profile and the canonical wire authority's runtime-neutral
+fake-upstream boundary. The active TypeScript product never receives that
+test-only seam.
 
 ## Running
 
@@ -37,8 +40,11 @@ runtime-neutral fake-upstream boundary.
 bun run test:compat:cli
 bun run test:compat:cli:mutation
 
-# Run the vertical profile against any later candidate command.
+# Run help and validation compatibility against any candidate command.
 node scripts/judge-cli-v1.mjs --profile vertical -- ./path/to/darty
+
+# Run the retained Rust candidate's full vertical acceptance profile.
+node scripts/judge-cli-v1.mjs --profile candidate -- ./path/to/darty
 ```
 
 The mutation proof changes the transport version only in a disposable copy of

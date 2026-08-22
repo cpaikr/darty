@@ -1,0 +1,64 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "help": [
+      "Use returned document and section IDs only with this report."
+    ],
+    "metadata": {
+      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "source": {
+        "endpoints": {
+          "shell": "https://dart.fss.or.kr/dsaf001/main.do"
+        },
+        "surface": "dsaf001",
+        "system": "dart"
+      },
+      "tocSource": "dart"
+    },
+    "references": {
+      "viewerUrl": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260101000001"
+    },
+    "result": {
+      "document": {
+        "id": "document:body:1",
+        "kind": "body",
+        "selected": true,
+        "title": "가람전자 사업보고서"
+      },
+      "documents": [
+        {
+          "id": "document:body:1",
+          "kind": "body",
+          "selected": true,
+          "title": "가람전자 사업보고서"
+        },
+        {
+          "id": "document:attachment:1",
+          "kind": "attachment",
+          "selected": false,
+          "title": "2026.01.01 감사보고서"
+        }
+      ],
+      "receipt": {
+        "receiptNumber": "20260101000001"
+      },
+      "request": {
+        "contentStartByte": 0,
+        "detail": "raw",
+        "maxBytes": 50000,
+        "outputFormat": "markdown",
+        "receipt": "20260101000001"
+      },
+      "toc": [
+        {
+          "children": [],
+          "id": "section:1",
+          "title": "I. 회사의 개요"
+        }
+      ]
+    },
+    "warnings": []
+  }
+}

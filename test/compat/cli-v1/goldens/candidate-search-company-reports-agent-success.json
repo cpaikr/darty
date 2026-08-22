@@ -1,0 +1,61 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "help": [
+      "Inspect filing TOC: darty view-report --receipt 20260101000001",
+      "Read a returned section: darty view-report --receipt 20260101000001 --section-id <toc[].id>"
+    ],
+    "metadata": {
+      "completeness": "complete",
+      "output": "agent",
+      "source": {
+        "endpoint": "https://dart.fss.or.kr/dsab007/detailSearch.ax",
+        "surface": "dsab007",
+        "system": "dart"
+      }
+    },
+    "references": {
+      "searchUrl": "https://dart.fss.or.kr/dsab007/detailSearch.ax"
+    },
+    "result": {
+      "company": {
+        "companyCode": "00000001",
+        "marketLabel": "유가증권시장",
+        "name": "가람전자"
+      },
+      "items": [
+        {
+          "companyCode": "00000001",
+          "companyName": "가람전자",
+          "presenterName": "가람전자",
+          "receiptDate": "2026-01-01",
+          "receiptNumber": "20260101000001",
+          "reportTitle": "[기재정정] 사업보고서",
+          "viewerUrl": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260101000001"
+        }
+      ],
+      "pagination": {
+        "currentPage": 1,
+        "returnedCount": 1,
+        "totalCount": 1,
+        "totalPages": 1
+      },
+      "request": {
+        "closingAccountsMonth": "all",
+        "companyCode": "00000001",
+        "corporationType": "all",
+        "disclosureTypes": [],
+        "endDate": "20260101",
+        "includeAllReports": false,
+        "industryCode": "all",
+        "page": 1,
+        "pageSize": 15,
+        "sortDirection": "desc",
+        "startDate": "20250101"
+      }
+    },
+    "warnings": []
+  }
+}

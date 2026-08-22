@@ -44,9 +44,9 @@ native package, followed by vertical acceptance and independent review.
 
 ### Next in-scope action
 
-Reconcile the accepted plan and current repository boundaries, then design and
-implement the retained candidate as the final reviewable PR without changing
-the active TypeScript product or porting the five excluded operations.
+Commit and push the independently reviewed PR #21 feedback fixes, then reply to
+and resolve every review thread, audit automatic checks and incremental review,
+and complete the final implementation PR lifecycle when all gates are clear.
 
 ### Evidence and blockers
 
@@ -61,7 +61,9 @@ the active TypeScript product or porting the five excluded operations.
 - PR 1 candidate validation: typecheck passed; 338 tests passed with 23 opt-in live skips; all 21 full-profile CLI scenarios passed; the disposable transport-version mutant was rejected at the expected JSON path; and the live four-step company → filing → TOC → section workflow passed on 2026-08-22.
 - Independent review completed on 2026-08-22. Its two safe findings were applied by asserting every vertical help option and adding deterministic pretty-success coverage; targeted parity, mutation, package dry-run, and diff checks passed afterward.
 - PR feedback tightened help parity to exact option sets plus normalized semantic copy, clarified the company-detail locator, and pinned the new Node action. CI exposed pre-existing `.js`/ESM mismatches in temporary smoke and mutation artifacts at the declared Node 20 minimum; naming both artifacts `.mjs` restored all 338 tests and the mutation proof under Node 20.18.1. The proof now forwards `process.execPath`, so its subject uses the same runtime as the proof itself.
-- Additional fixture-backed vertical success and `--agent` scenarios are not yet in the manifest. They remain intentionally assigned to canonical wire authority and must join the judge before candidate acceptance.
+- At the PR 1 checkpoint, additional fixture-backed vertical success and
+  `--agent` scenarios were still intentionally assigned to the later canonical
+  wire/candidate slices; they are now present in the candidate profile.
 - PR #19 passed repository CI and completed the required review lifecycle with all four review threads resolved and no pending or outside-diff feedback. Its three commits were preserved by merge commit `ff8770c` on 2026-08-22.
 - PR 2 authority candidate defines exactly four upstream operations in OpenAPI,
   25 stable HTML/viewer/transport rules, 17 independently fictional fixture
@@ -124,3 +126,120 @@ the active TypeScript product or porting the five excluded operations.
   confirmation on its fixes, and completed with no pending, unresolved, or
   outside-diff feedback. Its three commits were preserved by merge commit
   `de663c6` on 2026-08-22.
+- The retained candidate workspace now compiles on Rust 1.92 with a public
+  `DartyClient` exposing only the three included typed async operations. Its
+  private transport enforces no redirects, 5/10/30-second deadlines, exact
+  forms and viewer replay, 8/16/64 MiB streamed caps, declared HTML media type,
+  and UTF-8/WHATWG EUC-KR decoding. Public report identifiers remain opaque,
+  and raw viewer locators are not serialized.
+- Initial Rust SDK review found six correctness gaps: provider pacing and
+  concurrency, cyclic/deep TOC safety, shell locator validation, raw locator
+  leakage through typed errors, permissive viewer-receipt URLs, and missing
+  post-refetch document-selection confirmation. The candidate now serializes
+  each client's requests with at least 250 milliseconds between starts,
+  validates bounded locator graphs and identities before replay, publishes
+  endpoint-only error URLs, accepts only canonical receipt URL fields, and
+  rejects an unconfirmed document selection. Focused re-review found that the
+  first confirmation still trusted a regenerated positional ID; the follow-up
+  now also preserves and compares the requested upstream document identity.
+- Rust SDK validation passes formatting, Clippy with warnings denied, 14 unit
+  tests, and 11 public fixture tests. The fixture tests exercise exact
+  company/report forms and shell/content queries, the four-step workflow,
+  normalized empty and partial results, advanced filters, concise projection,
+  section navigation, no-TOC MS949 content, rejected non-DART viewer URLs, and
+  classified 503, redirect, media-type, charset, and streamed-size failures.
+  Adversarial tests now also cover cyclic and over-deep TOCs, locator/receipt
+  drift, strict document queries, first-valid initial locator selection,
+  endpoint-only content errors, ignored and same-position/different-identity
+  document reselection, serialized requests, 250-millisecond pacing, and a
+  cancelled queued waiter.
+- The retained adapter boundary is now complete. `darty-cli` exposes only the
+  three included Clap commands, `darty-node` retains one shared Rust client per
+  JavaScript `DartyClient`, and the public ESM facade exposes exactly three
+  Promise-returning methods plus typed `DartyError` failures and AbortSignal
+  cancellation. The binding converts panics to typed internal errors and keeps
+  its generated unsafe-code exception isolated to the Node-API crate.
+- The unpublished candidate npm root contains only the asynchronous SDK facade
+  and forwarding launcher. Its darwin-arm64 optional package contains the Rust
+  CLI and Node-API addon during disposable staging; both packages include the
+  project license. Clean-consumer acceptance verifies exact packed contents,
+  TypeScript declarations, the real addon, typed failures, prompt cancellation,
+  shared provider pacing, launcher stdout/stderr/arguments/exit forwarding, and
+  absence of JavaScript-owned command semantics.
+- The compatibility corpus now has a separate `candidate` profile. It preserves
+  the 12 frozen vertical help/validation cases and adds five independently
+  reviewed, fixture-backed exact success goldens covering company output,
+  company and filing agent projections, bounded TOC, and a truncated section
+  content window. All 17 cases pass against the Rust executable; the unchanged
+  active TypeScript product still passes the original 21-case full profile and
+  both transport-version mutation sentinels.
+- Rust 1.88 validation passes workspace formatting, all 26 tests (14 SDK unit,
+  11 public integration, one Node panic-containment), Clippy with warnings
+  denied, warning-free documentation, locked release builds, RustSec advisory
+  audit, and explicit cargo-deny advisory/bans/license/source policy. The
+  active baseline still passes frozen install, wire authority checks,
+  typecheck, 338 tests with 23 live skips, build, full compatibility, mutation,
+  and npm package dry-run. `src/`, root `package.json`, `bun.lock`, and GitHub
+  workflow files have no diff.
+- Independent final review found an immediate AbortSignal registration race, a
+  hand-maintained and inaccurate public error declaration, and permissive
+  candidate-fixture matching. The Node facade now registers cancellation
+  synchronously before execution, rechecks the signal after listener
+  attachment, and passes an abort-at-once packaged regression. One typed
+  `index.ts` now generates both runtime JavaScript and declarations; acceptance
+  checks their byte-for-byte freshness and the public `DartyError` constructor.
+  Fixture selection now compares complete query and body maps for every method,
+  with regressions for unexpected POST queries and GET bodies. Targeted Rust
+  tests, Clippy, and clean packaged-consumer validation pass after the fixes.
+- Focused independent re-review found no actionable issue after those fixes.
+  Final validation passes on Rust 1.88: formatting, 26 workspace tests, Clippy,
+  warning-free docs, locked release builds, RustSec audit, and cargo-deny policy.
+  Clean package acceptance and all 17 candidate judge cases pass. The unchanged
+  active TypeScript product passes frozen install, wire checks, typecheck, all
+  338 tests with 23 live skips, build, all 21 frozen CLI cases, both mutation
+  sentinels, and npm package dry-run.
+- Final implementation PR #21 is open from `codex/rust-vertical-candidate` to
+  `codex/rust-vertical-workflow`. Its initial CI, GitGuardian, and CodeRabbit
+  checks passed before review feedback.
+- The PR #21 feedback audit classified 16 findings as actionable and five as
+  incompatible with or already satisfied by the frozen contracts. The local
+  post-review patch now preserves selected attachment URLs, confirms requested
+  receipt document numbers, distinguishes all-dropped pages from recognized
+  empty results, rejects malformed stock rows, preserves all specified remark
+  forms, safely decodes escaped shell titles, bounds TOC DAG expansion,
+  rewrites safe relative report URLs while rejecting protocol-relative URLs,
+  preserves Markdown indentation, removes the panicking client default, uses
+  safe disclosure slicing, reports the actual rejected CLI window value, and
+  bounds fixture-server shutdown. Static parser regexes and selectors are now
+  compiled once.
+- Focused post-review validation passes 22 SDK unit tests, 14 public fixture
+  workflow tests, the CLI regression, workspace Clippy with warnings denied,
+  warning-free documentation, clean packaged-consumer acceptance, and all 17
+  candidate compatibility scenarios. Regression evidence also proves the
+  existing camel-case error serialization and missing-optional-field behavior.
+- The all-dropped distinction now applies consistently to company and filing
+  searches: both preserve positive source pagination, report partial
+  completeness and dropped rows, and omit `no_results`; recognized empty
+  shapes retain their operation-specific frozen pagination contracts.
+- A focused independent re-review found three final issues: main-body receipt
+  URLs without a selected `dcmNo` incorrectly rejected the already validated
+  initial document number, WHATWG URL parsing could reinterpret backslashes as
+  an origin escape, and the JavaScript line-continuation decoder was unreachable
+  without dot-all assignment matching. The fixes preserve strict document
+  confirmation through the validated initial locator, require joined relative
+  URLs to remain on the exact HTTPS DART origin, and parse multiline shell
+  assignments. Dedicated regressions cover each boundary.
+- The independent reviewer found no actionable issue in the complete final
+  feedback diff after those fixes. It confirmed the three findings are resolved,
+  `git diff --check` passes, and active TypeScript, root package, lockfile, and
+  workflow paths remain unchanged.
+- The final post-feedback matrix passes on Rust 1.88: formatting, 38 workspace
+  tests (22 SDK unit, 14 public fixture, one CLI, one Node), Clippy with warnings
+  denied, warning-free docs, and locked release builds. RustSec and cargo-deny
+  pass with only the established duplicate-`syn` warning. The unchanged active
+  TypeScript baseline passes frozen install, wire checks, typecheck, 338 tests
+  with 23 live skips, build, all 21 full-profile compatibility cases, both
+  mutation sentinels, and npm package dry-run; `src/`, root `package.json`,
+  `bun.lock`, and GitHub workflows remain unchanged.
+- Clean packaged-consumer acceptance and the fixture-enabled Rust CLI candidate
+  judge pass after the final review fixes; all 17 candidate scenarios match.

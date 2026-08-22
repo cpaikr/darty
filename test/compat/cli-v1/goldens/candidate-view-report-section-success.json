@@ -1,0 +1,79 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "help": [
+      "Use returned document and section IDs only with this report."
+    ],
+    "metadata": {
+      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "source": {
+        "endpoints": {
+          "content": "https://dart.fss.or.kr/report/viewer.do",
+          "shell": "https://dart.fss.or.kr/dsaf001/main.do"
+        },
+        "surface": "dsaf001",
+        "system": "dart"
+      },
+      "tocSource": "dart"
+    },
+    "references": {
+      "viewerUrl": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260101000001"
+    },
+    "result": {
+      "content": {
+        "body": "## 배당에 관한 사항\n\n**가람전자**는 이 fixture 안에서만 존재하는 가상 회사입니다.\n\nCP949 확장 음절 갂은 WHATWG EUC-KR 동작을 구별하기 위한 가상 표식입니다.\n\n이 문단은 UTF-8과 MS949 계열 디코딩, HTML 정리, Markdown 변환, 그리고 콘텐츠 윈도우를 검증하기 위한 독립적인 가상 데이터입니다. 실제 회사, 공시, 인물, 금액 또는 DART 응답을 복사하지 않았습니다.\n\n<table><tbody><tr><th>구분</th><th>내용</th></tr><tr><td>현금배당</td><td>가상 값</td></tr></tbody></table>\n\n첫 번째 추가 문단입니다. 동일한 입력에서 바이트 기준 경계가 문자 경계를 손상하지 않는지 확인합니다.\n\n두 번째 추가 문단입니다. 반환 본문이 최소 윈도우보다 길 때 다음 시작 바이트를 안정적으로 계산해야 합니다.\n\n세 번째 추가 문단입니다. 표는 병합 셀과 구조를 오해하게 만드는 파이프 표로 강제 변",
+        "format": "markdown",
+        "isFullContent": false,
+        "returnedBytes": 998,
+        "scope": "section",
+        "section": {
+          "id": "section:1.1",
+          "title": "1. 배당에 관한 사항"
+        },
+        "sizeBytes": 1754,
+        "window": {
+          "endByte": 998,
+          "hasMore": true,
+          "nextStartByte": 998,
+          "startByte": 0,
+          "unit": "utf8-bytes"
+        }
+      },
+      "document": {
+        "id": "document:body:1",
+        "kind": "body",
+        "selected": true,
+        "title": "가람전자 사업보고서"
+      },
+      "navigation": {
+        "children": [],
+        "parent": {
+          "id": "section:1",
+          "title": "I. 회사의 개요"
+        },
+        "previous": {
+          "id": "section:1",
+          "title": "I. 회사의 개요"
+        }
+      },
+      "receipt": {
+        "receiptNumber": "20260101000001"
+      },
+      "request": {
+        "contentStartByte": 0,
+        "maxBytes": 1000,
+        "outputFormat": "markdown",
+        "receipt": "20260101000001",
+        "sectionId": "section:1.1"
+      }
+    },
+    "warnings": [
+      {
+        "code": "content_truncated",
+        "message": "The rendered content is windowed; continue with window.nextStartByte."
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+[workspace]
+members = ["crates/darty", "crates/darty-cli", "crates/darty-node"]
+resolver = "3"
+
+[workspace.package]
+version = "0.5.0"
+edition = "2024"
+rust-version = "1.88"
+license = "Elastic-2.0"
+repository = "https://github.com/sjunepark/darty"
+
+[workspace.dependencies]
+ammonia = "4.1.4"
+async-trait = "0.1.89"
+chrono = { version = "0.4.42", default-features = false, features = ["clock", "serde"] }
+clap = { version = "4.6.6", features = ["derive"] }
+encoding_rs = "0.8.35"
+ego-tree = "0.11.0"
+futures-util = "0.3.31"
+napi = { version = "3.12.2", default-features = false, features = ["napi8", "tokio_rt"] }
+napi-build = "2.3.1"
+napi-derive = "3.6.3"
+regex = "1.12.2"
+reqwest = { version = "0.13.4", default-features = false, features = ["form", "query", "rustls", "stream"] }
+scraper = "0.27.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+tokio = { version = "1.49.0", features = ["io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
+tokio-util = "0.7.18"
+url = { version = "2.5.8", features = ["serde"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
