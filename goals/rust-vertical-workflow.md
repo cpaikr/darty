@@ -33,15 +33,20 @@ _None._
 - Recoverable compatibility baseline and mutation-tested parity judge — merged
   through PR #19 at `ff8770c`; locally marked by the annotated non-release tag
   `archive/rust-rewrite-baseline`.
+- Canonical DART wire authority and discarded Rust feasibility slice — merged
+  through PR #20 at `de663c6` after all ten review threads were resolved.
 
 ### Current in-scope result
 
-Canonical DART wire authority and discarded Rust feasibility slice.
+Retained company-search → filing-search → report-viewing candidate through the
+Rust SDK, async Node SDK, Clap CLI, forwarding npm launcher, and current-host
+native package, followed by vertical acceptance and independent review.
 
 ### Next in-scope action
 
-Deliver the canonical authority and discarded feasibility evidence through the
-PR 2 review lifecycle. Do not start the retained candidate until PR 2 is merged.
+Reconcile the accepted plan and current repository boundaries, then design and
+implement the retained candidate as the final reviewable PR without changing
+the active TypeScript product or porting the five excluded operations.
 
 ### Evidence and blockers
 
@@ -115,3 +120,7 @@ PR 2 review lifecycle. Do not start the retained candidate until PR 2 is merged.
 - An independent post-fix review classified every PR #20 finding as resolved,
   found no remaining correctness or design issue, and confirmed that no active
   TypeScript, package, lockfile, compatibility-test, or CI file changed.
+- PR #20 passed CI and security checks, received explicit CodeRabbit
+  confirmation on its fixes, and completed with no pending, unresolved, or
+  outside-diff feedback. Its three commits were preserved by merge commit
+  `de663c6` on 2026-08-22.
