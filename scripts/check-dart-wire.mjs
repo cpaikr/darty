@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import SwaggerParser from "@apidevtools/swagger-parser";
@@ -30,12 +31,15 @@ const expectedOperations = new Map([
 const expectedCaseIds = [
   "company-populated",
   "company-empty",
+  "company-partial",
   "company-changed",
   "reports-populated",
   "reports-advanced-filters",
   "reports-empty",
+  "reports-partial",
   "reports-changed",
   "report-shell-toc",
+  "report-shell-attachment",
   "report-shell-no-toc",
   "report-shell-no-selected",
   "report-shell-changed",
@@ -53,12 +57,59 @@ const expectedFaults = [
     retryable: true,
   },
   {
-    id: "source-timeout",
+    id: "source-redirect",
     operationIds: [...expectedOperations.keys()],
-    recipe: { stallAfterRequest: true, minimumMilliseconds: 30001 },
+    recipe: {
+      status: 302,
+      location: "https://example.invalid/outside-dart",
+      bodyBytes: 0,
+      followRedirects: false,
+    },
+    rule: "WIRE-REDIRECT-1",
+    classification: "source_unavailable",
+    retryable: true,
+  },
+  {
+    id: "source-connect-timeout",
+    operationIds: [...expectedOperations.keys()],
+    recipe: { stallDuringConnectMilliseconds: 5001, timeoutMilliseconds: 5000 },
     rule: "WIRE-TIMEOUT-1",
     classification: "source_unavailable",
     retryable: true,
+  },
+  {
+    id: "source-idle-read-timeout",
+    operationIds: [...expectedOperations.keys()],
+    recipe: {
+      status: 200,
+      contentType: "text/html; charset=UTF-8",
+      initialBodyBytes: 1,
+      stallAfterBodyMilliseconds: 10001,
+      timeoutMilliseconds: 10000,
+    },
+    rule: "WIRE-TIMEOUT-1",
+    classification: "source_unavailable",
+    retryable: true,
+  },
+  {
+    id: "source-total-timeout",
+    operationIds: [...expectedOperations.keys()],
+    recipe: { stallAfterRequestMilliseconds: 30001, timeoutMilliseconds: 30000 },
+    rule: "WIRE-TIMEOUT-1",
+    classification: "source_unavailable",
+    retryable: true,
+  },
+  {
+    id: "source-wrong-media-type",
+    operationIds: [...expectedOperations.keys()],
+    recipe: {
+      status: 200,
+      contentType: "application/json; charset=UTF-8",
+      bodyBytes: 2,
+    },
+    rule: "WIRE-CONTENT-TYPE-1",
+    classification: "source_parse_failure",
+    retryable: false,
   },
   {
     id: "source-unsupported-charset",
@@ -103,7 +154,6 @@ const sha256File = async (path) => sha256(await readFile(path));
 const sorted = (values) => [...values].sort();
 const sameSet = (left, right) =>
   JSON.stringify(sorted(left)) === JSON.stringify(sorted(right));
-const sameJson = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const resolveSchema = (schema) => {
   if (schema?.$ref === undefined) return schema;
@@ -112,6 +162,15 @@ const resolveSchema = (schema) => {
     fail(`unsupported schema reference ${schema.$ref}`);
   }
   return resolveSchema(api.components.schemas[name]);
+};
+
+const resolveResponse = (response) => {
+  if (response?.$ref === undefined) return response;
+  const name = response.$ref.match(/^#\/components\/responses\/([^/]+)$/)?.[1];
+  if (name === undefined || api.components?.responses?.[name] === undefined) {
+    fail(`unsupported response reference ${response.$ref}`);
+  }
+  return api.components.responses[name];
 };
 
 const validateScalar = (rawValue, rawSchema, field) => {
@@ -183,7 +242,8 @@ const resolveFixturePath = (fixturePath) => {
   return absolute;
 };
 
-const api = await SwaggerParser.validate(openapiPath, {
+const api = await SwaggerParser.parse(openapiPath);
+await SwaggerParser.validate(openapiPath, {
   resolve: { external: false },
   validate: { schema: true, spec: true },
 });
@@ -226,7 +286,8 @@ for (const [operationId, expected] of expectedOperations) {
   if (operation?.operationId !== operationId) {
     fail(`${expected.method} ${expected.path} must have operationId ${operationId}`);
   }
-  if (operation.responses?.["200"]?.content?.["text/html"] === undefined) {
+  const successResponse = resolveResponse(operation.responses?.["200"]);
+  if (successResponse?.content?.["text/html"] === undefined) {
     fail(`${operationId} must declare a text/html 200 response`);
   }
   if (operation.responses?.default === undefined) {
@@ -253,10 +314,13 @@ for (const [operationId, schemaName] of operationSchemas) {
   if (encoding?.style !== "form" || encoding.explode !== true) {
     fail(`${operationId}.${arrayField} must use repeated exploded form fields`);
   }
+  if (media.schema?.$ref !== `#/components/schemas/${schemaName}`) {
+    fail(`${operationId} must reference ${schemaName}`);
+  }
   if (api.components?.schemas?.[schemaName] === undefined) {
     fail(`missing OpenAPI schema ${schemaName}`);
   }
-  const schema = api.components.schemas[schemaName];
+  const schema = resolveSchema(media.schema);
   const optionalProperties = operationId === "searchCompanyReportsFragment" ? ["publicType"] : [];
   const expectedRequired = Object.keys(schema.properties).filter(
     (name) => !optionalProperties.includes(name),
@@ -317,7 +381,8 @@ const resolvedRequests = new Map();
 const resolveRequest = (fixtureCase, stack = []) => {
   if (resolvedRequests.has(fixtureCase.id)) return resolvedRequests.get(fixtureCase.id);
   const request = fixtureCase.request;
-  if (request?.matchRequestFrom === undefined) {
+  if (request === undefined) fail(`${fixtureCase.id} has no request`);
+  if (request.matchRequestFrom === undefined) {
     const copy = structuredClone(request);
     resolvedRequests.set(fixtureCase.id, copy);
     return copy;
@@ -493,7 +558,13 @@ for (const fault of faults) {
       fault.classification !== "source_parse_failure" ||
       fault.retryable !== false
     ) fail(`${fault.id} oversized recipe semantics drifted`);
-  } else if (!sameJson(fault, expectedFault)) {
+  } else if (
+    !sameSet(fault.operationIds, expectedFault.operationIds) ||
+    !isDeepStrictEqual(fault.recipe, expectedFault.recipe) ||
+    fault.rule !== expectedFault.rule ||
+    fault.classification !== expectedFault.classification ||
+    fault.retryable !== expectedFault.retryable
+  ) {
     fail(`${fault.id} recipe semantics drifted`);
   }
   if (fault.id === "source-unsupported-charset") {

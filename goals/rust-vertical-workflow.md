@@ -59,14 +59,15 @@ PR 2 review lifecycle. Do not start the retained candidate until PR 2 is merged.
 - Additional fixture-backed vertical success and `--agent` scenarios are not yet in the manifest. They remain intentionally assigned to canonical wire authority and must join the judge before candidate acceptance.
 - PR #19 passed repository CI and completed the required review lifecycle with all four review threads resolved and no pending or outside-diff feedback. Its three commits were preserved by merge commit `ff8770c` on 2026-08-22.
 - PR 2 authority candidate defines exactly four upstream operations in OpenAPI,
-  25 stable HTML/viewer/transport rules, 14 independently fictional fixture
-  cases with language-neutral expected outcomes, and 6 exact transport fault
-  recipes covering all three byte caps. `bun run check:dart-wire` validates
+  25 stable HTML/viewer/transport rules, 17 independently fictional fixture
+  cases with language-neutral expected outcomes, and 10 exact transport fault
+  recipes covering redirects, media type, every deadline phase, and all three
+  byte caps. `bun run check:dart-wire` validates
   exact operation triples, schema-conforming serialized requests and coupled
   form invariants, fixture hashes and provenance, CP949-only and malformed-byte
   behavior through every accepted alias, qualification completeness, and the
-  authority lock. Eleven fixture cases also conform through the unchanged
-  active TypeScript parsers.
+  authority lock. Fourteen fixture cases conform through the unchanged active
+  TypeScript parsers, and nine POST cases exercise the active serializers.
 - Five bounded metadata-only live probes on 2026-08-22 returned HTTP 200 without
   authentication or redirects: company search (7,315 bytes), filing search
   (18,514), report shell (71,132), UTF-8 section (4,753), and MS949 no-TOC
@@ -98,3 +99,19 @@ PR 2 review lifecycle. Do not start the retained candidate until PR 2 is merged.
   to the representative default workflow, required numeric timeout and
   cancellation configurations plus their measurement limits, and corrected
   the initialization wording. Re-review found no remaining actionable issue.
+- PR #20 received four CodeRabbit and six Codex findings. The review follow-up
+  adds successful partial-row cases, an attachment-selected shell case, exact
+  nested TOC and document projections, active POST serializer conformance with
+  repeated fields, redirect and media-type failures, and distinct connect,
+  idle-read, and total deadline recipes. It also hardens missing-request and
+  reference-cycle handling, exercises raw OpenAPI references before validation,
+  and makes fault-set comparison independent of object key order.
+- The review-strengthened authority passes 17 fictional fixture cases and 10
+  exact fault recipes. Fourteen cases conform through unchanged active
+  TypeScript parsers, and nine POST cases conform through unchanged active
+  serializers. Frozen install, wire checks, typecheck, 338 tests with 23 live
+  skips, build, all 21 compatibility cases, both mutation sentinels, package
+  dry-run, active-TypeScript diff checks, and whitespace checks pass.
+- An independent post-fix review classified every PR #20 finding as resolved,
+  found no remaining correctness or design issue, and confirmed that no active
+  TypeScript, package, lockfile, compatibility-test, or CI file changed.

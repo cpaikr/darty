@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "authorityVersion": "dart-wire-v1",
-  "description": "Cross-language fictional evidence for the three-operation DART vertical workflow.",
+  "description": "Cross-language fictional evidence for the four-operation DART wire workflow.",
   "selectionRule": "Match method, path, required headers, and complete form or query. Never select by case id alone.",
   "cases": [
     {
@@ -65,6 +65,24 @@
         "sha256": "87a8b7a5aed98160e90f6727e791dc0b1b1db815f026640104439b9188474893"
       },
       "expected": { "kind": "success", "parser": "company-search", "rows": 0, "droppedRows": 0, "pagination": { "currentPage": 1, "totalPages": 0, "totalCount": 0, "returnedCount": 0 } },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "company-partial",
+      "operationId": "searchCompanyFragment",
+      "rules": ["COMPANY-TABLE-1", "COMPANY-ROW-1", "COMPANY-PAGE-1", "COMPANY-PARTIAL-1"],
+      "request": { "matchRequestFrom": "company-populated", "formOverrides": { "textCrpNm": "부분회사" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-partial.utf8.html",
+        "sha256": "1c003ece68119c1ba6e413e9804188111ed0871950d511889d11be173620cbe3"
+      },
+      "expected": {
+        "kind": "success", "parser": "company-search", "rows": 1, "droppedRows": 1,
+        "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 2, "returnedCount": 1 },
+        "first": { "companyCode": "00000001", "companyName": "가람전자", "stockCode": "123456", "marketKind": "kospi" }
+      },
       "provenance": { "kind": "fictional", "containsLiveResponseData": false }
     },
     {
@@ -139,7 +157,7 @@
         "matchRequestFrom": "reports-populated",
         "formOverrides": {
           "reportName": "연차보고서", "reportName2": "연차보고서",
-          "publicType": ["A001"], "businessCode": "ROOT0001", "businessNm": ""
+          "publicType": ["A001", "A002"], "businessCode": "ROOT0001", "businessNm": ""
         }
       },
       "response": {
@@ -167,6 +185,24 @@
         "sha256": "33bedccf37aa12f4085f46182f8b11d0e223c1fab343a81c350f442fb4dcb3d9"
       },
       "expected": { "kind": "success", "parser": "company-reports", "rows": 0, "droppedRows": 0, "pagination": { "currentPage": 1, "totalPages": 0, "totalCount": 0, "returnedCount": 0 } },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "reports-partial",
+      "operationId": "searchCompanyReportsFragment",
+      "rules": ["REPORTS-TABLE-1", "REPORTS-ROW-1", "REPORTS-PAGE-1", "REPORTS-PARTIAL-1"],
+      "request": { "matchRequestFrom": "reports-populated", "formOverrides": { "textCrpCik": "00000001" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/reports-partial.utf8.html",
+        "sha256": "413758789010562ab6677bb47ca22ec4d8a598a9c41eb3525f4fdc2202fe3725"
+      },
+      "expected": {
+        "kind": "success", "parser": "company-reports", "rows": 1, "droppedRows": 1,
+        "pagination": { "currentPage": 1, "totalPages": 1, "totalCount": 2, "returnedCount": 1 },
+        "first": { "companyCode": "00000001", "reportTitle": "[기재정정]사업보고서", "receiptNumber": "20260101000001", "receiptDate": "2026-01-01" }
+      },
       "provenance": { "kind": "fictional", "containsLiveResponseData": false }
     },
     {
@@ -198,7 +234,54 @@
         "kind": "success", "parser": "report-shell", "documentCount": 2,
         "selectedQuery": "rcpNo=20260101000001", "selectedWasExplicit": true,
         "tocRoots": 1,
+        "documents": [
+          { "title": "가람전자 사업보고서", "kind": "body", "selected": true, "query": "rcpNo=20260101000001" },
+          { "title": "2026.01.01 감사보고서", "kind": "attachment", "selected": false, "query": "rcpNo=20260101000001&dcmNo=10000002" }
+        ],
+        "toc": [
+          {
+            "title": "I. 회사의 개요",
+            "locator": { "rcpNo": "20260101000001", "dcmNo": "10000001", "eleId": "1", "offset": "100", "length": "900", "dtd": "dart4.xsd", "tocNo": "1" },
+            "children": [
+              {
+                "title": "1. 배당에 관한 사항",
+                "locator": { "rcpNo": "20260101000001", "dcmNo": "10000001", "eleId": "2", "offset": "200", "length": "300", "dtd": "dart4.xsd", "tocNo": "2" },
+                "children": []
+              }
+            ]
+          }
+        ],
         "initialLocator": { "rcpNo": "20260101000001", "dcmNo": "10000001", "eleId": "1", "offset": "100", "length": "900", "dtd": "dart4.xsd", "tocNo": "" }
+      },
+      "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-shell-attachment",
+      "operationId": "fetchReportShell",
+      "rules": ["SHELL-DOCUMENTS-1", "SHELL-TREE-1", "SHELL-INITIAL-1", "SHELL-SELECTION-1"],
+      "request": { "method": "GET", "path": "/dsaf001/main.do", "headers": { "user-agent": { "present": true } }, "query": { "rcpNo": "20260101000001", "dcmNo": "10000002" } },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-shell-attachment.utf8.html",
+        "sha256": "46b53750b566dae155179e873a49ecfa0a8c0fe03ae452b7f0273c3ca08c5eb5"
+      },
+      "expected": {
+        "kind": "success", "parser": "report-shell", "documentCount": 2,
+        "selectedQuery": "rcpNo=20260101000001&dcmNo=10000002", "selectedWasExplicit": true,
+        "tocRoots": 1,
+        "documents": [
+          { "title": "가람전자 사업보고서", "kind": "body", "selected": false, "query": "rcpNo=20260101000001" },
+          { "title": "가람전자 감사보고서", "kind": "attachment", "selected": true, "query": "rcpNo=20260101000001&dcmNo=10000002" }
+        ],
+        "toc": [
+          {
+            "title": "감사보고서 본문",
+            "locator": { "rcpNo": "20260101000001", "dcmNo": "10000002", "eleId": "10", "offset": "1000", "length": "500", "dtd": "dart4.xsd", "tocNo": "10" },
+            "children": []
+          }
+        ],
+        "initialLocator": { "rcpNo": "20260101000001", "dcmNo": "10000002", "eleId": "10", "offset": "1000", "length": "500", "dtd": "dart4.xsd", "tocNo": "10" }
       },
       "provenance": { "kind": "fictional", "containsLiveResponseData": false }
     },
@@ -311,12 +394,44 @@
       "retryable": true
     },
     {
-      "id": "source-timeout",
+      "id": "source-redirect",
       "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
-      "recipe": { "stallAfterRequest": true, "minimumMilliseconds": 30001 },
+      "recipe": { "status": 302, "location": "https://example.invalid/outside-dart", "bodyBytes": 0, "followRedirects": false },
+      "rule": "WIRE-REDIRECT-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-connect-timeout",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "stallDuringConnectMilliseconds": 5001, "timeoutMilliseconds": 5000 },
       "rule": "WIRE-TIMEOUT-1",
       "classification": "source_unavailable",
       "retryable": true
+    },
+    {
+      "id": "source-idle-read-timeout",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "status": 200, "contentType": "text/html; charset=UTF-8", "initialBodyBytes": 1, "stallAfterBodyMilliseconds": 10001, "timeoutMilliseconds": 10000 },
+      "rule": "WIRE-TIMEOUT-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-total-timeout",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "stallAfterRequestMilliseconds": 30001, "timeoutMilliseconds": 30000 },
+      "rule": "WIRE-TIMEOUT-1",
+      "classification": "source_unavailable",
+      "retryable": true
+    },
+    {
+      "id": "source-wrong-media-type",
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "recipe": { "status": 200, "contentType": "application/json; charset=UTF-8", "bodyBytes": 2 },
+      "rule": "WIRE-CONTENT-TYPE-1",
+      "classification": "source_parse_failure",
+      "retryable": false
     },
     {
       "id": "source-unsupported-charset",

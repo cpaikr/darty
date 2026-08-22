@@ -17,15 +17,15 @@
     },
     {
       "path": "fixtures/dart/vertical-v1/manifest.json",
-      "sha256": "90e8561b2fd78e24d774c2f21c3967b459767d12826a088db6de2aeec15b6dad"
+      "sha256": "57251778728bec289c31ff38c2866e85267bb540d30f6d37d90a5a50b863311e"
     },
     {
       "path": "scripts/check-dart-wire.mjs",
-      "sha256": "d8bb294be9b090998fa9947ee9fcadeb5578b0ac3746cca6fa132ac9fe63d74a"
+      "sha256": "dcff26087459739f52c9c7b966edb18882a73b133d8f575ca014381757a33103"
     },
     {
       "path": "scripts/check-dart-fixture-conformance.ts",
-      "sha256": "f419b25271454c0314c2efa3c91a41a56339fdce4bdc45ca8a5f0b1d134b8a8f"
+      "sha256": "0d41c79cee9801e2629867b76b697a0ff2fe9fccd99f3ca4ace6be49186d20e0"
     }
   ]
 }

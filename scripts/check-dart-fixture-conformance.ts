@@ -8,7 +8,9 @@ import { deepStrictEqual, strictEqual } from "node:assert";
 
 import { Effect } from "effect";
 
+import { buildCompanySearchForm } from "../src/sources/dart/dsae001/company/build-form.ts";
 import { parseCompanySearchHtml } from "../src/sources/dart/dsae001/company/parse-html.ts";
+import { buildCompanyReportsSearchForm } from "../src/sources/dart/dsab007/company-reports/build-form.ts";
 import { parseCompanyReportsSearchHtml } from "../src/sources/dart/dsab007/company-reports/parse-html.ts";
 import { parseReportShell } from "../src/sources/dart/dsaf001/report/parse-shell.ts";
 import { createDartSourceTextResponse } from "../src/sources/dart/source-response.ts";
@@ -21,19 +23,29 @@ const manifest = JSON.parse(
 const cases = new Map(manifest.cases.map((fixtureCase) => [fixtureCase.id, fixtureCase]));
 
 const resolvedRequests = new Map<string, Record<string, any>>();
-const resolveRequest = (fixtureCase: Record<string, any>): Record<string, any> => {
+const resolveRequest = (
+  fixtureCase: Record<string, any>,
+  stack: string[] = [],
+): Record<string, any> => {
   const cached = resolvedRequests.get(fixtureCase.id);
   if (cached !== undefined) return cached;
-  if (fixtureCase.request.matchRequestFrom === undefined) {
-    const request = structuredClone(fixtureCase.request);
+  const rawRequest = fixtureCase.request;
+  if (rawRequest === undefined) throw new Error(`${fixtureCase.id} has no request`);
+  if (rawRequest.matchRequestFrom === undefined) {
+    const request = structuredClone(rawRequest);
     resolvedRequests.set(fixtureCase.id, request);
     return request;
   }
-  const base = cases.get(fixtureCase.request.matchRequestFrom);
+  if (stack.includes(fixtureCase.id)) {
+    throw new Error(`fixture inheritance cycle at ${fixtureCase.id}`);
+  }
+  const base = cases.get(rawRequest.matchRequestFrom);
   if (base === undefined) throw new Error(`${fixtureCase.id} has no base request`);
-  const request = structuredClone(resolveRequest(base));
-  request.form = { ...request.form, ...fixtureCase.request.formOverrides };
-  request.query = { ...request.query, ...fixtureCase.request.queryOverrides };
+  const request = structuredClone(
+    resolveRequest(base, [...stack, fixtureCase.id]),
+  );
+  request.form = { ...request.form, ...rawRequest.formOverrides };
+  request.query = { ...request.query, ...rawRequest.queryOverrides };
   resolvedRequests.set(fixtureCase.id, request);
   return request;
 };
@@ -73,6 +85,46 @@ const reportsRequest = (form: Record<string, any>) => ({
   finalReportOnly: form.finalReport === "recent",
 });
 
+const assertSerializedForm = (
+  actual: URLSearchParams,
+  expected: Record<string, any>,
+  fixtureId: string,
+) => {
+  const expectedKeys = Object.entries(expected)
+    .filter(([, value]) => !Array.isArray(value) || value.length > 0)
+    .map(([name]) => name)
+    .sort();
+  const actualKeys = [...new Set(actual.keys())].sort();
+  deepStrictEqual(actualKeys, expectedKeys, `${fixtureId} serialized field names`);
+  for (const [name, rawValue] of Object.entries(expected)) {
+    const expectedValues = Array.isArray(rawValue)
+      ? rawValue.map(String)
+      : [String(rawValue)];
+    deepStrictEqual(
+      actual.getAll(name),
+      expectedValues,
+      `${fixtureId}.${name} serialization`,
+    );
+  }
+};
+
+const locatorProjection = (locator: Record<string, any>) => ({
+  rcpNo: locator.rcpNo,
+  dcmNo: locator.dcmNo,
+  eleId: locator.eleId,
+  offset: locator.offset,
+  length: locator.length,
+  dtd: locator.dtd,
+  ...(locator.tocNo === undefined ? {} : { tocNo: locator.tocNo }),
+});
+
+const tocProjection = (nodes: readonly Record<string, any>[]): unknown[] =>
+  nodes.map((node) => ({
+    title: node.title,
+    locator: locatorProjection(node.locator),
+    children: tocProjection(node.children),
+  }));
+
 const successProjection = (value: any, expected: Record<string, any>) => {
   if (expected.parser === "company-search") {
     return {
@@ -109,16 +161,41 @@ const successProjection = (value: any, expected: Record<string, any>) => {
     selectedQuery: value.selectedDocument.query,
     selectedWasExplicit: value.selectedDocument.selected,
     tocRoots: value.toc.length,
+    ...(expected.documents === undefined ? {} : {
+      documents: value.documents.map((document: Record<string, any>) => ({
+        title: document.title,
+        kind: document.kind,
+        selected: document.selected,
+        query: document.query,
+      })),
+    }),
+    ...(expected.toc === undefined ? {} : { toc: tocProjection(value.toc) }),
     initialLocator: value.initialViewLocator,
   };
 };
 
 let parserCases = 0;
+let serializerCases = 0;
 for (const fixtureCase of manifest.cases) {
   const expected = fixtureCase.expected;
+  const request = resolveRequest(fixtureCase);
+  if (fixtureCase.operationId === "searchCompanyFragment") {
+    assertSerializedForm(
+      buildCompanySearchForm(companyRequest(request.form)),
+      request.form,
+      fixtureCase.id,
+    );
+    serializerCases += 1;
+  } else if (fixtureCase.operationId === "searchCompanyReportsFragment") {
+    assertSerializedForm(
+      buildCompanyReportsSearchForm(reportsRequest(request.form)),
+      request.form,
+      fixtureCase.id,
+    );
+    serializerCases += 1;
+  }
   if (expected.parser === "report-content") continue;
   parserCases += 1;
-  const request = resolveRequest(fixtureCase);
   const body = await readFile(resolve(fixtureRoot, fixtureCase.response.bodyPath), "utf8");
   const query = new URLSearchParams(request.query ?? {}).toString();
   const sourceUrl = `https://dart.fss.or.kr${request.path}${query === "" ? "" : `?${query}`}`;
@@ -147,4 +224,4 @@ for (const fixtureCase of manifest.cases) {
 const authorityHash = createHash("sha256")
   .update(await readFile(resolve(repoRoot, "docs/specs/dart-wire-v1.openapi.yaml")))
   .digest("hex");
-console.log(`DART fictional fixtures conformed through ${parserCases} active TypeScript parser cases (authority ${authorityHash.slice(0, 12)}).`);
+console.log(`DART fictional fixtures conformed through ${parserCases} active TypeScript parser cases and ${serializerCases} POST serializer cases (authority ${authorityHash.slice(0, 12)}).`);

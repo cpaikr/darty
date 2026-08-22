@@ -22,18 +22,24 @@ this experiment.
 
 ## Boundary and inputs
 
+The hashes below identify the exact reviewed inputs used by the discarded
+probe. PR feedback later strengthened the retained corpus with additional
+partial-row, attachment-selection, serializer, TOC, redirect, media-type, and
+deadline-phase evidence; those additions are candidate acceptance obligations,
+not retroactive claims about this deleted experiment.
+
 - Host: `aarch64-apple-darwin`, macOS; `rustc 1.92.0`, `cargo 1.92.0`.
 - Isolation: one private `publish = false` Cargo crate created under the OS
   temporary directory, outside the repository.
 - Upstream: a local Axum fake; no live DART response body was fetched or
   retained by the Rust probe.
-- Authority: `dart-wire-v1.openapi.yaml` SHA-256
+- Probe input authority: `dart-wire-v1.openapi.yaml` SHA-256
   `484edfdafb0892b4a77756a39111eb2e26a60f26f7ef02e5e482e30b36468293`.
-- Companion: `dart-html-viewer-v1.md` SHA-256
+- Probe input companion: `dart-html-viewer-v1.md` SHA-256
   `dc0150c3a54b001d42eed17f84871f689d2286e50401a9dd47fb30cb0d226bb1`.
-- Fixture manifest: SHA-256
+- Probe input fixture manifest: SHA-256
   `90e8561b2fd78e24d774c2f21c3967b459767d12826a088db6de2aeec15b6dad`.
-- Authority lock: SHA-256
+- Probe input authority lock: SHA-256
   `1a6657aa808cd8130b2884c27bad74e87c11ba2b19b90ea8c94de1c1a4507900`.
 
 ## Disposable dependency resolution
