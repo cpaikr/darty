@@ -123,6 +123,81 @@ const assertHelpContains = (
   }
 };
 
+const assertSectionWindow = (
+  envelope: JsonRecord,
+  receiptNumber: string | undefined,
+  sectionId: string | undefined,
+  reasons: string[],
+): void => {
+  const result = getRecord(envelope, "result");
+  const returnedReceipt = getString(getRecord(result, "receipt"), "receiptNumber");
+  if (returnedReceipt !== receiptNumber) {
+    reasons.push(
+      `view-report section returned receipt ${returnedReceipt ?? "<missing>"}, expected ${receiptNumber ?? "<missing>"}`,
+    );
+  }
+
+  const content = getRecord(result, "content");
+  const returnedSection = getRecord(content, "section");
+  const returnedSectionId = getString(returnedSection, "id");
+  if (returnedSectionId !== sectionId) {
+    reasons.push(
+      `view-report section returned section ${returnedSectionId ?? "<missing>"}, expected ${sectionId ?? "<missing>"}`,
+    );
+  }
+
+  const window = getRecord(content, "window");
+  const hasMore = window?.hasMore;
+  if (typeof hasMore !== "boolean") {
+    reasons.push("view-report section did not return content.window.hasMore");
+    return;
+  }
+
+  const startByte = window?.startByte;
+  const endByte = window?.endByte;
+  if (
+    typeof startByte !== "number" ||
+    !Number.isInteger(startByte) ||
+    startByte < 0 ||
+    typeof endByte !== "number" ||
+    !Number.isInteger(endByte) ||
+    endByte < startByte
+  ) {
+    reasons.push("view-report section returned invalid content.window byte bounds");
+  }
+
+  const help = getArray(envelope, "help");
+  const helpText = (help ?? []).filter((entry): entry is string => typeof entry === "string");
+  if (hasMore) {
+    const nextStartByte = window?.nextStartByte;
+    if (
+      typeof nextStartByte !== "number" ||
+      !Number.isInteger(nextStartByte) ||
+      nextStartByte < 0 ||
+      (typeof endByte === "number" && nextStartByte !== endByte)
+    ) {
+      reasons.push(
+        "truncated view-report section did not return a valid content.window.nextStartByte continuation",
+      );
+    }
+
+    if (
+      typeof nextStartByte === "number" &&
+      !helpText.some(
+        (entry) =>
+          entry.includes("Continue content") &&
+          entry.includes(`content-start-byte ${nextStartByte}`),
+      )
+    ) {
+      reasons.push(
+        "truncated view-report section did not expose a matching continuation command in help[]",
+      );
+    }
+  } else if (!helpText.some((entry) => entry.includes("toc"))) {
+    reasons.push("complete view-report section omitted a TOC/navigation recovery hint");
+  }
+};
+
 const reasons: string[] = [];
 
 const companyEnvelope = runStepOrRecordFailure(
@@ -205,16 +280,12 @@ const sectionEnvelope = runStepOrRecordFailure(
 );
 const content = getRecord(getRecord(sectionEnvelope, "result"), "content");
 const body = getString(content, "body");
-const window = getRecord(content, "window");
 
 if (body === undefined || body.length === 0) {
   reasons.push("view-report section did not return content.body");
 }
-if (typeof window?.hasMore !== "boolean") {
-  reasons.push("view-report section did not return content.window.hasMore");
-}
 if (sectionEnvelope !== undefined) {
-  assertHelpContains(sectionEnvelope, "toc", reasons);
+  assertSectionWindow(sectionEnvelope, receiptNumber, sectionId, reasons);
 }
 
 if (reasons.length > 0) {

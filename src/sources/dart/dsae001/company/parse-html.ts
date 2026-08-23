@@ -74,11 +74,43 @@ const parsePagination = (
   response: DartSourceTextResponse,
 ): Effect.Effect<SourceCompanyPagination, SourceChanged> =>
   Effect.gen(function* () {
+    const table = $("#corpTable").first();
+    const tbody = table.children("tbody").first();
+
+    if (table.length === 0 || tbody.length === 0) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsae001CompanyMessages.missingResultTable,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    const rows = tbody.children("tr");
+    const sentinelRows = rows.filter((_, row) => $(row).hasClass("noData"));
+    const noResults = sentinelRows.length > 0;
+    if (
+      (noResults &&
+        (sentinelRows.length !== 1 ||
+          rows.length !== 1 ||
+          $(sentinelRows.get(0)).children("td").length !== 1)) ||
+      (!noResults && rows.length === 0)
+    ) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsae001CompanyMessages.missingResultRows,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
     const pageInfoText = collapseWhitespace($(".pageInfo").first().text());
-    const pageInfoMatch = pageInfoText.match(/\[(\d+)\/(\d+)\]\s*\[총\s*([0-9,]+)건\]/);
+    const pageInfoMatch = pageInfoText.match(
+      /\[(\d+)\/(\d+)\]\s*\[총\s*([0-9,]+)건\]/,
+    );
 
     if (pageInfoMatch === null) {
-      if ($("#corpTable tbody tr.noData").length > 0) {
+      if (noResults) {
         return {
           currentPage: request.currentPage,
           totalPages: 0,
@@ -96,7 +128,12 @@ const parsePagination = (
     }
 
     const totalCount = parseNumber(pageInfoMatch[3] ?? "");
-    if (totalCount === undefined) {
+    const totalPages = Number.parseInt(pageInfoMatch[2] ?? "0", 10);
+    if (
+      totalCount === undefined ||
+      (noResults && (totalCount !== 0 || totalPages !== 0)) ||
+      (!noResults && (totalCount === 0 || totalPages === 0))
+    ) {
       return yield* Effect.fail(
         new SourceChanged({
           message: dsae001CompanyMessages.missingTotalCount,
@@ -150,14 +187,20 @@ const parseRows = (
   readonly rows: readonly SourceCompanyRow[];
   readonly warnings: readonly SourceCompanyParseWarning[];
 } => {
-  if ($("#corpTable tbody tr.noData").length > 0) {
+  if (
+    $("#corpTable").first().children("tbody").first().children("tr.noData")
+      .length > 0
+  ) {
     return { rows: [], warnings: [] };
   }
 
   const rows: SourceCompanyRow[] = [];
   const warnings: SourceCompanyParseWarning[] = [];
 
-  $("#corpTable tbody tr")
+  $("#corpTable").first()
+    .children("tbody")
+    .first()
+    .children("tr")
     .toArray()
     .forEach((row, rowIndex) => {
       try {
@@ -186,8 +229,8 @@ export const parseCompanySearchHtml = (
 
   return Effect.gen(function* () {
     const $ = cheerio.load(html);
-    const parsedRows = parseRows($);
     const pagination = yield* parsePagination($, request, response);
+    const parsedRows = parseRows($);
 
     return yield* Schema.decodeUnknown(SourceCompanySearchPage)({
       request,

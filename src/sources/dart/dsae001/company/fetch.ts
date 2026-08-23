@@ -1,8 +1,4 @@
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-} from "@effect/platform";
+import { HttpClient, HttpClientRequest } from "@effect/platform";
 import { Effect, ParseResult, Schema } from "effect";
 
 import {
@@ -12,14 +8,11 @@ import {
   SourceUnavailable,
 } from "../../errors.ts";
 import {
-  toHttpFailureDiagnostics,
-  toHttpResponseDiagnostics,
-  toTextDecodeFailureDiagnostics,
-} from "../../http-diagnostics.ts";
-import {
-  createDartSourceTextResponse,
-  type DartSourceTextResponse,
-} from "../../source-response.ts";
+  dartFetchHttpClientLayer,
+  dartTransportLimits,
+  requestDartTextResponse,
+} from "../../transport.ts";
+import type { DartSourceTextResponse } from "../../source-response.ts";
 import { buildCompanySearchForm } from "./build-form.ts";
 import { dsae001CompanyMessages } from "./messages.ts";
 import { parseCompanySearchHtml } from "./parse-html.ts";
@@ -70,33 +63,13 @@ export const fetchCompanySearchHtml = (
       ),
     );
 
-    const response = yield* client.execute(request).pipe(
-      Effect.mapError(
-        (error) =>
-          new SourceUnavailable({
-            message: dsae001CompanyMessages.sourceUnavailable,
-            sourceUrl: searchUrl,
-            diagnostics: toHttpFailureDiagnostics(error),
-          }),
-      ),
-    );
-
-    const html = yield* response.text.pipe(
-      Effect.mapError(
-        (error) =>
-          new ParseFailure({
-            message: dsae001CompanyMessages.htmlDecodeFailure,
-            sourceUrl: searchUrl,
-            diagnostics: toTextDecodeFailureDiagnostics(response, error),
-          }),
-      ),
-    );
-
-    return createDartSourceTextResponse(
-      html,
-      searchUrl,
-      toHttpResponseDiagnostics(response, html),
-    );
+    return yield* requestDartTextResponse(client, request, {
+      sourceUrl: searchUrl,
+      unavailableMessage: dsae001CompanyMessages.sourceUnavailable,
+      parseFailureMessage: dsae001CompanyMessages.htmlDecodeFailure,
+      maxBytes: dartTransportLimits.searchCompany,
+      responseKind: "html",
+    });
   });
 
 export const searchCompanySourcePage = (
@@ -110,4 +83,4 @@ export const searchCompanySourcePage = (
     const form = buildCompanySearchForm(request);
     const response = yield* fetchCompanySearchHtml(form);
     return yield* parseCompanySearchHtml(response, request);
-  }).pipe(Effect.provide(FetchHttpClient.layer));
+  }).pipe(Effect.provide(dartFetchHttpClientLayer));

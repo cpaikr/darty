@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { Effect } from "effect";
+import { Effect, Either } from "effect";
 
+import { SourceChanged } from "../../errors.ts";
 import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseContentsSearchHtml } from "./parse-html.ts";
 
@@ -50,6 +51,51 @@ const attachmentHtml = `
 <div class="psWrap" id="psWrap">
   <div class="pageInfo">[1/1] [총 1건]</div>
 </div>
+`;
+
+const tablelessTotalHtml = `
+<input type="hidden" id="totalCnt" value="3">
+<div class="pageInfo">[1/1] [총 3건]</div>
+`;
+
+const adversarialViewerLinksHtml = `
+<table class="tbWideList">
+  <tbody>
+    <tr>
+      <th><a class="company" href="javascript:openCorpInfoNew('01368637', 'winCorpInfo', '/dsae001/selectPopup.ax');">유일에너테크</a>
+        <a class="second" href="https://evil.example/dsaf001/main.do?rcpNo=20260331904807">evil-origin</a></th>
+      <td>snippet</td><td class="info">[본문]</td><td class="date">2026.03.31</td>
+    </tr>
+    <tr>
+      <th><a class="company" href="javascript:openCorpInfoNew('01368637', 'winCorpInfo', '/dsae001/selectPopup.ax');">유일에너테크</a>
+        <a class="second" href="/dsaf001/not-main.do?rcpNo=20260331904807">wrong-path</a></th>
+      <td>snippet</td><td class="info">[본문]</td><td class="date">2026.03.31</td>
+    </tr>
+    <tr>
+      <th><a class="company" href="javascript:openCorpInfoNew('01368637', 'winCorpInfo', '/dsae001/selectPopup.ax');">유일에너테크</a>
+        <a class="second" href="/dsaf001/main.do?rcpNo=123">malformed-receipt</a></th>
+      <td>snippet</td><td class="info">[본문]</td><td class="date">2026.03.31</td>
+    </tr>
+    <tr>
+      <th><a class="company" href="javascript:openCorpInfoNew('01368637', 'winCorpInfo', '/dsae001/selectPopup.ax');">유일에너테크</a>
+        <a class="second" href="https://user:pass@dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331904807">userinfo</a></th>
+      <td>snippet</td><td class="info">[본문]</td><td class="date">2026.03.31</td>
+    </tr>
+  </tbody>
+</table>
+<input type="hidden" id="totalCnt" value="4">
+<div class="pageInfo">[1/1] [총 4건]</div>
+`;
+
+const mixedSentinelHtml = `
+<table class="tbWideList">
+  <tbody>
+    <td colspan="3">조회 결과가 없습니다.</td>
+    <tr><td>unexpected data row</td></tr>
+  </tbody>
+</table>
+<input type="hidden" id="totalCnt" value="1">
+<div class="pageInfo">[1/1] [총 1건]</div>
 `;
 
 describe("parseContentsSearchHtml", () => {
@@ -158,5 +204,111 @@ describe("parseContentsSearchHtml", () => {
       reportNameSuffix: "정관",
       contentTypeLabel: "첨부문서",
     });
+  });
+
+  test("rejects a total-count page without the body-search result table as source changed", async () => {
+    const result = await Effect.runPromise(
+      Effect.either(
+        parseContentsSearchHtml(
+          sourceResponse(tablelessTotalHtml),
+          {
+            option: "contents",
+            currentPage: 1,
+            maxResults: 10,
+            maxLinks: 10,
+            sort: "DATE",
+            sortType: "desc",
+            keyword: "배당",
+            startDate: "20250331",
+            endDate: "20260331",
+          },
+        ),
+      ),
+    );
+
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left).toBeInstanceOf(SourceChanged);
+    }
+  });
+
+  test("drops off-origin, wrong-path, and malformed-receipt viewer links", async () => {
+    const result = await Effect.runPromise(
+      parseContentsSearchHtml(
+        sourceResponse(adversarialViewerLinksHtml),
+        {
+          option: "contents",
+          currentPage: 1,
+          maxResults: 10,
+          maxLinks: 10,
+          sort: "DATE",
+          sortType: "desc",
+          keyword: "배당",
+          startDate: "20250331",
+          endDate: "20260331",
+        },
+      ),
+    );
+
+    expect(result.rows).toEqual([]);
+    expect(result.pagination.totalCount).toBe(4);
+    expect(result.droppedRowCount).toBe(4);
+    expect(result.warnings).toHaveLength(4);
+    expect(result.warnings.every((warning) => warning.code === "row_parse_failed")).toBe(true);
+  });
+
+  test("drops body rows whose company does not match the requested eight-digit code", async () => {
+    const wrongCompanyHtml = attachmentHtml.replace("00641001", "00641002");
+    const result = await Effect.runPromise(
+      parseContentsSearchHtml(
+        sourceResponse(wrongCompanyHtml),
+        {
+          option: "contents",
+          currentPage: 1,
+          maxResults: 10,
+          maxLinks: 10,
+          sort: "DATE",
+          sortType: "desc",
+          keyword: "배당",
+          startDate: "20250331",
+          endDate: "20260331",
+          textCrpCik: "00641001",
+        },
+      ),
+    );
+
+    expect(result.rows).toEqual([]);
+    expect(result.droppedRowCount).toBe(1);
+    expect(result.warnings[0]).toMatchObject({
+      code: "row_parse_failed",
+      message:
+        "A DART search result row belonged to a different company and was dropped.",
+    });
+  });
+
+  test("rejects mixed body no-result sentinel and data rows", async () => {
+    const result = await Effect.runPromise(
+      Effect.either(
+        parseContentsSearchHtml(
+          sourceResponse(mixedSentinelHtml),
+          {
+            option: "contents",
+            currentPage: 1,
+            maxResults: 10,
+            maxLinks: 10,
+            sort: "DATE",
+            sortType: "desc",
+            keyword: "배당",
+            startDate: "20250331",
+            endDate: "20260331",
+          },
+        ),
+      ),
+    );
+
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left).toBeInstanceOf(SourceChanged);
+    }
   });
 });

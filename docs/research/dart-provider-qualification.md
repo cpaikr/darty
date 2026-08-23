@@ -26,6 +26,42 @@ Conditional means deterministic conformance must be proven with fictional
 fixtures and live use must obey the policies below. Unknowns do not establish
 qualification by themselves.
 
+## Maintainer approval records
+
+This section is the canonical location for explicit maintainer decisions about
+provider qualification and operation/surface acceptance. Evidence, fixtures,
+deterministic checks, and bounded live probes do not constitute approval by
+themselves. No approval records are currently recorded for the conditional
+three-operation qualification above; do not infer one from this document's
+status or review date.
+
+Append one record for each reviewed operation/surface. Use an immutable
+evidence revision (for example, a source commit or reviewed lock revision),
+not a date alone. The required schema is:
+
+| Field | Required value |
+|---|---|
+| `approver` | Named maintainer handle or name who made the decision. |
+| `date` | Decision date in `YYYY-MM-DD` format. |
+| `evidence revision` | Exact revision of the reviewed provider evidence and contracts. |
+| `limitations` | Remaining scope, operational, provider, or platform limitations; use `none recorded` only when explicitly reviewed. |
+| `operation/surface` | The qualified operation and public surface, such as `search-company / Rust SDK`. |
+| `decision` | Explicit outcome, such as `approved`, `conditional`, `rejected`, or `withdrawn`. |
+
+Use this template when adding a real decision; placeholders are not approval
+records:
+
+```md
+### Approval record — <operation/surface> — <date>
+
+- approver: <named maintainer>
+- date: <YYYY-MM-DD>
+- evidence revision: <immutable revision>
+- limitations: <remaining limitations>
+- operation/surface: <operation> / <public surface>
+- decision: <approved | conditional | rejected | withdrawn>
+```
+
 ## Evidence register
 
 - **Documented:** DART's public search guide describes human-facing integrated

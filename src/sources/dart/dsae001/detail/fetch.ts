@@ -1,8 +1,4 @@
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-} from "@effect/platform";
+import { HttpClient, HttpClientRequest } from "@effect/platform";
 import { Effect } from "effect";
 
 import {
@@ -11,15 +7,12 @@ import {
   SourceNotFound,
   SourceUnavailable,
 } from "../../errors.ts";
+import type { DartSourceTextResponse } from "../../source-response.ts";
 import {
-  toHttpFailureDiagnostics,
-  toHttpResponseDiagnostics,
-  toTextDecodeFailureDiagnostics,
-} from "../../http-diagnostics.ts";
-import {
-  createDartSourceTextResponse,
-  type DartSourceTextResponse,
-} from "../../source-response.ts";
+  dartFetchHttpClientLayer,
+  dartTransportLimits,
+  requestDartTextResponse,
+} from "../../transport.ts";
 import { toDsae001CompanyDetailUrl } from "../urls.ts";
 import { dsae001DetailMessages } from "./messages.ts";
 import { parseCompanyDetailHtml } from "./parse-html.ts";
@@ -48,33 +41,13 @@ export const fetchCompanyDetailHtml = (
       ),
     );
 
-    const response = yield* client.execute(request).pipe(
-      Effect.mapError(
-        (error) =>
-          new SourceUnavailable({
-            message: dsae001DetailMessages.sourceUnavailable,
-            sourceUrl,
-            diagnostics: toHttpFailureDiagnostics(error),
-          }),
-      ),
-    );
-
-    const html = yield* response.text.pipe(
-      Effect.mapError(
-        (error) =>
-          new ParseFailure({
-            message: dsae001DetailMessages.htmlDecodeFailure,
-            sourceUrl,
-            diagnostics: toTextDecodeFailureDiagnostics(response, error),
-          }),
-      ),
-    );
-
-    return createDartSourceTextResponse(
-      html,
+    return yield* requestDartTextResponse(client, request, {
       sourceUrl,
-      toHttpResponseDiagnostics(response, html),
-    );
+      unavailableMessage: dsae001DetailMessages.sourceUnavailable,
+      parseFailureMessage: dsae001DetailMessages.htmlDecodeFailure,
+      maxBytes: dartTransportLimits.companyDetail,
+      responseKind: "html",
+    });
   });
 
 export const fetchCompanyDetailPage = (
@@ -86,4 +59,4 @@ export const fetchCompanyDetailPage = (
   Effect.gen(function* () {
     const response = yield* fetchCompanyDetailHtml(companyCode);
     return yield* parseCompanyDetailHtml(response, companyCode);
-  }).pipe(Effect.provide(FetchHttpClient.layer));
+  }).pipe(Effect.provide(dartFetchHttpClientLayer));

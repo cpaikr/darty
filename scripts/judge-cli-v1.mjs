@@ -72,7 +72,14 @@ const validateManifest = (manifest) => {
       ) ||
       !Array.isArray(scenario.argv) ||
       !scenario.argv.every((argument) => typeof argument === "string") ||
-      typeof scenario.golden !== "string"
+      typeof scenario.golden !== "string" ||
+      (scenario.fixtureFault !== undefined && typeof scenario.fixtureFault !== "string") ||
+      (scenario.fixtureFaultPhase !== undefined &&
+        !["shell", "content"].includes(scenario.fixtureFaultPhase)) ||
+      (scenario.fixtureEvidence !== undefined &&
+        scenario.fixtureEvidence !== "transport-failure-equivalent") ||
+      (scenario.timeoutMs !== undefined &&
+        (!Number.isInteger(scenario.timeoutMs) || scenario.timeoutMs < 1))
     ) {
       throw new Error(`Malformed or duplicate scenario: ${JSON.stringify(scenario)}`);
     }
@@ -235,7 +242,7 @@ const runScenario = ({ command, scenario, golden, cwd, fixtureOrigin }) => {
   const result = spawnSync(command[0], [...command.slice(1), ...scenario.argv], {
     cwd,
     encoding: "utf8",
-    timeout: 10_000,
+    timeout: scenario.timeoutMs ?? 10_000,
     shell: false,
     env: {
       PATH: process.env.PATH,
@@ -281,6 +288,40 @@ const runScenario = ({ command, scenario, golden, cwd, fixtureOrigin }) => {
   return failures;
 };
 
+const launchFixture = ({ cwd, name, fault, phase }) => {
+  const readyPath = join(cwd, `fixture-${name}`);
+  const fixtureServer = spawn(
+    process.execPath,
+    [join(scriptDir, "serve-dart-fixture.mjs"), readyPath],
+    {
+      cwd: repoRoot,
+      stdio: "ignore",
+      env: {
+        ...process.env,
+        ...(fault === undefined ? {} : { DARTY_FIXTURE_FAULT: fault }),
+        ...(fault === undefined
+          ? {}
+          : {
+              DARTY_FIXTURE_FAULT_DELAY_SCALE: "0.01",
+              // Fast reset bounds the candidate judge. It is explicitly a
+              // transport-failure equivalent, not deadline-duration proof.
+              DARTY_FIXTURE_FAULT_FAST: "1",
+            }),
+        ...(phase === undefined ? {} : { DARTY_FIXTURE_FAULT_PHASE: phase }),
+      },
+    },
+  );
+  const deadline = Date.now() + 5_000;
+  while (!existsSync(readyPath) && Date.now() < deadline) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+  }
+  if (!existsSync(readyPath)) {
+    fixtureServer.kill("SIGTERM");
+    throw new Error(`Fixture server did not become ready for ${name}.`);
+  }
+  return { child: fixtureServer, origin: readFileSync(readyPath, "utf8") };
+};
+
 let parsed;
 try {
   parsed = parseArguments(process.argv.slice(2));
@@ -293,25 +334,15 @@ if (parsed !== undefined) {
   validateManifest(manifest);
   const command = resolveCommandPaths(parsed.command);
   const isolatedCwd = mkdtempSync(join(tmpdir(), "darty-cli-v1-"));
-  const readyPath = join(isolatedCwd, "fixture-origin");
-  const fixtureServer =
-    parsed.profile === "candidate"
-      ? spawn(process.execPath, [join(scriptDir, "serve-dart-fixture.mjs"), readyPath], {
-          cwd: repoRoot,
-          stdio: "ignore",
-        })
-      : undefined;
+  let fixtureServer;
   let fixtureOrigin;
   let checked = 0;
 
   try {
-    if (fixtureServer !== undefined) {
-      const deadline = Date.now() + 5_000;
-      while (!existsSync(readyPath) && Date.now() < deadline) {
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
-      }
-      if (!existsSync(readyPath)) throw new Error("Fixture server did not become ready.");
-      fixtureOrigin = readFileSync(readyPath, "utf8");
+    if (parsed.profile === "candidate") {
+      const normalFixture = launchFixture({ cwd: isolatedCwd, name: "normal" });
+      fixtureServer = normalFixture.child;
+      fixtureOrigin = normalFixture.origin;
     }
     for (const scenario of manifest.scenarios) {
       const selected =
@@ -330,13 +361,27 @@ if (parsed !== undefined) {
       const goldenPath = join(dirname(manifestPath), scenario.golden);
       const golden = readJson(goldenPath);
       validateGolden(golden, goldenPath);
-      const failures = runScenario({
-        command,
-        scenario,
-        golden,
-        cwd: isolatedCwd,
-        fixtureOrigin,
-      });
+      const faultFixture =
+        parsed.profile === "candidate" && scenario.fixtureFault !== undefined
+          ? launchFixture({
+              cwd: isolatedCwd,
+              name: `fault-${scenario.id}`,
+              fault: scenario.fixtureFault,
+              phase: scenario.fixtureFaultPhase,
+            })
+          : undefined;
+      let failures;
+      try {
+        failures = runScenario({
+          command,
+          scenario,
+          golden,
+          cwd: isolatedCwd,
+          fixtureOrigin: faultFixture?.origin ?? fixtureOrigin,
+        });
+      } finally {
+        faultFixture?.child.kill("SIGTERM");
+      }
 
       if (failures.length === 0) {
         console.log(`PASS ${scenario.id}`);

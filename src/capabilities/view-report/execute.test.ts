@@ -102,4 +102,37 @@ describe("executeViewReport", () => {
       expect(error.recoveryHint).toContain("documents[].id/toc[].id");
     }
   });
+
+  test("does not tell callers to retry a stale document ID", async () => {
+    const provider: ViewReportProvider = {
+      view: async () => {
+        throw new ViewReportProviderError({
+          code: "not_found",
+          message: "stale document",
+          retryable: false,
+          providerId: "test",
+          parameter: "documentId",
+        });
+      },
+    };
+
+    try {
+      await executeViewReport(
+        { receipt: "20260331004166", documentId: "document:old" },
+        provider,
+      );
+      throw new Error("Expected view-report execution to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ViewReportFailure);
+
+      if (!(error instanceof ViewReportFailure)) {
+        throw error;
+      }
+
+      expect(error.parameter).toBe("documentId");
+      expect(error.recoveryHint).toContain("Omit documentId");
+      expect(error.recoveryHint).toContain("documents[].id");
+      expect(error.recoveryHint).not.toContain("same receipt/documentId");
+    }
+  });
 });

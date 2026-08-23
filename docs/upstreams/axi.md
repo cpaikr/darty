@@ -8,9 +8,16 @@ reviewed when AXI evolves.
 - Upstream: <https://github.com/kunchenguid/axi>
 - Branch: `main`
 - Baseline commit:
-  [`8447811bd42da136759454e2e710cb03d7ccadf7`](https://github.com/kunchenguid/axi/commit/8447811bd42da136759454e2e710cb03d7ccadf7)
-- Observed: `2026-06-22`
+  [`622a35b968ecfb7c7d9db40b837d57f4cd9dad71`](https://github.com/kunchenguid/axi/commit/622a35b968ecfb7c7d9db40b837d57f4cd9dad71)
+- Observed: `2026-08-23`
 - Machine-readable baseline: [`axi-baseline.json`](axi-baseline.json)
+
+The 2026-08-23 review covered AXI SDK releases 0.1.8 through 0.1.11. AXI's
+new fail-loud unknown-flag guidance already matches Darty's CLI parser and
+compatibility judge. The new SDK-owned updater, session-hook lifecycle, and
+dependency-free version fast path are not adopted: Darty does not use the AXI
+SDK, keeps its frozen CLI Transport v1 surface, and remains a read-only DART
+tool rather than a package-management or session-integration command.
 
 ## What Compliance Means Here
 

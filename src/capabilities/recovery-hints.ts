@@ -16,8 +16,11 @@ const dateWindowHint =
 const companyReportsDateWindowHint =
   "Because of DART behavior, call search-company-reports with date windows of 10 years or less.";
 
-const returnedViewReportIdHint =
-  "Call view-report again with the same receipt to get current documents[].id/toc[].id values, then use the returned value.";
+const returnedViewReportDocumentIdHint =
+  "Omit documentId and call view-report again with receipt to get current documents[].id values, then use the returned value.";
+
+const returnedViewReportSectionIdHint =
+  "Call view-report again with the same receipt/documentId to get current documents[].id/toc[].id values, then use the returned toc[].id.";
 
 const contentWindowHint =
   "contentStartByte must be an integer greater than or equal to 0. To continue a long body, pass the previous response's content.window.nextStartByte unchanged.";
@@ -89,8 +92,9 @@ export const getInvalidRequestRecoveryHint = (
     case "receipt":
       return "Pass receiptNumber or viewerUrl from search-body/search-company-reports results as receipt.";
     case "documentId":
+      return returnedViewReportDocumentIdHint;
     case "sectionId":
-      return returnedViewReportIdHint;
+      return returnedViewReportSectionIdHint;
     case "maxBytes":
       return `maxBytes must be ${formatViewReportExpectedMaxBytes()}. Start low and increase only when needed.`;
     case "contentStartByte":
@@ -116,9 +120,11 @@ export const getInvalidRequestRecoveryHint = (
 export const getViewReportNotFoundRecoveryHint = (
   parameter: string | undefined,
 ): string | undefined =>
-  parameter === "documentId" || parameter === "sectionId"
-    ? returnedViewReportIdHint
-    : undefined;
+  parameter === "documentId"
+    ? returnedViewReportDocumentIdHint
+    : parameter === "sectionId"
+      ? returnedViewReportSectionIdHint
+      : undefined;
 
 export const getCompanyNotFoundRecoveryHint = (): string => companyCodeHint;
 

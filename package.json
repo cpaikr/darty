@@ -26,6 +26,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "overrides": {
+    "nanoid": "3.3.18",
+    "postcss": "8.5.26",
+    "undici": "7.29.0"
+  },
   "engines": {
     "node": ">=20.18.1"
   },
@@ -41,6 +46,7 @@
     "eval:cli:search-body": "bun run evals/search-body/cli/run-eval.ts",
     "eval:agent-cli:search-body": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
     "eval:workflow:cli": "bun run evals/workflows/run-eval.ts",
+    "eval:workflow:agent": "varlock run -- bun run evals/workflows/agent-run-eval.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:compat:cli": "bun run build && node scripts/judge-cli-v1.mjs --profile full -- node dist/cli.js",
@@ -54,7 +60,7 @@
     "commander": "^14.0.3",
     "domhandler": "^5.0.3",
     "effect": "^3.17.0",
-    "sanitize-html": "^2.17.3"
+    "sanitize-html": "^2.17.7"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "12.1.0",

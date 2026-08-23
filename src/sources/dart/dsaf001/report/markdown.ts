@@ -42,8 +42,80 @@ const hasChildren = (
 const normalizeInline = (value: string): string =>
   value.replace(/[\t\n\r ]+/g, " ").trim();
 
-const escapeMarkdownText = (value: string): string =>
-  value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeMarkdownText = (value: string): string => {
+  // Text nodes are untrusted report prose. Escape Markdown controls here,
+  // while keeping the wrappers emitted for real HTML elements meaningful.
+  // Angle brackets remain entities so ordinary report labels stay readable.
+  let escaped = value
+    .replace(/\\/g, "\\\\")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/`/g, "\\`")
+    .replace(/\*/g, "\\*")
+    .replace(/_/g, "\\_")
+    .replace(/\[/g, "\\[")
+    .replace(/\]/g, "\\]")
+    .replace(/~/g, "\\~")
+    .replace(/\|/g, "\\|");
+
+  // GFM recognizes bare URLs. A backslash before the scheme separator keeps
+  // a URL-looking value as prose without changing how it renders.
+  escaped = escaped
+    .replace(/\b((?:https?|ftp)):\/\//gi, "$1\\://")
+    .replace(/\b(www)\./gi, "$1\\.")
+    .replace(/\b([\w.+-]+)@([\w.-]+\.[A-Za-z]{2,})\b/g, "$1\\@$2");
+
+  // A heading, block quote, list marker, or thematic break is only active at
+  // the beginning of a Markdown line. Restrict these escapes to that context
+  // so dates, arithmetic, and normal punctuation remain unchanged.
+  escaped = escaped
+    .replace(/(^|\n)([ \t]{0,3})(#|>)/g, "$1$2\\$3")
+    .replace(/(^|\n)([ \t]{0,3})([-+])/g, "$1$2\\$3")
+    .replace(/(^|\n)([ \t]{0,3})(\d{1,9})([.)])(?=\s)/g, "$1$2$3\\$4")
+    .replace(/(^|\n)([ \t]{0,3})(-{3,}|={3,})([ \t]*)(?=\n|$)/g, "$1$2\\$3$4");
+
+  return escaped;
+};
+
+const longestBacktickRun = (value: string): number =>
+  Math.max(
+    0,
+    ...Array.from(value.matchAll(/`+/g), (match) => match[0]?.length ?? 0),
+  );
+
+const renderInlineCode = (value: string): string => {
+  const normalized = value.replace(/[\r\n]+/g, " ");
+
+  if (normalized.length === 0) {
+    return "";
+  }
+
+  const delimiter = "`".repeat(Math.max(1, longestBacktickRun(normalized) + 1));
+  const needsPadding = normalized.startsWith(" ") || normalized.endsWith(" ");
+  const body = needsPadding ? ` ${normalized} ` : normalized;
+
+  return `${delimiter}${body}${delimiter}`;
+};
+
+const renderFencedCode = (value: string): string => {
+  const code = value.replace(/\n+$/g, "");
+
+  if (code.length === 0) {
+    return "";
+  }
+
+  const fence = "`".repeat(Math.max(3, longestBacktickRun(code) + 1));
+
+  return `\n\n${fence}\n${code}\n${fence}\n\n`;
+};
+
+const escapeMarkdownLinkDestination = (value: string): string =>
+  value
+    .replace(/\\/g, "\\\\")
+    .replace(/[()]/g, "\\$&")
+    .replace(/\s/g, "%20")
+    .replace(/</g, "%3C")
+    .replace(/>/g, "%3E");
 
 const normalizeMarkdown = (value: string): string =>
   value
@@ -201,12 +273,10 @@ const renderNode = (
       return tableHtml.length === 0 ? "" : `\n\n${tableHtml}\n\n`;
     }
     case "pre": {
-      const code = $(node).text().replace(/\n+$/g, "");
-      return code.length === 0 ? "" : `\n\n\`\`\`\n${code}\n\`\`\`\n\n`;
+      return renderFencedCode($(node).text());
     }
     case "code": {
-      const code = $(node).text().replace(/`/g, "\\`");
-      return code.length === 0 ? "" : `\`${code}\``;
+      return renderInlineCode($(node).text());
     }
     case "strong":
     case "b":
@@ -222,12 +292,12 @@ const renderNode = (
         return "";
       }
 
-      return href === undefined || href.length === 0 || href === text
+      return href === undefined || href.length === 0
         ? text
-        : `[${text}](${href})`;
+        : `[${text}](${escapeMarkdownLinkDestination(href)})`;
     }
     case "img":
-      return $(node).attr("alt")?.trim() ?? "";
+      return escapeMarkdownText($(node).attr("alt")?.trim() ?? "");
     case "ul":
     case "ol":
       return asBlock(renderList($, node, tagName === "ol", context));

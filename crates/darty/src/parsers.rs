@@ -30,19 +30,24 @@ static RECEIPT_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\d{14}$").expect("static receipt regex"));
 static RECEIPT_DATE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").expect("static receipt-date regex"));
+#[cfg(test)]
 static SHELL_ASSIGNMENT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r#"(?ms)(node\d+)(?:\['(?P<single_field>[A-Za-z]+)'\]|\[\"(?P<double_field>[A-Za-z]+)\"\])\s*=\s*(?:\"(?P<double>(?:\\.|[^\"\\])*)\"|'(?P<single>(?:\\.|[^'\\])*)')\s*;"#,
     )
     .expect("static shell assignment regex")
 });
+#[cfg(test)]
 static SHELL_CHILD: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?m)(node\d+)(?:\['children'\]|\[\"children\"\])\.push\((node\d+)\)\s*;"#)
         .expect("static shell child regex")
 });
+#[cfg(test)]
+#[allow(dead_code)]
 static SHELL_ROOT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?m)treeData\.push\((node\d+)\)\s*;").expect("static shell root regex")
 });
+#[cfg(test)]
 static VIEW_DOC: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r#"viewDoc\(\s*(?:'(?P<receipt_single>[^']+)'|\"(?P<receipt_double>[^\"]+)\")\s*,\s*(?:'(?P<document_single>[^']+)'|\"(?P<document_double>[^\"]+)\")\s*,\s*(?:'(?P<element_single>[^']+)'|\"(?P<element_double>[^\"]+)\")\s*,\s*(?:'(?P<offset_single>[^']+)'|\"(?P<offset_double>[^\"]+)\")\s*,\s*(?:'(?P<length_single>[^']+)'|\"(?P<length_double>[^\"]+)\")\s*,\s*(?:'(?P<dtd_single>[^']+)'|\"(?P<dtd_double>[^\"]+)\")(?:\s*,\s*(?:'(?P<toc_single>[^']*)'|\"(?P<toc_double>[^\"]*)\"))?\s*\)"#,
@@ -78,6 +83,8 @@ static ATTACHMENT_OPTIONS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("#att > option").expect("static selector"));
 static PAGE_INFO: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse(".pageInfo").expect("static selector"));
+static SCRIPTS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("script").expect("static selector"));
 
 #[derive(Debug)]
 pub(crate) struct ParsedCompanyPage {
@@ -340,6 +347,12 @@ fn reports_row(
         }
     }
     let raw_row_text = collapsed_text(row);
+    let report_title = non_empty(collapsed_inline_text(report_link))?;
+    let presenter_name = cells[3]
+        .value()
+        .attr("title")
+        .and_then(|value| non_empty(value.split_whitespace().collect::<Vec<_>>().join(" ")))
+        .or_else(|| non_empty(collapsed_text(cells[3])));
 
     Some(SearchCompanyReportsItem {
         company: FilingCompany {
@@ -349,9 +362,9 @@ fn reports_row(
         },
         filing: Filing {
             receipt_number: receipt_number.clone(),
-            report_title: collapsed_text(report_link),
+            report_title,
             receipt_date,
-            presenter_name: non_empty(collapsed_text(cells[3])),
+            presenter_name,
         },
         matched_disclosure_type: None,
         references: FilingItemReferences {
@@ -504,74 +517,389 @@ struct ScriptNode {
     children: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ScriptToken {
+    Identifier(String),
+    String { quote: char, raw: String },
+    Punctuation(char),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ScriptRoot {
+    name: String,
+    declared_at_use: bool,
+}
+
 fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator), ShellParseError> {
     let mut nodes: BTreeMap<String, ScriptNode> = BTreeMap::new();
-    for captures in SHELL_ASSIGNMENT.captures_iter(html) {
-        let encoded = captures
-            .name("double")
-            .or_else(|| captures.name("single"))
-            .expect("one shell string branch matched")
-            .as_str();
-        let value = decode_js_string(encoded).ok_or_else(|| {
-            ShellParseError::parse_failure("report shell has an invalid string escape")
-        })?;
-        nodes
-            .entry(captures[1].to_owned())
-            .or_default()
-            .fields
-            .insert(
-                paired_capture(&captures, "single_field", "double_field")
-                    .expect("one shell field branch matched")
-                    .to_owned(),
-                value,
-            );
+    let mut invalid_nodes = BTreeSet::new();
+    let mut roots = Vec::new();
+    let mut initial_locators = Vec::new();
+    let document = Html::parse_document(html);
+
+    for script in document
+        .select(&SCRIPTS)
+        .filter(|script| is_executable_script(*script))
+    {
+        let tokens = tokenize_script(&script.inner_html());
+        let mut index = 0;
+        while index < tokens.len() {
+            if let Some((name, end)) = match_node_creation(&tokens, index) {
+                nodes.insert(name, ScriptNode::default());
+                index = end;
+                continue;
+            }
+            if let Some((name, field, raw_value, end)) = match_field_assignment(&tokens, index) {
+                let value = decode_script_string(raw_value)?;
+                if let Some(node) = nodes.get_mut(&name) {
+                    node.fields.insert(field, value);
+                } else {
+                    invalid_nodes.insert(name);
+                }
+                index = end;
+                continue;
+            }
+            if let Some((parent, child, end)) = match_child_push(&tokens, index) {
+                if nodes.contains_key(&parent) && nodes.contains_key(&child) {
+                    nodes
+                        .get_mut(&parent)
+                        .expect("parent node was checked above")
+                        .children
+                        .push(child);
+                } else {
+                    invalid_nodes.insert(parent);
+                }
+                index = end;
+                continue;
+            }
+            if let Some((name, end)) = match_root_push(&tokens, index) {
+                let declared_at_use = nodes.contains_key(&name);
+                if !declared_at_use {
+                    invalid_nodes.insert(name.clone());
+                }
+                roots.push(ScriptRoot {
+                    name,
+                    declared_at_use,
+                });
+                index = end;
+                continue;
+            }
+            if let Some((locator, end)) = match_view_doc(&tokens, index)? {
+                initial_locators.push(locator);
+                index = end;
+                continue;
+            }
+            index += 1;
+        }
     }
-    for captures in SHELL_CHILD.captures_iter(html) {
-        nodes
-            .entry(captures[1].to_owned())
-            .or_default()
-            .children
-            .push(captures[2].to_owned());
-    }
-    let roots = SHELL_ROOT
-        .captures_iter(html)
-        .map(|captures| captures[1].to_owned())
-        .collect::<Vec<_>>();
+
     let mut toc = Vec::new();
     let mut visiting = BTreeSet::new();
     let mut expansions = 0;
-    for (index, name) in roots.iter().enumerate() {
-        if let Some(node) = build_toc(
-            name,
+    let mut unusable_root = false;
+    for (index, root) in roots.iter().enumerate() {
+        if !root.declared_at_use || invalid_nodes.contains(&root.name) {
+            unusable_root = true;
+            continue;
+        }
+        match build_toc(
+            &root.name,
             &(index + 1).to_string(),
             &nodes,
+            &invalid_nodes,
             &mut visiting,
             &mut expansions,
             0,
         )? {
-            toc.push(node);
+            Some(node) => toc.push(node),
+            None => unusable_root = true,
         }
     }
-    let initial = VIEW_DOC
-        .captures_iter(html)
-        .filter_map(|captures| {
-            Some(ViewerLocator {
-                receipt_number: paired_capture(&captures, "receipt_single", "receipt_double")?
-                    .to_owned(),
-                document_number: paired_capture(&captures, "document_single", "document_double")?
-                    .to_owned(),
-                element_id: paired_capture(&captures, "element_single", "element_double")?
-                    .to_owned(),
-                offset: paired_capture(&captures, "offset_single", "offset_double")?.to_owned(),
-                length: paired_capture(&captures, "length_single", "length_double")?.to_owned(),
-                dtd: paired_capture(&captures, "dtd_single", "dtd_double")?.to_owned(),
-                toc_number: paired_capture(&captures, "toc_single", "toc_double")
-                    .map(str::to_owned),
-            })
-        })
+
+    if !roots.is_empty() && unusable_root {
+        return Err(ShellParseError::changed(
+            "report shell TOC contains declared but unusable roots",
+        ));
+    }
+    let initial = initial_locators
+        .into_iter()
         .find(|locator| valid_locator(locator, &locator.receipt_number, None))
         .ok_or("report shell has no valid initial viewer locator")?;
     Ok((toc, initial))
+}
+
+fn is_executable_script(script: ElementRef<'_>) -> bool {
+    let Some(script_type) = script.value().attr("type") else {
+        return true;
+    };
+    let script_type = script_type
+        .split(';')
+        .next()
+        .map(str::trim)
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    matches!(
+        script_type.as_str(),
+        "" | "text/javascript"
+            | "application/javascript"
+            | "text/ecmascript"
+            | "application/ecmascript"
+            | "application/x-javascript"
+            | "module"
+    )
+}
+
+fn tokenize_script(source: &str) -> Vec<ScriptToken> {
+    let characters = source.chars().collect::<Vec<_>>();
+    let mut tokens = Vec::new();
+    let mut index = 0;
+    while index < characters.len() {
+        let character = characters[index];
+        if character.is_whitespace() {
+            index += 1;
+            continue;
+        }
+        if character == '/' && characters.get(index + 1) == Some(&'/') {
+            index += 2;
+            while index < characters.len() && !matches!(characters[index], '\n' | '\r') {
+                index += 1;
+            }
+            continue;
+        }
+        if character == '/' && characters.get(index + 1) == Some(&'*') {
+            index += 2;
+            while index + 1 < characters.len()
+                && !(characters[index] == '*' && characters[index + 1] == '/')
+            {
+                index += 1;
+            }
+            index = (index + 2).min(characters.len());
+            continue;
+        }
+        if character == '<'
+            && characters.get(index + 1) == Some(&'!')
+            && characters.get(index + 2) == Some(&'-')
+            && characters.get(index + 3) == Some(&'-')
+        {
+            index += 4;
+            while index < characters.len() && !matches!(characters[index], '\n' | '\r') {
+                index += 1;
+            }
+            continue;
+        }
+        if matches!(character, '\'' | '"' | '`') {
+            let quote = character;
+            index += 1;
+            let mut raw = String::new();
+            let mut escaped = false;
+            let mut closed = false;
+            while index < characters.len() {
+                let character = characters[index];
+                index += 1;
+                if !escaped && character == quote {
+                    closed = true;
+                    break;
+                }
+                raw.push(character);
+                if escaped {
+                    escaped = false;
+                } else {
+                    escaped = character == '\\';
+                }
+            }
+            if closed {
+                tokens.push(ScriptToken::String { quote, raw });
+            } else {
+                break;
+            }
+            continue;
+        }
+        if is_script_identifier_start(character) {
+            let start = index;
+            index += 1;
+            while index < characters.len() && is_script_identifier_continue(characters[index]) {
+                index += 1;
+            }
+            tokens.push(ScriptToken::Identifier(
+                characters[start..index].iter().collect(),
+            ));
+            continue;
+        }
+        tokens.push(ScriptToken::Punctuation(character));
+        index += 1;
+    }
+    tokens
+}
+
+fn is_script_identifier_start(character: char) -> bool {
+    character == '_' || character == '$' || character.is_ascii_alphabetic()
+}
+
+fn is_script_identifier_continue(character: char) -> bool {
+    is_script_identifier_start(character) || character.is_ascii_digit()
+}
+
+fn match_node_creation(tokens: &[ScriptToken], index: usize) -> Option<(String, usize)> {
+    let mut cursor = index;
+    if matches!(
+        tokens.get(cursor),
+        Some(ScriptToken::Identifier(keyword)) if matches!(keyword.as_str(), "var" | "let" | "const")
+    ) {
+        cursor += 1;
+    }
+    let ScriptToken::Identifier(name) = tokens.get(cursor)? else {
+        return None;
+    };
+    if !is_node_name(name) {
+        return None;
+    }
+    if !is_punctuation(tokens.get(cursor + 1), '=')
+        || !is_punctuation(tokens.get(cursor + 2), '{')
+        || !is_punctuation(tokens.get(cursor + 3), '}')
+    {
+        return None;
+    }
+    Some((name.clone(), cursor + 4))
+}
+
+fn match_field_assignment(
+    tokens: &[ScriptToken],
+    index: usize,
+) -> Option<(String, String, &str, usize)> {
+    let ScriptToken::Identifier(name) = tokens.get(index)? else {
+        return None;
+    };
+    if !is_node_name(name)
+        || !is_punctuation(tokens.get(index + 1), '[')
+        || !is_punctuation(tokens.get(index + 3), ']')
+        || !is_punctuation(tokens.get(index + 4), '=')
+    {
+        return None;
+    }
+    let ScriptToken::String {
+        quote: field_quote,
+        raw: field_raw,
+    } = tokens.get(index + 2)?
+    else {
+        return None;
+    };
+    if !matches!(field_quote, '\'' | '"') {
+        return None;
+    }
+    let field = decode_js_string(field_raw)?;
+    let ScriptToken::String {
+        quote: value_quote,
+        raw: value_raw,
+    } = tokens.get(index + 5)?
+    else {
+        return None;
+    };
+    if !matches!(value_quote, '\'' | '"') {
+        return None;
+    }
+    Some((name.clone(), field, value_raw, index + 6))
+}
+
+fn match_child_push(tokens: &[ScriptToken], index: usize) -> Option<(String, String, usize)> {
+    let ScriptToken::Identifier(parent) = tokens.get(index)? else {
+        return None;
+    };
+    if !is_node_name(parent)
+        || !is_punctuation(tokens.get(index + 1), '[')
+        || !is_punctuation(tokens.get(index + 3), ']')
+        || !is_punctuation(tokens.get(index + 4), '.')
+        || !is_identifier(tokens.get(index + 5), "push")
+        || !is_punctuation(tokens.get(index + 6), '(')
+        || !is_punctuation(tokens.get(index + 8), ')')
+    {
+        return None;
+    }
+    let ScriptToken::String { quote, raw } = tokens.get(index + 2)? else {
+        return None;
+    };
+    if !matches!(quote, '\'' | '"') || decode_js_string(raw)? != "children" {
+        return None;
+    }
+    let ScriptToken::Identifier(child) = tokens.get(index + 7)? else {
+        return None;
+    };
+    is_node_name(child).then(|| (parent.clone(), child.clone(), index + 9))
+}
+
+fn match_root_push(tokens: &[ScriptToken], index: usize) -> Option<(String, usize)> {
+    if !is_identifier(tokens.get(index), "treeData")
+        || !is_punctuation(tokens.get(index + 1), '.')
+        || !is_identifier(tokens.get(index + 2), "push")
+        || !is_punctuation(tokens.get(index + 3), '(')
+        || !is_punctuation(tokens.get(index + 5), ')')
+    {
+        return None;
+    }
+    let ScriptToken::Identifier(name) = tokens.get(index + 4)? else {
+        return None;
+    };
+    is_node_name(name).then(|| (name.clone(), index + 6))
+}
+
+fn match_view_doc(
+    tokens: &[ScriptToken],
+    index: usize,
+) -> Result<Option<(ViewerLocator, usize)>, ShellParseError> {
+    if !is_identifier(tokens.get(index), "viewDoc") || !is_punctuation(tokens.get(index + 1), '(') {
+        return Ok(None);
+    }
+    let mut values = Vec::new();
+    let mut cursor = index + 2;
+    loop {
+        let Some(ScriptToken::String { quote, raw }) = tokens.get(cursor) else {
+            return Ok(None);
+        };
+        if !matches!(quote, '\'' | '"') {
+            return Ok(None);
+        }
+        values.push(decode_script_string(raw)?);
+        cursor += 1;
+        if is_punctuation(tokens.get(cursor), ')') {
+            break;
+        }
+        if !is_punctuation(tokens.get(cursor), ',') || values.len() >= 7 {
+            return Ok(None);
+        }
+        cursor += 1;
+    }
+    if !(6..=7).contains(&values.len()) {
+        return Ok(None);
+    }
+    let mut values = values.into_iter();
+    let locator = ViewerLocator {
+        receipt_number: values.next().expect("six viewDoc values were checked"),
+        document_number: values.next().expect("six viewDoc values were checked"),
+        element_id: values.next().expect("six viewDoc values were checked"),
+        offset: values.next().expect("six viewDoc values were checked"),
+        length: values.next().expect("six viewDoc values were checked"),
+        dtd: values.next().expect("six viewDoc values were checked"),
+        toc_number: values.next(),
+    };
+    Ok(Some((locator, cursor + 1)))
+}
+
+fn decode_script_string(raw: &str) -> Result<String, ShellParseError> {
+    decode_js_string(raw)
+        .ok_or_else(|| ShellParseError::parse_failure("report shell has an invalid string escape"))
+}
+
+fn is_node_name(value: &str) -> bool {
+    value.strip_prefix("node").is_some_and(|suffix| {
+        !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit())
+    })
+}
+
+fn is_identifier(token: Option<&ScriptToken>, expected: &str) -> bool {
+    matches!(token, Some(ScriptToken::Identifier(value)) if value == expected)
+}
+
+fn is_punctuation(token: Option<&ScriptToken>, expected: char) -> bool {
+    matches!(token, Some(ScriptToken::Punctuation(value)) if *value == expected)
 }
 
 fn paired_capture<'input>(
@@ -589,6 +917,7 @@ fn build_toc(
     name: &str,
     position: &str,
     nodes: &BTreeMap<String, ScriptNode>,
+    invalid_nodes: &BTreeSet<String>,
     visiting: &mut BTreeSet<String>,
     expansions: &mut usize,
     depth: u8,
@@ -602,6 +931,10 @@ fn build_toc(
     *expansions += 1;
     if *expansions > MAX_TOC_EXPANSIONS {
         return Err("report shell TOC exceeds the supported size");
+    }
+    if invalid_nodes.contains(name) {
+        visiting.remove(name);
+        return Ok(None);
     }
     let Some(node) = nodes.get(name) else {
         visiting.remove(name);
@@ -641,16 +974,20 @@ fn build_toc(
     };
     let mut children = Vec::new();
     for (index, child) in node.children.iter().enumerate() {
-        if let Some(child) = build_toc(
+        let Some(child) = build_toc(
             child,
             &format!("{position}.{}", index + 1),
             nodes,
+            invalid_nodes,
             visiting,
             expansions,
             depth + 1,
-        )? {
-            children.push(child);
-        }
+        )?
+        else {
+            visiting.remove(name);
+            return Err("report shell TOC contains an unusable child");
+        };
+        children.push(child);
     }
     visiting.remove(name);
     Ok(Some(ParsedTocNode {
@@ -791,6 +1128,15 @@ fn collapsed_text(element: ElementRef<'_>) -> String {
         .join(" ")
 }
 
+fn collapsed_inline_text(element: ElementRef<'_>) -> String {
+    element
+        .text()
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn non_empty(value: String) -> Option<String> {
     (!value.is_empty()).then_some(value)
 }
@@ -883,6 +1229,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(page.items[0].filing.receipt_number, "20260101000001");
+        assert_eq!(page.items[0].filing.report_title, "[기재정정]사업보고서");
         assert!(page.items[0].evidence.is_some());
     }
 
@@ -908,6 +1255,29 @@ mod tests {
         let page = reports_page(&plain, "00000001", ResponseDetail::Concise).unwrap();
         assert_eq!(page.items[0].remarks[0].text, "일반 텍스트 비고");
         assert!(page.items[0].remarks[0].title.is_none());
+    }
+
+    #[test]
+    fn prefers_presenter_title_attribute_and_drops_empty_report_titles() {
+        let fixture =
+            include_str!("../../../fixtures/dart/vertical-v1/bodies/reports-populated.utf8.html");
+        let titled_presenter = fixture.replace(
+            r#"<td class="tL ellipsis" title="가람전자">가람전자</td>"#,
+            r#"<td class="tL ellipsis" title="  표시   이름  ">셀 텍스트</td>"#,
+        );
+        let page = reports_page(&titled_presenter, "00000001", ResponseDetail::Concise).unwrap();
+        assert_eq!(
+            page.items[0].filing.presenter_name.as_deref(),
+            Some("표시 이름")
+        );
+
+        let empty_title = titled_presenter.replace(
+            r#"<a href="/dsaf001/main.do?rcpNo=20260101000001"><span class="txtCB" title="앞서 제출한 내용을 바로잡은 보고서">[기재정정]</span>사업보고서</a>"#,
+            r#"<a href="/dsaf001/main.do?rcpNo=20260101000001"><span class="txtCB" title="앞서 제출한 내용을 바로잡은 보고서"></span></a>"#,
+        );
+        let page = reports_page(&empty_title, "00000001", ResponseDetail::Concise).unwrap();
+        assert!(page.items.is_empty());
+        assert_eq!(page.dropped, 1);
     }
 
     #[test]
@@ -972,6 +1342,79 @@ mod tests {
             !super::VIEW_DOC
                 .is_match(r#"viewDoc('20260101000001", "10000001", "1", "0", "1", "dart4.xsd")"#)
         );
+    }
+
+    #[test]
+    fn shell_parser_ignores_comments_and_string_contained_fake_statements() {
+        let fake = SHELL.replace(
+            "var treeData = [];",
+            r#"var treeData = [];
+// treeData.push(node99);
+/* node99['text'] = "fake"; viewDoc("bad", "bad", "bad", "bad", "bad", "bad"); */
+var fake = "treeData.push(node98); node98['text'] = \\"fake\\";";"#,
+        );
+        let shell = report_shell(&fake).unwrap();
+        assert_eq!(shell.toc.len(), 1);
+        assert_eq!(shell.toc[0].title, "I. 회사의 개요");
+        assert_eq!(shell.initial_locator.receipt_number, "20260101000001");
+    }
+
+    #[test]
+    fn shell_parser_requires_node_creation_before_field_use() {
+        let malformed = SHELL.replace(
+            "var node1 = {};",
+            "node1['text'] = \"used before creation\";\nvar node1 = {};",
+        );
+        let failure = report_shell(&malformed).unwrap_err();
+        assert_eq!(failure.kind, super::ShellParseErrorKind::SourceChanged);
+        assert!(failure.reason.contains("unusable roots"));
+    }
+
+    #[test]
+    fn shell_parser_propagates_invalid_descendants_through_valid_parents() {
+        let malformed_child = SHELL.replace(
+            "treeData.push(node1);",
+            r#"var node3 = {};
+node3['text'] = "Invalid descendant";
+node3['rcpNo'] = "20260101000001";
+node3['dcmNo'] = "10000001";
+node3['eleId'] = "3";
+node3['offset'] = "0";
+node3['length'] = "1";
+node3['dtd'] = "dart4.xsd";
+node3['children'] = [];
+node3['children'].push(node4);
+var node4 = {};
+node1['children'].push(node3);
+treeData.push(node1);"#,
+        );
+        let failure = report_shell(&malformed_child).unwrap_err();
+        assert_eq!(failure.kind, super::ShellParseErrorKind::SourceChanged);
+        assert_eq!(
+            failure.reason,
+            "report shell TOC contains an unusable child"
+        );
+    }
+
+    #[test]
+    fn shell_parser_distinguishes_zero_roots_from_unusable_and_mixed_roots() {
+        let zero_roots = SHELL.replace("treeData.push(node1);", "// treeData.push(node1);");
+        let shell = report_shell(&zero_roots).unwrap();
+        assert!(shell.toc.is_empty());
+        assert_eq!(shell.initial_locator.document_number, "10000001");
+
+        let unusable_root = SHELL.replace("treeData.push(node1);", "treeData.push(node99);");
+        let failure = report_shell(&unusable_root).unwrap_err();
+        assert_eq!(failure.kind, super::ShellParseErrorKind::SourceChanged);
+        assert!(failure.reason.contains("unusable roots"));
+
+        let mixed_roots = SHELL.replace(
+            "treeData.push(node1);",
+            "treeData.push(node1);\ntreeData.push(node99);",
+        );
+        let failure = report_shell(&mixed_roots).unwrap_err();
+        assert_eq!(failure.kind, super::ShellParseErrorKind::SourceChanged);
+        assert!(failure.reason.contains("unusable roots"));
     }
 
     #[test]

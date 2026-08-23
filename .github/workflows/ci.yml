@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -29,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Audit high-severity npm dependencies
+        run: bun audit --audit-level=high
 
       - name: Check DART wire authority
         run: bun run check:dart-wire
@@ -55,7 +58,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Set up Rust 1.88
         run: rustup toolchain install 1.88.0 --profile minimal --component clippy,rustfmt
@@ -96,7 +99,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -121,11 +124,18 @@ jobs:
 
       - name: Build unpublished candidate
         run: |
-          cargo +1.88.0 build --release --locked -p darty-cli --features fixture-origin
+          cargo +1.88.0 build --release --locked -p darty-cli
           cargo +1.88.0 build --release --locked -p darty-node
 
+      - name: Build isolated fixture candidate
+        run: |
+          cargo +1.88.0 build --release --locked -p darty-cli --features fixture-origin --target-dir target/candidate-fixture
+          cargo +1.88.0 build --release --locked -p darty-node --features test-fixture --target-dir target/candidate-fixture
+
       - name: Test packaged candidate
+        env:
+          DARTY_CANDIDATE_FIXTURE_TARGET: target/candidate-fixture
         run: node scripts/test-rust-candidate.mjs
 
       - name: Test candidate compatibility
-        run: node scripts/judge-cli-v1.mjs --profile candidate -- target/release/darty
+        run: node scripts/judge-cli-v1.mjs --profile candidate -- target/candidate-fixture/release/darty

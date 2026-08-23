@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Either } from "effect";
 
+import { SourceChanged } from "../../errors.ts";
 import { createDartSourceTextResponse } from "../../source-response.ts";
 import { parseCompanyReportsSearchHtml } from "./parse-html.ts";
 
@@ -60,6 +61,19 @@ const noResultsHtml = `
 </table>
 </div>
 `;
+
+const tablelessTotalHtml = `
+<div class="pageInfo">[1/1] [총 1건]</div>
+`;
+
+const mixedSentinelHtml = noResultsHtml.replace(
+  "  </tbody>",
+  `    <tr><td>1</td><td>unexpected</td><td>data</td><td>row</td><td>2026.05.04</td><td></td></tr>
+  </tbody>`,
+).replace(
+  "</div>\n",
+  "</div>\n<div class=\"pageInfo\">[1/1] [총 1건]</div>\n",
+);
 
 const request = {
   option: "corp",
@@ -131,5 +145,70 @@ describe("parseCompanyReportsSearchHtml", () => {
     });
     expect(result.rows).toEqual([]);
     expect(result.warnings).toEqual([]);
+  });
+
+  test("drops rows for a different company with an explicit partial warning", async () => {
+    const wrongCompanyHtml = populatedHtml.replace(
+      "openCorpInfoNew('00190321'",
+      "openCorpInfoNew('00126380'",
+    );
+
+    const result = await Effect.runPromise(
+      parseCompanyReportsSearchHtml(sourceResponse(wrongCompanyHtml), request),
+    );
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]?.companyCode).toBe("00190321");
+    expect(result.pagination.returnedCount).toBe(1);
+    expect(result.droppedRowCount).toBe(1);
+    expect(result.warnings).toEqual([
+      {
+        code: "row_parse_failed",
+        rowIndex: 0,
+        message:
+          "A DART company filing result row belonged to a different company and was dropped.",
+      },
+    ]);
+  });
+
+  test("drops company-report rows that do not have exactly six cells", async () => {
+    const malformedCellsHtml = populatedHtml.replace(
+      '      <td class="tL ellipsis" title="케이티">케이티</td>\n      <td>2026.05.04</td>',
+      '      <td>2026.05.04</td>',
+    );
+    const result = await Effect.runPromise(
+      parseCompanyReportsSearchHtml(sourceResponse(malformedCellsHtml), request),
+    );
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]?.rcpNo).toBe("20260415000003");
+    expect(result.droppedRowCount).toBe(1);
+    expect(result.warnings).toHaveLength(1);
+  });
+
+  test("rejects mixed company-report no-result sentinel and data rows", async () => {
+    const result = await Effect.runPromise(
+      Effect.either(
+        parseCompanyReportsSearchHtml(sourceResponse(mixedSentinelHtml), request),
+      ),
+    );
+
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left).toBeInstanceOf(SourceChanged);
+    }
+  });
+
+  test("rejects a total-count page without the company filing result table as source changed", async () => {
+    const result = await Effect.runPromise(
+      Effect.either(
+        parseCompanyReportsSearchHtml(sourceResponse(tablelessTotalHtml), request),
+      ),
+    );
+
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left).toBeInstanceOf(SourceChanged);
+    }
   });
 });

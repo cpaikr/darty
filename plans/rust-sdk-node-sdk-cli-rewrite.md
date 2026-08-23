@@ -72,6 +72,31 @@ platform-support claim.
 
 ### Phase 3 — complete capability and SDK parity: active
 
+Before selecting the next operation, complete or explicitly disposition this
+readiness checkpoint:
+
+- Investigate the current live `view-report` `source_changed` result for
+  receipt `20260331000460`. Refresh bounded provider evidence and the canonical
+  viewer contract or fixtures if DART changed; preserve the fail-closed parser
+  unless evidence supports a narrower correction.
+- Obtain the repository owner action needed to repair or replace
+  `RELEASE_PLEASE_TOKEN`, then verify Release Please on the exact successful
+  `main` SHA. The repository-controlled SHA, tag, audit, compatibility, and
+  mutation gates remain required regardless of token state.
+- Decide and apply the available GitHub branch-protection or ruleset policy.
+  If the account plan still cannot enforce it, record that limitation and keep
+  the repository-controlled release gates as the enforceable boundary.
+- Record explicit maintainer decisions in the canonical provider qualification
+  approval records where required. Do not infer approval from fixtures, live
+  probes, or successful CI.
+- Run the model-assisted workflow evaluation only after an owner authorizes
+  the credentials and external model usage. Preserve the deterministic trace,
+  returned-ID, date-window, and citation checks as preconditions to prose
+  judging.
+
+These items are operational or evidence gates, not permission to publish,
+promote the candidate, loosen source validation, or invent approval records.
+
 Port these shipped TypeScript operations through the Rust SDK, Node SDK, and
 CLI:
 
@@ -80,6 +105,10 @@ CLI:
 - `company-rss`
 - `disclosure-types`
 - `report-guide`
+
+The list above is scope, not an approved implementation sequence. No fixed port
+order has been approved; the next operation is selected after its contract and
+evidence plan receive maintainer review.
 
 For each operation:
 
@@ -90,12 +119,36 @@ For each operation:
   oversized source data, timeouts, cancellation, and sanitization;
 - keep live checks bounded and separate from credential-free gates.
 
+For each newly ported source-backed operation, Phase 3 also requires both of
+these gates before counting the operation as complete:
+
+1. Requalify the DART provider for that operation: refresh bounded live
+   evidence, update the canonical contract and fictional fixtures when the
+   evidence changes, and pass deterministic conformance checks.
+2. Record explicit maintainer approval of that operation's qualification and
+   port acceptance in the canonical [provider qualification approval records](../docs/research/dart-provider-qualification.md#maintainer-approval-records),
+   including the approver, date, evidence revision, operation/surface,
+   decision, and any remaining limitations. Fixture-only success or an
+   unreviewed live probe is not approval.
+
+The two gates apply to the source-backed ports (`search-body`, `company-detail`,
+and `company-rss`); the static `disclosure-types` and `report-guide` ports still
+need their contract, SDK, CLI, and compatibility checks. The current
+three-operation provider record is conditional evidence, not a blanket
+qualification for future operations.
+
 Phase 3 exits when all eight operations are available through every candidate
-surface and pass the approved compatibility, SDK, and workflow checks. The
-shipped TypeScript entry points remain unchanged at this milestone.
+surface, pass the approved compatibility, SDK, and workflow checks, and every
+newly ported source-backed operation has both provider requalification and an
+explicit maintainer approval record. The shipped TypeScript entry points remain
+unchanged at this milestone.
 
 ### Phase 4 — distribution and atomic cutover: pending
 
+- Before making any platform-support claim or starting cutover, requalify every
+  source-backed operation against the current provider evidence and confirm
+  that its Phase 3 approval record is still valid; record a new explicit
+  maintainer approval for the complete provider/platform/cutover decision.
 - Select a supported Rust/Node target matrix from actual users and available
   CI; do not infer support from the current-host artifact.
 - Test the Rust crate, Node SDK, native packages, and CLI as clean external
@@ -135,10 +188,13 @@ shipped TypeScript entry points remain unchanged at this milestone.
 - [Architecture](../ARCHITECTURE.md)
 - [CLI transport v1](../docs/specs/cli-transport-v1.md)
 - [DART source map](../docs/research/dart-source-map.md)
+- [Provider qualification approval records](../docs/research/dart-provider-qualification.md#maintainer-approval-records)
 - [Specification index](../docs/specs/README.md)
 
 ## Next action
 
-Start phase 3 with one contract-reviewed operation and carry it vertically
-through the Rust SDK, Node SDK, CLI, judge, and package acceptance before
-starting the next.
+Complete or explicitly disposition every Phase 3 readiness-checkpoint item
+above. Then select one operation with an approved contract/evidence plan and
+carry it vertically through the Rust SDK, Node SDK, CLI, judge, and package
+acceptance. For a source-backed operation, do not mark the slice complete until
+its provider requalification and explicit maintainer approval are recorded.

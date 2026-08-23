@@ -1,0 +1,17 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "source_unavailable",
+      "message": "The DART source request failed or timed out.",
+      "retryable": true,
+      "sourceUrl": "https://dart.fss.or.kr/dsae001/search.ax"
+    }
+  }
+}

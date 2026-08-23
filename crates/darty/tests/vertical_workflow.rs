@@ -39,6 +39,8 @@ const SECTION_BODY: &[u8] =
     include_bytes!("../../../fixtures/dart/vertical-v1/bodies/report-section.utf8.html");
 const SECTION_MS949_BODY: &[u8] =
     include_bytes!("../../../fixtures/dart/vertical-v1/bodies/report-section.ms949.bin");
+const OVERSIZED_SEED: &[u8] =
+    include_bytes!("../../../fixtures/dart/vertical-v1/bodies/oversized-seed.ascii.html");
 
 #[tokio::test]
 async fn company_to_section_workflow_uses_exact_wire_and_opaque_ids() {
@@ -391,6 +393,172 @@ async fn transport_faults_are_sanitized_and_classified() {
 }
 
 #[tokio::test]
+async fn operation_specific_manifest_caps_reject_cap_plus_one_before_parsing() {
+    // These sizes mirror source-oversized-shell and source-oversized-content in
+    // fixtures/dart/vertical-v1/manifest.json. The search cap is covered by the
+    // transport_faults_are_sanitized_and_classified case above.
+    let fixture = FixtureServer::spawn(vec![
+        Reply::shell_response("20260101000001", None, 16 * 1024 * 1024 + 1),
+        Reply::shell("20260101000001", None, SHELL_BODY),
+        Reply::content_response(
+            "20260101000001",
+            "10000001",
+            "2",
+            "200",
+            "300",
+            "dart4.xsd",
+            64 * 1024 * 1024 + 1,
+        ),
+    ])
+    .await;
+    let client = fixture.client();
+
+    let shell_error = client
+        .view_report(ViewReportRequest::new("20260101000001"))
+        .await
+        .unwrap_err();
+    assert_eq!(shell_error.code, ErrorCode::SourceParseFailure);
+    assert!(!shell_error.retryable);
+    assert_eq!(
+        shell_error.source_url.as_deref(),
+        Some("https://dart.fss.or.kr/dsaf001/main.do")
+    );
+
+    let mut content_request = ViewReportRequest::new("20260101000001");
+    content_request.section_id = Some("section:1.1".to_owned());
+    let content_error = client.view_report(content_request).await.unwrap_err();
+    assert_eq!(content_error.code, ErrorCode::SourceParseFailure);
+    assert!(!content_error.retryable);
+    assert_eq!(
+        content_error.source_url.as_deref(),
+        Some("https://dart.fss.or.kr/report/viewer.do")
+    );
+
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn transport_deadlines_are_bounded_and_phase_specific() {
+    // The manifest's 5/10/30 second values remain the production policy (the
+    // exact defaults are asserted in transport.rs). This fixture-only
+    // constructor injects millisecond values so each real timeout is exercised
+    // without making the integration suite wait 45 seconds. The header-stall
+    // fixture accepts the socket first, so it is a request/read failure
+    // equivalent, not evidence of a connect-timeout duration.
+    let header_fixture = FixtureServer::spawn(vec![
+        Reply::company("헤더정지", COMPANY_BODY).stall_before_headers(),
+    ])
+    .await;
+    let header_client = header_fixture.client_with_deadlines(
+        Duration::from_millis(40),
+        Duration::from_millis(40),
+        Duration::from_secs(1),
+    );
+    let started = Instant::now();
+    let header_error = header_client
+        .search_company(SearchCompanyRequest::new("헤더정지"))
+        .await
+        .unwrap_err();
+    let header_elapsed = started.elapsed();
+    assert_eq!(header_error.code, ErrorCode::SourceUnavailable);
+    assert!(header_error.retryable);
+    assert_eq!(
+        header_error.message,
+        "The DART source request failed or timed out."
+    );
+    assert_eq!(
+        header_error.source_url.as_deref(),
+        Some("https://dart.fss.or.kr/dsae001/search.ax")
+    );
+    assert!(header_elapsed >= Duration::from_millis(25));
+    assert!(header_elapsed < Duration::from_millis(500));
+    header_fixture.finish().await;
+
+    let idle_fixture = FixtureServer::spawn(vec![
+        Reply::company("본문정지", COMPANY_BODY).stall_after_body(),
+    ])
+    .await;
+    let idle_client = idle_fixture.client_with_deadlines(
+        Duration::from_secs(1),
+        Duration::from_millis(40),
+        Duration::from_secs(1),
+    );
+    let started = Instant::now();
+    let idle_error = idle_client
+        .search_company(SearchCompanyRequest::new("본문정지"))
+        .await
+        .unwrap_err();
+    let idle_elapsed = started.elapsed();
+    assert_eq!(idle_error.code, ErrorCode::SourceUnavailable);
+    assert!(idle_error.retryable);
+    assert_eq!(
+        idle_error.message,
+        "The DART response body failed or timed out while streaming."
+    );
+    assert_eq!(
+        idle_error.source_url.as_deref(),
+        Some("https://dart.fss.or.kr/dsae001/search.ax")
+    );
+    assert!(idle_elapsed >= Duration::from_millis(25));
+    assert!(idle_elapsed < Duration::from_millis(500));
+    idle_fixture.finish().await;
+
+    let total_fixture =
+        FixtureServer::spawn(vec![Reply::company("전체정지", COMPANY_BODY).drip_body()]).await;
+    let total_client = total_fixture.client_with_deadlines(
+        Duration::from_secs(1),
+        Duration::from_secs(1),
+        Duration::from_millis(140),
+    );
+    let started = Instant::now();
+    let total_error = total_client
+        .search_company(SearchCompanyRequest::new("전체정지"))
+        .await
+        .unwrap_err();
+    let total_elapsed = started.elapsed();
+    assert_eq!(total_error.code, ErrorCode::SourceUnavailable);
+    assert!(total_error.retryable);
+    assert_eq!(
+        total_error.message,
+        "The DART response body failed or timed out while streaming."
+    );
+    assert_eq!(
+        total_error.source_url.as_deref(),
+        Some("https://dart.fss.or.kr/dsae001/search.ax")
+    );
+    assert!(total_elapsed >= Duration::from_millis(110));
+    assert!(total_elapsed < Duration::from_millis(500));
+    assert!(total_elapsed > idle_elapsed + Duration::from_millis(50));
+    total_fixture.finish().await;
+}
+
+#[tokio::test]
+async fn refused_loopback_connect_is_a_source_failure_without_a_timing_claim() {
+    // A listener that accepts and delays headers cannot prove a connect
+    // deadline: TCP connection establishment has already succeeded. Port 0
+    // provides the deterministic refusal path that this fixture seam can
+    // safely exercise without relying on wall-clock thresholds.
+    let client = DartyClient::for_fixture_origin_with_deadlines(
+        Url::parse("http://127.0.0.1:0/").unwrap(),
+        FETCHED_AT,
+        Duration::from_secs(5),
+        Duration::from_secs(10),
+        Duration::from_secs(30),
+    )
+    .unwrap();
+    let error = client
+        .search_company(SearchCompanyRequest::new("가람"))
+        .await
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::SourceUnavailable);
+    assert!(error.retryable);
+    assert_eq!(
+        error.source_url.as_deref(),
+        Some("https://dart.fss.or.kr/dsae001/search.ax")
+    );
+}
+
+#[tokio::test]
 async fn content_failures_expose_only_the_canonical_endpoint() {
     let fixture = FixtureServer::spawn(vec![
         Reply::shell("20260101000002", None, NO_TOC_SHELL_BODY),
@@ -606,6 +774,41 @@ async fn cancelled_gate_waiter_does_not_block_the_next_request() {
     fixture.finish().await;
 }
 
+#[tokio::test]
+async fn cancelled_in_flight_request_allows_a_following_request_to_progress() {
+    let fixture = FixtureServer::spawn_concurrent(vec![
+        Reply::company("가람", COMPANY_BODY).delayed(Duration::from_millis(750)),
+        Reply::company("가람", COMPANY_BODY),
+    ])
+    .await;
+    let arrivals = fixture.arrivals();
+    let client = fixture.client();
+    let cancelled_client = client.clone();
+    let in_flight = tokio::spawn(async move {
+        cancelled_client
+            .search_company(SearchCompanyRequest::new("가람"))
+            .await
+    });
+    wait_for_arrivals(&arrivals, 1).await;
+
+    let cancelled_at = Instant::now();
+    in_flight.abort();
+    assert!(in_flight.await.unwrap_err().is_cancelled());
+
+    let next = tokio::time::timeout(
+        Duration::from_millis(1_000),
+        client.search_company(SearchCompanyRequest::new("가람")),
+    )
+    .await
+    .expect("the request after cancellation should not remain queued")
+    .unwrap();
+    assert_eq!(next.result.items[0].company_code, "00000001");
+    assert!(cancelled_at.elapsed() < Duration::from_millis(1_000));
+    assert_eq!(arrivals.lock().unwrap().len(), 2);
+
+    fixture.finish().await;
+}
+
 async fn wait_for_arrivals(arrivals: &Arc<Mutex<Vec<Instant>>>, expected: usize) {
     tokio::time::timeout(Duration::from_secs(1), async {
         loop {
@@ -627,15 +830,35 @@ struct FixtureServer {
 
 impl FixtureServer {
     async fn spawn(replies: Vec<Reply>) -> Self {
+        Self::spawn_mode(replies, false).await
+    }
+
+    async fn spawn_concurrent(replies: Vec<Reply>) -> Self {
+        Self::spawn_mode(replies, true).await
+    }
+
+    async fn spawn_mode(replies: Vec<Reply>, concurrent: bool) -> Self {
         let listener = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
         let address = listener.local_addr().unwrap();
         let arrivals = Arc::new(Mutex::new(Vec::new()));
         let recorded_arrivals = Arc::clone(&arrivals);
         let task = tokio::spawn(async move {
-            for reply in replies {
-                let (stream, _) = listener.accept().await.unwrap();
-                recorded_arrivals.lock().unwrap().push(Instant::now());
-                reply.serve(stream).await;
+            if concurrent {
+                let mut servers = Vec::with_capacity(replies.len());
+                for reply in replies {
+                    let (stream, _) = listener.accept().await.unwrap();
+                    recorded_arrivals.lock().unwrap().push(Instant::now());
+                    servers.push(tokio::spawn(reply.serve(stream)));
+                }
+                for server in servers {
+                    server.await.unwrap();
+                }
+            } else {
+                for reply in replies {
+                    let (stream, _) = listener.accept().await.unwrap();
+                    recorded_arrivals.lock().unwrap().push(Instant::now());
+                    reply.serve(stream).await;
+                }
             }
         });
         Self {
@@ -647,6 +870,22 @@ impl FixtureServer {
 
     fn client(&self) -> DartyClient {
         DartyClient::for_fixture_origin(self.origin.clone(), FETCHED_AT).unwrap()
+    }
+
+    fn client_with_deadlines(
+        &self,
+        connect_timeout: Duration,
+        read_timeout: Duration,
+        total_timeout: Duration,
+    ) -> DartyClient {
+        DartyClient::for_fixture_origin_with_deadlines(
+            self.origin.clone(),
+            FETCHED_AT,
+            connect_timeout,
+            read_timeout,
+            total_timeout,
+        )
+        .unwrap()
     }
 
     fn arrivals(&self) -> Arc<Mutex<Vec<Instant>>> {
@@ -671,6 +910,9 @@ struct Reply {
     content_type: Option<&'static str>,
     extra_headers: Vec<(&'static str, &'static str)>,
     response_delay: Duration,
+    stall_before_headers: bool,
+    stall_after_body: bool,
+    drip_body: bool,
 }
 
 impl Reply {
@@ -689,6 +931,9 @@ impl Reply {
             content_type: Some("text/html; charset=UTF-8"),
             extra_headers: Vec::new(),
             response_delay: Duration::ZERO,
+            stall_before_headers: false,
+            stall_after_body: false,
+            drip_body: false,
         }
     }
 
@@ -713,8 +958,30 @@ impl Reply {
         reply
     }
 
+    fn shell_response(receipt: &'static str, document: Option<&'static str>, bytes: usize) -> Self {
+        let mut reply = Self::shell(receipt, document, &[]);
+        reply.body = repeated_fixture_body(bytes);
+        reply
+    }
+
     fn delayed(mut self, duration: Duration) -> Self {
         self.response_delay = duration;
+        self
+    }
+
+    fn stall_before_headers(mut self) -> Self {
+        self.stall_before_headers = true;
+        self
+    }
+
+    fn stall_after_body(mut self) -> Self {
+        self.stall_after_body = true;
+        self
+    }
+
+    fn drip_body(mut self) -> Self {
+        self.drip_body = true;
+        self.body = vec![b'x'; 256];
         self
     }
 
@@ -743,6 +1010,9 @@ impl Reply {
             content_type: Some("text/html; charset=UTF-8"),
             extra_headers: Vec::new(),
             response_delay: Duration::ZERO,
+            stall_before_headers: false,
+            stall_after_body: false,
+            drip_body: false,
         }
     }
 
@@ -757,6 +1027,9 @@ impl Reply {
             content_type: Some("text/html; charset=UTF-8"),
             extra_headers: Vec::new(),
             response_delay: Duration::ZERO,
+            stall_before_headers: false,
+            stall_after_body: false,
+            drip_body: false,
         }
     }
 
@@ -775,6 +1048,9 @@ impl Reply {
             content_type: Some("text/html; charset=UTF-8"),
             extra_headers: Vec::new(),
             response_delay: Duration::ZERO,
+            stall_before_headers: false,
+            stall_after_body: false,
+            drip_body: false,
         }
     }
 
@@ -806,7 +1082,34 @@ impl Reply {
             content_type: Some(content_type),
             extra_headers: Vec::new(),
             response_delay: Duration::ZERO,
+            stall_before_headers: false,
+            stall_after_body: false,
+            drip_body: false,
         }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn content_response(
+        receipt: &'static str,
+        document: &'static str,
+        element: &'static str,
+        offset: &'static str,
+        length: &'static str,
+        dtd: &'static str,
+        bytes: usize,
+    ) -> Self {
+        let mut reply = Self::content(
+            receipt,
+            document,
+            element,
+            offset,
+            length,
+            dtd,
+            &[],
+            "text/html; charset=UTF-8",
+        );
+        reply.body = repeated_fixture_body(bytes);
+        reply
     }
 
     async fn serve(self, mut stream: TcpStream) {
@@ -849,6 +1152,11 @@ impl Reply {
 
         tokio::time::sleep(self.response_delay).await;
 
+        if self.stall_before_headers {
+            wait_for_client_close(&mut stream).await;
+            return;
+        }
+
         let mut head = format!("HTTP/1.1 {} Fixture\r\n", self.status);
         if let Some(content_type) = self.content_type {
             write!(head, "Content-Type: {content_type}\r\n")
@@ -863,10 +1171,35 @@ impl Reply {
             self.body.len()
         )
         .expect("writing to a string cannot fail");
-        stream.write_all(head.as_bytes()).await.unwrap();
-        stream.write_all(&self.body).await.unwrap();
-        stream.shutdown().await.unwrap();
+        if stream.write_all(head.as_bytes()).await.is_err() {
+            return;
+        }
+        if self.stall_after_body {
+            if let Some(first) = self.body.first()
+                && stream.write_all(std::slice::from_ref(first)).await.is_err()
+            {
+                return;
+            }
+            wait_for_client_close(&mut stream).await;
+            return;
+        }
+        if self.drip_body {
+            for byte in &self.body {
+                if stream.write_all(std::slice::from_ref(byte)).await.is_err() {
+                    return;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        } else if stream.write_all(&self.body).await.is_err() {
+            return;
+        }
+        let _ = stream.shutdown().await;
     }
+}
+
+async fn wait_for_client_close(stream: &mut TcpStream) {
+    let mut byte = [0_u8; 1];
+    let _ = tokio::time::timeout(Duration::from_secs(1), stream.read(&mut byte)).await;
 }
 
 struct CapturedRequest {
@@ -911,6 +1244,15 @@ async fn read_request(stream: &mut TcpStream) -> CapturedRequest {
         headers,
         body: bytes[header_end..header_end + content_length].to_vec(),
     }
+}
+
+fn repeated_fixture_body(bytes: usize) -> Vec<u8> {
+    let mut body = Vec::with_capacity(bytes);
+    while body.len() < bytes {
+        let remaining = bytes - body.len();
+        body.extend_from_slice(&OVERSIZED_SEED[..remaining.min(OVERSIZED_SEED.len())]);
+    }
+    body
 }
 
 fn pair_map(pairs: &[(&str, String)]) -> BTreeMap<String, Vec<String>> {

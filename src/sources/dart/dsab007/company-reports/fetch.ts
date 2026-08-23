@@ -1,8 +1,4 @@
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-} from "@effect/platform";
+import { HttpClient, HttpClientRequest } from "@effect/platform";
 import { Effect, ParseResult, Schema } from "effect";
 
 import {
@@ -11,15 +7,12 @@ import {
   SourceChanged,
   SourceUnavailable,
 } from "../../errors.ts";
+import type { DartSourceTextResponse } from "../../source-response.ts";
 import {
-  toHttpFailureDiagnostics,
-  toHttpResponseDiagnostics,
-  toTextDecodeFailureDiagnostics,
-} from "../../http-diagnostics.ts";
-import {
-  createDartSourceTextResponse,
-  type DartSourceTextResponse,
-} from "../../source-response.ts";
+  dartFetchHttpClientLayer,
+  dartTransportLimits,
+  requestDartTextResponse,
+} from "../../transport.ts";
 import { buildCompanyReportsSearchForm } from "./build-form.ts";
 import { dsab007CompanyReportsMessages } from "./messages.ts";
 import { parseCompanyReportsSearchHtml } from "./parse-html.ts";
@@ -70,33 +63,13 @@ export const fetchCompanyReportsSearchHtml = (
       ),
     );
 
-    const response = yield* client.execute(request).pipe(
-      Effect.mapError(
-        (error) =>
-          new SourceUnavailable({
-            message: dsab007CompanyReportsMessages.sourceUnavailable,
-            sourceUrl: searchUrl,
-            diagnostics: toHttpFailureDiagnostics(error),
-          }),
-      ),
-    );
-
-    const html = yield* response.text.pipe(
-      Effect.mapError(
-        (error) =>
-          new ParseFailure({
-            message: dsab007CompanyReportsMessages.htmlDecodeFailure,
-            sourceUrl: searchUrl,
-            diagnostics: toTextDecodeFailureDiagnostics(response, error),
-          }),
-      ),
-    );
-
-    return createDartSourceTextResponse(
-      html,
-      searchUrl,
-      toHttpResponseDiagnostics(response, html),
-    );
+    return yield* requestDartTextResponse(client, request, {
+      sourceUrl: searchUrl,
+      unavailableMessage: dsab007CompanyReportsMessages.sourceUnavailable,
+      parseFailureMessage: dsab007CompanyReportsMessages.htmlDecodeFailure,
+      maxBytes: dartTransportLimits.searchCompanyReports,
+      responseKind: "html",
+    });
   });
 
 export const searchCompanyReportsSourcePage = (
@@ -110,4 +83,4 @@ export const searchCompanyReportsSourcePage = (
     const form = buildCompanyReportsSearchForm(request);
     const response = yield* fetchCompanyReportsSearchHtml(form);
     return yield* parseCompanyReportsSearchHtml(response, request);
-  }).pipe(Effect.provide(FetchHttpClient.layer));
+  }).pipe(Effect.provide(dartFetchHttpClientLayer));

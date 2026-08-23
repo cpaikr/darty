@@ -54,4 +54,36 @@ describe("convertReportHtmlToMarkdown", () => {
       "&lt;주요 경영지표&gt;",
     );
   });
+
+  test("escapes Markdown controls in plain report text", () => {
+    expect(
+      convertReportHtmlToMarkdown(
+        "<p>[악성 링크](https://evil.test) ![악성 이미지](https://evil.test/x) *강조* _강조_</p><p># 제목</p><p>``` 펜스 ```</p>",
+      ),
+    ).toBe(
+      "\\[악성 링크\\](https\\://evil.test) !\\[악성 이미지\\](https\\://evil.test/x) \\*강조\\* \\_강조\\_\n\n\\# 제목\n\n\\`\\`\\` 펜스 \\`\\`\\`",
+    );
+  });
+
+  test("does not autolink URL-like or setext-heading prose", () => {
+    expect(
+      convertReportHtmlToMarkdown("<p>www.example.com foo@example.com</p><p>Title<br>===</p>"),
+    ).toBe("www\\.example.com foo\\@example.com\n\nTitle\n\\===");
+  });
+
+  test("keeps sanitizer-approved anchors while escaping their labels safely", () => {
+    expect(
+      convertReportHtmlToMarkdown(
+        '<p><a href="https://dart.fss.or.kr/report/viewer.do?a=(b)">[보고서]</a></p>',
+      ),
+    ).toBe(
+      "[\\[보고서\\]](https://dart.fss.or.kr/report/viewer.do?a=\\(b\\))",
+    );
+  });
+
+  test("chooses code delimiters longer than embedded backtick runs", () => {
+    expect(convertReportHtmlToMarkdown("<p><code>a`b``c</code></p><pre>x```y````z</pre>")).toBe(
+      "```a`b``c```\n\n`````\nx```y````z\n`````",
+    );
+  });
 });

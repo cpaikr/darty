@@ -1,0 +1,17 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "source_unavailable",
+      "message": "The DART response body failed or timed out while streaming.",
+      "retryable": true,
+      "sourceUrl": "https://dart.fss.or.kr/report/viewer.do"
+    }
+  }
+}

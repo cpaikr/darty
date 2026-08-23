@@ -70,6 +70,114 @@ const extractInitialDocumentQuery = (
   }
 };
 
+const parseQueryIdentity = (
+  query: string,
+): { readonly receiptNumber: string; readonly dcmNo: string | undefined } | undefined => {
+  try {
+    const params = new URLSearchParams(query.replaceAll("&amp;", "&"));
+    const receiptNumber = params.get("rcpNo")?.trim();
+
+    if (receiptNumber === undefined || receiptNumber.length === 0) {
+      return undefined;
+    }
+
+    const dcmNo = params.get("dcmNo")?.trim();
+
+    return {
+      receiptNumber,
+      dcmNo: dcmNo === undefined || dcmNo.length === 0 ? undefined : dcmNo,
+    };
+  } catch {
+    return undefined;
+  }
+};
+
+const assertShellIdentity = (
+  shell: SourceReportShell,
+  receiptNumber: string,
+): void => {
+  let sourceIdentity: { readonly receiptNumber: string; readonly dcmNo: string | undefined };
+
+  try {
+    const url = new URL(shell.sourceUrl);
+    const sourceReceipt = url.searchParams.get("rcpNo")?.trim();
+
+    if (sourceReceipt === undefined || sourceReceipt.length === 0) {
+      throw new Error("missing receipt");
+    }
+
+    const sourceDcmNo = url.searchParams.get("dcmNo")?.trim();
+    sourceIdentity = {
+      receiptNumber: sourceReceipt,
+      dcmNo: sourceDcmNo === undefined || sourceDcmNo.length === 0 ? undefined : sourceDcmNo,
+    };
+  } catch {
+    throw new ViewReportProviderError({
+      code: "source_changed",
+      message: dsaf001ReportMessages.shellChanged,
+      retryable: false,
+      providerId,
+      sourceUrl: shell.sourceUrl,
+    });
+  }
+
+  if (shell.receiptNumber !== receiptNumber || sourceIdentity.receiptNumber !== receiptNumber) {
+    throw new ViewReportProviderError({
+      code: "source_changed",
+      message: dsaf001ReportMessages.shellChanged,
+      retryable: false,
+      providerId,
+      sourceUrl: shell.sourceUrl,
+    });
+  }
+
+  const selectedQueryIdentity = parseQueryIdentity(shell.selectedDocument.query);
+  const selectedIsReturned = shell.documents.some(
+    (document) => document.id === shell.selectedDocument.id,
+  );
+  const allDocumentsMatchReceipt = shell.documents.every(
+    (document) => parseQueryIdentity(document.query)?.receiptNumber === receiptNumber,
+  );
+
+  if (
+    !selectedIsReturned ||
+    !allDocumentsMatchReceipt ||
+    selectedQueryIdentity?.receiptNumber !== receiptNumber ||
+    (sourceIdentity.dcmNo !== undefined && selectedQueryIdentity?.dcmNo !== sourceIdentity.dcmNo)
+  ) {
+    throw new ViewReportProviderError({
+      code: "source_changed",
+      message: dsaf001ReportMessages.shellChanged,
+      retryable: false,
+      providerId,
+      sourceUrl: shell.sourceUrl,
+    });
+  }
+
+  const expectedDcmNo = sourceIdentity.dcmNo ?? selectedQueryIdentity.dcmNo;
+  const locatorMatches = (locator: { readonly rcpNo: string; readonly dcmNo: string }): boolean =>
+    locator.rcpNo === receiptNumber &&
+    (expectedDcmNo === undefined || locator.dcmNo === expectedDcmNo);
+
+  if (
+    (shell.initialViewLocator !== undefined && !locatorMatches(shell.initialViewLocator)) ||
+    shell.toc.some((section) => {
+      const visit = (entry: SourceReportSection): boolean =>
+        !locatorMatches(entry.locator) || entry.children.some(visit);
+
+      return visit(section);
+    })
+  ) {
+    throw new ViewReportProviderError({
+      code: "source_changed",
+      message: dsaf001ReportMessages.shellChanged,
+      retryable: false,
+      providerId,
+      sourceUrl: shell.sourceUrl,
+    });
+  }
+};
+
 const selectShell = async (
   source: Dsaf001ReportSource,
   receiptNumber: string,
@@ -82,6 +190,8 @@ const selectShell = async (
     initialDocumentQuery,
     context,
   );
+
+  assertShellIdentity(initialShell, receiptNumber);
 
   if (documentId === undefined || initialShell.selectedDocument.id === documentId) {
     return initialShell;
@@ -102,7 +212,21 @@ const selectShell = async (
     });
   }
 
-  return source.fetchShell(receiptNumber, document.query, context);
+  const selectedShell = await source.fetchShell(receiptNumber, document.query, context);
+
+  assertShellIdentity(selectedShell, receiptNumber);
+
+  if (selectedShell.selectedDocument.id !== documentId) {
+    throw new ViewReportProviderError({
+      code: "source_changed",
+      message: dsaf001ReportMessages.shellChanged,
+      retryable: false,
+      providerId,
+      sourceUrl: selectedShell.sourceUrl,
+    });
+  }
+
+  return selectedShell;
 };
 
 const viewReport = async (

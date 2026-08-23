@@ -9,11 +9,11 @@
     },
     {
       "path": "docs/specs/dart-html-viewer-v1.md",
-      "sha256": "f1a2d0e0ba07c31cc9ed0d81a6e5cddc9d386a315b0cbab3b695f68e2cc4d9ea"
+      "sha256": "7d77cf582ad0244a5d1124063767489fa874e69110a47429f5b8634f1274e440"
     },
     {
       "path": "docs/research/dart-provider-qualification.md",
-      "sha256": "960d7d79dd4ea7fc0b1a181d0040b6e3b56064b57a30622119b82d9a7abfddd9"
+      "sha256": "25e1e85fad4267c504b9876324a77131901088803542af9c5df38b9df7c66fa6"
     },
     {
       "path": "fixtures/dart/vertical-v1/manifest.json",

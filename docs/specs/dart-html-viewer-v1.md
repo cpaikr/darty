@@ -27,7 +27,12 @@ authorities. Every source claim below is labeled `observed`, `inferred`,
 - `WIRE-REDIRECT-1` — **Project decision.** Automatic redirects are disabled.
   This prevents a locator from silently crossing the DART origin.
 - `WIRE-TIMEOUT-1` — **Project decision.** Connect timeout is 5 seconds, idle
-  read timeout is 10 seconds, and total request deadline is 30 seconds.
+  read timeout is 10 seconds, and total request deadline is 30 seconds. The
+  fast fixture fault labelled `source-connect-timeout` is an accepted-socket
+  header-delay transport-failure equivalent; it is not evidence of a
+  connect-timeout duration. The production defaults are asserted directly in
+  the Rust transport unit tests, while phase-specific timeout behavior uses
+  injected fixture deadlines.
   Cancellation must stop an in-flight request promptly; public cancellation
   projection is owned by each SDK surface rather than this wire contract.
 - `WIRE-SIZE-1` — **Project decision.** Raw response bytes are capped before

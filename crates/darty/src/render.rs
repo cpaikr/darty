@@ -1,4 +1,9 @@
-use std::{borrow::Cow, fmt::Write as _, sync::LazyLock};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    fmt::Write as _,
+    sync::LazyLock,
+};
 
 use ego_tree::NodeRef;
 use scraper::{Html, node::Node};
@@ -23,11 +28,100 @@ pub(crate) fn render_content(
 }
 
 fn sanitize(source_html: &str) -> String {
+    let mut tag_attributes = HashMap::new();
+    tag_attributes.insert("a", HashSet::from(["href"]));
+    tag_attributes.insert("img", HashSet::from(["alt", "src"]));
+    tag_attributes.insert("td", HashSet::from(["colspan", "rowspan"]));
+    tag_attributes.insert("th", HashSet::from(["colspan", "rowspan", "scope"]));
+    tag_attributes.insert("ol", HashSet::from(["start"]));
+
     let mut builder = ammonia::Builder::default();
     builder
-        .add_tags(["table", "thead", "tbody", "tfoot", "tr", "th", "td"])
-        .add_tag_attributes("td", ["colspan", "rowspan"])
-        .add_tag_attributes("th", ["colspan", "rowspan"])
+        .tags(HashSet::from([
+            "address",
+            "article",
+            "aside",
+            "footer",
+            "header",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "hgroup",
+            "main",
+            "nav",
+            "section",
+            "blockquote",
+            "dd",
+            "div",
+            "dl",
+            "dt",
+            "figcaption",
+            "figure",
+            "hr",
+            "li",
+            "menu",
+            "ol",
+            "p",
+            "pre",
+            "ul",
+            "a",
+            "abbr",
+            "b",
+            "bdi",
+            "bdo",
+            "br",
+            "cite",
+            "code",
+            "data",
+            "dfn",
+            "em",
+            "i",
+            "kbd",
+            "mark",
+            "q",
+            "rb",
+            "rp",
+            "rt",
+            "rtc",
+            "ruby",
+            "s",
+            "samp",
+            "small",
+            "span",
+            "strong",
+            "sub",
+            "sup",
+            "time",
+            "u",
+            "var",
+            "wbr",
+            "caption",
+            "table",
+            "tbody",
+            "td",
+            "tfoot",
+            "th",
+            "thead",
+            "tr",
+            "img",
+        ]))
+        .tag_attributes(tag_attributes)
+        .generic_attributes(HashSet::new())
+        .url_schemes(HashSet::from(["http", "https", "ftp", "mailto", "tel"]))
+        .link_rel(None)
+        .attribute_filter(|element, attribute, value| {
+            if element == "img" && attribute == "src" {
+                match Url::parse(value) {
+                    Ok(url) if !matches!(url.scheme(), "http" | "https") => None,
+                    _ => Some(Cow::Borrowed(value)),
+                }
+            } else {
+                Some(Cow::Borrowed(value))
+            }
+        })
         .url_relative(ammonia::UrlRelative::Custom(Box::new(
             rewrite_dart_relative_url,
         )));
@@ -275,6 +369,47 @@ mod tests {
                 .contains("src=\"https://dart.fss.or.kr/images/logo.png\"")
         );
         assert!(!content.body.contains("evil.example"));
+    }
+
+    #[test]
+    fn sanitizer_uses_tag_specific_attributes_and_url_schemes() {
+        let content = render_content(
+            r#"<p lang="ko" title="ignored"><a href="mailto:ir@example.com" title="ignored">mail</a><a href="ftp://dart.fss.or.kr/file">ftp</a><img src="mailto:ir@example.com" alt="mail" width="10"><img src="ftp://dart.fss.or.kr/logo.png" alt="ftp"><img src="https://dart.fss.or.kr/logo.png" alt="ok"></p><table><tr><th scope="col" headers="ignored">head</th><td colspan="2" rowspan="3" style="ignored">cell</td></tr></table><ol start="3"><li>item</li></ol>"#,
+            OutputFormat::Html,
+            0,
+            10_000,
+            "document",
+            None,
+        );
+        assert!(
+            content
+                .body
+                .contains("<a href=\"mailto:ir@example.com\">mail</a>")
+        );
+        assert!(
+            content
+                .body
+                .contains("<a href=\"ftp://dart.fss.or.kr/file\">ftp</a>")
+        );
+        assert!(content.body.contains("<img alt=\"mail\">"));
+        assert!(content.body.contains("<img alt=\"ftp\">"));
+        assert!(
+            content
+                .body
+                .contains("<img src=\"https://dart.fss.or.kr/logo.png\" alt=\"ok\">")
+        );
+        assert!(content.body.contains("<th scope=\"col\">head</th>"));
+        assert!(
+            content
+                .body
+                .contains("<td colspan=\"2\" rowspan=\"3\">cell</td>")
+        );
+        assert!(content.body.contains("<ol start=\"3\">"));
+        assert!(!content.body.contains("title="));
+        assert!(!content.body.contains("lang="));
+        assert!(!content.body.contains("headers="));
+        assert!(!content.body.contains("style="));
+        assert!(!content.body.contains("width="));
     }
 
     #[test]

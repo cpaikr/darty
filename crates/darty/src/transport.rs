@@ -1,10 +1,11 @@
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
+use chrono::{DateTime, Utc};
 use encoding_rs::{EUC_KR, UTF_8};
 use futures_util::StreamExt;
 use reqwest::{
-    Client, Method,
-    header::{CONTENT_TYPE, HeaderMap, HeaderValue, REFERER, USER_AGENT},
+    Client, Method, StatusCode,
+    header::{CONTENT_TYPE, HeaderMap, HeaderValue, REFERER, RETRY_AFTER, USER_AGENT},
     redirect,
 };
 use tokio::{sync::Mutex, time::Instant};
@@ -19,6 +20,25 @@ const USER_AGENT_VALUE: &str = concat!(
     " (+https://github.com/sjunepark/darty)"
 );
 const REQUEST_START_INTERVAL: Duration = Duration::from_millis(250);
+const MAX_RETRY_AFTER_SECONDS: u64 = 86_400;
+const MAX_RETRY_AFTER_VALUE_LENGTH: usize = 128;
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct DeadlineConfig {
+    pub connect: Duration,
+    pub read: Duration,
+    pub total: Duration,
+}
+
+impl Default for DeadlineConfig {
+    fn default() -> Self {
+        Self {
+            connect: Duration::from_secs(5),
+            read: Duration::from_secs(10),
+            total: Duration::from_secs(30),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub(crate) struct SourceTransport {
@@ -49,7 +69,10 @@ impl SourceTransport {
     }
 
     #[cfg(feature = "fixture-origin")]
-    pub(crate) fn fixture(origin: Url) -> Result<Self, DartyError> {
+    pub(crate) fn fixture_with_deadlines(
+        origin: Url,
+        deadlines: DeadlineConfig,
+    ) -> Result<Self, DartyError> {
         let loopback = origin
             .host_str()
             .is_some_and(|host| host == "localhost" || host == "127.0.0.1" || host == "::1");
@@ -60,15 +83,22 @@ impl SourceTransport {
                 "Use the candidate fixture server on localhost.",
             ));
         }
-        Self::new(origin)
+        Self::new_with_deadlines(origin, deadlines)
     }
 
     fn new(request_origin: Url) -> Result<Self, DartyError> {
+        Self::new_with_deadlines(request_origin, DeadlineConfig::default())
+    }
+
+    fn new_with_deadlines(
+        request_origin: Url,
+        deadlines: DeadlineConfig,
+    ) -> Result<Self, DartyError> {
         let client = Client::builder()
             .redirect(redirect::Policy::none())
-            .connect_timeout(Duration::from_secs(5))
-            .read_timeout(Duration::from_secs(10))
-            .timeout(Duration::from_secs(30))
+            .connect_timeout(deadlines.connect)
+            .read_timeout(deadlines.read)
+            .timeout(deadlines.total)
             .build()
             .map_err(|_| DartyError {
                 code: ErrorCode::InternalError,
@@ -132,11 +162,13 @@ impl SourceTransport {
         })?;
         let status = response.status();
         if status.as_u16() != 200 {
-            return Err(DartyError::source(
+            let mut error = DartyError::source(
                 ErrorCode::SourceUnavailable,
                 format!("DART returned unexpected HTTP status {}.", status.as_u16()),
                 canonical_url,
-            ));
+            );
+            error.recovery_hint = retry_after_hint(status, response.headers(), Utc::now());
+            return Err(error);
         }
 
         let content_type = response
@@ -204,6 +236,31 @@ fn canonical_url(path: &str) -> String {
         .to_string()
 }
 
+fn retry_after_hint(status: StatusCode, headers: &HeaderMap, now: DateTime<Utc>) -> Option<String> {
+    if status != StatusCode::TOO_MANY_REQUESTS {
+        return None;
+    }
+    let value = headers.get(RETRY_AFTER)?.to_str().ok()?.trim();
+    if value.is_empty() || value.len() > MAX_RETRY_AFTER_VALUE_LENGTH {
+        return None;
+    }
+    if let Ok(seconds) = value.parse::<u64>() {
+        return (seconds <= MAX_RETRY_AFTER_SECONDS)
+            .then(|| format!("Retry after {seconds} seconds."));
+    }
+    let date = DateTime::parse_from_rfc2822(value)
+        .ok()?
+        .with_timezone(&Utc);
+    let milliseconds = date.signed_duration_since(now).num_milliseconds();
+    let seconds = if milliseconds <= 0 {
+        0
+    } else {
+        u64::try_from(milliseconds.saturating_add(999) / 1_000)
+            .expect("positive duration should convert to seconds")
+    };
+    (seconds <= MAX_RETRY_AFTER_SECONDS).then(|| format!("Retry after {seconds} seconds."))
+}
+
 fn parse_content_type(value: &str) -> (&str, Option<String>) {
     let mut parts = value.split(';');
     let media_type = parts.next().unwrap_or_default().trim();
@@ -237,7 +294,24 @@ fn decode(bytes: &[u8], charset: Option<&str>, source_url: &str) -> Result<Strin
 
 #[cfg(test)]
 mod tests {
-    use super::{decode, encode_form, parse_content_type};
+    use std::time::Duration;
+
+    use chrono::{DateTime, Utc};
+    use reqwest::{
+        StatusCode,
+        header::{HeaderMap, HeaderValue, RETRY_AFTER},
+    };
+
+    use super::{
+        DeadlineConfig, MAX_RETRY_AFTER_VALUE_LENGTH, decode, encode_form, parse_content_type,
+        retry_after_hint,
+    };
+
+    fn test_now() -> DateTime<Utc> {
+        DateTime::parse_from_rfc3339("2026-08-23T00:00:00Z")
+            .expect("fixed test clock")
+            .with_timezone(&Utc)
+    }
 
     #[test]
     fn form_keeps_repeated_fields() {
@@ -261,5 +335,74 @@ mod tests {
     fn malformed_input_is_replaced() {
         let decoded = decode(b"prefix \xff suffix", None, "https://dart.invalid").unwrap();
         assert!(decoded.contains('\u{fffd}'));
+    }
+
+    #[test]
+    fn production_deadline_defaults_are_five_ten_and_thirty_seconds() {
+        let deadlines = DeadlineConfig::default();
+        assert_eq!(deadlines.connect, Duration::from_secs(5));
+        assert_eq!(deadlines.read, Duration::from_secs(10));
+        assert_eq!(deadlines.total, Duration::from_secs(30));
+    }
+
+    #[test]
+    fn retry_after_keeps_bounded_numeric_hint_only_for_429() {
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("30"));
+        assert_eq!(
+            retry_after_hint(StatusCode::TOO_MANY_REQUESTS, &headers, test_now()).as_deref(),
+            Some("Retry after 30 seconds.")
+        );
+        assert!(retry_after_hint(StatusCode::SERVICE_UNAVAILABLE, &headers, test_now()).is_none());
+    }
+
+    #[test]
+    fn retry_after_http_date_is_relative_to_the_injected_clock() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            RETRY_AFTER,
+            HeaderValue::from_static("Sun, 23 Aug 2026 00:00:30 GMT"),
+        );
+        assert_eq!(
+            retry_after_hint(StatusCode::TOO_MANY_REQUESTS, &headers, test_now()).as_deref(),
+            Some("Retry after 30 seconds.")
+        );
+    }
+
+    #[test]
+    fn retry_after_http_date_in_the_past_is_immediate() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            RETRY_AFTER,
+            HeaderValue::from_static("Sat, 22 Aug 2026 23:59:59 GMT"),
+        );
+        assert_eq!(
+            retry_after_hint(StatusCode::TOO_MANY_REQUESTS, &headers, test_now()).as_deref(),
+            Some("Retry after 0 seconds.")
+        );
+    }
+
+    #[test]
+    fn retry_after_http_date_far_in_the_future_is_omitted() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            RETRY_AFTER,
+            HeaderValue::from_static("Mon, 24 Aug 2026 00:00:01 GMT"),
+        );
+        assert!(retry_after_hint(StatusCode::TOO_MANY_REQUESTS, &headers, test_now()).is_none());
+    }
+
+    #[test]
+    fn retry_after_omits_malformed_and_oversized_values() {
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("tomorrow"));
+        assert!(retry_after_hint(StatusCode::TOO_MANY_REQUESTS, &headers, test_now()).is_none());
+
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("86401"));
+        assert!(retry_after_hint(StatusCode::TOO_MANY_REQUESTS, &headers, test_now()).is_none());
+
+        let oversized = "1".repeat(MAX_RETRY_AFTER_VALUE_LENGTH + 1);
+        headers.insert(RETRY_AFTER, HeaderValue::from_str(&oversized).unwrap());
+        assert!(retry_after_hint(StatusCode::TOO_MANY_REQUESTS, &headers, test_now()).is_none());
     }
 }

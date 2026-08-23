@@ -41,7 +41,7 @@ This track validates the invocation boundary:
 - at least one `search-body` invocation uses valid CLI argument shape;
 - the command arguments match the scenario request, including keyword, date range, and company-code filter when requested.
 
-It only requires the matching structured CLI invocation to exit successfully. Detailed stdout envelope correctness belongs to the fixed-command CLI eval, and final-answer quality belongs in a separate future track.
+It only requires the matching structured CLI invocation to exit successfully. Detailed stdout envelope correctness belongs to the fixed-command CLI eval. Final-answer quality is evaluated separately by the opt-in research workflow track in [`../workflows/`](../workflows/README.md).
 
 Set `OPENAI_MODEL` to override the model.
 
@@ -90,4 +90,6 @@ bun run eval:search-body:agent:cli
 - CLI subprocess UX checks belong in `test/cli/`; these evals focus on live scenario usefulness and agent structured-tool invocation behavior.
 - Deterministic assertions are preferred here when output shape, echoed request parameters, item counts, receipt numbers, URL prefixes, or command arguments are objective.
 - Do not add an `llm-rubric` judge to tracks where checks can be expressed in JavaScript.
-- If we later want to evaluate final user-facing prose, add a separate final-answer track backed by a runner that explicitly treats final-answer quality as the thing under test.
+- Do not fold final-answer prose checks into this invocation track; use the
+  separate research workflow runner, which has an explicit final-answer judge
+  and remains outside credential-free CI.

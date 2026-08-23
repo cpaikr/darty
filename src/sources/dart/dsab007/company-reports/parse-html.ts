@@ -19,8 +19,8 @@ import {
 } from "./source-model.ts";
 import type { SourceCompanyReportsReplayInput } from "./replay-schema.ts";
 
-const absoluteUrl = (href: string): string =>
-  new URL(href, "https://dart.fss.or.kr").toString();
+const dartOrigin = "https://dart.fss.or.kr";
+const viewerPath = "/dsaf001/main.do";
 
 const collapseWhitespace = (value: string): string =>
   value.replace(/\s+/g, " ").trim();
@@ -51,12 +51,40 @@ const parseCorpId = (href: string | undefined): string | undefined => {
     return undefined;
   }
 
-  const match = href.match(/openCorpInfoNew\('([^']+)'/);
+  const match = href.match(/openCorpInfoNew\('(\d{8})'/);
   return match?.[1];
 };
 
-const parseReceiptNumber = (href: string): string | undefined =>
-  new URL(absoluteUrl(href)).searchParams.get("rcpNo") ?? undefined;
+const parseViewerLink = (
+  href: string,
+): {
+  readonly url: URL;
+  readonly rcpNo: string;
+} => {
+  let url: URL;
+  try {
+    url = new URL(href, dartOrigin);
+  } catch {
+    throw new Error(dsab007CompanyReportsMessages.missingViewerLink);
+  }
+
+  if (
+    url.origin !== dartOrigin ||
+    url.pathname !== viewerPath ||
+    url.username.length > 0 ||
+    url.password.length > 0
+  ) {
+    throw new Error(dsab007CompanyReportsMessages.missingViewerLink);
+  }
+
+  const receiptNumbers = url.searchParams.getAll("rcpNo");
+  const rcpNo = receiptNumbers[0];
+  if (receiptNumbers.length !== 1 || rcpNo === undefined || !/^\d{14}$/.test(rcpNo)) {
+    throw new Error(dsab007CompanyReportsMessages.missingReceiptNumber);
+  }
+
+  return { url, rcpNo };
+};
 
 const parsePagination = (
   $: cheerio.CheerioAPI,
@@ -64,13 +92,61 @@ const parsePagination = (
   response: DartSourceTextResponse,
 ): Effect.Effect<SourceCompanyReportsPagination, SourceChanged> =>
   Effect.gen(function* () {
-    if (hasNoResultsPlaceholder($)) {
+    const table = $("table.tbList").first();
+    const tbody = table.children("tbody").first();
+
+    if (table.length === 0 || tbody.length === 0) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007CompanyReportsMessages.missingResultTable,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    const noResultsState = getNoResultsState($);
+    if (noResultsState.mixed) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007CompanyReportsMessages.missingResultRows,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    if (noResultsState.hasSentinel) {
+      const pageInfoText = collapseWhitespace($(".pageInfo").first().text());
+      const pageInfoMatch = pageInfoText.match(
+        /\[(\d+)\/(\d+)\]\s*\[총\s*([0-9,]+)건\]/,
+      );
+      if (
+        pageInfoMatch !== null &&
+        (parseNumber(pageInfoMatch[3] ?? "") !== 0 ||
+          Number.parseInt(pageInfoMatch[2] ?? "0", 10) !== 0)
+      ) {
+        return yield* Effect.fail(
+          new SourceChanged({
+            message: dsab007CompanyReportsMessages.missingTotalCount,
+            ...getSourceResponseErrorContext(response),
+          }),
+        );
+      }
+
       return {
         currentPage: request.currentPage,
         totalPages: 0,
         totalCount: 0,
         returnedCount: 0,
       };
+    }
+
+    if (tbody.children("tr").length === 0) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007CompanyReportsMessages.missingResultRows,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
     }
 
     const pageInfoText = collapseWhitespace($(".pageInfo").first().text());
@@ -88,7 +164,8 @@ const parsePagination = (
     }
 
     const totalCount = parseNumber(pageInfoMatch[3] ?? "");
-    if (totalCount === undefined) {
+    const totalPages = Number.parseInt(pageInfoMatch[2] ?? "0", 10);
+    if (totalCount === undefined || totalCount === 0 || totalPages === 0) {
       return yield* Effect.fail(
         new SourceChanged({
           message: dsab007CompanyReportsMessages.missingTotalCount,
@@ -105,10 +182,45 @@ const parsePagination = (
     };
   });
 
-const hasNoResultsPlaceholder = ($: cheerio.CheerioAPI): boolean =>
-  $("table.tbList tbody td.no_data, table.tbList tbody td[colspan]")
+const getNoResultsState = (
+  $: cheerio.CheerioAPI,
+): {
+  readonly hasSentinel: boolean;
+  readonly mixed: boolean;
+} => {
+  const tbody = $("table.tbList").first().children("tbody").first();
+  const rows = tbody.children("tr").toArray();
+  const directSentinelCells = tbody
+    .children("td.no_data, td[colspan]")
     .toArray()
-    .some((cell) => collapseWhitespace($(cell).text()) === noResultsMessage);
+    .filter((cell) => collapseWhitespace($(cell).text()) === noResultsMessage);
+  const directDataCells = tbody
+    .children("td")
+    .toArray()
+    .filter((cell) => !directSentinelCells.includes(cell));
+  const sentinelRows = rows.filter((row) =>
+    $(row)
+      .children("td.no_data, td[colspan]")
+      .toArray()
+      .some((cell) => collapseWhitespace($(cell).text()) === noResultsMessage),
+  );
+  const sentinelSet = new Set(sentinelRows);
+  const dataRows = rows.filter((row) => !sentinelSet.has(row));
+  const hasSentinel = directSentinelCells.length > 0 || sentinelRows.length > 0;
+
+  return {
+    hasSentinel,
+    mixed:
+      hasSentinel &&
+      (dataRows.length > 0 ||
+        directDataCells.length > 0 ||
+        directSentinelCells.length + sentinelRows.length !== 1 ||
+        sentinelRows.some((row) => $(row).children("td").length !== 1)),
+  };
+};
+
+const hasNoResultsPlaceholder = ($: cheerio.CheerioAPI): boolean =>
+  getNoResultsState($).hasSentinel;
 
 const parseRemarks = (
   $: cheerio.CheerioAPI,
@@ -137,13 +249,17 @@ const parseRow = (
 ): SourceCompanyReportsRow => {
   const element = $(row as never);
   const cells = element.children("td");
+  if (cells.length !== 6) {
+    throw new Error(dsab007CompanyReportsMessages.rowParseFailed);
+  }
+
   const companyCell = cells.eq(1);
   const reportCell = cells.eq(2);
   const presenterCell = cells.eq(3);
   const receiptDateCell = cells.eq(4);
   const remarksCell = cells.eq(5);
   const companyLink = companyCell.find("a[href^='javascript:openCorpInfoNew']").first();
-  const reportLink = reportCell.find("a[href^='/dsaf001/main.do']").first();
+  const reportLink = reportCell.find("a[href]").first();
   const companyCode = parseCorpId(companyLink.attr("href"));
   const href = reportLink.attr("href");
 
@@ -155,10 +271,7 @@ const parseRow = (
     throw new Error(dsab007CompanyReportsMessages.missingViewerLink);
   }
 
-  const rcpNo = parseReceiptNumber(href);
-  if (rcpNo === undefined) {
-    throw new Error(dsab007CompanyReportsMessages.missingReceiptNumber);
-  }
+  const viewer = parseViewerLink(href);
 
   const reportTitle = collapseWhitespace(reportLink.text());
   if (reportTitle.length === 0) {
@@ -176,11 +289,11 @@ const parseRow = (
       collapseWhitespace(companyCell.find("span[title]").first().attr("title") ?? "") ||
       undefined,
     reportTitle,
-    rcpNo,
+    rcpNo: viewer.rcpNo,
     presenterName: presenterName || undefined,
     receiptDate: parseDate(receiptDateCell.text()),
     viewerPath: href,
-    viewerUrl: absoluteUrl(href),
+    viewerUrl: viewer.url.toString(),
     remarks: parseRemarks($, remarksCell),
     rawRowText: collapseWhitespace(element.text()),
   } satisfies SourceCompanyReportsRow;
@@ -188,6 +301,7 @@ const parseRow = (
 
 const parseRows = (
   $: cheerio.CheerioAPI,
+  request: SourceCompanyReportsReplayInput,
 ): {
   readonly rows: readonly SourceCompanyReportsRow[];
   readonly warnings: readonly SourceCompanyReportsParseWarning[];
@@ -199,11 +313,24 @@ const parseRows = (
   const rows: SourceCompanyReportsRow[] = [];
   const warnings: SourceCompanyReportsParseWarning[] = [];
 
-  $("table.tbList tbody tr")
+  $("table.tbList").first()
+    .children("tbody")
+    .first()
+    .children("tr")
     .toArray()
     .forEach((row, rowIndex) => {
       try {
-        rows.push(parseRow($, row));
+        const parsedRow = parseRow($, row);
+        if (parsedRow.companyCode !== request.textCrpCik) {
+          warnings.push({
+            code: "row_parse_failed",
+            rowIndex,
+            message: dsab007CompanyReportsMessages.companyMismatch,
+          });
+          return;
+        }
+
+        rows.push(parsedRow);
       } catch {
         warnings.push({
           code: "row_parse_failed",
@@ -241,8 +368,8 @@ export const parseCompanyReportsSearchHtml = (
 
   return Effect.gen(function* () {
     const $ = cheerio.load(html);
-    const parsedRows = parseRows($);
     const pagination = yield* parsePagination($, request, response);
+    const parsedRows = parseRows($, request);
 
     return yield* Schema.decodeUnknown(SourceCompanyReportsSearchPage)({
       request,

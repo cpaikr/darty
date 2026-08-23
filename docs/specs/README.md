@@ -23,7 +23,14 @@ unpublished Rust/Node/CLI implementation retained under `crates/` and
 
 `disclosure-types` and `report-guide` are shipped static operations not yet in
 the retained candidate. [The active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md)
-owns port order and timing.
+owns the phase gates and per-operation sequencing; no fixed port order is
+approved, so the list above is scope rather than a schedule. Each newly ported
+source-backed operation also requires provider requalification and an explicit
+maintainer approval before it can satisfy the Phase 3 gate. The Phase 4
+platform/cutover gate repeats that review for the complete source-backed set.
+Record those decisions only in the canonical [provider qualification approval
+records](../research/dart-provider-qualification.md#maintainer-approval-records);
+the current provider document contains no approval entries.
 
 ## Wire authority
 
