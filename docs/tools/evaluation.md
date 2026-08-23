@@ -10,9 +10,9 @@ Use the cheapest reliable evidence for each claim:
 - scenario evals for realistic multi-step usefulness and agent invocation.
 
 Objective facts—arguments, identifiers, call order, output envelopes, exit
-status, and empty-result behavior—belong in deterministic assertions. An LLM
-judge is appropriate only for a separately owned final-answer track with a
-subjective rubric; no such runner is currently required.
+status, and empty-result behavior—belong in deterministic assertions. The
+agent research workflow separately uses an LLM judge for grounded final-answer
+quality after its deterministic trace and citation gates pass.
 
 Evaluate task success, call efficiency, reference fidelity, failure recovery,
 output size, and latency. Keep live/model-dependent checks outside required CI

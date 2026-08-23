@@ -2,7 +2,10 @@
 
 This corpus is independently fictional, cross-language evidence for
 `dart-wire-v1`. It contains no retained live DART response body and is not a
-wire or public capability authority.
+wire or public capability authority. HTTP fields and routes are canonical in
+[`dart-wire-v1.openapi.yaml`](../../../docs/specs/dart-wire-v1.openapi.yaml);
+decoding and HTML/viewer grammar are canonical in the
+[`dart-html-viewer-v1` companion](../../../docs/specs/dart-html-viewer-v1.md).
 
 `manifest.json` matches fixtures by actual method, path, required headers, and
 complete form/query values. Body hashes make drift explicit. The MS949 body is
@@ -11,7 +14,9 @@ that strict EUC-KR rejects; the repository check proves WHATWG decoding after
 normalizing all three accepted charset aliases. A separate hex-encoded byte
 fixture proves malformed-byte replacement. Language-neutral expected
 projections make success, empty, partial, and drift outcomes independently
-checkable.
+checkable. Fault recipes model redirects, media-type drift, oversized bodies,
+decode failures, timeouts, and truncated streams without depending on the live
+provider.
 
 Run:
 
@@ -21,5 +26,8 @@ bun run check:dart-wire
 
 The shipped TypeScript product uses this corpus for selected parser and POST
 serializer conformance, but does not have a fixture transport seam. The
-retained Rust candidate consumes the corpus through an injected test transport
-and passes fixture-backed SDK, CLI, `--agent`, and package acceptance checks.
+retained Rust candidate consumes it through an injected transport for SDK,
+CLI, `--agent`, and package acceptance checks. Fast injected deadline cases are
+transport-failure equivalents, not proof of production timing; Rust transport
+tests separately assert configured deadlines. Fixture-only features are not
+production behavior or provider qualification.

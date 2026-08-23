@@ -1,115 +1,90 @@
 # Release
 
-This repo publishes the TypeScript npm package `@sjunepark/darty`. The package
-includes the Node-based `darty` CLI through `package.json` `bin`.
+This repository publishes the shipped TypeScript npm package
+`@sjunepark/darty`, including its Node-based `darty` CLI. Release Please owns
+normal version bumps, `CHANGELOG.md`, source tags, and GitHub Releases; the
+tagged Release workflow publishes npm. The retained Rust/Node/CLI candidate is
+unpublished and outside this flow.
 
-Release Please owns normal version bumps, `CHANGELOG.md`, source tags, and
-GitHub Releases. The Release workflow validates tagged source and publishes
-npm. The retained Rust/Node/CLI candidate is unpublished, is not selected by
-the root package, and is outside this release flow. This repo does not yet
-publish native packages or standalone OS-native binaries.
+## Manual prerequisites
 
-## Manual setup
+Configure npm trusted publishing for `@sjunepark/darty` with GitHub Actions,
+repository `sjunepark/darty`, and workflow `release.yml`. Publishing uses OIDC,
+so no npm token is required.
 
-Configure npm trusted publishing for `@sjunepark/darty`:
+Configure `RELEASE_PLEASE_TOKEN` as a fine-grained PAT or GitHub App token with
+repository Contents and Pull requests read/write access. The default
+`GITHUB_TOKEN` is insufficient because its generated tags do not trigger the
+Release workflow. Missing, expired, or under-scoped credentials require a
+repository owner; track current repair work in
+[`tasks/repair-release-please-token.md`](../tasks/repair-release-please-token.md).
 
-- Publisher: GitHub Actions
-- Organization or user: `sjunepark`
-- Repository: `darty`
-- Workflow filename: `release.yml`
+Branch protection/rulesets are unavailable for the current private-repository
+account plan. Repository workflows therefore enforce exact-commit gates:
+Release Please runs only after successful `CI` for the current `main` head, and
+tagged publication requires successful `CI` for the exact tag commit. If
+branch protection becomes available, require `CI / validate` as defense in
+depth.
 
-Configure this secret in this private repository:
+## Manual release-readiness evals
 
-- `RELEASE_PLEASE_TOKEN`: token used by `.github/workflows/release-please.yml` to open release PRs and create source tags/releases. Use a fine-grained PAT or GitHub App token, not the default `GITHUB_TOKEN`, so Release Please-created tags trigger `.github/workflows/release.yml`. Grant this repository Contents read/write and Pull requests read/write access.
+Run checks relevant to changes in CLI contracts, workflows, eval harnesses, or
+answer-quality prompts. These are opt-in readiness evidence, not required CI or
+npm publication dependencies.
 
-npm publishing uses OIDC trusted publishing, so no npm publish token is required.
+| Eval | Command | Use |
+|---|---|---|
+| Fixed report workflow | `bun run eval:workflow:cli` | Live DART workflow and CLI contract changes |
+| Agent body search | `bun run eval:agent-cli:search-body` | CLI, invocation-harness, or prompt changes; requires `OPENAI_API_KEY` |
+| Agent research workflow | `bun run eval:workflow:agent` | Workflow, citation, or answer-quality changes; requires `OPENAI_API_KEY` and a final-answer judge |
 
-Branch protection is not currently available for this repository. The
-repository-controlled release gate therefore runs Release Please from a
-successful `CI` `workflow_run`, checks that the CI run's exact commit is still
-the head of `main`, and refuses to run when `main` moved. If branch protection
-becomes available, require the `CI / validate` check as defense in depth.
+Run `bun run env:check` before hosted-model checks. The default
+`OPENAI_MODEL` is the readiness baseline; overrides are exploratory unless
+[`evals/README.md`](../evals/README.md) promotes them.
 
-The `RELEASE_PLEASE_TOKEN` value is an external prerequisite. A missing,
-expired, or under-scoped token blocks Release Please before it can open a PR or
-create a source tag; credentials cannot be repaired from this repository.
+## Automated flow
 
-For changes to CLI tool contracts, workflow behavior, eval harness behavior, or
-answer-quality prompts, run the relevant checks before release-readiness
-signoff. These are manual, opt-in checks; none is a required CI or npm
-publishing dependency.
-
-| Eval | Command | Classification | Readiness use |
-| --- | --- | --- | --- |
-| Fixed report workflow | `bun run eval:workflow:cli` | Live DART; fixed assertions; manual/opt-in; no hosted model | Run for workflow, CLI contract, or workflow-eval changes. |
-| Agent body search | `bun run eval:agent-cli:search-body` | Live DART + hosted model; manual; requires `OPENAI_API_KEY` | Run for CLI contract, eval-harness, or answer-quality changes. |
-| Agent research workflow | `bun run eval:workflow:agent` | Live DART + hosted model (including a final-answer judge); manual; requires `OPENAI_API_KEY` | Run for workflow, eval-harness, or answer-quality changes. |
-
-Run `bun run env:check` before the model-assisted checks. Use the default
-`OPENAI_MODEL` as the required manual model gate; additional model overrides
-are exploratory unless explicitly promoted in [`evals/README.md`](../evals/README.md).
-The fixed workflow eval is live but does not use a hosted model. All three
-evals remain outside required CI and npm publishing automation because live
-DART (and, for the agent evals, hosted-model) availability is not deterministic
-for release automation.
-
-## Automated release flow
-
-While the package is pre-1.0, Release Please treats normal `feat:` and `fix:` commits as patch releases and reserves minor bumps for breaking changes. This keeps rapid greenfield feature work on `0.0.x` unless a commit uses `!` or a `BREAKING CHANGE:` footer.
-
-1. Land normal work on `main` using Conventional Commits, especially `feat:`, `fix:`, and `docs:`. Use `!` or a `BREAKING CHANGE:` footer for breaking changes.
-2. `.github/workflows/ci.yml` validates pull requests and pushes to `main`
-   with the high-severity Bun audit, wire locks, CLI compatibility and
-   mutation checks, TypeScript typecheck/tests/build, Rust tests, and candidate
+1. Land Conventional Commits on `main`. Within the current pre-1.0 minor line,
+   normal `feat:` and `fix:` commits create patch releases; `!` or a
+   `BREAKING CHANGE:` footer creates a minor release.
+2. `CI` runs the high-severity dependency audit, wire locks, CLI compatibility
+   and mutation proof, TypeScript validation, Rust validation, and candidate
    package acceptance.
-3. After a successful `CI` run for a `main` commit,
-   `.github/workflows/release-please.yml` verifies that exact commit is still
-   `main`, then opens or updates a release PR that bumps `package.json`,
-   updates `.release-please-manifest.json`, and writes `CHANGELOG.md`.
-4. Merge the release PR after CI passes.
-5. Release Please creates the source tag and GitHub Release.
-6. The source tag triggers `.github/workflows/release.yml`. Its metadata job
-   requires a successful `CI` workflow run for the exact tagged commit before
-   the tagged `npm_validation` job runs the high-severity Bun audit, DART wire
-   authority check, full CLI v1 judge, mutation proof, typecheck, tests, and
-   build. Only then does the publish job run.
+3. After successful `CI`, Release Please verifies that the exact commit remains
+   the `main` head and opens or updates the release PR.
+4. Merge the release PR after CI passes. Release Please creates the source tag
+   and GitHub Release.
+5. The source tag triggers `release.yml`. Its metadata job requires successful
+   `CI` for the exact tagged commit before tagged validation and npm publish.
 
-The workflow-run gate is the repository-controlled substitute for unavailable
-branch protection: a failed CI conclusion cannot create a Release Please tag,
-and a manually pushed tag without a successful exact-commit CI run cannot
-publish. A concurrent main push can make a gate fail; the subsequent successful
-CI run retries the Release Please workflow for the new head.
-
-The source tag must match `package.json` exactly. Version `x.y.z` uses source tag `vx.y.z`.
+Version `x.y.z` uses source tag `vx.y.z`, and the tag must match
+`package.json`. A concurrent `main` push may close an exact-head window; the
+next successful CI run evaluates the new head.
 
 ## Dependency audit policy
 
-`bun audit --audit-level=high` is required in both CI and tagged release validation. The
-lockfile uses Bun `overrides` only for vulnerable transitives that are
-compatible with the package's Node `>=20.18.1` engine:
-
-| Transitive | Pinned version | Dependency path | High findings addressed |
-| --- | ---: | --- | --- |
-| `nanoid` | `3.3.18` | `sanitize-html` → `postcss` | [GHSA-28wg-ghj8-5hjv](https://github.com/advisories/GHSA-28wg-ghj8-5hjv), [GHSA-2v37-7h3g-55p8](https://github.com/advisories/GHSA-2v37-7h3g-55p8) |
-| `postcss` | `8.5.26` | `sanitize-html` | [GHSA-r28c-9q8g-f849](https://github.com/advisories/GHSA-r28c-9q8g-f849) |
-| `undici` | `7.29.0` | `cheerio` | [GHSA-4cwx-7wf7-3272](https://github.com/advisories/GHSA-4cwx-7wf7-3272), [GHSA-vmh5-mc38-953g](https://github.com/advisories/GHSA-vmh5-mc38-953g), [GHSA-vxpw-j846-p89q](https://github.com/advisories/GHSA-vxpw-j846-p89q), [GHSA-hm92-r4w5-c3mj](https://github.com/advisories/GHSA-hm92-r4w5-c3mj) |
-
-The pinned package releases are published as [`nanoid@3.3.18`](https://www.npmjs.com/package/nanoid/v/3.3.18), [`postcss@8.5.26`](https://www.npmjs.com/package/postcss/v/8.5.26), and [`undici@7.29.0`](https://www.npmjs.com/package/undici/v/7.29.0). Keep these overrides narrow; update them when the direct dependency graph or advisory fix versions change.
+`bun audit --audit-level=high` is required in CI and tagged validation.
+`package.json` may use narrow Bun `overrides` for vulnerable transitives only
+when the selected releases are compatible with the supported Node engine.
+Treat `package.json` and the lockfile as the exact version authority. Remove or
+update an override when the direct dependency graph incorporates the fix, and
+verify frozen installation plus the audit after every change.
 
 ## Manual fallback
 
-If automation needs to be bypassed, update `package.json` and `.release-please-manifest.json` to the same version, commit the change, ensure that exact commit has a successful `CI` run on `main`, and push a matching source tag:
+If automation must be bypassed, update `package.json` and
+`.release-please-manifest.json` to the same version, commit the change, confirm
+successful `CI` for that exact `main` commit, and push the matching tag:
 
 ```sh
 git tag vx.y.z
 git push origin main refs/tags/vx.y.z
 ```
 
-The Release workflow checks the tag commit against the successful CI workflow
-runs and fails closed when no exact match exists. Creating a Git tag itself
-cannot be prevented without GitHub branch/tag protection, so treat this as an
-exceptional, auditable fallback.
+The Release workflow fails closed without exact-commit CI evidence. GitHub
+cannot prevent creation of an arbitrary tag under the current account limits,
+so this is an exceptional, auditable fallback.
 
-To republish an existing source tag without moving it, run the `Release` workflow manually with the `tag` input set to the existing tag, for example `v0.2.1`.
-
-The workflow is idempotent. If the npm package version already exists, npm publish is skipped.
+To republish an existing source tag without moving it, run the `Release`
+workflow manually with that tag as the `tag` input. The workflow skips npm
+publish when the package version already exists.

@@ -1,342 +1,114 @@
 # Source Architecture
 
 This document covers the shipped TypeScript implementation under `src/`. It is
-the runnable baseline until the rewrite's atomic cutover; it is not the
-accepted target architecture. The repo-root
-[ARCHITECTURE.md](../ARCHITECTURE.md) distinguishes this baseline from the
-unpublished Rust candidate and the target product.
+the runnable baseline until the rewrite's atomic cutover, not the accepted
+target architecture. Root [ARCHITECTURE.md](../ARCHITECTURE.md) owns the
+shipped/candidate/target status boundary.
 
-## Purpose
+## Scope
 
-`src/` contains the executable slice of `darty`: public `search-body`,
-`search-company`, `search-company-reports`, `company-detail`, `company-rss`,
-`disclosure-types`, `report-guide`, and `view-report` capabilities, a local CLI
-transport, and internal DART source adapters for `dsab007` search, `dsae001`
-company overview search/detail, DART company RSS, and `dsaf001` report viewing.
-The `disclosure-types` and `report-guide` helpers are static and have no live
-DART adapter.
+The source tree implements eight public operations:
 
-The public design goal is a reusable capability core with narrowly justified
-integration surfaces. The active public surfaces are the CLI and the
-trusted-host `@sjunepark/darty/toolset` package export; Pi adapters remain out
-of scope.
+- source-backed: `search-body`, `search-company`,
+  `search-company-reports`, `company-detail`, `company-rss`, and `view-report`;
+- static: `disclosure-types` and `report-guide`.
 
-## Layer Overview
+The active public surfaces are the `darty` CLI and the trusted-host
+`@sjunepark/darty/toolset` export. Both are thin adapters over the same
+capability core. Pi adapters are not supported.
 
-The CLI and toolset are not the real app. The capability layer is: a semantic
-request contract, a provider interface, and an execution path that normalizes
-errors and shapes results. Public transports stay thin over that core.
+## Layers
 
 ```mermaid
 graph TD
-    subgraph Transport["Transport Adapters"]
-        CLI["CLI · src/cli/"]
-        TOOLSET["Toolset · src/toolset.ts"]
-    end
-
-    subgraph App["Shared Composition · src/app/"]
-        APP["Operation name · schemas · provider wiring"]
-    end
-
-    subgraph Cap["Capability Contracts · src/capabilities/"]
-        CAP["Request/result schemas · validation · execution"]
-    end
-
-    subgraph Src["Source Adapters · src/sources/dart/"]
-        SRC["Replay/viewer contracts · request builders · HTML parsers"]
-    end
-
-    CLI --> APP
-    TOOLSET --> APP
-    APP --> CAP
-    CAP --> SRC
-    SRC --> DART[("dart.fss.or.kr")]
+    CLI["CLI · src/cli/"] --> APP["Composition · src/app/"]
+    TOOLSET["Toolset · src/toolset.ts"] --> APP
+    APP --> CAP["Capability contracts · src/capabilities/"]
+    CAP --> SOURCE["DART operation adapters · src/sources/dart/"]
+    SOURCE --> TRANSPORT["Shared transport · src/sources/dart/transport.ts"]
+    TRANSPORT --> DART[(dart.fss.or.kr)]
+    CAP --> STATIC["Static project data"]
 ```
 
-| Layer | Path | Owns |
-|-------|------|------|
-| **Transport** | `src/cli.ts`, `src/cli/program.ts`, `src/cli/`, `src/toolset.ts` | Own public host contracts, call the shared operation, and serialize process/toolset output |
-| **Composition** | `src/app/` | Share default provider wiring plus machine-readable schema access across transports |
-| **Capability** | `src/capabilities/` | Public semantic request/result schemas, JSON Schema export, validation, and execution |
-| **Source** | `src/sources/dart/` | DART replay/viewer fields, form POST or viewer GETs, HTML parsing, source models, and error mapping |
+| Layer | Owns |
+|---|---|
+| `src/cli/` and `src/toolset.ts` | Public host contracts, CLI flags/help, process serialization, and toolset discovery/execution |
+| `src/app/` | Operation names, schema access, default provider wiring, and shared composition |
+| `src/capabilities/` | Semantic request/result schemas, validation, typed failures, projections, and execution |
+| `src/sources/dart/<surface>/` | Upstream request mapping, source models, HTML/XML parsing, sanitization, and operation-specific error mapping |
+| `src/sources/dart/transport.ts` | Shared origin, redirect, status, media-type, charset, deadline, size, cancellation, and body-cleanup policy |
 
-## Component Map
+## Component boundaries
 
-The diagram shows the established `search-body` path. `search-company`,
-`search-company-reports`, `company-detail`, `company-rss`, and `view-report` use
-the same transport/app/capability shape through their matching `app/`,
-`capabilities/`, `cli/commands/`, and `sources/dart/` modules. The static
-`disclosure-types` and `report-guide` helpers use the same
-transport/app/capability shape without a `src/sources/dart/` provider.
+- `src/cli.ts` starts the executable; `src/cli/program.ts` owns Commander
+  registration and converts failures into the CLI v1 process contract.
+- `src/cli/commands/` owns transport-local flags, help, examples, and output
+  formatting. Semantic validation stays in capabilities.
+- `src/toolset.ts` exposes the same operations to a trusted JS/TS host with
+  source-owned schemas, serialized errors, and `AbortSignal` cancellation.
+- `src/app/` attaches default providers to capability executors. It contains no
+  independent DART implementation.
+- Each capability owns its public semantic contract. Low-level replay fields
+  remain internal to its source adapter.
+- `src/sources/dart/` contains adapters for `dsab007` body and company-report
+  search, `dsae001` company search/detail, company RSS, and `dsaf001` report
+  viewing. Static operations bypass this layer.
 
-```mermaid
-graph TD
-    CLI_TS["src/cli.ts\nexecutable entrypoint"] --> CLI_PROGRAM["src/cli/program.ts\nCommander program + runtime"]
-    CLI_PROGRAM --> CMD["src/cli/commands/search-body.ts"]
-    CMD --> RUN["executeSearchBodyCommand()"]
-    RUN --> APP["src/app/search-body.ts"]
-    APP --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
-    APP --> EXEC["execute.ts\nvia shared operation"]
-    APP -. default provider .-> PROV["provider.ts"]
-    EXEC --> PROV
-    PROV --> SEARCH["search.ts"]
-    SEARCH --> FETCH["fetch.ts"]
-    FETCH --> FORM["build-form.ts"]
-    FETCH --> PARSE["parse-html.ts"]
+## Request flow
 
-    CONTRACT["contract.ts + contract/\npublic schema + resolver"] --> EXEC
-    CONTRACT --> SPEC
+1. A transport parses host-specific input and calls an `src/app/` operation.
+2. The capability rejects unknown fields, applies defaults, validates semantic
+   constraints, and calls its provider.
+3. The provider maps public input into a source-owned request.
+4. The shared transport enforces the DART origin and bounded HTTP policy.
+5. The operation adapter parses fail-closed into a source model and maps it to
+   the capability result.
+6. The capability creates the shared success or typed-failure envelope; the
+   transport projects and serializes it for its public surface.
 
-    REPLAY["replay-schema.ts"] --> SEARCH
-    MODEL["source-model.ts"] --> PARSE
+`view-report` follows the same flow but first parses `/dsaf001/main.do` into
+document/TOC locators, then fetches `/report/viewer.do`. Its source adapter
+keeps locators opaque, validates their receipt/document identity, sanitizes
+HTML, and produces bounded content windows with best-effort Markdown.
 
-    FETCH -->|POST| DART[("/dsab007/search.ax")]
+## Contract and transport policies
 
-    subgraph cli ["CLI transport"]
-        CLI_TS
-        CLI_PROGRAM
-        CMD
-        RUN
-    end
-    subgraph app ["src/app/"]
-        APP
-    end
-    subgraph cap ["src/capabilities/search-body/"]
-        CONTRACT
-        SPEC
-        EXEC
-        PROV
-    end
-    subgraph source ["src/sources/dart/dsab007/contents/"]
-        SEARCH
-        FETCH
-        FORM
-        PARSE
-        REPLAY
-        MODEL
-    end
-```
-
-- **`src/cli.ts`** — Executable CLI entry point. Imports `runDartyCli()` and
-  starts the CLI without owning command registration.
-- **`src/cli/program.ts`** — Reusable Root Commander program and runtime.
-  Registers commands, exposes `createDartyCliProgram()` for tests, and turns
-  failures into the CLI v1 JSON failure envelope plus a process exit code.
-- **`src/cli/commands/`** — CLI transport adapters. Own Commander flags, help
-  text, examples, and stdout formatting while delegating semantic validation and
-  execution through an injected command runner. Most command successes and all
-  command failures serialize as JSON to stdout; `report-guide` success output
-  and help remain human-readable.
-- **`src/toolset.ts`** — Trusted JS/TS server-host adapter. Exposes command
-  discovery/help, source-owned validation metadata, serialized errors,
-  validated execution, and `AbortSignal` cancellation without Pi runtime types.
-- **`src/app/`** — Shared operation wiring. Exposes internal operation names,
-  JSON Schemas, and capability executors with the default DART providers already
-  attached.
-- **`src/capabilities/`** — Public, transport-neutral contracts and execution
-  flow. Defines semantic inputs, success result shapes, typed failures, and
-  execution logic.
-- **`src/sources/dart/`** — Internal DART adapters. Owns replay/viewer schemas,
-  request construction, HTML parsing/sanitization, source models, and error mapping.
-  `dsab007/contents` powers body-content search; `dsab007/company-reports`
-  powers company-code filing search; `dsae001/company` powers company-name
-  search; `dsae001/detail` powers company detail lookup; `api/company-rss` powers
-  company RSS; `dsaf001/report` resolves receipt
-  viewer shells, document selectors, TOCs, content planning, navigation,
-  sanitized HTML, and best-effort Markdown.
-
-## Behavior-First Core
-
-The biggest design choice is **behavior-first core, transport-local UX**. The
-shared layer owns semantic schemas and execution behavior. The CLI owns
-process-level parsing, help text, and final stdout/stderr/exit-code behavior.
-
-```mermaid
-graph LR
-    CONTRACT["contract.ts + contract/\nEffect Schema"] --> VALIDATE["Runtime\nvalidation"]
-    CONTRACT --> TS["TypeScript\ntypes"]
-    CONTRACT --> SPEC["spec.ts\noperation name\n+ JSON Schema"]
-
-    SPEC --> CLI_META["CLI name reuse"]
-    CONTRACT --> RESULT["Success result\nenvelope"]
-
-    CLI_META -. transport local .-> CLI_FLAGS["CLI flags · help · examples"]
-```
-
-How it works:
-
-1. **`contract.ts`** re-exports the public contract modules. The backing
-   `contract/` files define the request schema, success result schema, typed
-   failures, and semantic validation rules.
-2. **`spec.ts`** exports the operation name plus request/result JSON Schemas for
-   tests and package-owned introspection. Commander flags remain explicitly
-   defined by each CLI command.
-3. **`app/`** wires those schemas and shared executors to the default provider
-   implementations.
-4. **`cli/commands/`** defines each CLI UX explicitly, then delegates to the
-   shared operation.
-
-One source of truth gives you:
-
-- runtime validation shape
-- TypeScript types
-- success result schema
-- JSON Schema for toolset introspection and tests
-
-What is intentionally *not* centralized:
-
-- CLI flags and CLI-specific flag wording
-- process-level help text, examples, and formatting
-
-## Runtime Flow
-
-The detailed diagram below shows the `search-body` path. `view-report`
-follows the same transport/app/capability/provider layering, but its source
-adapter uses GET requests against `/dsaf001/main.do` and `/report/viewer.do`
-instead of the `dsab007` POST replay flow. Inside `dsaf001/report`, `view.ts`
-keeps the top-level provider orchestration while `source.ts`, `plan.ts`,
-`content.ts`, and `navigation.ts` own fetch seams, content selection, HTML
-truncation, and TOC navigation respectively.
-
-```mermaid
-graph TD
-    CLI_INPUT["CLI flags"]
-    CLI_ENTRY["src/cli.ts\nexecutable entrypoint"]
-    CLI_PROGRAM["src/cli/program.ts\nCommander runtime"]
-    CLI_CMD["executeSearchBodyCommand()\nCLI-only stdout handling"]
-    APP["src/app/search-body.ts\nshared operation"]
-    RESOLVE["resolveSearchBodyRequest()"]
-    REQUEST["Validated\nSearchBodyRequest"]
-    PROVIDER["provider.search()"]
-    TO_REPLAY["toDsab007ContentsReplayInput()"]
-    BUILD["buildContentsSearchForm()"]
-    FETCH["fetchContentsSearchHtml()"]
-    POST["POST /dsab007/search.ax"]
-    HTML["Source text response\nbody + safe HTTP diagnostics"]
-    PARSE_HTML["parseContentsSearchHtml()"]
-    SOURCE_PAGE["SourceContentsSearchPage"]
-    TO_RESULT["toDsab007ContentsProviderResult()"]
-    ENVELOPE["SearchBodyResult\nenvelope"]
-    CLI_OUTPUT["JSON to stdout"]
-
-    CLI_INPUT --> CLI_ENTRY
-    CLI_ENTRY --> CLI_PROGRAM
-    CLI_PROGRAM --> CLI_CMD
-    CLI_CMD --> APP
-    APP --> RESOLVE
-    RESOLVE --> REQUEST
-    REQUEST --> PROVIDER
-    PROVIDER --> TO_REPLAY
-    TO_REPLAY --> BUILD
-    BUILD --> FETCH
-    FETCH --> POST
-    POST --> HTML
-    HTML --> PARSE_HTML
-    PARSE_HTML --> SOURCE_PAGE
-    SOURCE_PAGE --> TO_RESULT
-    TO_RESULT --> ENVELOPE
-    ENVELOPE --> CLI_OUTPUT
-```
-
-Step by step:
-
-1. CLI converts flags into a parsed command with separate `request` and `output` buckets. `request` contains only public semantic capability keys (`keyword`, `startDate`, etc.); `output` contains CLI presentation controls such as `pretty` and `verbose`.
-2. `resolveSearchBodyRequest()` rejects unknown parameters, then uses the public request schema to apply defaults and validate required fields, enums, integer bounds, and date formats.
-3. `src/app/search-body.ts` wires the shared capability executor to the default `dsab007ContentsProvider`.
-4. `toDsab007ContentsReplayInput()` translates the public request into the internal replay contract (`DATE`/`rpt_nm`, `textCrpCik`, `maxResults`).
-5. `buildContentsSearchForm()` encodes the replay input as `URLSearchParams`.
-6. `fetchContentsSearchHtml()` POSTs the form body to `/dsab007/search.ax` and returns a source text response containing the body, source URL, and safe HTTP diagnostics.
-7. `parseContentsSearchHtml()` extracts rows, pagination, and warnings from that source response so parser failures can retain HTTP status/content-type/response-length context.
-8. `toDsab007ContentsProviderResult()` maps source rows into public items.
-9. `buildSearchBodyResult()` wraps the provider result in a capability-owned envelope with metadata, references, and warnings.
-10. The CLI projects the capability envelope into its CLI output contract, then serializes exactly one JSON stdout payload. Default CLI output may omit low-benefit diagnostic/context fields; `--verbose` restores them.
-
-Semantic validation happens inside the capability executor, not in the CLI transport. CLI-only presentation options stay out of the capability request so the domain contract remains independent from process-output controls.
-
-## Two Schemas
-
-There are two schemas in play, deliberately kept separate.
-
-```mermaid
-graph LR
-    subgraph Public["Public Schema · contract.ts"]
-        direction TB
-        P_KW["keyword"]
-        P_DATE["startDate · endDate"]
-        P_SORT["sortBy: date | reportName"]
-        P_COMPANY["companyCode"]
-        P_PAGE["page"]
-    end
-
-    subgraph Internal["Replay Schema · replay-schema.ts"]
-        direction TB
-        I_KW["keyword"]
-        I_DATE["startDate · endDate"]
-        I_SORT["sort: DATE | rpt_nm"]
-        I_COMPANY["textCrpCik"]
-        I_PAGE["currentPage"]
-        I_FIXED["maxResults · maxLinks\noption · b_* fields"]
-    end
-
-    P_KW ---|1:1| I_KW
-    P_DATE ---|1:1| I_DATE
-    P_SORT ---|renamed| I_SORT
-    P_COMPANY ---|renamed| I_COMPANY
-    P_PAGE ---|renamed| I_PAGE
-```
-
-- **Public semantic schema** (`SearchBodyRequestSchema`, re-exported from
-  `contract.ts`): what the CLI accepts after flag parsing. Semantic names,
-  clean enums, documented metadata.
-- **Internal replay schema** (`SourceContentsReplayInput` in
-  `replay-schema.ts`): what DART's form actually expects. Raw field names,
-  fixed page-size values, duplicated `b_*` parameters.
-
-`toDsab007ContentsReplayInput()` is the only function that knows both. The
-replay schema stays internal unless the product decides to expose lower-level
-knobs.
-
-## Start Here
-
-- `src/cli.ts` — executable CLI entry point
-- `src/cli/program.ts` — reusable Commander program, command registration, and CLI runtime
-- `src/app/*` — shared operation composition seams
-- `src/cli/commands/*` — explicit CLI surfaces over shared operations
-- `src/cli/command-helpers.ts` — small Commander transport helpers shared by
-  command files
-- `src/capabilities/*/contract.ts` — public input/output contracts, typed
-  failures, and request resolution
-- `src/capabilities/*/spec.ts` — operation identifiers and machine-readable
-  request/result schemas
-- `src/capabilities/*/execute.ts` — shared validation, execution, and error
-  normalization
-- `src/sources/dart/dsab007/contents/search.ts` and
-  `src/sources/dart/dsae001/company/search.ts` — public-to-source mapping and
-  provider boundaries
-
-## Test Coverage Map
-
-Tests make the design relationships explicit:
-
-- `spec.test.ts` — request/result JSON Schemas come from the same core schemas
-- `search-body.test.ts` — CLI surface is explicit while still delegating to
-  the shared executor
-- `contract.test.ts` — semantic resolution is shared and transport-independent
-- `execute.test.ts` — provider errors get normalized into capability-owned failures
-- `test/cli/` — subprocess CLI reflects the shared core
+- Public schemas use semantic names. DART form/query fields and replay-only
+  constants stay in source adapters; one mapper is allowed to know both.
+- CLI presentation controls such as `pretty`, `verbose`, and `agent` are not
+  capability request fields.
+- Source parsing fails closed when required tables, pagination, RSS structure,
+  viewer documents, or executable TOC grammar changes. Recognized partial rows
+  may produce explicit warnings rather than silent success.
+- The shared transport accepts only the exact DART origin, disables automatic
+  redirects, requires successful HTML/XML media types as appropriate, decodes
+  only supported charsets, and enforces connect/idle/total deadlines and raw
+  byte caps before parsing.
+- Cancellation aborts in-flight reads and cleanup completes before capacity is
+  released. Errors expose bounded diagnostics, never raw response bodies,
+  cookies, or secrets.
+- Viewer HTML is sanitized before publication. Public document and section IDs
+  are opaque and must come from the selected shell; callers cannot synthesize
+  raw viewer locators.
 
 ## Invariants
 
-- Public capability modules do not import DART-specific replay schemas or parser
-  models. That boundary keeps source details below the capability contract.
-- CLI parsing stays shallow. Required fields, defaults, enum checks, and public
-  validation happen in capability execution, not in Commander option handlers.
-- Provider implementations return capability-shaped results, not raw source page
-  structures.
-- The replay contract is intentionally richer than the public contract. Fields
-  that exist only to satisfy DART form behavior stay internal until the project
-  decides they are stable public knobs.
-- The capability layer is the single source of truth for semantic behavior and
-  machine-readable request/result schemas.
-- CLI commands may duplicate small amounts of process UX metadata rather than
-  forcing one shared manifest abstraction.
+- The CLI and toolset reuse the capability core; neither owns DART behavior.
+- Public success envelopes contain `result`, `metadata`, `references`, and
+  `warnings`. Typed failures remain explicit and include recovery hints only
+  when a safe next action is known.
+- Default projections stay compact while preserving identifiers and references
+  required for the next operation. Detailed/raw modes add bounded source
+  evidence, not unrestricted upstream bodies.
+- Source URLs and references remain tied to the exact returned company,
+  filing, document, or section.
+- Tests inject providers/transports at the capability or source seam; live
+  checks remain opt-in and do not replace fictional conformance evidence.
+
+## Start here
+
+- [`src/app/`](app/) for operation composition.
+- [`src/capabilities/`](capabilities/) for public contracts and behavior.
+- [`src/sources/dart/`](sources/dart/) for DART adapters and shared transport.
+- [`src/cli/`](cli/) and [`src/toolset.ts`](toolset.ts) for public adapters.
+- [Specification index](../docs/specs/README.md) for stable contracts.

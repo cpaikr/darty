@@ -5,7 +5,6 @@
 - `name`: `dsab007-search-company-reports-v1`
 - `operation`: `search-company-reports`
 - `owner`: `darty`
-- `status`: shipped in TypeScript and retained Rust candidate
 - `domain`: DART integrated filing search by selected company through `dsab007`
 - `users`: LLM agents and scripts that need company-specific filing lists from a stable DART company identifier
 

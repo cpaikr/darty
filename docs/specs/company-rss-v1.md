@@ -1,7 +1,6 @@
 # Company RSS v1
 
 - `name`: `company-rss-v1`
-- `status`: shipped in TypeScript; not yet in retained Rust candidate
 - `domain`: DART company-specific disclosure RSS
 
 ## Public Operation

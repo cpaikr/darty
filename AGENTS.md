@@ -45,6 +45,8 @@ not add placeholder build, lint, or format commands.
 - Live DART evidence: `docs/research/`
 - Stable capability and transport contracts: `docs/specs/`
 - Shared tool-design guidance: `docs/tools/`
+- AXI upstream baseline and drift review: `docs/upstreams/axi.md` and
+  `docs/upstreams/axi-baseline.json`
 - Release automation and secrets: `docs/release.md`
 
 ## Release and Publishing
@@ -52,10 +54,8 @@ not add placeholder build, lint, or format commands.
 - Read `docs/release.md` before release work.
 - Release Please owns normal version bumps and `CHANGELOG.md`; do not edit them
   manually except for the documented fallback.
-- Use Conventional Commits. While the package is pre-1.0, normal `feat:` and
-  `fix:` commits become patch releases; breaking commits using `!` or
-  `BREAKING CHANGE:` become minor releases.
-- Version `x.y.z` uses source tag `vx.y.z`.
+- Use Conventional Commits and follow the version/tag semantics in
+  `docs/release.md`.
 - The current release workflow publishes only the TypeScript npm product. The
   Rust candidate must not be published or described as supported before the
   active plan's cutover gates are complete and `docs/release.md` is updated.

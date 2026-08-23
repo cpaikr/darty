@@ -58,8 +58,7 @@ Set `OPENAI_MODEL` and optionally `OPENAI_JUDGE_MODEL` to select the agent and
 final-answer judge models. This track is live and model-dependent; it is an
 opt-in manual/readiness check and is never a credential-free CI requirement.
 
-The older `eval:search-body:*` script aliases remain equivalent during the
-staged harness refactor. `OPENAI_MODEL` overrides the agent runner's default.
+`OPENAI_MODEL` overrides the agent runner's default.
 
 ## Gate policy
 

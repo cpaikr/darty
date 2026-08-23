@@ -22,11 +22,3 @@ product, implementation, contract, or delivery truth.
 | What wire subset does the Rust vertical candidate conform to? | [`dart-wire-v1.openapi.yaml`](../specs/dart-wire-v1.openapi.yaml) and [`dart-html-viewer-v1.md`](../specs/dart-html-viewer-v1.md) |
 | How is CLI compatibility frozen? | [`test/compat/cli-v1/README.md`](../../test/compat/cli-v1/README.md) |
 | Which validation layer should I run? | [`evals/README.md`](../../evals/README.md), repository CI, and `AGENTS.md` |
-
-The essential implementation distinction is:
-
-```text
-shipped:   TypeScript CLI + ./toolset -> TypeScript capability/source core
-candidate: Rust CLI + Node SDK        -> Rust SDK (three operations)
-target:    Rust CLI + Node SDK        -> Rust SDK (all eight operations)
-```

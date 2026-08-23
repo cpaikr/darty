@@ -1,7 +1,5 @@
 # dsaf001 Report View v1
 
-Status: shipped in TypeScript and retained Rust candidate.
-
 ## Purpose
 
 `view-report` resolves a DART receipt into the viewer document context and uses
@@ -11,7 +9,7 @@ progressive disclosure for report content:
 2. call again with a returned `sectionId` to get best-effort Markdown or sanitized HTML for one section
 
 The tool is read-only and hides DART's raw viewer parameters (`dcmNo`, `eleId`,
-`offset`, `length`, `dtd`) behind stable tool IDs.
+`offset`, `length`, `dtd`) behind opaque, receipt/document-scoped IDs.
 
 ## Request
 

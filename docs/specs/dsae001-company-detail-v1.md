@@ -1,7 +1,6 @@
 # dsae001 Company Detail v1
 
 - `name`: `dsae001-company-detail-v1`
-- `status`: shipped in TypeScript; not yet in retained Rust candidate
 - `domain`: DART company overview detail lookup
 
 ## Public Operation

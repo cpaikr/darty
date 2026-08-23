@@ -28,16 +28,16 @@ runs two normal user tasks:
    select a filing, fetch that filing's TOC, fetch one returned section, and
    cite the exact `receiptNumber` and `sectionId` for that same report.
 2. `related-filings-comparison` requires the agent to fetch two distinct
-   related filings, inspect each TOC, retrieve a comparable section from each,
-   and cite both exact receipt/section pairs in a grounded comparison.
+   related filings, inspect each TOC, retrieve the same normalized section
+   title from each, and cite both exact receipt/section pairs in a grounded
+   comparison.
 
 The deterministic trace gate passes only when the required commands succeed,
 the company and filing references are present, section bodies are non-empty,
 each report search uses the scenario's required date range, every returned
 filing has a valid receipt date inside that range, and every retrieved
 receipt/section pair uses a section ID returned by the TOC for its own receipt.
-A
-separate final-answer judge then checks that the prose answers the task,
+A separate final-answer judge then checks that the prose answers the task,
 grounds claims in the returned body excerpts, and contains no invented or
 cross-report identifiers. Both gates must pass for the scenario to pass.
 

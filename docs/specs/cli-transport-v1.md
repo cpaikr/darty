@@ -2,8 +2,10 @@
 
 ## Scope
 
-This spec defines the subprocess contract for the active `darty` CLI transport.
-Capability request and result schemas remain owned by each capability spec.
+This implementation-neutral spec defines the subprocess contract for the
+`darty` CLI. Capability request and result schemas remain owned by each
+capability spec; [ARCHITECTURE.md](../../ARCHITECTURE.md) owns which
+implementation currently conforms.
 
 ## Command Execution Output
 

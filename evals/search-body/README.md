@@ -30,7 +30,8 @@ This track validates:
 
 ### Agentic CLI
 
-`agent-cli/run-eval.ts` evaluates `gpt-5.4-mini` by default through a small OpenAI tool-calling loop with one structured local tool for darty CLI execution.
+`agent-cli/run-eval.ts` uses the configured OpenAI model through a small
+tool-calling loop with one structured local tool for darty CLI execution.
 
 This track validates the invocation boundary:
 
@@ -43,7 +44,7 @@ This track validates the invocation boundary:
 
 It only requires the matching structured CLI invocation to exit successfully. Detailed stdout envelope correctness belongs to the fixed-command CLI eval. Final-answer quality is evaluated separately by the opt-in research workflow track in [`../workflows/`](../workflows/README.md).
 
-Set `OPENAI_MODEL` to override the model.
+Set `OPENAI_MODEL` to select the model.
 
 ## Scenario Shape
 
@@ -68,7 +69,7 @@ bun install
 Run the fixed-command CLI eval. This track does not require an OpenAI API key:
 
 ```bash
-bun run eval:search-body:cli
+bun run eval:cli:search-body
 ```
 
 For the LLM-backed evals, create `.env.local` in the repo root with `OPENAI_API_KEY`, then validate the environment:
@@ -80,7 +81,7 @@ bun run env:check
 Run the agentic CLI eval:
 
 ```bash
-bun run eval:search-body:agent:cli
+bun run eval:agent-cli:search-body
 ```
 
 ## Notes

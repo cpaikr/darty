@@ -113,12 +113,36 @@ by `fetchReportContent`.
   child nodes, and push roots into `treeData`. Required section fields are
   `text`, `rcpNo`, `dcmNo`, `eleId`, `offset`, `length`, and `dtd`; `tocNo` is
   optional metadata. Incomplete nodes are not addressable sections.
+- `SHELL-TREE-EXECUTABLE-1` — **Project decision.** Only supported statements
+  in executable script content establish viewer state. Matching text inside
+  comments, quoted strings, template literals, or regular-expression literals
+  is not evidence. Declared but unusable node roots fail closed.
+- `SHELL-TREE-GRAPH-1` — **Project decision.** Cycles, orphan nodes, roots
+  reused across documents, mixed receipt/document identity, or references to
+  undeclared nodes are `source_changed`. Every
+  addressable node must bind to the shell receipt and its selected document.
+- `SHELL-TREE-BOUNDS-1` — **Unresolved conformance mismatch.** The retained
+  Rust candidate limits tree depth to 64 and expanded nodes to 10,000; the
+  shipped TypeScript parser does not yet enforce equivalent bounds. These
+  limits are candidate safety behavior, not cross-language wire authority,
+  until the mismatch is dispositioned.
+- `SHELL-TREE-CONFORMANCE-1` — **Unresolved conformance mismatch.** The shipped
+  TypeScript parser ignores regex-literal text and requires explicit
+  `treeData=[]` for no-TOC shells, but does not filter non-executable script
+  types. The retained Rust parser filters script types but does not yet enforce
+  either regex-literal exclusion or explicit no-TOC initialization. Do not
+  claim cross-language viewer-grammar parity until these differences are
+  dispositioned from reviewed evidence.
 - `SHELL-INITIAL-1` — **Observed.** The initial selected locator is the first
   syntactically valid `viewDoc(rcpNo, dcmNo, eleId, offset, length, dtd[, tocNo])`
   call. `tocNo` is shell metadata and is not sent to `fetchReportContent`.
 - `SHELL-NO-TOC-1` — **Observed.** A shell may have no TOC and an initial
   locator with `eleId=0`, `offset=0`, and `length=0`; that locator retrieves the
-  selected full HTML document.
+  selected full HTML document. Observed no-TOC evidence initializes
+  `treeData=[]` explicitly.
+- `SHELL-NO-TOC-2` — **Project decision.** Explicit executable initialization
+  to `treeData=[]` is the only accepted no-TOC shape; missing or ambiguous tree
+  initialization is `source_changed`.
 - `SHELL-SELECTION-1` — **Project decision.** Callers may select only a query
   returned by a parsed document option. Raw viewer locators remain internal.
 - `SHELL-CHANGED-1` — **Project decision.** A shell without a receipt number

@@ -8,16 +8,15 @@ reviewed when AXI evolves.
 - Upstream: <https://github.com/kunchenguid/axi>
 - Branch: `main`
 - Baseline commit:
-  [`622a35b968ecfb7c7d9db40b837d57f4cd9dad71`](https://github.com/kunchenguid/axi/commit/622a35b968ecfb7c7d9db40b837d57f4cd9dad71)
+  [`46d02d35f46a173dec5bd6be18827684fd1e885c`](https://github.com/kunchenguid/axi/commit/46d02d35f46a173dec5bd6be18827684fd1e885c)
 - Observed: `2026-08-23`
 - Machine-readable baseline: [`axi-baseline.json`](axi-baseline.json)
 
-The 2026-08-23 review covered AXI SDK releases 0.1.8 through 0.1.11. AXI's
-new fail-loud unknown-flag guidance already matches Darty's CLI parser and
-compatibility judge. The new SDK-owned updater, session-hook lifecycle, and
-dependency-free version fast path are not adopted: Darty does not use the AXI
-SDK, keeps its frozen CLI Transport v1 surface, and remains a read-only DART
-tool rather than a package-management or session-integration command.
+The 2026-08-23 review covered AXI SDK releases 0.1.8 through 0.1.11 and the
+later catalog-only commit that added `mssql-axi`. The catalog change does not
+affect Darty. AXI's fail-loud unknown-flag guidance already matches Darty's CLI
+parser and compatibility judge. Its SDK updater, session hooks, and version
+fast path are not adopted because Darty does not use the AXI SDK.
 
 ## What Compliance Means Here
 
@@ -53,20 +52,8 @@ prints a review report with commit and file changes.
 
 When drift is reported:
 
-1. Review upstream changes, especially watched paths.
+1. Review upstream changes, especially the watched paths in
+   [`axi-baseline.json`](axi-baseline.json).
 2. Decide whether Darty's CLI contract, docs, tests, or evals need updates.
 3. Make any required Darty changes.
-4. Advance `baselineCommit`, `observedAt`, and any relevant notes in this file.
-
-## Watched Upstream Paths
-
-The checker highlights these AXI paths because they are most likely to affect
-Darty's agent-facing CLI contract:
-
-- `README.md`
-- `CONTRIBUTING.md`
-- `.agents/skills/axi/SKILL.md`
-- `packages/axi-sdk-js/README.md`
-- `packages/axi-sdk-js/package.json`
-- `packages/axi-sdk-js/src/`
-- `packages/axi-sdk-js/test/`
+4. Advance `baselineCommit`, `observedAt`, and the review summary here.

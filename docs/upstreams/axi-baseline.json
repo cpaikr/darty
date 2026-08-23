@@ -4,7 +4,7 @@
   "owner": "kunchenguid",
   "repo": "axi",
   "branch": "main",
-  "baselineCommit": "622a35b968ecfb7c7d9db40b837d57f4cd9dad71",
+  "baselineCommit": "46d02d35f46a173dec5bd6be18827684fd1e885c",
   "observedAt": "2026-08-23",
   "upstreamVersion": {
     "axi-sdk-js": "0.1.11"
