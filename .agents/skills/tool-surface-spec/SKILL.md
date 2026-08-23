@@ -5,6 +5,12 @@ description: Design, review, scaffold, or validate reusable agent-tool packages 
 
 # Tool Surface Spec
 
+This is reusable guidance for packages whose chosen product shape includes a
+CLI and TypeScript `./toolset`. It does not override a repository's accepted
+architecture. In Darty, defer to `VISION.md` and the active rewrite plan: the
+shipped toolset remains a temporary baseline and is removed at the Rust/Node
+SDK cutover.
+
 Help projects expose deterministic capabilities through **two required public surfaces**: a CLI for subprocess use and a runtime-neutral `./toolset` SDK for in-process adapters.
 
 The core idea is **one capability contract with thin adapters**. Compatibility means agents can discover current behavior from the CLI, run commands as subprocesses, import the neutral toolset when an in-process integration needs it, and receive predictable structured outputs without needing Pi-specific extensions or host-specific wrappers.

@@ -26,6 +26,7 @@ bun run eval:workflow:cli
 
 ## Follow-ups
 
-Later held-out workflow cases belong in `TODO.md`: amended reports, multiple
-similar company names, stale `sectionId` recovery, and truncated section
-continuation after this baseline produces transcripts.
+Later held-out workflow cases belong in
+[the workflow-eval task](../../tasks/expand-cli-workflow-evals.md): amended
+reports, multiple similar company names, stale `sectionId` recovery, and
+truncated section continuation.

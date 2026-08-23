@@ -91,6 +91,13 @@ toolset은 명령 discovery/help, 입력 검증, source-owned serialized errors,
 - 투자, 회계, 법률 판단을 제공하지 않습니다.
 - 결과를 중요한 의사결정에 사용할 때는 원문 DART 링크와 참조 정보를 직접 확인하세요.
 
+## 개발 문서
+
+- [제품 방향](VISION.md)
+- [현재·후보·목표 아키텍처](ARCHITECTURE.md)
+- [진행 중인 작업과 백로그](ROADMAP.md)
+- [기능 및 전송 계약](docs/specs/README.md)
+
 ## 라이선스
 
 Elastic License 2.0. 자세한 내용은 [`LICENSE.md`](./LICENSE.md)를 참조하세요.

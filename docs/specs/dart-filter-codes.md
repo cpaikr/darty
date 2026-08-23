@@ -1,6 +1,7 @@
 # DART Filter Codes
 
-Status: reference for implemented filters.
+Status: shipped TypeScript reference; the retained candidate implements the
+company-filing-search subset.
 
 This page collects source-shaped DART filter values that are exposed by current capability contracts. Keep these fields explicit: callers pass DART codes, not semantic aliases, unless a future spec adds a separately evidenced lookup or alias layer.
 

@@ -52,7 +52,10 @@ Current project decision:
 - `/dsae001/search.ax`
   Company overview search fragment endpoint used by the `회사별` search tab.
 - `/dsae001/select.ax`
-  Company overview detail fragment endpoint. It accepts `selectKey={companyCode}`.
+  Company overview detail fragment endpoint. The observed UI submits
+  `selectKey={companyCode}` by POST. The shipped TypeScript adapter currently
+  performs a GET with the same query parameter; that is implemented behavior,
+  not an observed UI transport claim.
 - `/api/companyRSS.xml`
   Company-specific disclosure RSS endpoint. It accepts `crpCd={companyCode}`.
 - `/dsae001/selectPopup.ax`
@@ -386,7 +389,9 @@ Company code finding:
 
 - The company search result row does include the 8-digit DART company code in the company link's `select(...)` argument.
 - Example for 삼성전자: link `javascript:select('00126380');`, stock code `005930`.
-- The selected company detail request uses the same code as `selectKey` for `POST /dsae001/select.ax`.
+- The observed UI company detail request uses the same code as `selectKey` for
+  `POST /dsae001/select.ax`. The shipped TypeScript adapter's GET replay is
+  documented separately in the capability spec.
 - The selected company detail fragment includes fields such as `회사이름`, `영문명`, `공시회사명`, `종목코드`, `대표자명`, `법인구분`, `법인등록번호`, `사업자등록번호`, `주소`, `홈페이지`, `전화번호`, `팩스번호`, `업종명`, `설립일`, and `결산월`.
 
 Observed page-size behavior:
@@ -409,7 +414,9 @@ Observed in the report viewer source:
 - `https://dart.fss.or.kr/api/todayRSS.xml`
 - `https://dart.fss.or.kr/api/companyRSS.xml?crpCd={companyCode}`
 
-These may be useful for lightweight feed operations, but they are supporting surfaces, not yet the primary contract.
+`companyRSS` is implemented by the shipped TypeScript `company-rss` operation,
+but remains outside the retained three-operation Rust candidate and canonical
+vertical wire subset. `todayRSS` is only an observed adjacent surface.
 
 ## Current Contract Implications
 

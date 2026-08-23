@@ -3,9 +3,12 @@
 ## Product
 
 - `name`: `darty`
-- `status`: accepted target; not yet implemented
+- `status`: accepted target
 - `domain`: Korean corporate disclosures, filing metadata, and document sections from DART
 - `users`: LLM agents, agent developers, investors, researchers, and internal automation that need reliable DART access
+
+Implementation status and delivery order live in [ARCHITECTURE.md](ARCHITECTURE.md)
+and [ROADMAP.md](ROADMAP.md).
 
 ## Goal
 

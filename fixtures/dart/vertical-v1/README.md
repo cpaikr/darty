@@ -19,7 +19,7 @@ Run:
 bun run check:dart-wire
 ```
 
-The active TypeScript CLI does not gain a fixture transport seam. The retained
-Rust candidate will consume this corpus through an injected test transport,
-and fixture-backed success and `--agent` cases will enter the black-box judge
-before candidate acceptance.
+The shipped TypeScript product uses this corpus for selected parser and POST
+serializer conformance, but does not have a fixture transport seam. The
+retained Rust candidate consumes the corpus through an injected test transport
+and passes fixture-backed SDK, CLI, `--agent`, and package acceptance checks.

@@ -14,7 +14,8 @@ found in the representative default request serialization exercised by the
 four-request workflow, streamed response limits, DART charset decoding, the
 three parser boundaries, the identifier handoff, or async timeout and
 cancellation control. Complete OpenAPI request serialization, including
-advanced filters and repeated `publicType`, remains candidate-owned work.
+advanced filters and repeated `publicType`, was left to the later retained
+candidate and is not a claim of this discarded experiment.
 
 The temporary probe crate and all of its Cargo artifacts were deleted after
 validation. No Rust source, `Cargo.toml`, `Cargo.lock`, or `target` directory
@@ -46,8 +47,8 @@ not retroactive claims about this deleted experiment.
 ## Disposable dependency resolution
 
 The private crate resolved the following direct versions. They demonstrate a
-working combination on this host; the retained candidate must choose and
-review its own dependency set.
+working combination on this host. The retained candidate later selected and
+reviewed its own dependency set independently.
 
 | Role | Resolved crate |
 |---|---|
@@ -93,7 +94,10 @@ The probe did not retain an independent elapsed-latency measurement for these
 cases. The 0.11-second figure is the duration of the complete five-test suite,
 not a timeout or cancellation service-level objective.
 
-## Retained-candidate implications
+## Handoff requirements
+
+The experiment produced these requirements for the later retained candidate;
+this section records the handoff, not current work status:
 
 - Keep redirects disabled and stream into the operation-specific raw-byte cap
   before decoding.
@@ -118,5 +122,6 @@ the representative default workflow, including advanced filters or repeated
 `publicType`. It also did not decide SDK types, Node FFI mechanics, Clap
 structure, npm native-package layout, Markdown conversion, HTML sanitization,
 public content windows, production observability, broad live-DART resilience,
-performance targets, an MSRV, or support beyond the single host. Those remain
-owned by the retained candidate and its acceptance review.
+performance targets, an MSRV, or support beyond the single host. None is a
+claim of this discarded experiment. The active plan and candidate tests own
+their current disposition.

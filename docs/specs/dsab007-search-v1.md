@@ -1,10 +1,11 @@
-# dsab007 Search v1
+# dsab007 Body-content Search v1
 
 ## 1. Identity
 
 - `name`: `dsab007-search-v1`
+- `operation`: `search-body`
 - `owner`: `darty`
-- `status`: draft
+- `status`: shipped in TypeScript; not yet in retained Rust candidate
 - `domain`: DART integrated filing search through `dsab007`
 - `users`: LLM agents and scripts that need direct DART search access without browser automation
 
@@ -19,18 +20,18 @@
 
 ## 3. Capability Boundary
 
-The first tool should:
+The operation does:
 
 - expose a semantic capability contract for contents search
-- share one execution core for `dsab007` mode replays
-- parse the returned HTML fragment into structured mode-specific results
-- start with `option=contents`
+- parse the returned HTML fragment into structured results
+- use `option=contents`
 - return filing identifiers needed for later retrieval
 
-The first tool should not yet:
+It does not:
 
-- claim that every `dsab007` mode is already implemented
-- expose TOC-aware section retrieval
+- claim that every `dsab007` mode is implemented
+- expose TOC-aware section retrieval; the separate `view-report` operation owns
+  that behavior
 - handle authenticated or mutating flows
 
 ## 4. Implemented Korean UI Slice
@@ -83,7 +84,7 @@ Observed but not implemented from the Korean UI:
 - quick date buttons and `기간더보기`; callers provide explicit dates instead
 - page-size dropdown (`15`, `30`, `50`, `100`); live probes show page size is accepted but not caller-controlled for `option=contents`
 - popup automation for `찾기`, autocomplete, recent-search, reset, and help flows
-- filing viewer or section retrieval after clicking a result
+- filing viewer or section retrieval inside this operation; use `view-report`
 
 ### Official Guide Source For Descriptions
 
@@ -139,7 +140,7 @@ Guide-backed details that must stay out of the public contract until implemented
 - `corpCik`
   Company identifier visible in company popup links.
 
-### Deferred identifiers for later retrieval
+### Identifiers owned by report viewing
 
 - `eleId`
 - `offset`
@@ -147,11 +148,12 @@ Guide-backed details that must stay out of the public contract until implemented
 - `tocNo`
 - `atocId`
 
-These appear in the viewer contract, not the first search-result contract.
+These appear in the [viewer contract](dsaf001-view-report-v1.md), not this
+search-result contract.
 
-## 6. Proposed Operations
+## 6. Public operation
 
-### `search_contents`
+### `search-body`
 
 - `purpose`
   Search DART filing contents through a semantic capability backed by an internal `dsab007` replay adapter.
@@ -170,11 +172,12 @@ These appear in the viewer contract, not the first search-result contract.
 - `safety class`
   read-only
 
-### Deferred: `get_filing_viewer`
+### Adjacent operation: `view-report`
 
-A separate viewer operation is not implemented in the current v1 slice. For now, each `search_contents` result item includes `references.viewerUrl` plus filing identifiers such as `receiptNumber` and optional `documentNumber`.
-
-Section retrieval and standalone viewer lookup are intentionally deferred to a later spec once the filing-level contract is stable.
+`view-report` is implemented separately. Each `search-body` result includes
+`references.viewerUrl` plus `receiptNumber` and optional `documentNumber` for
+that follow-up workflow. Its TOC and section behavior belongs only in the
+[viewer contract](dsaf001-view-report-v1.md).
 
 ## 7. Current Contract Stance
 
@@ -242,7 +245,7 @@ Observed request:
 
 - endpoint: `POST /dsab007/search.ax`
 - successful anonymous replay in tested cases
-- `option=contents` is the first implemented mode
+- `option=contents` is the implemented mode
 - request fields mirror DART names more closely than the first semantic prototype did
 - result paging through `currentPage`; page size is currently upstream-controlled even though `maxResults` is accepted in the replay payload
 
@@ -264,7 +267,10 @@ Observed response:
 - attachment rows require preserving more of the raw report-name structure than a simple title/subtitle split
 - no-result responses may omit the pagination block entirely and currently render `조회 결과가 없습니다.` as a bare `td[colspan]` placeholder under `tbody`
 
-## 10. Open Questions
+## 10. Rewrite status
 
-- Which `dsab007` mode should be implemented second?
-- Which additional filters, if any, deserve promotion from the replay adapter into the stable public capability contract?
+This contract describes the shipped TypeScript operation. A future Rust SDK,
+Node SDK, and Rust CLI port must preserve the public request, projection,
+reference, warning, and failure behavior rather than promote unverified replay
+fields. [The active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md) owns its
+delivery status.

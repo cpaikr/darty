@@ -1,36 +1,32 @@
 # Learning Guide
 
-This directory is onboarding material for programmers who are new to `darty`. It explains how the repo fits together and where to start reading.
+This page is the onboarding route for readers new to Darty. It does not own
+product, implementation, contract, or delivery truth.
 
-These pages are not the authoritative source for implementation behavior, product scope, or project policy. When accuracy matters, defer to the source code, tests, [README](../../README.md), [VISION](../../VISION.md), root [ARCHITECTURE](../../ARCHITECTURE.md), source [ARCHITECTURE](../../src/ARCHITECTURE.md), [specs](../specs/README.md), and source investigation notes under [docs/research](../research/dart-source-map.md).
+## Start Here
 
-## Recommended Reading Path
+1. [`README.md`](../../README.md) — what users can install and run today.
+2. [`VISION.md`](../../VISION.md) — the selected Rust SDK, Node SDK, and CLI
+   destination.
+3. [`ARCHITECTURE.md`](../../ARCHITECTURE.md) — the shipped TypeScript product,
+   retained Rust candidate, and target boundary in one status map.
+4. [`ROADMAP.md`](../../ROADMAP.md) — current delivery phase and backlog.
 
-1. [System overview](system-overview.md) — what `darty` is trying to make easy and why the current slice is small.
-2. [Codebase map](codebase-map.md) — where the major directories live and what each owns.
-3. [Runtime flows](runtime-flows.md) — how a `search-body` call moves from CLI to DART and back.
-4. [Contracts and boundaries](contracts-and-boundaries.md) — the public semantic contract, internal replay contract, provider seam, and error ownership.
-5. [DART source adapter](dart-source-adapter.md) — how the current `dsab007` contents adapter builds forms, fetches HTML, parses rows, and protects source-specific details.
-6. [Verification map](verification-map.md) — how colocated tests, live tests, CLI checks, and model-in-the-loop evals divide responsibility.
+## Follow The Work
 
-## Fast Mental Model
+| Question | Canonical source |
+|---|---|
+| How does the active TypeScript implementation work? | [`src/ARCHITECTURE.md`](../../src/ARCHITECTURE.md) |
+| What does an operation accept and return? | [`docs/specs/`](../specs/README.md) and the code-backed schemas |
+| What DART behavior was observed? | [`docs/research/dart-source-map.md`](../research/dart-source-map.md) |
+| What wire subset does the Rust vertical candidate conform to? | [`dart-wire-v1.openapi.yaml`](../specs/dart-wire-v1.openapi.yaml) and [`dart-html-viewer-v1.md`](../specs/dart-html-viewer-v1.md) |
+| How is CLI compatibility frozen? | [`test/compat/cli-v1/README.md`](../../test/compat/cli-v1/README.md) |
+| Which validation layer should I run? | [`evals/README.md`](../../evals/README.md), repository CI, and `AGENTS.md` |
 
-`darty` is a read-only DART access tool. The current implementation exposes public capabilities through a thin CLI transport over a transport-neutral core:
+The essential implementation distinction is:
 
 ```text
-CLI flags
-   |
-   v
-shared capability operation
-   |
-   v
-semantic request/result contract
-   |
-   v
-DART source adapter
-   |
-   v
-structured JSON envelope with references and warnings
+shipped:   TypeScript CLI + ./toolset -> TypeScript capability/source core
+candidate: Rust CLI + Node SDK        -> Rust SDK (three operations)
+target:    Rust CLI + Node SDK        -> Rust SDK (all eight operations)
 ```
-
-The important architectural idea is that the CLI is a thin process surface over shared internal capability code. The capability contract and executor decide semantic behavior; source adapters handle DART-specific replay and parsing.

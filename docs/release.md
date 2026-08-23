@@ -1,8 +1,13 @@
 # Release
 
-This repo publishes the npm package `@sjunepark/darty`. The npm package includes the Node-based `darty` CLI through `package.json` `bin`.
+This repo publishes the TypeScript npm package `@sjunepark/darty`. The package
+includes the Node-based `darty` CLI through `package.json` `bin`.
 
-Release Please owns normal version bumps, `CHANGELOG.md`, source tags, and GitHub Releases. The Release workflow validates tagged source and publishes npm. This repo does not build or upload standalone OS-native binaries.
+Release Please owns normal version bumps, `CHANGELOG.md`, source tags, and
+GitHub Releases. The Release workflow validates tagged source and publishes
+npm. The retained Rust/Node/CLI candidate is unpublished, is not selected by
+the root package, and is outside this release flow. This repo does not yet
+publish native packages or standalone OS-native binaries.
 
 ## Manual setup
 
@@ -35,7 +40,9 @@ This eval depends on live DART and hosted model availability, so it is not part 
 While the package is pre-1.0, Release Please treats normal `feat:` and `fix:` commits as patch releases and reserves minor bumps for breaking changes. This keeps rapid greenfield feature work on `0.0.x` unless a commit uses `!` or a `BREAKING CHANGE:` footer.
 
 1. Land normal work on `main` using Conventional Commits, especially `feat:`, `fix:`, and `docs:`. Use `!` or a `BREAKING CHANGE:` footer for breaking changes.
-2. `.github/workflows/ci.yml` validates pull requests with typecheck, tests, and the npm CLI build.
+2. `.github/workflows/ci.yml` validates pull requests with wire locks, CLI
+   compatibility and mutation checks, TypeScript typecheck/tests/build, Rust
+   tests, and candidate package acceptance.
 3. `.github/workflows/release-please.yml` opens or updates a release PR that bumps `package.json`, updates `.release-please-manifest.json`, and writes `CHANGELOG.md`.
 4. Merge the release PR after CI passes.
 5. Release Please creates the source tag and GitHub Release.

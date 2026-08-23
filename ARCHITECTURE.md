@@ -1,178 +1,100 @@
 # Architecture
 
-This repo now has two layers:
+This document owns repository topology and implementation status. Detailed
+TypeScript layering lives in [src/ARCHITECTURE.md](src/ARCHITECTURE.md); product
+destination and delivery order live in [VISION.md](VISION.md) and
+[ROADMAP.md](ROADMAP.md).
 
-- root docs that hold product and source-contract decisions
-- a small implementation slice under `src/` plus opt-in live checks under `test/` for DART source behavior
+## Implementation Status
 
-It also contains an isolated, non-active rewrite candidate. `crates/darty`
-owns the retained three-operation Rust SDK, `crates/darty-cli` and
-`crates/darty-node` are thin adapters, and `candidate/npm/` holds the proposed
-root and current-host package shapes. None of these paths changes the active
-root npm exports or `bin`; the atomic cutover remains later roadmap work.
+| State | Public status | Location | Capability coverage |
+|---|---|---|---|
+| Shipped product | Active `@sjunepark/darty` package | `src/`, root `package.json` | Eight operations through the Node-based CLI; `./toolset` remains supported until cutover |
+| Rewrite candidate | Retained, reviewed, unpublished | `crates/`, `candidate/npm/` | `search-company`, `search-company-reports`, and `view-report` through Rust SDK, async Node SDK, and Rust CLI |
+| Accepted target | Selected, partially implemented | `VISION.md` | One Rust-owned implementation for all eight operations, exposed through Rust SDK, Node SDK, and CLI |
 
-## Big Picture
+The candidate does not replace root package exports or `bin`. Its current-host
+native package proves Darwin ARM64 packaging only; it is not a supported
+platform matrix or release artifact.
 
-Darty has two public integration surfaces over the same capability core:
+## Repository Map
 
-- `darty` CLI for humans, subprocess-capable agents, and desktop hosts such as Creo.
-- `@sjunepark/darty/toolset` for trusted JS/TS server hosts that execute Darty in-process behind their own runtime boundary.
+- [`README.md`](README.md) — installation and usage for the shipped package.
+- [`VISION.md`](VISION.md) — accepted product shape, scope, and non-goals.
+- [`ROADMAP.md`](ROADMAP.md) and [`plans/`](plans/) — delivery status, remaining
+  work, and next action.
+- [`docs/specs/`](docs/specs/README.md) — stable public capability, CLI, and
+  supported upstream wire contracts.
+- [`docs/research/`](docs/research/dart-source-map.md) — non-normative source
+  observations, provenance, provider qualification, and feasibility evidence.
+- [`docs/tools/`](docs/tools/) — reusable tool-design guidance; not product
+  implementation status.
+- [`docs/learning/`](docs/learning/INDEX.md) — a short onboarding route to the
+  canonical documents and code.
+- [`src/`](src/ARCHITECTURE.md) — active Bun/TypeScript implementation and
+  deterministic tests.
+- `crates/darty` — retained Rust SDK candidate and sole candidate DART conformer.
+- `crates/darty-cli` — thin Clap subprocess adapter over the Rust SDK.
+- `crates/darty-node` — narrow asynchronous Node-API binding.
+- `candidate/npm/` — unpublished root Node SDK/launcher and current-host native
+  package shapes.
+- [`fixtures/dart/vertical-v1/`](fixtures/dart/vertical-v1/README.md) — fictional,
+  cross-language wire evidence.
+- [`test/compat/cli-v1/`](test/compat/cli-v1/README.md) — implementation-neutral
+  CLI compatibility corpus.
+- [`evals/`](evals/README.md) — opt-in live and model-in-the-loop task checks.
 
-Behind those surfaces, the capability layer is a semantic request contract, a
-provider interface, and an execution path that normalizes errors and shapes
-results. Pi adapters are intentionally not part of the package surface.
+## Current TypeScript Product
 
-The current core has eight capabilities: `search-body` for DART body search,
-`search-company` for DART company overview company-name search,
-`search-company-reports` for company-code based filing search, `company-detail`
-for company overview detail lookup, `company-rss` for company-specific RSS,
-`disclosure-types` for static DART detailed disclosure-type code discovery,
-`report-guide` for report-family guidance, and `view-report` for receipt-based
-report TOC/section retrieval.
+The active product has four layers:
 
-For layer diagrams, the schema derivation chain, and the runtime pipeline, see
-[src/ARCHITECTURE.md](src/ARCHITECTURE.md).
-
-## Document Ownership
-
-- [README.md](README.md)
-  Minimal public/package orientation for the CLI and trusted-host toolset surfaces.
-- [VISION.md](VISION.md)
-  Product-level goal, scope, and non-goals for the current project.
-- [docs/research/dart-source-map.md](docs/research/dart-source-map.md)
-  Non-normative source investigation and provenance for `dsab007` search,
-  `dsae001` company overview search, and the report viewer.
-- [docs/research/dart-provider-qualification.md](docs/research/dart-provider-qualification.md)
-  Operational access, pacing, retention, monitoring, and withdrawal evidence
-  for bounded use of the DART website.
-- [docs/research/rust-feasibility-v1.md](docs/research/rust-feasibility-v1.md)
-  Completed and discarded Rust feasibility evidence for the reviewed vertical
-  wire workflow; it does not own retained candidate dependencies or APIs.
-- [docs/research/dart-report-guide.md](docs/research/dart-report-guide.md)
-  Practical map of what information appears in major DART report families.
-- [docs/learning/](docs/learning/INDEX.md)
-  Onboarding-oriented explanations for new readers. These pages are secondary learning material, not the source of truth for implementation behavior, product decisions, or project policy.
-- [docs/release.md](docs/release.md)
-  Release automation setup for npm publishing.
-- [docs/upstreams/](docs/upstreams/axi.md)
-  Pinned external project baselines, including AXI compatibility drift checks.
-- [docs/tools/](docs/tools/)
-  Canonical home for single-tool design.
-- [docs/specs/](docs/specs/)
-  Stable, evidence-backed capability specs. The `dart-wire-v1` OpenAPI owns the
-  supported upstream HTTP subset and its HTML/viewer companion owns grammar
-  that OpenAPI cannot express.
-- `fixtures/dart/`
-  Independently fictional cross-language source evidence. Fixtures test the
-  canonical contracts but never replace them as authority.
-- `evals/`
-  Agent task evals where a model uses local tools to complete user-like tasks.
-- `src/`
-  Current implementation root for `dsab007` contracts, request building, parsers, CLI commands, and colocated deterministic tests.
-- `crates/`
-  Retained Rust rewrite candidate: one SDK core plus thin CLI and Node-API
-  adapters for the reviewed vertical workflow.
-- `candidate/npm/`
-  Unpublished npm package candidates. The root facade exposes the asynchronous
-  Node SDK and a forwarding-only launcher; the current-host optional package
-  receives generated native artifacts only during acceptance packaging.
-- `test/`
-  Opt-in live or broader integration checks that should stay separate from module-local fixture tests.
-  Use `test/live/` for live DART coverage and `test/cli/` for subprocess CLI smoke tests.
-
-## Contributor Flow
-
-1. Start with [README.md](README.md).
-2. If the work is about the current product, read [VISION.md](VISION.md) first.
-3. Use [docs/research/dart-source-map.md](docs/research/dart-source-map.md) to understand what the live source actually exposes today.
-4. Use [docs/tools/foundations.md](docs/tools/foundations.md) and the linked tool docs to shape the contract.
-5. Promote only evidence-backed, implementation-ready capability specs into [docs/specs/](docs/specs/README.md).
-6. Keep the implementation slice small: capability contracts, shared request/client seams, source parsers, and thin CLI commands.
-7. Keep tool rules in the tool docs; link to canonical guidance instead of duplicating it.
-
-## Invariants
-
-- Keep product vision at the repo root, not mixed into specs or plans.
-- Keep source investigation notes outside `docs/specs/`; only promote stable
-  contract decisions into specs. Research replay lists remain non-normative
-  once a supported route enters `dart-wire-v1`.
-- Keep tool contract rules in [docs/tools/contracts.md](docs/tools/contracts.md), not in project notes.
-- Prefer links to canonical guidance over repeating the same rule in multiple files.
-- Mark source observations as observed, inferred, or unverified; do not blur them together.
-
-## Current Code Shape
-
-- [src/ARCHITECTURE.md](src/ARCHITECTURE.md)
-  Layer overview, component map, schema derivation, runtime pipeline, and
-  implementation invariants for the current `src/` slice.
-- `test/live/`
-  Opt-in live DART checks that exercise the shared client seam against the source.
-- `test/cli/`
-  Subprocess CLI smoke tests.
-
-## Runtime Flow
-
-The dominant current flows are:
-
-```
-argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/search-body.ts
-     -> executeSearchBodyCommand()
-     -> app/search-body.ts -> capabilities/search-body/execute.ts
-     -> sources/dart/dsab007/contents/search.ts
-     -> /dsab007/search.ax
-
-argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/search-company.ts
-     -> executeSearchCompanyCommand()
-     -> app/search-company.ts -> capabilities/search-company/execute.ts
-     -> sources/dart/dsae001/company/search.ts
-     -> /dsae001/search.ax
-
-argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/search-company-reports.ts
-     -> executeSearchCompanyReportsCommand()
-     -> app/search-company-reports.ts -> capabilities/search-company-reports/execute.ts
-     -> sources/dart/dsab007/company-reports/search.ts
-     -> /dsab007/detailSearch.ax
-
-argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/company-detail.ts
-     -> executeCompanyDetailCommand()
-     -> app/company-detail.ts -> capabilities/company-detail/execute.ts
-     -> sources/dart/dsae001/detail/detail.ts
-     -> /dsae001/select.ax
-
-argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/company-rss.ts
-     -> executeCompanyRssCommand()
-     -> app/company-rss.ts -> capabilities/company-rss/execute.ts
-     -> sources/dart/api/company-rss/rss.ts
-     -> /api/companyRSS.xml
-
-argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/view-report.ts
-     -> executeViewReportCommand()
-     -> app/view-report.ts -> capabilities/view-report/execute.ts
-     -> sources/dart/dsaf001/report/
-     -> /dsaf001/main.do -> /report/viewer.do
-
-argv -> src/cli.ts -> src/cli/program.ts -> cli/commands/disclosure-types.ts
-     -> executeDisclosureTypesCommand()
-     -> app/disclosure-types.ts -> capabilities/disclosure-types/execute.ts
-     -> static pblntf_detail_ty code table
-
+```text
+CLI or ./toolset
+      -> src/app composition
+      -> src/capabilities semantic contracts and execution
+      -> src/sources/dart request, transport, parsing, and source errors
 ```
 
-See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the full runtime pipeline,
-layer boundaries, and step-by-step data transformations.
+The capability layer owns semantic validation and result/failure envelopes;
+the CLI owns process UX; DART-shaped fields remain inside source adapters. See
+[src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the component and runtime maps.
 
-## Current Invariants
+## Retained Rewrite Candidate
 
-Implementation-level invariants (schema ownership, provider boundaries, replay
-contract isolation) live in
-[src/ARCHITECTURE.md § Invariants](src/ARCHITECTURE.md#invariants).
+```text
+Rust SDK (crates/darty) -> DART
+          |-> Rust CLI (crates/darty-cli)
+          `-> Node-API binding (crates/darty-node)
+                    `-> Node SDK facade (candidate/npm/darty)
 
-## Expected Expansion
+candidate npm bin -> platform package -> compiled Rust CLI
+```
 
-If the current single-package shape holds up, expand carefully:
+The Rust SDK owns candidate request construction, transport policy, bounds,
+decoding, parsing, domain normalization, and sanitized source failures. The CLI
+and Node binding translate surface concerns without creating a second DART
+implementation.
 
-- `docs/specs/` for stable capability specs
-- `src/` for the core capability while the surface is still small
-- `packages/cli` only if the CLI outgrows a single-package layout
-- split packages only if the CLI or core capability layout outgrows the current single-package shape
-- `evals/` for CLI-based agent task evals and transcripts
+The supported upstream subset for the vertical candidate is canonical in
+[`dart-wire-v1.openapi.yaml`](docs/specs/dart-wire-v1.openapi.yaml) and
+[`dart-html-viewer-v1.md`](docs/specs/dart-html-viewer-v1.md). The fictional
+fixture corpus and provider qualification are evidence, not competing
+authorities.
+
+## Target Boundary
+
+At cutover, all eight accepted operations move behind the Rust SDK; the root
+npm export becomes the Node SDK; the npm `darty` bin becomes a forwarding-only
+launcher for the Rust CLI; and the TypeScript conformer plus `./toolset` are
+removed. Until then, the shipped and candidate states above must remain visibly
+separate.
+
+## Documentation Invariants
+
+- README describes only the shipped package.
+- Architecture records implementation topology and status, not delivery order.
+- Vision records the selected destination, not completion claims.
+- Roadmap and the active plan own progress and next actions.
+- Specs own stable contracts; research owns observations and unknowns.
+- Source evidence must be labeled, and candidate evidence must not imply a
+  supported release or platform.

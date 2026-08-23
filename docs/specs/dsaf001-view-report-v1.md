@@ -1,6 +1,6 @@
 # dsaf001 Report View v1
 
-Status: implemented initial contract.
+Status: shipped in TypeScript and retained Rust candidate.
 
 ## Purpose
 

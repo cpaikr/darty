@@ -1,6 +1,7 @@
 # DART HTML and Viewer Companion v1
 
-Status: canonical upstream companion contract for `dart-wire-v1`.
+Status: canonical upstream companion contract for the retained Rust candidate
+and accepted target's `dart-wire-v1` subset.
 
 This document owns the language-neutral response-decoding, HTML-fragment, and
 viewer-shell rules that OpenAPI cannot express. The HTTP methods, routes,

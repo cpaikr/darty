@@ -1,6 +1,9 @@
 # Contents Search Evals
 
-These evals cover the current public `search-body` capability through fixed CLI commands and LLM-backed CLI tool use.
+These evals cover the shipped TypeScript `search-body` capability through fixed
+CLI commands and LLM-backed CLI tool use. The retained Rust candidate does not
+yet implement this operation; [the active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md)
+owns its delivery status.
 
 ## Goal
 

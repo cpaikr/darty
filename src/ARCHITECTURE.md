@@ -1,8 +1,10 @@
 # Source Architecture
 
-This document covers the current implementation under `src/`. It sits below the
-repo-root [ARCHITECTURE.md](../ARCHITECTURE.md), which explains the broader repo
-shape and document ownership.
+This document covers the shipped TypeScript implementation under `src/`. It is
+the runnable baseline until the rewrite's atomic cutover; it is not the
+accepted target architecture. The repo-root
+[ARCHITECTURE.md](../ARCHITECTURE.md) distinguishes this baseline from the
+unpublished Rust candidate and the target product.
 
 ## Purpose
 
@@ -167,7 +169,8 @@ How it works:
    `contract/` files define the request schema, success result schema, typed
    failures, and semantic validation rules.
 2. **`spec.ts`** exports the operation name plus request/result JSON Schemas for
-   CLI command registration, tests, and package-owned introspection.
+   tests and package-owned introspection. Commander flags remain explicitly
+   defined by each CLI command.
 3. **`app/`** wires those schemas and shared executors to the default provider
    implementations.
 4. **`cli/commands/`** defines each CLI UX explicitly, then delegates to the
@@ -178,7 +181,7 @@ One source of truth gives you:
 - runtime validation shape
 - TypeScript types
 - success result schema
-- JSON Schema for CLI wiring and tests
+- JSON Schema for toolset introspection and tests
 
 What is intentionally *not* centralized:
 
