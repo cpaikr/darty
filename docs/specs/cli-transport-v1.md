@@ -15,11 +15,13 @@ For command executions that run or attempt to run a capability:
 - stderr is empty by default
 - `--pretty` pretty-prints both success and failure JSON
 
-Help and home paths are exceptions:
+Help, home, and `report-guide` success paths are exceptions:
 
 - `darty --help` and `darty <command> --help` print human-readable help to stdout
   and exit `0`
 - bare `darty` prints a compact JSON home envelope to stdout and exits `0`
+- successful `darty report-guide` execution prints human-readable Markdown to
+  stdout and exits `0`; failures still use the JSON failure envelope
 - a command invoked with no required options attempts to run the capability,
   prints a JSON `invalid_request` failure envelope, and exits `1`
 

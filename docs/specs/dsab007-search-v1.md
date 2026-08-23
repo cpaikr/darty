@@ -168,16 +168,18 @@ search-result contract.
 - `error recovery`
   typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date and page values
 - `warning cases`
-  `partial_rows_dropped` when the parser drops incomplete result rows from an otherwise successful response
+  `partial_rows_dropped` when the parser drops incomplete result rows from an
+  otherwise successful response; `no_results` when DART returns a successful
+  empty search, with guidance to widen the date range or remove optional filters
 - `safety class`
   read-only
 
 ### Adjacent operation: `view-report`
 
-`view-report` is implemented separately. Each `search-body` result includes
-`references.viewerUrl` plus `receiptNumber` and optional `documentNumber` for
-that follow-up workflow. Its TOC and section behavior belongs only in the
-[viewer contract](dsaf001-view-report-v1.md).
+`view-report` is implemented separately. Each `search-body` result item includes
+`references.viewerUrl` plus `filing.receiptNumber` and optional
+`filing.documentNumber` for that follow-up workflow. Its TOC and section
+behavior belongs only in the [viewer contract](dsaf001-view-report-v1.md).
 
 ## 7. Current Contract Stance
 
