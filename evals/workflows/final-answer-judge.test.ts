@@ -27,6 +27,7 @@ const comparisonScenario: AgentWorkflowScenario = {
 
 const facts: WorkflowTraceFacts = {
   companyCodes: ["00126380"],
+  companyCodeDiscoveries: [{ companyCode: "00126380", operationIndex: 0 }],
   filings: [
     {
       companyCode: "00126380",
@@ -41,7 +42,14 @@ const facts: WorkflowTraceFacts = {
       reportTitle: "사업보고서",
     },
   ],
-  reportSearches: [{ startDate: "20250331", endDate: "20260331" }],
+  reportSearches: [
+    {
+      companyCode: "00126380",
+      startDate: "20250331",
+      endDate: "20260331",
+      operationIndex: 1,
+    },
+  ],
   viewedReceipts: ["20260331000001", "20250331000001"],
   tocs: [
     { receiptNumber: "20260331000001", sectionIds: ["section:1"] },

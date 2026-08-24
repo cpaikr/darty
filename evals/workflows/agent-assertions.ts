@@ -33,13 +33,21 @@ export type WorkflowSectionCitation = {
   readonly bodyExcerpt: string;
 };
 
+export type WorkflowCompanyCodeFact = {
+  readonly companyCode: string;
+  readonly operationIndex: number;
+};
+
 export type WorkflowReportSearchFact = {
+  readonly companyCode: string | undefined;
   readonly startDate: string | undefined;
   readonly endDate: string | undefined;
+  readonly operationIndex: number;
 };
 
 export type WorkflowTraceFacts = {
   readonly companyCodes: readonly string[];
+  readonly companyCodeDiscoveries: readonly WorkflowCompanyCodeFact[];
   readonly filings: readonly WorkflowFilingFact[];
   readonly reportSearches: readonly WorkflowReportSearchFact[];
   readonly viewedReceipts: readonly string[];
@@ -199,6 +207,7 @@ const buildTraceFacts = (
   reasons: string[],
 ): WorkflowTraceFacts => {
   const companyCodes: string[] = [];
+  const companyCodeDiscoveries: WorkflowCompanyCodeFact[] = [];
   const filings: WorkflowFilingFact[] = [];
   const reportSearches: WorkflowReportSearchFact[] = [];
   const viewedReceipts: string[] = [];
@@ -206,7 +215,7 @@ const buildTraceFacts = (
   const sectionCitations: WorkflowSectionCitation[] = [];
   const successfulOperations: string[] = [];
 
-  for (const execution of toolExecutions) {
+  for (const [operationIndex, execution] of toolExecutions.entries()) {
     const parsedExecution = parseExecution(execution);
     if (parsedExecution === undefined) {
       continue;
@@ -218,15 +227,24 @@ const buildTraceFacts = (
 
     if (parsed.operation === "search-company") {
       for (const item of getArray(result, "items") ?? []) {
-        addUnique(companyCodes, getString(isRecord(item) ? item : undefined, "companyCode"));
+        const companyCode = getString(
+          isRecord(item) ? item : undefined,
+          "companyCode",
+        );
+        addUnique(companyCodes, companyCode);
+        if (companyCode !== undefined) {
+          companyCodeDiscoveries.push({ companyCode, operationIndex });
+        }
       }
       continue;
     }
 
     if (parsed.operation === "search-company-reports") {
       reportSearches.push({
+        companyCode: getString(parsed.options, "companyCode"),
         startDate: getString(parsed.options, "startDate"),
         endDate: getString(parsed.options, "endDate"),
+        operationIndex,
       });
       for (const item of getArray(result, "items") ?? []) {
         const itemRecord = isRecord(item) ? item : undefined;
@@ -304,6 +322,7 @@ const buildTraceFacts = (
 
   return {
     companyCodes,
+    companyCodeDiscoveries,
     filings,
     reportSearches,
     viewedReceipts,
@@ -330,6 +349,20 @@ const assertCommonWorkflow = (
 
   if (!facts.companyCodes.includes("00126380")) {
     reasons.push(`workflow did not resolve Samsung Electronics companyCode ${samsungCompanyCode}`);
+  }
+
+  for (const reportSearch of facts.reportSearches) {
+    const discoveredEarlier = facts.companyCodeDiscoveries.some(
+      (discovery) =>
+        discovery.companyCode === reportSearch.companyCode &&
+        discovery.operationIndex < reportSearch.operationIndex,
+    );
+
+    if (!discoveredEarlier) {
+      reasons.push(
+        `search-company-reports companyCode ${reportSearch.companyCode ?? "<missing>"} was not returned by an earlier successful search-company call`,
+      );
+    }
   }
 
   if (facts.filings.length === 0) {

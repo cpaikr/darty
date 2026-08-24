@@ -240,6 +240,20 @@ describe("agent workflow trace assertions", () => {
     expect(result.reasons.join(" ")).toContain("was not returned by search-company-reports");
   });
 
+  test("requires report searches to use a company code discovered earlier", () => {
+    const result = evaluateWorkflowTrace(exactScenario, [
+      reports,
+      company,
+      toc("20260331000001", "section:1"),
+      section("20260331000001", "section:1", "Evidence"),
+    ]);
+
+    expect(result.pass).toBe(false);
+    expect(result.reasons.join(" ")).toContain(
+      "was not returned by an earlier successful search-company call",
+    );
+  });
+
   test("requires each comparison citation to match its own report TOC", () => {
     const result = evaluateWorkflowTrace(comparisonScenario, [
       company,
