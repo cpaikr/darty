@@ -4,7 +4,6 @@
 
 - `name`: `dsae001-search-company-v1`
 - `owner`: `darty`
-- `status`: implemented
 - `domain`: DART company overview search through `dsae001`
 - `users`: LLM agents and scripts that need to resolve company names to DART company codes
 

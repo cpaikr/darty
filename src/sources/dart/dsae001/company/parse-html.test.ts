@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Either } from "effect";
 
+import { SourceChanged } from "../../errors.ts";
 import { createDartSourceTextResponse } from "../../source-response.ts";
+import { dsae001CompanyMessages } from "./messages.ts";
 import { parseCompanySearchHtml } from "./parse-html.ts";
 
 const sourceUrl = "https://dart.fss.or.kr/dsae001/search.ax";
@@ -70,6 +72,16 @@ const partiallyMalformedHtml = `
 <div class="pageInfo">[1/1] [총 2건]</div>
 `;
 
+const tablelessTotalHtml = `
+<div class="pageInfo">[1/1] [총 1건]</div>
+`;
+
+const mixedSentinelHtml = noResultsHtml.replace(
+  "  </tbody>",
+  `    <tr><td>1</td><td><a href="javascript:select('00126380');">삼성전자</a></td></tr>
+  </tbody>`,
+);
+
 describe("parseCompanySearchHtml", () => {
   test("parses company rows and exposes the 8-digit DART company code", async () => {
     const result = await Effect.runPromise(
@@ -129,5 +141,37 @@ describe("parseCompanySearchHtml", () => {
         message: "Could not parse a DART 기업개황 company-search result row.",
       },
     ]);
+  });
+
+  test("rejects a total-count page without the company result table as source changed", async () => {
+    const result = await Effect.runPromise(
+      Effect.either(
+        parseCompanySearchHtml(sourceResponse(tablelessTotalHtml), request),
+      ),
+    );
+
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left).toBeInstanceOf(SourceChanged);
+      expect(result.left).toMatchObject({
+        message: dsae001CompanyMessages.missingResultTable,
+      });
+    }
+  });
+
+  test("rejects mixed company no-result sentinel and data rows", async () => {
+    const result = await Effect.runPromise(
+      Effect.either(
+        parseCompanySearchHtml(sourceResponse(mixedSentinelHtml), request),
+      ),
+    );
+
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left).toBeInstanceOf(SourceChanged);
+      expect(result.left).toMatchObject({
+        message: dsae001CompanyMessages.missingResultRows,
+      });
+    }
   });
 });

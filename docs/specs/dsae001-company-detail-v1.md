@@ -1,7 +1,6 @@
 # dsae001 Company Detail v1
 
 - `name`: `dsae001-company-detail-v1`
-- `status`: implemented
 - `domain`: DART company overview detail lookup
 
 ## Public Operation
@@ -18,7 +17,7 @@ Fetches the DART company overview detail fragment for one DART company code and 
 
 Unknown request fields are rejected.
 
-## Source
+## Implemented TypeScript source behavior
 
 - `GET https://dart.fss.or.kr/dsae001/select.ax?selectKey={companyCode}`
 - Source surface: DART `dsae001`

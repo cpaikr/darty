@@ -1,0 +1,17 @@
+{
+  "kind": "json",
+  "exitCode": 1,
+  "jsonFormat": "compact",
+  "value": {
+    "result": null,
+    "metadata": { "cliTransportVersion": "1" },
+    "references": {},
+    "warnings": [],
+    "error": {
+      "code": "source_parse_failure",
+      "message": "The DART response exceeded the supported byte limit.",
+      "retryable": false,
+      "sourceUrl": "https://dart.fss.or.kr/dsaf001/main.do"
+    }
+  }
+}

@@ -8,7 +8,7 @@ without already knowing DART codes such as `612`.
 ## Current state
 
 The CLI accepts an industry code but provides no discovery path. This product
-improvement was recorded in the legacy `TODO.md` and is outside rewrite parity.
+improvement is outside rewrite parity and remains intentionally unscheduled.
 
 ## Next action
 

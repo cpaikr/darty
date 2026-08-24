@@ -13,6 +13,8 @@ use futures_util::FutureExt;
 use serde::Serialize;
 use serde_json::{Value, json};
 use tokio_util::sync::CancellationToken;
+#[cfg(feature = "test-fixture")]
+use url::Url;
 
 static OPERATIONS: OnceLock<Mutex<BTreeMap<String, CancellationToken>>> = OnceLock::new();
 
@@ -38,8 +40,8 @@ impl NativeDartyClient {
     /// # Errors
     ///
     /// Returns a Node-API error if the Rust SDK client cannot be initialized.
-    pub fn new(fixture_origin: Option<String>, fetched_at: Option<String>) -> napi::Result<Self> {
-        build_client(fixture_origin, fetched_at)
+    pub fn new() -> napi::Result<Self> {
+        build_client()
             .map(|client| Self { client })
             .map_err(|error| napi::Error::from_reason(error.message))
     }
@@ -163,19 +165,35 @@ async fn run_operation(
     }
 }
 
-fn build_client(
-    fixture_origin: Option<String>,
-    fetched_at: Option<String>,
-) -> Result<DartyClient, DartyError> {
-    let Some(origin) = fixture_origin else {
-        return DartyClient::new();
-    };
-    let origin = url::Url::parse(&origin)
-        .map_err(|_| invalid_request("fixtureOrigin must be a valid URL.", "fixtureOrigin"))?;
-    DartyClient::for_fixture_origin(
-        origin,
-        fetched_at.unwrap_or_else(|| "2026-08-22T00:00:00.000Z".to_owned()),
-    )
+#[cfg(not(feature = "test-fixture"))]
+fn build_client() -> Result<DartyClient, DartyError> {
+    DartyClient::new()
+}
+
+/// Builds the isolated deterministic test addon client.
+///
+/// This code is not compiled into the production addon. The acceptance test
+/// opts into it through the `test-fixture` Cargo feature and builds the addon
+/// in a separate target directory. Keeping the environment seam here, rather
+/// than in the shipped JavaScript facade, prevents a production package from
+/// silently selecting a fixture origin or fixed clock.
+#[cfg(feature = "test-fixture")]
+fn build_client() -> Result<DartyClient, DartyError> {
+    let origin = std::env::var("DARTY_NODE_TEST_FIXTURE_ORIGIN").map_err(|_| {
+        invalid_request(
+            "The test addon requires DARTY_NODE_TEST_FIXTURE_ORIGIN.",
+            "testFixtureOrigin",
+        )
+    })?;
+    let origin = Url::parse(&origin).map_err(|_| {
+        invalid_request(
+            "DARTY_NODE_TEST_FIXTURE_ORIGIN must be a valid URL.",
+            "testFixtureOrigin",
+        )
+    })?;
+    let fetched_at = std::env::var("DARTY_NODE_TEST_FIXTURE_FETCHED_AT")
+        .unwrap_or_else(|_| "2026-08-22T00:00:00.000Z".to_owned());
+    DartyClient::for_fixture_origin(origin, fetched_at)
 }
 
 fn parse_input<T: serde::de::DeserializeOwned>(input: &str) -> Result<T, DartyError> {

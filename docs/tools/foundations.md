@@ -1,93 +1,20 @@
-# Foundations
+# Tool foundations
 
-This document defines the repo's baseline for single-tool design.
+Design a capability before choosing its transport. A useful agent-facing
+capability has a narrow intent, semantic and bounded inputs, deterministic
+behavior, structured results, stable references, explicit failures, and a
+clear next step.
 
-## What An Agent Tool Is
+Keep four concerns distinct:
 
-An agent tool is a capability packaged so an agent can:
+- **core**: domain validation, execution, and result shaping;
+- **source adapter**: DART wire behavior, parsing, and source failures;
+- **transport**: CLI or SDK-specific invocation and presentation;
+- **policy and guidance**: permissions, limits, retries, and usage advice.
 
-- recognize when to use it
-- supply valid inputs
-- get deterministic work done efficiently
-- receive results shaped for the next step
-- recover from failures without guesswork
+The core should not depend on transport syntax. A transport should not become
+a second implementation of DART behavior.
 
-Tool quality is rarely decided by "can the model call it?" The harder part is designing the contract, result shape, references, safety limits, retries, and operating model around the capability.
-
-## Default Design Order
-
-For most durable tools, this sequence holds:
-
-1. define the capability boundary
-2. investigate the live source
-3. design the contract
-4. implement the deterministic core
-5. add tests and eval scenarios
-6. expose a CLI
-7. add MCP if the runtime benefits from it
-8. add skills or prompt guidance
-
-Starting from transport usually produces thin, leaky tools that are hard to test and hard to reuse.
-
-## Standard Layers
-
-- `core`
-  Domain logic and deterministic work.
-- `adapter`
-  CLI, MCP, SDK, or HTTP wrapper over the core.
-- `policy`
-  Auth, permissions, retries, rate limits, caching, audit trail.
-- `guidance`
-  Skill text, examples, and usage heuristics.
-
-The capability core should not depend on transport-specific assumptions.
-
-## What Makes A Tool Good For Agents
-
-- `narrow intent`
-  One call should represent one meaningful action.
-- `structured output`
-  Return objects, tables, spans, references, and metadata instead of prose when possible.
-- `progressive detail`
-  Support summary, filtered, and raw access instead of forcing large dumps.
-- `stable references`
-  Preserve filing ids, document ids, section ids, page numbers, URLs, and anchors.
-- `explicit errors`
-  Make invalid input, source changes, auth issues, and partial results legible.
-- `deterministic behavior`
-  Prefer rule-based core logic over hidden prompt-like heuristics.
-- `agent-efficient abstraction`
-  Return what the agent needs next, not the most literal dump of the source.
-
-## Useful Mental Split
-
-People often collapse four different things into "tool":
-
-- `execution transport`
-  MCP, CLI, HTTP, or in-process calls
-- `capability`
-  Search filings, fetch sections, map viewer identifiers, extract XBRL facts
-- `packaging`
-  Skill text, prompt wrapper, helper agent
-- `runtime policy`
-  Approval, sandbox, auth, scope, retries
-
-Keeping those separate makes design and reuse much easier.
-
-## Tool Families
-
-The repo should standardize principles and evaluation rules, not force one payload shape across all tools.
-
-- `domain access tools`
-  DART directly today; OpenDART and related regulatory sources only as clearly marked adjacent or future investigations
-- `document retrieval tools`
-  filing sections, PDFs, XBRL documents
-- `transformation tools`
-  normalize tables, map identifiers, clean entities
-- `workspace tools`
-  local fixtures, transcripts, cached artifacts
-
-## Related Reading
-
-- [Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents)
-- [Building effective agents](https://www.anthropic.com/research/building-effective-agents)
+For this repository, the shipped TypeScript layering and accepted Rust target
+are mapped in [ARCHITECTURE.md](../../ARCHITECTURE.md). Operation boundaries
+and transport rules belong in [specs](../specs/README.md).

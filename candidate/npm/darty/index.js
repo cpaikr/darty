@@ -28,7 +28,21 @@ const invoke = async (nativeClient, operation, input, options = {}) => {
     const isAborted = () => signal?.aborted === true;
     if (isAborted())
         throw abortError();
-    const inputJson = JSON.stringify(input);
+    let inputJson;
+    try {
+        const encoded = JSON.stringify(input);
+        if (encoded === undefined) {
+            throw new TypeError("Request input is missing.");
+        }
+        inputJson = encoded;
+    }
+    catch {
+        throw new DartyError({
+            code: "invalid_request",
+            message: "Request input must be a JSON-serializable object.",
+            retryable: false,
+        });
+    }
     const operationId = randomUUID();
     nativeClient.registerOperation(operationId);
     const cancel = () => nativeClient.cancelOperation(operationId);
@@ -53,7 +67,7 @@ const invoke = async (nativeClient, operation, input, options = {}) => {
 export class DartyClient {
     #nativeClient;
     constructor() {
-        this.#nativeClient = new native.NativeDartyClient(process.env.DARTY_FIXTURE_ORIGIN, process.env.DARTY_FIXTURE_FETCHED_AT);
+        this.#nativeClient = new native.NativeDartyClient();
     }
     searchCompany(input, options) {
         return invoke(this.#nativeClient, "search-company", input, options);

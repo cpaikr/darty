@@ -182,6 +182,68 @@
       "golden": "goldens/candidate-view-report-section-success.json"
     },
     {
+      "id": "candidate-fault-http-503-search-company",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람"],
+      "fixtureFault": "source-http-503",
+      "golden": "goldens/candidate-fault-http-503-search-company.json"
+    },
+    {
+      "id": "candidate-fault-redirect-search-company",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람"],
+      "fixtureFault": "source-redirect",
+      "golden": "goldens/candidate-fault-redirect-search-company.json"
+    },
+    {
+      "id": "candidate-fault-connect-timeout-search-company",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람"],
+      "fixtureFault": "source-connect-timeout",
+      "fixtureEvidence": "transport-failure-equivalent",
+      "golden": "goldens/candidate-fault-connect-timeout-search-company.json"
+    },
+    {
+      "id": "candidate-fault-idle-read-timeout-view-report",
+      "profiles": ["candidate"],
+      "argv": ["view-report", "--receipt", "20260101000001", "--section-id", "section:1.1", "--max-bytes", "1000"],
+      "fixtureFault": "source-idle-read-timeout",
+      "fixtureFaultPhase": "content",
+      "fixtureEvidence": "transport-failure-equivalent",
+      "golden": "goldens/candidate-fault-idle-read-timeout-view-report.json"
+    },
+    {
+      "id": "candidate-fault-total-timeout-search-company",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람"],
+      "fixtureFault": "source-total-timeout",
+      "fixtureEvidence": "transport-failure-equivalent",
+      "golden": "goldens/candidate-fault-total-timeout-search-company.json"
+    },
+    {
+      "id": "candidate-fault-search-cap",
+      "profiles": ["candidate"],
+      "argv": ["search-company", "--company-name", "가람"],
+      "fixtureFault": "source-oversized-search",
+      "golden": "goldens/candidate-fault-search-cap.json"
+    },
+    {
+      "id": "candidate-fault-shell-cap",
+      "profiles": ["candidate"],
+      "argv": ["view-report", "--receipt", "20260101000001"],
+      "fixtureFault": "source-oversized-shell",
+      "fixtureFaultPhase": "shell",
+      "golden": "goldens/candidate-fault-shell-cap.json"
+    },
+    {
+      "id": "candidate-fault-content-cap",
+      "profiles": ["candidate"],
+      "argv": ["view-report", "--receipt", "20260101000001", "--section-id", "section:1.1", "--max-bytes", "1000"],
+      "fixtureFault": "source-oversized-content",
+      "fixtureFaultPhase": "content",
+      "golden": "goldens/candidate-fault-content-cap.json"
+    },
+    {
       "id": "search-body-missing-input",
       "profiles": ["full"],
       "argv": ["search-body"],

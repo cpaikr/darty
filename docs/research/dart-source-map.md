@@ -52,7 +52,10 @@ Current project decision:
 - `/dsae001/search.ax`
   Company overview search fragment endpoint used by the `회사별` search tab.
 - `/dsae001/select.ax`
-  Company overview detail fragment endpoint. It accepts `selectKey={companyCode}`.
+  Company overview detail fragment endpoint. The observed UI submits
+  `selectKey={companyCode}` by POST. The shipped TypeScript adapter currently
+  performs a GET with the same query parameter; that is implemented behavior,
+  not an observed UI transport claim.
 - `/api/companyRSS.xml`
   Company-specific disclosure RSS endpoint. It accepts `crpCd={companyCode}`.
 - `/dsae001/selectPopup.ax`
@@ -126,11 +129,9 @@ Observed document selection behavior:
 - The `첨부` selector values include both `rcpNo={rcpNo}` and `dcmNo={dcmNo}`. Reopening the shell with those parameters selects that attachment and embeds a new TOC/request set for the attachment document.
 - The download button calls `/pdf/download/main.do?rcp_no={rcpNo}&dcm_no={dcmNo}` for the currently selected document.
 
-Implemented behavior derived from these observations:
-
-- Receipt rendering can start from public `receiptNumber` by first fetching `/dsaf001/main.do?rcpNo={receiptNumber}` and parsing the selected document context.
-- Direct report-body retrieval should use `/report/viewer.do` only after the shell provides `dcmNo`, `dtd`, and, for sectioned documents, the TOC section parameters.
-- The implemented `view-report` v1 starts with selected-document discovery, TOC listing, individual section retrieval for TOC-backed documents, and full selected-document retrieval only when DART exposes no TOC. Full-document stitching for TOC-backed documents remains outside the current contract.
+The canonical public behavior derived from these observations lives in the
+[report-viewing contract](../specs/dsaf001-view-report-v1.md) and
+[viewer companion](../specs/dart-html-viewer-v1.md).
 
 ## Search Surface Notes
 
@@ -164,7 +165,7 @@ observed UI rather than implemented capabilities.
 
 When `본문내용` is selected, the UI shows these relevant controls:
 
-| Korean UI control | Observed DOM or POST field | Current implementation status |
+| Korean UI control | Observed DOM or POST field | Contract disposition |
 |---|---|---|
 | `본문내용 입력` | visible `contentWord`; submitted as `keyword` and `b_keyword` | implemented as required public `keyword` |
 | `동의어` | `synonym` / `b_synonym` style replay field | observed, not implemented |
@@ -259,7 +260,7 @@ Evidence classification:
 - **Project decision:** `search-company-reports` is code-first, callers resolve
   names through `search-company`, and the public operation rejects date windows
   wider than 10 years.
-- **Implemented contract:**
+- **Contract:**
   [`dsab007-search-company-reports-v1.md`](../specs/dsab007-search-company-reports-v1.md).
 
 ### Official DART Search Guide
@@ -333,10 +334,9 @@ Evidence classification:
 
 - **Observed:** body-content search is replayable without browser automation and
   returns HTML that requires parsing.
-- **Implemented:** `search-body` keeps its mode-specific replay fields explicit.
-- **Superseded project direction:** the earlier recommendation to begin with one
-  shared `dsab007` mode no longer governs the product; the accepted rewrite plan
-  and `VISION.md` own current architecture decisions.
+- **Project decision:** `search-body` keeps its mode-specific replay fields
+  explicit; its [capability contract](../specs/dsab007-search-v1.md) owns public
+  behavior.
 
 ## Company Overview Search Surface Notes
 
@@ -347,11 +347,11 @@ The visible page title is `기업개황`. The main tabs are:
 - `회사별`
 - `업종별`
 
-The current implementation covers only `회사별` company-name search.
+The public company-search contract covers the `회사별` company-name path.
 
 Observed `회사별` UI controls:
 
-| Korean UI control | Observed DOM or POST field | Current implementation status |
+| Korean UI control | Observed DOM or POST field | Contract disposition |
 |---|---|---|
 | `회사별` tab | fixed page tab | implemented as fixed capability choice |
 | `검색조건 선택=회사명` | `searchType=1` | implemented as fixed capability choice |
@@ -386,7 +386,9 @@ Company code finding:
 
 - The company search result row does include the 8-digit DART company code in the company link's `select(...)` argument.
 - Example for 삼성전자: link `javascript:select('00126380');`, stock code `005930`.
-- The selected company detail request uses the same code as `selectKey` for `POST /dsae001/select.ax`.
+- The observed UI company detail request uses the same code as `selectKey` for
+  `POST /dsae001/select.ax`. The shipped TypeScript adapter's GET replay is
+  documented separately in the capability spec.
 - The selected company detail fragment includes fields such as `회사이름`, `영문명`, `공시회사명`, `종목코드`, `대표자명`, `법인구분`, `법인등록번호`, `사업자등록번호`, `주소`, `홈페이지`, `전화번호`, `팩스번호`, `업종명`, `설립일`, and `결산월`.
 
 Observed page-size behavior:
@@ -399,8 +401,8 @@ Evidence classification:
 
 - **Observed:** `dsae001` company-name search is replayable without browser
   automation, and its rows expose DART company codes.
-- **Implemented:** `search-company` resolves those rows; `company-detail` and
-  `company-rss` own the separate detail and RSS retrieval paths.
+- **Project decision:** company resolution, detail, and RSS are separate public
+  capabilities; their contracts own supported behavior.
 
 ## Adjacent Feeds And Supporting Surfaces
 
@@ -409,13 +411,15 @@ Observed in the report viewer source:
 - `https://dart.fss.or.kr/api/todayRSS.xml`
 - `https://dart.fss.or.kr/api/companyRSS.xml?crpCd={companyCode}`
 
-These may be useful for lightweight feed operations, but they are supporting surfaces, not yet the primary contract.
+`companyRSS` has a separate [capability contract](../specs/company-rss-v1.md)
+but remains outside the canonical vertical wire subset. `todayRSS` is only an
+observed adjacent surface.
 
 ## Current Contract Implications
 
-- The canonical vertical wire subset contains only the four operations named in
-  `dart-wire-v1`; adjacent routes in this research map are not implicitly
-  supported.
+- The canonical vertical wire subset contains four upstream calls serving
+  three public operations; adjacent routes in this research map are not
+  implicitly supported.
 - Public IDs prefer filing and company identifiers that survive UI changes.
 - Opaque viewer offsets and lengths remain internal.
 - Search and retrieval remain separate operations.
@@ -423,20 +427,7 @@ These may be useful for lightweight feed operations, but they are supporting sur
 - Product direction and rewrite architecture are owned by `VISION.md` and the
   active plan, not this research record.
 
-## Follow-Ups
-
-Completed for the first search-body slice:
-
-- classified the implemented `/dsab007/search.ax` contents replay fields into public semantic inputs versus internal replay-only fields
-- defined and implemented the parsed result row model for the current tool contract
-
-Completed for the first view-report slice:
-
-- confirmed `/report/viewer.do` content retrieval through shell-provided viewer parameters
-- implemented `view-report` as receipt-to-document/TOC discovery plus selected section retrieval for TOC-backed documents
-- implemented selected-document retrieval for no-TOC documents through the shell's initial viewer locator
-
-Future investigation, not current v1 scope:
-
-- decide whether TOC-backed full-document stitching is useful enough to specify
-- evaluate PDF download and XBRL preview mappings when those become product priorities
+Future product investigations are tracked as
+[large-report content windows](../../tasks/improve-large-report-content-windows.md)
+and [XBRL support](../../tasks/support-xbrl-views.md), not as open research-map
+delivery items.

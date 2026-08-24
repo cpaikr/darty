@@ -1,6 +1,8 @@
 export const dsae001CompanyMessages = {
   sourceUnavailable: "Could not fetch DART 기업개황 company-search results.",
   htmlDecodeFailure: "Could not read DART 기업개황 company-search HTML.",
+  missingResultTable: "Could not find the result table in DART 기업개황 company-search results.",
+  missingResultRows: "Could not find result rows in DART 기업개황 company-search results.",
   missingTotalCount: "Could not find the total count in DART 기업개황 company-search results.",
   missingCompanyCode: "Could not find the company code in a DART 기업개황 company-search result row.",
   missingCompanyName: "Could not find the company name in a DART 기업개황 company-search result row.",

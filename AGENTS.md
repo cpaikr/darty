@@ -2,59 +2,73 @@
 
 ## Scope
 
-- This repo is for a DART querying/searching tool, not only `본문내용` body search.
-- The current code in `src/` and `test/` is an early slice, so do not mistake the first implementation path for the full product scope.
-- Treat repo docs and the current code as the source of truth. Do not invent commands, packages, or product scope that the repo does not define.
+- Darty is a read-only DART querying and retrieval tool, not only a body-search
+  command.
+- The shipped product is the Bun/strict TypeScript implementation in
+  `src/`. A reviewed Rust/Node/CLI candidate exists under `crates/` and
+  `candidate/`, but it is unpublished and supports only the vertical workflow.
+- Treat repository docs, code, tests, and configuration as the source of truth.
+  Do not promote candidate or target behavior to shipped behavior.
 
 ## Read First
 
-- Start with `README.md`.
-- For product direction, read `VISION.md`.
-- For active project work and rewrite sequencing, read `ROADMAP.md` and its
-  linked current plan.
-- For `dsab007` contract or parser work, read `docs/research/dart-source-map.md` and `docs/specs/dsab007-search-v1.md`.
-- Use `ARCHITECTURE.md` for document ownership and placement.
+- Start with `README.md` for the shipped package.
+- Read `VISION.md` for the accepted target and non-goals.
+- Read `ARCHITECTURE.md` for current, candidate, and target boundaries.
+- Read `ROADMAP.md` and its linked plan for active delivery state.
+- For DART wire, parser, or capability work, read the relevant documents under
+  `docs/research/` and `docs/specs/`.
 
 ## Commands
 
-- Install deps: `bun install`
+- Install dependencies: `bun install`
+- Validate DART wire authority: `bun run check:dart-wire`
 - Typecheck: `bun run typecheck`
-- Test: `bun test`
-- Build npm CLI: `bun run build`
-- Live tests: `bun run test:live`
-- Manual search check: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
-- Do not add placeholder build, lint, or format commands to docs. Only document commands that exist in the repo.
+- Test the TypeScript product: `bun test`
+- Build the shipped npm CLI: `bun run build`
+- Check CLI v1 compatibility: `bun run test:compat:cli`
+- Run live tests: `bun run test:live`
+- Manually search: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
+- Test the Rust candidate: `cargo test --workspace --all-features --locked`
+- Lint the Rust candidate: `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`
 
-## Where Changes Go
+Document only commands that exist or direct Cargo commands enforced in CI. Do
+not add placeholder build, lint, or format commands.
 
-- Product scope and non-goals: `VISION.md`
-- Live DART investigation and source evidence: `docs/research/dart-source-map.md`
-- Stable, evidence-backed capability contracts: `docs/specs/`
+## Document Ownership
+
+- Shipped package usage: `README.md`
+- Product scope, target surfaces, and non-goals: `VISION.md`
+- Repository topology and implementation status: `ARCHITECTURE.md`
+- Source implementation details: `src/ARCHITECTURE.md`
+- Active order and backlog: `ROADMAP.md`, `plans/`, and `tasks/`
+- Live DART evidence: `docs/research/`
+- Stable capability and transport contracts: `docs/specs/`
 - Shared tool-design guidance: `docs/tools/`
-- Release automation and required secrets: `docs/release.md`
-- Active project order: `ROADMAP.md`
-- Scheduled work: `plans/`
-- Unscheduled work: `tasks/`
+- AXI upstream baseline and drift review: `docs/upstreams/axi.md` and
+  `docs/upstreams/axi-baseline.json`
+- Release automation and secrets: `docs/release.md`
 
 ## Release and Publishing
 
-- Read `docs/release.md` before preparing release automation changes or manual fallback tags.
-- Release Please owns normal version bumps and changelog updates; do not manually edit versions or changelogs unless doing the documented manual fallback.
-- Use Conventional Commit messages. While the package is pre-1.0, normal `feat:` and `fix:` commits become patch releases; breaking commits using `!` or `BREAKING CHANGE:` become minor releases.
-- Manual release tags must match `package.json` exactly: version `x.y.z` uses source tag `vx.y.z`.
-- The current release workflow publishes npm only. Rewrite work may prepare a
-  different target artifact shape only when authorized by the active plan;
-  update `docs/release.md` before enabling or publishing it.
+- Read `docs/release.md` before release work.
+- Release Please owns normal version bumps and `CHANGELOG.md`; do not edit them
+  manually except for the documented fallback.
+- Use Conventional Commits and follow the version/tag semantics in
+  `docs/release.md`.
+- The current release workflow publishes only the TypeScript npm product. The
+  Rust candidate must not be published or described as supported before the
+  active plan's cutover gates are complete and `docs/release.md` is updated.
 
 ## Working Rules
 
-- Keep diffs small and edit the canonical document instead of repeating guidance elsewhere.
-- Distinguish between current implementation limits and intended product scope. Broader DART query/search work is in scope even when the current code only covers an initial slice.
-- Keep the current implementation read-only and citation-first unless the repo docs change that contract.
-- Preserve the current Bun, strict TypeScript, `effect`, and `cheerio`
-  implementation as the runnable baseline until the rewrite plan's atomic
-  cutover. Rewrite work follows the accepted Rust SDK, Node SDK, and CLI target
-  in `VISION.md` and the active plan instead of extending TypeScript source
-  behavior in parallel.
-- Update nearby tests and docs in the same change when behavior, contracts, or evidence changes.
-- Mark source claims as observed, inferred, or unverified when that distinction matters.
+- Keep diffs small and edit the canonical document instead of repeating facts.
+- Preserve the TypeScript product as the runnable comparison baseline until the
+  rewrite's atomic cutover. Phase 3 work belongs in the Rust SDK, Node SDK
+  candidate, and Rust CLI, not in a parallel extension of TypeScript behavior.
+- Keep the implementation read-only and reference-first unless product docs
+  change that contract.
+- Update nearby tests and docs together when behavior, contracts, or evidence
+  changes.
+- Label source claims as observed, inferred, project decision, or unknown when
+  the distinction matters.

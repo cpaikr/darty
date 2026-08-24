@@ -1,6 +1,9 @@
 # Contents Search Evals
 
-These evals cover the current public `search-body` capability through fixed CLI commands and LLM-backed CLI tool use.
+These evals cover the shipped TypeScript `search-body` capability through fixed
+CLI commands and LLM-backed CLI tool use. The retained Rust candidate does not
+yet implement this operation; [the active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md)
+owns its delivery status.
 
 ## Goal
 
@@ -27,7 +30,8 @@ This track validates:
 
 ### Agentic CLI
 
-`agent-cli/run-eval.ts` evaluates `gpt-5.4-mini` by default through a small OpenAI tool-calling loop with one structured local tool for darty CLI execution.
+`agent-cli/run-eval.ts` uses the configured OpenAI model through a small
+tool-calling loop with one structured local tool for darty CLI execution.
 
 This track validates the invocation boundary:
 
@@ -38,9 +42,9 @@ This track validates the invocation boundary:
 - at least one `search-body` invocation uses valid CLI argument shape;
 - the command arguments match the scenario request, including keyword, date range, and company-code filter when requested.
 
-It only requires the matching structured CLI invocation to exit successfully. Detailed stdout envelope correctness belongs to the fixed-command CLI eval, and final-answer quality belongs in a separate future track.
+It only requires the matching structured CLI invocation to exit successfully. Detailed stdout envelope correctness belongs to the fixed-command CLI eval. Final-answer quality is evaluated separately by the opt-in research workflow track in [`../workflows/`](../workflows/README.md).
 
-Set `OPENAI_MODEL` to override the model.
+Set `OPENAI_MODEL` to select the model.
 
 ## Scenario Shape
 
@@ -65,7 +69,7 @@ bun install
 Run the fixed-command CLI eval. This track does not require an OpenAI API key:
 
 ```bash
-bun run eval:search-body:cli
+bun run eval:cli:search-body
 ```
 
 For the LLM-backed evals, create `.env.local` in the repo root with `OPENAI_API_KEY`, then validate the environment:
@@ -77,7 +81,7 @@ bun run env:check
 Run the agentic CLI eval:
 
 ```bash
-bun run eval:search-body:agent:cli
+bun run eval:agent-cli:search-body
 ```
 
 ## Notes
@@ -87,4 +91,6 @@ bun run eval:search-body:agent:cli
 - CLI subprocess UX checks belong in `test/cli/`; these evals focus on live scenario usefulness and agent structured-tool invocation behavior.
 - Deterministic assertions are preferred here when output shape, echoed request parameters, item counts, receipt numbers, URL prefixes, or command arguments are objective.
 - Do not add an `llm-rubric` judge to tracks where checks can be expressed in JavaScript.
-- If we later want to evaluate final user-facing prose, add a separate final-answer track backed by a runner that explicitly treats final-answer quality as the thing under test.
+- Do not fold final-answer prose checks into this invocation track; use the
+  separate research workflow runner, which has an explicit final-answer judge
+  and remains outside credential-free CI.

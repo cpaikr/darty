@@ -7,7 +7,7 @@ version = "0.5.0"
 edition = "2024"
 rust-version = "1.88"
 license = "Elastic-2.0"
-repository = "https://github.com/sjunepark/darty"
+repository = "https://github.com/cpaikr/darty"
 
 [workspace.dependencies]
 ammonia = "4.1.4"

@@ -343,7 +343,7 @@ components:
           maxItems: 60
           items:
             type: string
-            pattern: '^[A-Z]\d{3}$'
+            pattern: '^[A-J]\d{3}$'
         startDate:
           type: string
           pattern: '^\d{8}$'

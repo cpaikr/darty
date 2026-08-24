@@ -49,16 +49,35 @@ const waitForFile = async (path) => {
   assert.ok(existsSync(path), `fixture server did not create ${path}`);
 };
 
-const startFixture = async (name, delay = 0) => {
+const startFixture = async (name, delay = 0, options = {}) => {
   const readyPath = join(temporaryRoot, `${name}-origin`);
+  const requestMarker = join(temporaryRoot, `${name}-requests`);
   const child = spawn(process.execPath, [join(scriptDir, "serve-dart-fixture.mjs"), readyPath], {
     cwd: repoRoot,
     stdio: "ignore",
-    env: { ...process.env, DARTY_FIXTURE_DELAY_MS: String(delay) },
+    env: {
+      ...process.env,
+      DARTY_FIXTURE_DELAY_MS: String(delay),
+      ...(options.firstDelay === undefined
+        ? {}
+        : { DARTY_FIXTURE_DELAY_FIRST_MS: String(options.firstDelay) }),
+      DARTY_FIXTURE_REQUEST_MARKER: requestMarker,
+    },
   });
   fixtureChildren.add(child);
   await waitForFile(readyPath);
-  return { child, origin: readFileSync(readyPath, "utf8") };
+  return { child, origin: readFileSync(readyPath, "utf8"), requestMarker };
+};
+
+const waitForRequest = async (path, expectedCount) => {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (existsSync(path) && Number.parseInt(readFileSync(path, "utf8"), 10) >= expectedCount) {
+      return;
+    }
+    await new Promise((resolveWait) => setTimeout(resolveWait, 10));
+  }
+  assert.fail(`fixture did not observe request ${expectedCount}`);
 };
 
 const stopFixture = async (child) => {
@@ -78,6 +97,10 @@ const fixtureForm = (fields) => {
     }
   }
   return form;
+};
+
+const assertExactKeys = (value, expected, label) => {
+  assert.deepEqual(Object.keys(value).sort(), [...expected].sort(), `${label} keys`);
 };
 
 const rawRequestStatus = (url, body) =>
@@ -101,11 +124,99 @@ const rawRequestStatus = (url, body) =>
     request.end(body);
   });
 
+const rawFormRequestStatus = (url, body, headers = {}) =>
+  new Promise((resolveStatus, rejectRequest) => {
+    const request = httpRequest(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "content-length": Buffer.byteLength(body),
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          ...headers,
+        },
+      },
+      (response) => {
+        response.resume();
+        response.once("end", () => resolveStatus(response.statusCode));
+      },
+    );
+    request.once("error", rejectRequest);
+    request.end(body);
+  });
+
 try {
-  const cliArtifact = join(repoRoot, "target/release/darty");
-  const addonArtifact = join(repoRoot, "target/release/libdarty_node.dylib");
-  assert.ok(existsSync(cliArtifact), "build the release darty CLI first");
-  assert.ok(existsSync(addonArtifact), "build the release darty-node addon first");
+  const productionCliArtifact = join(repoRoot, "target/release/darty");
+  const productionAddonArtifact = join(repoRoot, "target/release/libdarty_node.dylib");
+  assert.ok(existsSync(productionCliArtifact), "build the release darty CLI first");
+  assert.ok(
+    existsSync(productionAddonArtifact),
+    "build the release darty-node addon first",
+  );
+
+  const configuredFixtureTarget = process.env.DARTY_CANDIDATE_FIXTURE_TARGET;
+  const fixtureTarget = configuredFixtureTarget
+    ? resolve(repoRoot, configuredFixtureTarget)
+    : join(temporaryRoot, "fixture-target");
+  const fixtureCliArtifact = join(fixtureTarget, "release/darty");
+  const fixtureAddonArtifact = join(fixtureTarget, "release/libdarty_node.dylib");
+  if (configuredFixtureTarget === undefined) {
+    console.log("Building isolated fixture CLI/addon target for local acceptance tests.");
+    run(
+      "cargo",
+      [
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "darty-cli",
+        "--features",
+        "fixture-origin",
+        "--target-dir",
+        fixtureTarget,
+      ],
+      { timeout: 120_000 },
+    );
+    run(
+      "cargo",
+      [
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "darty-node",
+        "--features",
+        "test-fixture",
+        "--target-dir",
+        fixtureTarget,
+      ],
+      { timeout: 120_000 },
+    );
+  } else {
+    console.log(`Using isolated fixture CLI/addon target: ${fixtureTarget}`);
+  }
+  assert.ok(existsSync(fixtureCliArtifact), "the isolated fixture darty CLI was built");
+  assert.ok(existsSync(fixtureAddonArtifact), "the isolated fixture darty-node addon was built");
+
+  const productionAddonBytes = readFileSync(productionAddonArtifact);
+  const productionCliBytes = readFileSync(productionCliArtifact);
+  for (const forbidden of [
+    "DARTY_FIXTURE_ORIGIN",
+    "DARTY_FIXTURE_FETCHED_AT",
+    "DARTY_NODE_TEST_FIXTURE_ORIGIN",
+    "DARTY_NODE_TEST_FIXTURE_FETCHED_AT",
+  ]) {
+    assert.equal(
+      productionAddonBytes.includes(Buffer.from(forbidden)),
+      false,
+      `production addon must not contain ${forbidden}`,
+    );
+    assert.equal(
+      productionCliBytes.includes(Buffer.from(forbidden)),
+      false,
+      `production CLI must not contain ${forbidden}`,
+    );
+  }
 
   const generatedFacade = join(temporaryRoot, "generated-facade");
   run(
@@ -119,69 +230,98 @@ try {
       `${generatedFile} must be fresh from the typed facade source`,
     );
   }
+  const facadeSource = readFileSync(join(repoRoot, "candidate/npm/darty/index.ts"), "utf8");
+  assert.doesNotMatch(facadeSource, /DARTY_(?:NODE_TEST_)?FIXTURE/);
+  assert.doesNotMatch(facadeSource, /process\.env/);
 
-  const stageRoot = join(temporaryRoot, "stage");
-  const rootPackage = join(stageRoot, "darty");
-  const nativePackage = join(stageRoot, "darty-darwin-arm64");
-  cpSync(join(repoRoot, "candidate/npm/darty"), rootPackage, { recursive: true });
-  cpSync(join(repoRoot, "candidate/npm/darty-darwin-arm64"), nativePackage, {
-    recursive: true,
-  });
-  copyFileSync(cliArtifact, join(nativePackage, "darty"));
-  chmodSync(join(nativePackage, "darty"), 0o755);
-  copyFileSync(addonArtifact, join(nativePackage, "darty.node"));
+  const stagePackage = (name, cliArtifact, addonArtifact) => {
+    const stageRoot = join(temporaryRoot, `${name}-stage`);
+    const rootPackage = join(stageRoot, "darty");
+    const nativePackage = join(stageRoot, "darty-darwin-arm64");
+    cpSync(join(repoRoot, "candidate/npm/darty"), rootPackage, { recursive: true });
+    cpSync(join(repoRoot, "candidate/npm/darty-darwin-arm64"), nativePackage, {
+      recursive: true,
+    });
+    copyFileSync(cliArtifact, join(nativePackage, "darty"));
+    chmodSync(join(nativePackage, "darty"), 0o755);
+    copyFileSync(addonArtifact, join(nativePackage, "darty.node"));
 
-  const tarballs = join(temporaryRoot, "tarballs");
-  mkdirSync(tarballs);
-  const nativePack = JSON.parse(
-    run("npm", ["pack", nativePackage, "--json", "--pack-destination", tarballs]).stdout,
-  )[0];
-  const rootPack = JSON.parse(
-    run("npm", ["pack", rootPackage, "--json", "--pack-destination", tarballs]).stdout,
-  )[0];
-  const nativeFiles = nativePack.files.map(({ path }) => path).sort();
-  assert.deepEqual(nativeFiles, ["LICENSE.md", "darty", "darty.node", "package.json"]);
-  const rootFiles = rootPack.files.map(({ path }) => path).sort();
-  assert.deepEqual(rootFiles, [
-    "LICENSE.md",
-    "bin/darty.js",
-    "index.d.ts",
-    "index.js",
-    "native.js",
-    "package.json",
-  ]);
+    const tarballs = join(temporaryRoot, `${name}-tarballs`);
+    mkdirSync(tarballs);
+    const nativePack = JSON.parse(
+      run("npm", ["pack", nativePackage, "--json", "--pack-destination", tarballs]).stdout,
+    )[0];
+    const rootPack = JSON.parse(
+      run("npm", ["pack", rootPackage, "--json", "--pack-destination", tarballs]).stdout,
+    )[0];
+    const nativeFiles = nativePack.files.map(({ path }) => path).sort();
+    assert.deepEqual(nativeFiles, ["LICENSE.md", "darty", "darty.node", "package.json"]);
+    const rootFiles = rootPack.files.map(({ path }) => path).sort();
+    assert.deepEqual(rootFiles, [
+      "LICENSE.md",
+      "bin/darty.js",
+      "index.d.ts",
+      "index.js",
+      "native.js",
+      "package.json",
+    ]);
+    return { rootPack, nativePack, tarballs };
+  };
 
-  const consumer = join(temporaryRoot, "consumer");
-  mkdirSync(consumer);
-  writeFileSync(
-    join(temporaryRoot, "consumer-package.json"),
-    JSON.stringify({ private: true, type: "module" }),
+  console.log("Staging production CLI/addon artifacts for the production acceptance consumer.");
+  const productionPackages = stagePackage(
+    "production",
+    productionCliArtifact,
+    productionAddonArtifact,
   );
-  cpSync(join(temporaryRoot, "consumer-package.json"), join(consumer, "package.json"));
-  run(
-    "npm",
-    [
-      "install",
-      "--ignore-scripts",
-      "--no-audit",
-      "--no-fund",
-      join(tarballs, nativePack.filename),
-      join(tarballs, rootPack.filename),
-    ],
-    { cwd: consumer },
-  );
+  console.log("Staging isolated fixture CLI/addon artifacts for the fixture acceptance consumer.");
+  const fixturePackages = stagePackage("fixture", fixtureCliArtifact, fixtureAddonArtifact);
 
-  const packageRoot = join(consumer, "node_modules/@sjunepark/darty");
-  const sdk = await import(pathToFileURL(join(packageRoot, "index.js")));
-  assert.deepEqual(Object.keys(sdk).sort(), ["DartyClient", "DartyError"]);
-  assert.deepEqual(Object.getOwnPropertyNames(sdk.DartyClient.prototype).sort(), [
+  const installConsumer = (name, packages) => {
+    const consumer = join(temporaryRoot, name);
+    mkdirSync(consumer);
+    writeFileSync(
+      join(temporaryRoot, `${name}-package.json`),
+      JSON.stringify({ private: true, type: "module" }),
+    );
+    cpSync(join(temporaryRoot, `${name}-package.json`), join(consumer, "package.json"));
+    run(
+      "npm",
+      [
+        "install",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        join(packages.tarballs, packages.nativePack.filename),
+        join(packages.tarballs, packages.rootPack.filename),
+      ],
+      { cwd: consumer },
+    );
+    return consumer;
+  };
+
+  const productionConsumer = installConsumer("production-consumer", productionPackages);
+  const fixtureConsumer = installConsumer("fixture-consumer", fixturePackages);
+  const productionPackageRoot = join(
+    productionConsumer,
+    "node_modules/@sjunepark/darty",
+  );
+  const fixturePackageRoot = join(fixtureConsumer, "node_modules/@sjunepark/darty");
+  const productionSdk = await import(pathToFileURL(join(productionPackageRoot, "index.js")));
+  assert.deepEqual(Object.keys(productionSdk).sort(), ["DartyClient", "DartyError"]);
+  assert.deepEqual(Object.getOwnPropertyNames(productionSdk.DartyClient.prototype).sort(), [
     "constructor",
     "searchCompany",
     "searchCompanyReports",
     "viewReport",
   ]);
 
-  const declarations = readFileSync(join(packageRoot, "index.d.ts"), "utf8");
+  const declarations = readFileSync(join(productionPackageRoot, "index.d.ts"), "utf8");
+  assert.equal(
+    declarations.includes("Record<string, unknown>"),
+    false,
+    "public response metadata must use project-owned declarations",
+  );
   const declaredMethods = [
     ...declarations.matchAll(/^\s+(searchCompany(?:Reports)?|viewReport)\(/gm),
   ]
@@ -189,8 +329,8 @@ try {
     .sort();
   assert.deepEqual(declaredMethods, ["searchCompany", "searchCompanyReports", "viewReport"]);
   writeFileSync(
-    join(consumer, "consumer.ts"),
-    `import { DartyClient, DartyError } from "@sjunepark/darty";\nconst client = new DartyClient();\nconst typedError = new DartyError({ code: "invalid_request", message: "invalid", retryable: false, parameter: "companyName" });\nconst companyCode: Promise<string> = client.searchCompany({ companyName: "가람" }).then((response) => response.result.items[0]!.companyCode);\nconst reports = client.searchCompanyReports({ companyCode: "00000001", startDate: "20250101", endDate: "20260101" });\nconst report = client.viewReport({ receipt: "20260101000001", sectionId: "section:1.1" }, { signal: new AbortController().signal });\nvoid [companyCode, reports, report, typedError];\n`,
+    join(productionConsumer, "consumer.ts"),
+    `import { DartyClient, DartyError } from "@sjunepark/darty";\nconst client = new DartyClient();\nconst typedError = new DartyError({ code: "invalid_request", message: "invalid", retryable: false, parameter: "companyName" });\nconst company = client.searchCompany({ companyName: "가람" });\nconst companyCode: Promise<string> = company.then((response) => response.result.items[0]!.companyCode);\nconst companyPage: Promise<number> = company.then((response) => response.result.request.page);\nconst companyEndpoint: Promise<string> = company.then((response) => response.metadata.source.endpoint);\nconst reports = client.searchCompanyReports({ companyCode: "00000001", startDate: "20250101", endDate: "20260101" });\nconst reportPageSize: Promise<number> = reports.then((response) => response.result.request.pageSize);\nconst reportDetail: Promise<"concise" | "detailed" | "raw"> = reports.then((response) => response.result.request.detail);\nconst reportSource: Promise<string> = reports.then((response) => response.metadata.sourceBehavior.sortBy);\nconst report = client.viewReport({ receipt: "20260101000001", sectionId: "section:1.1" }, { signal: new AbortController().signal });\nconst viewFormat: Promise<"html" | "markdown"> = report.then((response) => response.result.request.outputFormat);\nconst viewDetail: Promise<"concise" | "detailed" | "raw"> = report.then((response) => response.result.request.detail);\nconst viewEndpoint: Promise<string> = report.then((response) => response.metadata.source.endpoints.shell);\nvoid [companyCode, companyPage, companyEndpoint, reports, reportPageSize, reportDetail, reportSource, report, viewFormat, viewDetail, viewEndpoint, typedError];\n`,
   );
   run(
     join(repoRoot, "node_modules/.bin/tsc"),
@@ -205,8 +345,51 @@ try {
       "NodeNext",
       "consumer.ts",
     ],
-    { cwd: consumer },
+    { cwd: productionConsumer },
   );
+
+  // Exercise production validation before the fixture consumer is imported.
+  // Fixture isolation is proven above from the production artifacts themselves;
+  // package acceptance must not send a valid request to the live DART service.
+  const productionRoutingFixture = await startFixture("production-routing");
+  process.env.DARTY_FIXTURE_ORIGIN = productionRoutingFixture.origin;
+  process.env.DARTY_FIXTURE_FETCHED_AT = "1999-01-01T00:00:00.000Z";
+  process.env.DARTY_NODE_TEST_FIXTURE_ORIGIN = productionRoutingFixture.origin;
+  process.env.DARTY_NODE_TEST_FIXTURE_FETCHED_AT = "2026-08-22T00:00:00.000Z";
+  const productionClient = new productionSdk.DartyClient();
+  for (const [operation, input] of [
+    ["searchCompany", {}],
+    ["searchCompanyReports", {}],
+    ["viewReport", {}],
+  ]) {
+    await assert.rejects(
+      productionClient[operation](input),
+      (error) =>
+        error instanceof productionSdk.DartyError &&
+        error.code === "invalid_request" &&
+        error.parameter === "input" &&
+        error.retryable === false,
+      `production addon ${operation} validation boundary`,
+    );
+  }
+
+  assert.equal(
+    existsSync(productionRoutingFixture.requestMarker),
+    false,
+    "production addon validation must not route to the fixture",
+  );
+  await stopFixture(productionRoutingFixture.child);
+
+  const packageRoot = fixturePackageRoot;
+  const consumer = fixtureConsumer;
+  const sdk = await import(pathToFileURL(join(packageRoot, "index.js")));
+  assert.deepEqual(Object.keys(sdk).sort(), ["DartyClient", "DartyError"]);
+  assert.deepEqual(Object.getOwnPropertyNames(sdk.DartyClient.prototype).sort(), [
+    "constructor",
+    "searchCompany",
+    "searchCompanyReports",
+    "viewReport",
+  ]);
 
   const fixture = await startFixture("normal");
   const fixtureManifest = JSON.parse(
@@ -233,25 +416,178 @@ try {
     404,
     "query fixtures must reject unexpected request bodies",
   );
-  process.env.DARTY_FIXTURE_ORIGIN = fixture.origin;
-  process.env.DARTY_FIXTURE_FETCHED_AT = "2026-08-22T00:00:00.000Z";
+  const exactCompanyForm = fixtureForm(companyFixture.request.form).toString();
+  const exactCompanyHeaders = {
+    "content-type": companyFixture.request.headers["content-type"],
+    referer: companyFixture.request.headers.referer,
+  };
+  assert.equal(
+    await rawFormRequestStatus(
+      new URL(companyFixture.request.path, fixture.origin),
+      exactCompanyForm,
+      exactCompanyHeaders,
+    ),
+    404,
+    "form fixtures must reject a missing user-agent",
+  );
+  assert.equal(
+    await rawFormRequestStatus(
+      new URL(companyFixture.request.path, fixture.origin),
+      exactCompanyForm,
+      { ...exactCompanyHeaders, "user-agent": "" },
+    ),
+    404,
+    "form fixtures must reject an empty user-agent",
+  );
+  // Deliberately provide the legacy names with an unusable origin. The
+  // installed Node facade and test addon must ignore them; only the explicit
+  // test-build seam below may select the deterministic fixture.
+  process.env.DARTY_FIXTURE_ORIGIN = "http://127.0.0.1:1";
+  process.env.DARTY_FIXTURE_FETCHED_AT = "1999-01-01T00:00:00.000Z";
+  process.env.DARTY_NODE_TEST_FIXTURE_ORIGIN = fixture.origin;
+  process.env.DARTY_NODE_TEST_FIXTURE_FETCHED_AT = "2026-08-22T00:00:00.000Z";
   const client = new sdk.DartyClient();
+  await assert.rejects(
+    client.searchCompany(),
+    (error) =>
+      error instanceof sdk.DartyError &&
+      error.code === "invalid_request" &&
+      error.retryable === false,
+    "missing JS input must stay inside the typed DartyError boundary",
+  );
+  const cyclic = {};
+  cyclic.self = cyclic;
+  await assert.rejects(
+    client.searchCompany(cyclic),
+    (error) =>
+      error instanceof sdk.DartyError &&
+      error.code === "invalid_request" &&
+      error.retryable === false,
+    "unserializable JS input must stay inside the typed DartyError boundary",
+  );
   const pending = client.searchCompany({ companyName: "가람" });
   assert.ok(pending instanceof Promise, "Node SDK operation must return a Promise");
   const companies = await pending;
+  assertExactKeys(companies, ["metadata", "references", "result", "warnings"], "company response");
+  assertExactKeys(
+    companies.result.request,
+    ["companyName", "page", "pageSize"],
+    "company normalized request",
+  );
+  assert.deepEqual(companies.result.request, {
+    companyName: "가람",
+    page: 1,
+    pageSize: 15,
+  });
+  assertExactKeys(
+    companies.metadata,
+    ["fetchedAt", "source", "sourceBehavior", "completeness", "droppedItemCount"],
+    "company metadata",
+  );
+  assertExactKeys(companies.metadata.source, ["system", "surface", "endpoint"], "company source");
+  assertExactKeys(
+    companies.metadata.sourceBehavior,
+    ["searchMode", "callerControlsPageSize", "maxObservedPageSize", "observationStatus"],
+    "company source behavior",
+  );
+  assert.equal(companies.metadata.fetchedAt, "2026-08-22T00:00:00.000Z");
+  assert.equal(companies.metadata.source.endpoint, "https://dart.fss.or.kr/dsae001/search.ax");
+  assert.equal(companies.references.searchUrl, "https://dart.fss.or.kr/dsae001/search.ax");
   assert.equal(companies.result.items[0].companyCode, "00000001");
   const reports = await client.searchCompanyReports({
     companyCode: "00000001",
     startDate: "20250101",
     endDate: "20260101",
   });
+  assertExactKeys(reports, ["metadata", "references", "result", "warnings"], "reports response");
+  assertExactKeys(
+    reports.result.request,
+    [
+      "companyCode",
+      "startDate",
+      "endDate",
+      "page",
+      "pageSize",
+      "sortDirection",
+      "disclosureTypes",
+      "industryCode",
+      "corporationType",
+      "closingAccountsMonth",
+      "includeAllReports",
+      "detail",
+    ],
+    "reports normalized request",
+  );
+  assert.deepEqual(reports.result.request, {
+    companyCode: "00000001",
+    startDate: "20250101",
+    endDate: "20260101",
+    page: 1,
+    pageSize: 15,
+    sortDirection: "desc",
+    disclosureTypes: [],
+    industryCode: "all",
+    corporationType: "all",
+    closingAccountsMonth: "all",
+    includeAllReports: false,
+    detail: "concise",
+  });
+  assertExactKeys(
+    reports.metadata,
+    ["fetchedAt", "source", "sourceBehavior", "completeness", "droppedItemCount"],
+    "reports metadata",
+  );
+  assertExactKeys(reports.metadata.source, ["system", "surface", "endpoint"], "reports source");
+  assertExactKeys(
+    reports.metadata.sourceBehavior,
+    [
+      "searchMode",
+      "sortBy",
+      "callerControlsPageSize",
+      "pageSizeChoices",
+      "finalReportDefault",
+      "observationStatus",
+    ],
+    "reports source behavior",
+  );
+  assert.equal(reports.metadata.fetchedAt, "2026-08-22T00:00:00.000Z");
+  assert.equal(reports.metadata.source.endpoint, "https://dart.fss.or.kr/dsab007/detailSearch.ax");
+  assert.equal(reports.references.searchUrl, "https://dart.fss.or.kr/dsab007/detailSearch.ax");
   assert.equal(reports.result.company.companyCode, "00000001");
   assert.equal(reports.result.items[0].filing.receiptNumber, "20260101000001");
-  assert.equal(reports.result.items[0].filing.reportTitle, "[기재정정] 사업보고서");
+  assert.equal(reports.result.items[0].filing.reportTitle, "[기재정정]사업보고서");
   const section = await client.viewReport({
     receipt: "20260101000001",
     sectionId: "section:1.1",
   });
+  assertExactKeys(section, ["metadata", "references", "result", "warnings"], "view response");
+  assertExactKeys(
+    section.result.request,
+    ["receipt", "sectionId", "outputFormat", "maxBytes", "contentStartByte", "detail"],
+    "view normalized request",
+  );
+  assert.deepEqual(section.result.request, {
+    receipt: "20260101000001",
+    sectionId: "section:1.1",
+    outputFormat: "markdown",
+    maxBytes: 50_000,
+    contentStartByte: 0,
+    detail: "concise",
+  });
+  assertExactKeys(section.metadata, ["fetchedAt", "source", "tocSource"], "view metadata");
+  assertExactKeys(section.metadata.source, ["system", "surface", "endpoints"], "view source");
+  assertExactKeys(
+    section.metadata.source.endpoints,
+    ["shell", "content"],
+    "view source endpoints",
+  );
+  assert.equal(section.metadata.fetchedAt, "2026-08-22T00:00:00.000Z");
+  assert.equal(section.metadata.source.endpoints.shell, "https://dart.fss.or.kr/dsaf001/main.do");
+  assert.equal(
+    section.metadata.source.endpoints.content,
+    "https://dart.fss.or.kr/report/viewer.do",
+  );
+  assert.match(section.references.viewerUrl, /^https:\/\/dart\.fss\.or\.kr\/dsaf001\/main\.do\?/);
   assert.equal(section.result.receipt.receiptNumber, "20260101000001");
   assert.equal(section.result.content.section.id, "section:1.1");
   assert.equal(section.result.content.format, "markdown");
@@ -293,21 +629,29 @@ try {
   assert.equal(JSON.parse(launched.stdout).metadata.output, "agent");
   await stopFixture(fixture.child);
 
-  const delayedFixture = await startFixture("delayed", 5_000);
-  process.env.DARTY_FIXTURE_ORIGIN = delayedFixture.origin;
+  const delayedFixture = await startFixture("delayed", 0, { firstDelay: 5_000 });
+  process.env.DARTY_NODE_TEST_FIXTURE_ORIGIN = delayedFixture.origin;
   const delayedClient = new sdk.DartyClient();
   const controller = new AbortController();
-  const startedAt = Date.now();
   const cancelled = delayedClient.searchCompany(
     { companyName: "가람" },
     { signal: controller.signal },
   );
+  await waitForRequest(delayedFixture.requestMarker, 1);
+  const startedAt = Date.now();
   controller.abort();
   await assert.rejects(
     cancelled,
     (error) => error.name === "AbortError" && error.code === "ABORT_ERR",
   );
   assert.ok(Date.now() - startedAt < 1_000, "cancellation must promptly drop native work");
+  const nextStartedAt = Date.now();
+  const afterCancellation = await delayedClient.searchCompany({ companyName: "가람" });
+  assert.equal(afterCancellation.result.items[0].companyCode, "00000001");
+  assert.ok(
+    Date.now() - nextStartedAt < 1_000,
+    "an in-flight cancellation must allow the next request to progress",
+  );
   await stopFixture(delayedFixture.child);
 
   const installedNative = join(

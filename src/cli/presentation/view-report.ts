@@ -42,6 +42,10 @@ const limitTocDepth = (
 const toViewReportHelp = (result: ViewReportResult): readonly string[] => {
   const request = result.result.request;
   const content = result.result.content;
+  const documentArgument =
+    request.documentId === undefined
+      ? ""
+      : ` --document-id ${quoteCliValue(result.result.document.id)}`;
 
   if (content?.window.hasMore === true) {
     return [
@@ -66,12 +70,12 @@ const toViewReportHelp = (result: ViewReportResult): readonly string[] => {
       ...(nextSection === undefined
         ? []
         : [
-            `Read next section: darty view-report --receipt ${quoteCliValue(request.receipt)} --section-id ${quoteCliValue(nextSection.id)}`,
+            `Read next section: darty view-report --receipt ${quoteCliValue(request.receipt)}${documentArgument} --section-id ${quoteCliValue(nextSection.id)}`,
           ]),
       ...(previousSection === undefined
         ? []
         : [
-            `Read previous section: darty view-report --receipt ${quoteCliValue(request.receipt)} --section-id ${quoteCliValue(previousSection.id)}`,
+            `Read previous section: darty view-report --receipt ${quoteCliValue(request.receipt)}${documentArgument} --section-id ${quoteCliValue(previousSection.id)}`,
           ]),
       "Rerun with --toc-depth <number> when you need nearby TOC context.",
     ];
@@ -81,7 +85,7 @@ const toViewReportHelp = (result: ViewReportResult): readonly string[] => {
 
   if (firstSection !== undefined) {
     return [
-      `Read first section: darty view-report --receipt ${quoteCliValue(request.receipt)} --section-id ${quoteCliValue(firstSection.id)}`,
+      `Read first section: darty view-report --receipt ${quoteCliValue(request.receipt)}${documentArgument} --section-id ${quoteCliValue(firstSection.id)}`,
       "Choose a different returned toc[].id to read another section.",
       "Use --toc-depth <number> to limit TOC output depth in the CLI.",
     ];

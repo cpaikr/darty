@@ -1,7 +1,6 @@
 # Company RSS v1
 
 - `name`: `company-rss-v1`
-- `status`: implemented
 - `domain`: DART company-specific disclosure RSS
 
 ## Public Operation

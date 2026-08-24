@@ -1,270 +1,78 @@
-# dsab007 Search v1
-
-## 1. Identity
-
-- `name`: `dsab007-search-v1`
-- `owner`: `darty`
-- `status`: draft
-- `domain`: DART integrated filing search through `dsab007`
-- `users`: LLM agents and scripts that need direct DART search access without browser automation
-
-## 2. Problem
-
-- User task:
-  replay DART integrated filing search modes programmatically, starting with `본문내용`.
-- Generic tools are insufficient because:
-  the DART flow is HTML-driven, parameter-heavy, and split between search results and the report viewer.
-- This capability is worth standardizing because:
-  the integrated filing search surface exposes useful workflows that are not covered well by the official API.
-
-## 3. Capability Boundary
-
-The first tool should:
-
-- expose a semantic capability contract for contents search
-- share one execution core for `dsab007` mode replays
-- parse the returned HTML fragment into structured mode-specific results
-- start with `option=contents`
-- return filing identifiers needed for later retrieval
-
-The first tool should not yet:
-
-- claim that every `dsab007` mode is already implemented
-- expose TOC-aware section retrieval
-- handle authenticated or mutating flows
-
-## 4. Implemented Korean UI Slice
-
-This spec is aligned to the live Korean DART UI, but only up to the behavior currently implemented.
-
-Observed UI entrypoint:
-
-- `공시서류검색 > 공시통합검색`
-- URL: `https://dart.fss.or.kr/dsab007/main.do?option=corp`
-- implemented mode after changing the search selector: `본문내용` (`option=contents`)
-
-Implemented input mapping:
-
-| Korean DART UI | Public input | Internal `/dsab007/search.ax` replay field | Status |
-|---|---|---|---|
-| search selector `본문내용` | fixed capability choice | `option=contents` | implemented; not caller-configurable |
-| `본문내용 입력` | `keyword` | `keyword`, `b_keyword` | implemented and required |
-| `검색시작일` | `startDate` | `startDate`, `b_startDate` | implemented and required |
-| `검색종료일` | `endDate` | `endDate`, `b_endDate` | implemented and required |
-| result page | `page` | `currentPage` | implemented; default `1` |
-| result sort `접수일자` | `sortBy=date` | `sort=DATE` | implemented; default |
-| result sort `보고서명` | `sortBy=reportName` | `sort=rpt_nm` | implemented |
-| sort direction `오름차순` / `내림차순` | `sortDirection=asc|desc` | `sortType=asc|desc` | implemented; default `desc` |
-| `회사명/종목코드 입력` after company lookup | `companyCode` | `textCrpCik`, `b_textCrpCik` | implemented only for the hidden company code value, not free-text company name |
-| `제출인명 입력` | `presenterName` | `textPresenterNm`, `b_textPresenterNm` | implemented |
-| `보고서명 입력` | `reportName` | `reportName`, `b_reportName` | implemented |
-| response detail | `detail=concise|detailed|raw` | n/a | implemented; controls output projection, not DART replay |
-
-Implemented output mapping:
-
-| Korean DART result UI | Public result field |
-|---|---|
-| `검색건수` / `[총 N건]` | `result.pagination.totalCount` |
-| pager `[현재/전체]` | `result.pagination.currentPage`, `result.pagination.totalPages` |
-| company badge and company link | `item.company.marketLabel`, `item.company.name`, `item.company.companyCode` |
-| report link | `item.filing.receiptNumber`, `item.filing.documentNumber`, `item.references.viewerUrl` |
-| report title text | `item.filing.reportTitle`, modifier/period/suffix fields when parsed |
-| body hit snippet | `item.match.snippetText`, `item.evidence.snippetHtml` |
-| `[공시유형] [본문|첨부문서] 제출인 : ...` | `item.match.disclosureTypeLabel`, `contentTypeLabel`, `presenterName`, plus `evidence.rawInfoText` |
-| receipt date | `item.filing.receiptDate` |
-
-Observed but not implemented from the Korean UI:
-
-- other search modes: `전체`, `회사명`, `보고서명`, `보고서 목차명`, `고급검색`
-- free-text company-name replay through `textCrpNm`; tested as accepted but ignored for the current replay shape
-- `동의어`
-- `문서유형` (`전체`, `본문`, `첨부문서`)
-- `공시유형` checkbox filtering
-- quick date buttons and `기간더보기`; callers provide explicit dates instead
-- page-size dropdown (`15`, `30`, `50`, `100`); live probes show page size is accepted but not caller-controlled for `option=contents`
-- popup automation for `찾기`, autocomplete, recent-search, reset, and help flows
-- filing viewer or section retrieval after clicking a result
-
-### Official Guide Source For Descriptions
-
-Use the official DART guide as the source for Korean UI explanations and future tool-description copy:
-
-- `https://dart.fss.or.kr/guide/main.jsp?menu=122`
-- guide title: `공시 서류 검색 – 공시통합검색`
-
-The guide is broader than this spec. It explains all integrated-search modes and many UI controls that are not implemented here. It should be used to understand user-facing labels, concepts, examples, and wording, but it is not itself the replay API contract.
-
-For the currently implemented `본문내용` slice, guide-backed description details that are safe to mention in tool/help copy:
-
-- `본문내용` searches within submitted disclosure document contents.
-- The keyword field supports DART's documented common search syntax because the tool passes the keyword through to DART:
-  - AND condition (`공백`, space): `사과 포도` searches for documents where both `사과` and `포도` exist.
-  - OR condition (`|`): `사과|포도` searches for documents where either `사과` or `포도` exists.
-  - NOT condition (`!`): `사과!포도` excludes documents containing `포도` from results for `사과`.
-  - EXACT condition (`" "`): `"사과 포도"` searches for a word/phrase made exactly of `사과포도` or `사과 포도` in that order; no other word or phrase may appear between `사과` and `포도`.
-- Date fields correspond to the guide's search-period inputs; the tool requires explicit `YYYYMMDD` dates instead of modeling quick date buttons.
-- `presenterName` maps to the guide's `제출인명` concept, used when the filing presenter can differ from the target company.
-- `reportName` maps to the guide's `보고서명` narrowing field.
-
-Guide-backed details that must stay out of the public contract until implemented and tested:
-
-- synonym expansion (`동의어`)
-- document target (`본문` vs `첨부문서`)
-- disclosure-type filtering
-- page-size control
-- popup selection flows
-- non-contents search modes
-
-## 5. Domain Model
-
-### Primary entities
-
-- `search_body_input`
-  Semantic request for the public `search-body` capability.
-- `source_contents_replay_input`
-  Internal DART replay request for the implemented `contents` mode.
-- `contents_row`
-  One public search item returned by the capability.
-- `source_contents_row`
-  One parsed DART source row before public result mapping.
-- `filing_reference`
-  Stable filing-level reference built around `rcpNo` and usually `dcmNo`.
-
-### Stable identifiers
-
-- `rcpNo`
-  Filing receipt number.
-- `dcmNo`
-  Filing document number from the result-row viewer link.
-- `corpCik`
-  Company identifier visible in company popup links.
-
-### Deferred identifiers for later retrieval
-
-- `eleId`
-- `offset`
-- `length`
-- `tocNo`
-- `atocId`
-
-These appear in the viewer contract, not the first search-result contract.
-
-## 6. Proposed Operations
-
-### `search_contents`
-
-- `purpose`
-  Search DART filing contents through a semantic capability backed by an internal `dsab007` replay adapter.
-- `inputs`
-  `page`, `sortBy`, `sortDirection`, `keyword`, `startDate`, `endDate`, optional stable filters such as `companyCode`, `presenterName`, and `reportName`, plus `detail` for response projection
-- `output`
-  `result`, `metadata`, `references`, `warnings`
-- `result item`
-  stable company, filing, match, reference, and evidence fields derived from parsed DART rows
-- `error cases`
-  `invalid_request`, `source_unavailable`, `source_changed`, `source_parse_failure`, `internal_error`
-- `error recovery`
-  typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date and page values
-- `warning cases`
-  `partial_rows_dropped` when the parser drops incomplete result rows from an otherwise successful response
-- `safety class`
-  read-only
-
-### Deferred: `get_filing_viewer`
-
-A separate viewer operation is not implemented in the current v1 slice. For now, each `search_contents` result item includes `references.viewerUrl` plus filing identifiers such as `receiptNumber` and optional `documentNumber`.
-
-Section retrieval and standalone viewer lookup are intentionally deferred to a later spec once the filing-level contract is stable.
-
-## 7. Current Contract Stance
-
-Public external inputs should stay semantic:
-
-- `page`
-- `sortBy`
-- `sortDirection`
-- `keyword`
-- `startDate`
-- `endDate`
-- optional `companyCode`
-- optional `presenterName`
-- optional `reportName`
-
-Keep the low-level DART replay layer internal:
-
-- `option`
-- `currentPage`
-- `maxResults`
-- `maxLinks`
-- `sort`
-- `sortType`
-- `keyword`
-- `startDate`
-- `endDate`
-- optional `textCrpCik`
-- optional `textPresenterNm`
-- optional `reportName`
-
-Status labels used in this spec and in the contract tests:
-
-- `observed`
-  direct live evidence confirms the field shape or behavior
-- `inferred`
-  the field appears in replay/source inspection but is not yet proven stable live
-- `unverified`
-  the field is named or suspected but still lacks stable evidence
-
-Keep these replay helpers internal unless proven necessary:
-
-- duplicated `b_*` fields
-- `isSort`
-- `isTab`
-- `autoSearch`
-- `reportNamePopYn`
-
-Observed `option=contents` restriction:
-
-- `sort` is currently limited to `DATE | rpt_nm`
-- `sortType` is currently limited to `asc | desc`
-
-## 8. Output Modes
-
-- `concise` (default)
-  capability-owned result envelope with normalized public items, metadata, references, and warnings. Item-level source evidence is omitted while filing references remain available for follow-up calls.
-- `detailed` / `raw`
-  include item `evidence` fields such as preserved source row text/snippet HTML for verification and parser debugging.
-
-Full `/dsab007/search.ax` response HTML stays internal for fixtures, debugging, and parser tests. Public `raw` means exposed row-level evidence, not a replay of the entire upstream HTML fragment.
-
-## 9. Observed Upstream Contract
-
-Observed request:
-
-- endpoint: `POST /dsab007/search.ax`
-- successful anonymous replay in tested cases
-- `option=contents` is the first implemented mode
-- request fields mirror DART names more closely than the first semantic prototype did
-- result paging through `currentPage`; page size is currently upstream-controlled even though `maxResults` is accepted in the replay payload
-
-Current implementation note:
-
-- live validation on 2026-03-31 and replay-contract probes show `maxResults` is accepted but ignored for tested values
-- the replay adapter should expose the field internally, but the public capability should not present it as a stable caller-controlled input
-- live validation on 2026-04-01 still shows `maxLinks` being accepted but ignored for `option=contents`
-- the public capability should treat page size and pager width as upstream-controlled for now
-- live validation on 2026-04-01 shows `textCrpCik`, `textPresenterNm`, and `reportName` affecting results, while `textCrpNm` is currently accepted but ignored for the replay shape used here
-- the capability should depend on a capability-owned provider result, not on parsed DART source pages directly
-- provider-specific source failures should be normalized into capability-owned provider errors before they reach capability execution
-
-Observed response:
-
-- HTML fragment, not JSON
-- count header, sort controls, result table, hidden `totalCnt`, pagination block
-- result row viewer link includes `rcpNo`, `dcmNo`, and the original keyword
-- attachment rows require preserving more of the raw report-name structure than a simple title/subtitle split
-- no-result responses may omit the pagination block entirely and currently render `조회 결과가 없습니다.` as a bare `td[colspan]` placeholder under `tbody`
-
-## 10. Open Questions
-
-- Which `dsab007` mode should be implemented second?
-- Which additional filters, if any, deserve promotion from the replay adapter into the stable public capability contract?
+# dsab007 Body-content Search v1
+
+`search-body` searches submitted DART document contents through the integrated
+`dsab007` `option=contents` surface. It is read-only and returns filing
+identifiers needed for later retrieval. Other integrated-search modes and
+report viewing are outside this capability.
+
+## Request
+
+| Field | Required | Contract |
+|---|---:|---|
+| `keyword` | yes | Non-empty DART body-search expression |
+| `startDate`, `endDate` | yes | Valid `YYYYMMDD` dates with start not after end |
+| `page` | no | Integer 1–100; default 1 |
+| `sortBy` | no | `date` or `reportName`; default `date` |
+| `sortDirection` | no | `asc` or `desc`; default `desc` |
+| `companyCode` | no | 8-digit DART company code |
+| `presenterName`, `reportName` | no | Non-empty narrowing text |
+| `detail` | no | `concise`, `detailed`, or `raw`; default `concise` |
+
+Unknown fields are rejected. The keyword is passed to DART, whose documented
+syntax includes space for AND, `|` for OR, `!` for NOT, and quotes for an exact
+phrase. The operation does not expose synonym expansion, body/attachment
+selection, disclosure-type filters, page size, popup automation, or free-text
+company lookup.
+
+Low-level fields such as `option`, `currentPage`, `sort`, `sortType`,
+`textCrpCik`, duplicated `b_*` fields, and fixed paging values are internal.
+`toDsab007ContentsReplayInput()` is the boundary between semantic input and
+source replay.
+
+## Result
+
+The shared success envelope contains:
+
+- `result.request`: normalized semantic request;
+- `result.pagination`: current page, total pages/count, and returned count;
+- `result.items[]`: company, filing, match, and item references;
+- `metadata`: fetch time, `dsab007` source, observed paging behavior,
+  completeness, and dropped-row count;
+- `references.searchUrl` and explicit warnings.
+
+Each item includes company name and optional 8-digit company code; 14-digit
+receipt number, optional source document number, normalized report title, and
+receipt date; match snippet and optional disclosure/content/presenter labels;
+and a DART viewer URL. Detailed/raw projections add bounded row-level evidence
+such as raw report text, info text, and snippet HTML. They never expose the
+complete upstream response body.
+
+`partial_rows_dropped` reports recognized rows that could not be mapped.
+`no_results` is a successful empty search with guidance to widen the date range
+or remove optional filters.
+
+## Failures
+
+| Code | Retryable | Meaning |
+|---|---:|---|
+| `invalid_request` | no | Semantic input is invalid or unknown |
+| `source_unavailable` | yes | Bounded DART transport failed |
+| `source_changed` | no | Required result/pagination grammar changed |
+| `source_parse_failure` | no | Source bytes or HTML could not be decoded/parsed safely |
+| `internal_error` | no | Unexpected provider or implementation failure |
+
+Failures may include a concise recovery hint when a safe next step is known,
+such as resolving `companyCode` with `search-company`.
+
+## Source and ownership
+
+The adapter posts internal replay fields to `/dsab007/search.ax`, accepts an
+HTML fragment, and treats effective page size and pager width as
+upstream-controlled. Source observations and Korean UI mappings live in
+[`dart-source-map.md`](../research/dart-source-map.md); they are evidence, not
+public contract. `view-report` owns TOC/document retrieval and every raw viewer
+locator.
+
+Implementation status and port sequencing live in
+[ARCHITECTURE.md](../../ARCHITECTURE.md) and the
+[active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md).

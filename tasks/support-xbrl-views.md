@@ -8,7 +8,7 @@ contracts.
 ## Current state
 
 XBRL is in the broader product direction but has no accepted capability spec or
-implementation. It was recorded as later work in the legacy `TODO.md`.
+implementation. It remains intentionally unscheduled.
 
 ## Next action
 

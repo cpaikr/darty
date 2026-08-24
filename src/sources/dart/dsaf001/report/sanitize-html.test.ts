@@ -11,6 +11,14 @@ describe("sanitizeReportHtml", () => {
     ).toBe('<p>본문위험<img alt="로고"></p>');
   });
 
+  test("does not revive executable markup nested in raw-text elements", () => {
+    const fetched = sanitizeFetchedReportHtml(
+      "<html><body><xmp><xmp><img src=x onerror=alert(1)></xmp></xmp></body></html>",
+    );
+
+    expect(sanitizeReportHtml(fetched)).toBe("&lt;xmp&gt;&lt;img src=x onerror=alert(1)&gt;");
+  });
+
   test("keeps safe links and image sources while resolving DART-relative URLs", () => {
     expect(
       sanitizeReportHtml(

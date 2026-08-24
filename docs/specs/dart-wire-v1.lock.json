@@ -5,15 +5,15 @@
   "files": [
     {
       "path": "docs/specs/dart-wire-v1.openapi.yaml",
-      "sha256": "ceaf60e18818a7a2be225f86ea26f14830dae5119a0195ea2f0dc83cc121ef18"
+      "sha256": "f696c64d73020d029266691e979e78b3ef069c7af22a187ed93966994d40eeb0"
     },
     {
       "path": "docs/specs/dart-html-viewer-v1.md",
-      "sha256": "dc0150c3a54b001d42eed17f84871f689d2286e50401a9dd47fb30cb0d226bb1"
+      "sha256": "b92f8505625616c91cca2f1cb6fb3831fbb0d0a1d0d3f47ce44d056df36f4d87"
     },
     {
       "path": "docs/research/dart-provider-qualification.md",
-      "sha256": "960d7d79dd4ea7fc0b1a181d0040b6e3b56064b57a30622119b82d9a7abfddd9"
+      "sha256": "38a75d1ed7c1a81167cf9f344506ce51d3d0e77a10aa37d3c1578838cc7ae492"
     },
     {
       "path": "fixtures/dart/vertical-v1/manifest.json",

@@ -421,6 +421,17 @@ describe("createDsaf001ViewReportProvider", () => {
                 selectedAttachment,
               ],
               selectedDocument: selectedAttachment,
+              toc: [
+                {
+                  ...createTocShell().toc[0]!,
+                  locator: { ...rootLocator, dcmNo: "11213015" },
+                  children: createTocShell().toc[0]!.children.map((section) => ({
+                    ...section,
+                    locator: { ...section.locator, dcmNo: "11213015" },
+                  })),
+                },
+              ],
+              initialViewLocator: { ...rootLocator, dcmNo: "11213015" },
             })
           : createTocShell(),
     });
@@ -464,6 +475,7 @@ describe("createDsaf001ViewReportProvider", () => {
       if (!(error instanceof ViewReportProviderError)) throw error;
       expect(error.code).toBe("not_found");
       expect(error.parameter).toBe("documentId");
+      expect(error.message).toContain("Omit documentId");
       expect(error.message).toContain("documents[].id");
       expect(error.message).toContain("dcmNo");
     }

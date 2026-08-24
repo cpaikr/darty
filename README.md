@@ -24,7 +24,7 @@ CLI를 바로 실행하려면 다음처럼 사용할 수 있습니다.
 npx @sjunepark/darty --help
 ```
 
-npm/npx 환경에서는 Node.js 20.18.1 이상이 필요합니다. 이 저장소의 개발, 테스트, 빌드는 Bun을 사용합니다.
+npm/npx 환경에서는 Node.js 22.12.0 이상이 필요합니다. 이 저장소의 개발, 테스트, 빌드는 Bun을 사용합니다.
 
 ## CLI
 
@@ -35,13 +35,18 @@ darty --help
 darty search-body --keyword 배당 --start-date 20250331 --end-date 20260331
 ```
 
-명령과 옵션의 최신 기준은 CLI 도움말입니다. README에는 전체 옵션을 복제하지 않습니다.
+명령, 옵션, 입력 제약, 출력 동작의 최신 기준은 CLI 도움말입니다. README에는
+전체 옵션을 복제하지 않습니다.
 
 ```bash
 darty <command> --help
 ```
 
-대부분의 조회 명령은 성공과 실패를 모두 표준 출력의 JSON 응답 객체로 출력합니다. `report-guide`와 도움말 출력은 사람이 읽기 쉬운 텍스트로 유지됩니다.
+대부분의 조회 명령은 성공과 실패를 모두 표준 출력의 단일 JSON 응답 객체로
+출력합니다. 실패는 non-zero로 종료하고, 진행 로그와 진단은 표준 에러를
+사용합니다. 검색 계열의 `--agent` 모드는 후속 호출에 필요한 식별자와 출처를
+유지하면서 더 작은 JSON과 `help[]` 힌트를 출력합니다. `report-guide`와 도움말은
+사람이 읽기 쉬운 텍스트로 유지됩니다.
 
 현재 제공하는 주요 작업은 다음과 같습니다.
 
@@ -53,19 +58,6 @@ darty <command> --help
 - `disclosure-types`: 공시상세유형 코드 조회
 - `report-guide`: 필요한 정보가 어떤 DART 보고서에 있는지 안내하는 Markdown 가이드 출력
 - `view-report`: 보고서 목차 또는 본문 조회
-
-## CLI 통합 계약
-
-CLI 도움말이 현재 명령, 옵션, 입력 제약, 출력 동작의 기준입니다.
-
-```bash
-darty --help
-darty <command> --help
-```
-
-정상 조회 명령은 표준 출력에 단일 JSON 응답 객체를 출력합니다. 실패도 표준 출력에 단일 JSON 실패 객체를 출력하고 non-zero로 종료합니다. 진행 로그와 디버그 진단은 표준 에러를 사용해 stdout JSON 파싱을 방해하지 않습니다.
-
-검색 계열 명령은 `--agent`를 지원합니다. 이 모드는 후속 호출에 필요한 식별자와 출처 참조를 유지하면서 기본 결과보다 작은 JSON과 `help[]` 다음 단계 힌트를 출력합니다.
 
 ## JS/TS 서버 toolset
 
@@ -90,6 +82,13 @@ toolset은 명령 discovery/help, 입력 검증, source-owned serialized errors,
 - DART의 공식 OpenDART API를 사용하는 패키지가 아닙니다.
 - 투자, 회계, 법률 판단을 제공하지 않습니다.
 - 결과를 중요한 의사결정에 사용할 때는 원문 DART 링크와 참조 정보를 직접 확인하세요.
+
+## 개발 문서
+
+- [제품 방향](VISION.md)
+- [현재·후보·목표 아키텍처](ARCHITECTURE.md)
+- [진행 중인 작업과 백로그](ROADMAP.md)
+- [기능 및 전송 계약](docs/specs/README.md)
 
 ## 라이선스
 

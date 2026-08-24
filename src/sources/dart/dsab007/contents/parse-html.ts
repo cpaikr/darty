@@ -16,8 +16,8 @@ import {
 } from "./source-model.ts";
 import type { SourceContentsReplayInput } from "./replay-schema.ts";
 
-const absoluteUrl = (href: string): string =>
-  new URL(href, "https://dart.fss.or.kr").toString();
+const dartOrigin = "https://dart.fss.or.kr";
+const viewerPath = "/dsaf001/main.do";
 
 const collapseWhitespace = (value: string): string =>
   value.replace(/\s+/g, " ").trim();
@@ -33,15 +33,44 @@ const parseNumber = (value: string): number | undefined => {
   return Number.parseInt(digits, 10);
 };
 
-const parseHrefParams = (href: string): URLSearchParams =>
-  new URL(absoluteUrl(href)).searchParams;
+const parseViewerLink = (
+  href: string,
+): {
+  readonly url: URL;
+  readonly params: URLSearchParams;
+  readonly rcpNo: string;
+} => {
+  let url: URL;
+  try {
+    url = new URL(href, dartOrigin);
+  } catch {
+    throw new Error(dsab007ContentsMessages.missingViewerLink);
+  }
+
+  if (
+    url.origin !== dartOrigin ||
+    url.pathname !== viewerPath ||
+    url.username.length > 0 ||
+    url.password.length > 0
+  ) {
+    throw new Error(dsab007ContentsMessages.missingViewerLink);
+  }
+
+  const receiptNumbers = url.searchParams.getAll("rcpNo");
+  const rcpNo = receiptNumbers[0];
+  if (receiptNumbers.length !== 1 || rcpNo === undefined || !/^\d{14}$/.test(rcpNo)) {
+    throw new Error(dsab007ContentsMessages.missingReceiptNumber);
+  }
+
+  return { url, params: url.searchParams, rcpNo };
+};
 
 const parseCorpId = (href: string | undefined): string | undefined => {
   if (href === undefined) {
     return undefined;
   }
 
-  const match = href.match(/openCorpInfoNew\('([^']+)'/);
+  const match = href.match(/openCorpInfoNew\('(\d{8})'/);
   return match?.[1];
 };
 
@@ -112,13 +141,79 @@ const parsePagination = (
   response: DartSourceTextResponse,
 ): Effect.Effect<SourceContentsPagination, SourceChanged> =>
   Effect.gen(function* () {
+    const table = $("table.tbWideList").first();
+    const tbody = table.children("tbody").first();
+
+    if (table.length === 0 || tbody.length === 0) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007ContentsMessages.missingResultTable,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    const noResultsState = getNoResultsState($);
+    const noResults = noResultsState.hasSentinel;
+    if (noResultsState.mixed) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007ContentsMessages.missingResultRows,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    if (!noResults && tbody.children("tr").length === 0) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007ContentsMessages.missingResultRows,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
     const totalCountValue =
       $("#totalCnt").attr("value") ?? $("#searchCnt").text() ?? "";
     const totalCount = parseNumber(totalCountValue);
-    const pageInfoText = $(".pageInfo").first().text();
-    const pageInfoMatch = pageInfoText.match(/\[(\d+)\/(\d+)\]/);
+    const pageInfoText = collapseWhitespace($(".pageInfo").first().text());
+    const pageInfoMatch = pageInfoText.match(
+      /\[(\d+)\/(\d+)\]\s*\[총\s*([0-9,]+)건\]/,
+    );
 
     if (totalCount === undefined) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007ContentsMessages.missingTotalCount,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    if (
+      noResults &&
+      (totalCount !== 0 ||
+        (pageInfoMatch !== null &&
+          Number.parseInt(pageInfoMatch[2] ?? "0", 10) !== 0))
+    ) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007ContentsMessages.missingResultRows,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    if (!noResults && totalCount === 0) {
+      return yield* Effect.fail(
+        new SourceChanged({
+          message: dsab007ContentsMessages.missingResultRows,
+          ...getSourceResponseErrorContext(response),
+        }),
+      );
+    }
+
+    if (!noResults && pageInfoMatch === null) {
       return yield* Effect.fail(
         new SourceChanged({
           message: dsab007ContentsMessages.missingTotalCount,
@@ -139,28 +234,45 @@ const parsePagination = (
     };
   });
 
-const hasNoResultsPlaceholder = ($: cheerio.CheerioAPI): boolean => {
-  const tbody = $("table.tbWideList tbody").first();
-  const directCellText = collapseWhitespace(
-    tbody
+const getNoResultsState = (
+  $: cheerio.CheerioAPI,
+): {
+  readonly hasSentinel: boolean;
+  readonly mixed: boolean;
+} => {
+  const tbody = $("table.tbWideList").first().children("tbody").first();
+  const rows = tbody.children("tr").toArray();
+  const directSentinelCells = tbody
+    .children("td[colspan]")
+    .toArray()
+    .filter((cell) => collapseWhitespace($(cell).text()) === noResultsMessage);
+  const directDataCells = tbody
+    .children("td")
+    .toArray()
+    .filter((cell) => !directSentinelCells.includes(cell));
+  const sentinelRows = rows.filter((row) =>
+    $(row)
       .children("td[colspan]")
       .toArray()
-      .map((cell) => $(cell).text())
-      .join(" "),
+      .some((cell) => collapseWhitespace($(cell).text()) === noResultsMessage),
   );
-  const wrappedCellText = collapseWhitespace(
-    tbody
-      .children("tr")
-      .children("td[colspan]")
-      .toArray()
-      .map((cell) => $(cell).text())
-      .join(" "),
-  );
+  const sentinelSet = new Set(sentinelRows);
+  const dataRows = rows.filter((row) => !sentinelSet.has(row));
+  const hasSentinel = directSentinelCells.length > 0 || sentinelRows.length > 0;
 
-  return (
-    directCellText === noResultsMessage || wrappedCellText === noResultsMessage
-  );
+  return {
+    hasSentinel,
+    mixed:
+      hasSentinel &&
+      (dataRows.length > 0 ||
+        directDataCells.length > 0 ||
+        directSentinelCells.length + sentinelRows.length !== 1 ||
+        sentinelRows.some((row) => $(row).children("td").length !== 1)),
+  };
 };
+
+const hasNoResultsPlaceholder = ($: cheerio.CheerioAPI): boolean =>
+  getNoResultsState($).hasSentinel;
 
 const parseRow = (
   $: cheerio.CheerioAPI,
@@ -178,12 +290,7 @@ const parseRow = (
     throw new Error(dsab007ContentsMessages.missingViewerLink);
   }
 
-  const params = parseHrefParams(href);
-  const rcpNo = params.get("rcpNo");
-
-  if (rcpNo === null) {
-    throw new Error(dsab007ContentsMessages.missingReceiptNumber);
-  }
+  const viewer = parseViewerLink(href);
 
   const rawReportText = collapseWhitespace(reportLink.text());
   const reportParts = parseReportParts(rawReportText);
@@ -197,8 +304,8 @@ const parseRow = (
       ) || undefined,
     corpCik: parseCorpId(companyLink.attr("href")),
     ...reportParts,
-    rcpNo,
-    dcmNo: params.get("dcmNo") ?? undefined,
+    rcpNo: viewer.rcpNo,
+    dcmNo: viewer.params.get("dcmNo") ?? undefined,
     snippetHtml: snippetCell.html()?.trim() ?? "",
     snippetText: collapseWhitespace(snippetCell.text()),
     disclosureTypeLabel: infoParts.disclosureTypeLabel,
@@ -206,13 +313,14 @@ const parseRow = (
     presenterName: infoParts.presenterName,
     rawInfoText: infoParts.rawInfoText,
     viewerPath: href,
-    viewerUrl: absoluteUrl(href),
+    viewerUrl: viewer.url.toString(),
     receiptDate: parseDate(dateCell.text()),
   } satisfies SourceContentsRow;
 };
 
 const parseRows = (
   $: cheerio.CheerioAPI,
+  request: SourceContentsReplayInput,
 ): {
   readonly rows: readonly SourceContentsRow[];
   readonly warnings: readonly SourceContentsParseWarning[];
@@ -224,11 +332,27 @@ const parseRows = (
   const rows: SourceContentsRow[] = [];
   const warnings: SourceContentsParseWarning[] = [];
 
-  $("table.tbWideList tbody tr")
+  $("table.tbWideList").first()
+    .children("tbody")
+    .first()
+    .children("tr")
     .toArray()
     .forEach((row, rowIndex) => {
       try {
-        rows.push(parseRow($, row));
+        const parsedRow = parseRow($, row);
+        if (
+          request.textCrpCik !== undefined &&
+          parsedRow.corpCik !== request.textCrpCik
+        ) {
+          warnings.push({
+            code: "row_parse_failed",
+            rowIndex,
+            message: dsab007ContentsMessages.companyMismatch,
+          });
+          return;
+        }
+
+        rows.push(parsedRow);
       } catch {
         warnings.push({
           code: "row_parse_failed",
@@ -253,8 +377,8 @@ export const parseContentsSearchHtml = (
 
   return Effect.gen(function* () {
     const $ = cheerio.load(html);
-    const parsedRows = parseRows($);
     const pagination = yield* parsePagination($, response);
+    const parsedRows = parseRows($, request);
 
     return yield* Schema.decodeUnknown(SourceContentsSearchPage)({
       request,

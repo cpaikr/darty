@@ -9,7 +9,7 @@ workflow produces stable transcripts.
 ## Current state
 
 The baseline workflow covers company lookup, filing search, report TOC, and
-section retrieval. The held-out cases were recorded in the legacy `TODO.md` but
+section retrieval. The held-out cases remain intentionally unscheduled but
 are not required for rewrite parity.
 
 ## Next action

@@ -1,10 +1,15 @@
 use std::sync::Arc;
 
+#[cfg(feature = "fixture-origin")]
+use std::time::Duration;
+
 use chrono::{SecondsFormat, Utc};
 use reqwest::Method;
 #[cfg(feature = "fixture-origin")]
 use url::Url;
 
+#[cfg(feature = "fixture-origin")]
+use crate::transport::DeadlineConfig;
 use crate::{
     Completeness, ContentSection, DartyError, DisclosureTypeEvidence, ErrorCode, FilingCompany,
     MatchedDisclosureType, Navigation, NavigationEntry, ParsedTocNode, Receipt, ReportEndpoints,
@@ -58,8 +63,32 @@ impl DartyClient {
         origin: Url,
         fetched_at: impl Into<String>,
     ) -> Result<Self, DartyError> {
+        let deadlines = DeadlineConfig::default();
+        Self::for_fixture_origin_with_deadlines(
+            origin,
+            fetched_at,
+            deadlines.connect,
+            deadlines.read,
+            deadlines.total,
+        )
+    }
+
+    #[cfg(feature = "fixture-origin")]
+    #[doc(hidden)]
+    pub fn for_fixture_origin_with_deadlines(
+        origin: Url,
+        fetched_at: impl Into<String>,
+        connect_timeout: Duration,
+        read_timeout: Duration,
+        total_timeout: Duration,
+    ) -> Result<Self, DartyError> {
+        let deadlines = DeadlineConfig {
+            connect: connect_timeout,
+            read: read_timeout,
+            total: total_timeout,
+        };
         Ok(Self {
-            transport: SourceTransport::fixture(origin)?,
+            transport: SourceTransport::fixture_with_deadlines(origin, deadlines)?,
             clock: Arc::new(FixedClock(fetched_at.into())),
         })
     }

@@ -1,8 +1,9 @@
 # DART Website Provider Qualification
 
-Status: conditional qualification for the three-operation vertical candidate.
+Status: `search-company` and `search-company-reports` conditionally qualified;
+`view-report` requires requalification.
 Owner: Darty maintainers.
-Last reviewed: 2026-08-22.
+Last reviewed: 2026-08-23.
 
 This record evaluates whether the DART website is operationally suitable for
 bounded, read-only use by the candidate. It is not protocol authority, a public
@@ -20,11 +21,48 @@ Evidence labels in this document are `documented`, `observed`, `inferred`,
 |---|---|---|---|---|
 | `search-company` | conditional | **Observed, 2026-08-22:** direct unauthenticated POST returned HTTP 200, UTF-8 HTML, 7,315 bytes. Earlier request/HTML evidence is in the source map. | Official availability, rate limits, and geographic policy. | Access failure, redirect, content-type drift, parser drift, or DART policy notice. |
 | `search-company-reports` | conditional | **Observed, 2026-08-22:** direct code-first POST returned HTTP 200, UTF-8 HTML, 18,514 bytes. Earlier filter/date evidence is in the source map. | Official availability, rate limits, and whether all accepted filters remain stable. | Access failure, redirect, content-type drift, parser drift, misleading empty result inside an accepted window, or DART policy notice. |
-| `view-report` | conditional | **Observed, 2026-08-22:** shell and UTF-8 section returned HTTP 200 at 71,132 and 4,753 bytes; a no-TOC document returned MS949 HTML at 47,703 bytes. | Official availability, maximum document sizes, and offset/length units. | Access failure, redirect, charset/grammar drift, size-limit rejection of ordinary reports, or DART policy notice. |
+| `view-report` | requalification required | **Observed, 2026-08-22:** the seeded shell, UTF-8 section, and a no-TOC MS949 document succeeded. **Observed, 2026-08-23:** the live workflow reached a newly selected receipt `20260331000460`, then reproducibly returned `source_changed` while parsing its report shell/TOC. | Whether DART introduced a new supported shell grammar or this receipt is outside the accepted grammar; official availability, maximum document sizes, and offset/length units. | Reconcile the failing shell against the canonical grammar; refresh fixtures and contract only when evidence supports a bounded rule. |
 
 Conditional means deterministic conformance must be proven with fictional
-fixtures and live use must obey the policies below. Unknowns do not establish
-qualification by themselves.
+fixtures and live use must obey the policies below. Requalification-required
+means the reproducible-drift threshold below was reached and current evidence
+cannot qualify that operation. Unknowns do not establish qualification by
+themselves.
+
+## Maintainer approval records
+
+This section is the canonical location for explicit maintainer decisions about
+provider qualification and operation/surface acceptance. Evidence, fixtures,
+deterministic checks, and bounded live probes do not constitute approval by
+themselves. No approval records are currently recorded for the operations
+above; do not infer one from this document's status or review date.
+
+Append one record for each reviewed operation/surface. Use an immutable
+evidence revision (for example, a source commit or reviewed lock revision),
+not a date alone. The required schema is:
+
+| Field | Required value |
+|---|---|
+| `approver` | Named maintainer handle or name who made the decision. |
+| `date` | Decision date in `YYYY-MM-DD` format. |
+| `evidence revision` | Exact revision of the reviewed provider evidence and contracts. |
+| `limitations` | Remaining scope, operational, provider, or platform limitations; use `none recorded` only when explicitly reviewed. |
+| `operation/surface` | The qualified operation and public surface, such as `search-company / Rust SDK`. |
+| `decision` | Explicit outcome, such as `approved`, `conditional`, `rejected`, or `withdrawn`. |
+
+Use this template when adding a real decision; placeholders are not approval
+records:
+
+```md
+### Approval record — <operation/surface> — <date>
+
+- approver: <named maintainer>
+- date: <YYYY-MM-DD>
+- evidence revision: <immutable revision>
+- limitations: <remaining limitations>
+- operation/surface: <operation> / <public surface>
+- decision: <approved | conditional | rejected | withdrawn>
+```
 
 ## Evidence register
 
@@ -39,6 +77,10 @@ qualification by themselves.
   without authentication, cookies, redirects, or retained bodies. All returned
   HTTP 200 and `text/html`; sizes ranged from 4,753 to 71,132 bytes and elapsed
   time from 0.117 to 0.512 seconds.
+- **Observed, 2026-08-23:** company resolution and filing search succeeded in
+  live workflow runs, but report viewing for selected receipt
+  `20260331000460` reproducibly failed closed as `source_changed`. No live body
+  was retained.
 - **Inferred:** the tested routes are usable for low-volume public reads from
   the current host. This does not imply availability from every network or at
   production volume.

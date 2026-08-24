@@ -97,6 +97,40 @@ describe("toViewReportCliResult", () => {
     );
   });
 
+  test("preserves attachment scope in generated section navigation", () => {
+    const attachment = toViewReportCliResult(
+      {
+        ...result,
+        result: {
+          ...result.result,
+          request: {
+            ...result.result.request,
+            documentId: "document:attachment:2",
+          },
+          document: {
+            id: "document:attachment:2",
+            title: "첨부 문서",
+            kind: "attachment",
+            selected: true,
+          },
+          navigation: {
+            previous: { id: "section:0", title: "이전" },
+            next: { id: "section:2", title: "다음" },
+            children: [],
+          },
+        },
+      },
+      { pretty: false, verbose: false },
+    );
+
+    expect(attachment.help).toContain(
+      "Read next section: darty view-report --receipt 20260331004166 --document-id document:attachment:2 --section-id section:2",
+    );
+    expect(attachment.help).toContain(
+      "Read previous section: darty view-report --receipt 20260331004166 --document-id document:attachment:2 --section-id section:0",
+    );
+  });
+
   test("includes a bounded TOC when tocDepth is set", () => {
     const withToc = toViewReportCliResult(result, {
       pretty: false,

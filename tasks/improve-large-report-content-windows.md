@@ -9,7 +9,7 @@ contract without exposing DART viewer replay parameters.
 
 `view-report` already provides bounded content-window behavior needed for
 current parity. A broader pagination or chunking design remains unresolved and
-was recorded in the legacy `TODO.md`.
+remains intentionally unscheduled.
 
 ## Next action
 

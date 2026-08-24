@@ -3,9 +3,12 @@
 ## Product
 
 - `name`: `darty`
-- `status`: accepted target; not yet implemented
+- `status`: accepted target
 - `domain`: Korean corporate disclosures, filing metadata, and document sections from DART
 - `users`: LLM agents, agent developers, investors, researchers, and internal automation that need reliable DART access
+
+Implementation status and delivery order live in [ARCHITECTURE.md](ARCHITECTURE.md)
+and [ROADMAP.md](ROADMAP.md).
 
 ## Goal
 
@@ -123,12 +126,3 @@ The product is successful when an agent can reliably:
 The rewrite is successful when the same supported operations are also usable
 through idiomatic Rust and Node SDKs, the CLI v1 contract remains compatible,
 and no superseded TypeScript DART implementation or toolset surface remains.
-
-## Open Questions
-
-These belong to investigation, not the vision:
-
-- how closely the public search contract should mirror DART's native search form
-- which identifier mapping is stable enough for public contracts
-- how much of the report viewer can be accessed cleanly without browser automation
-- whether financial statement and XBRL retrieval belong in v1 or a later phase

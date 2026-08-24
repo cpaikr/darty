@@ -4,10 +4,10 @@
   "owner": "kunchenguid",
   "repo": "axi",
   "branch": "main",
-  "baselineCommit": "8447811bd42da136759454e2e710cb03d7ccadf7",
-  "observedAt": "2026-06-22",
+  "baselineCommit": "46d02d35f46a173dec5bd6be18827684fd1e885c",
+  "observedAt": "2026-08-23",
   "upstreamVersion": {
-    "axi-sdk-js": "0.1.7"
+    "axi-sdk-js": "0.1.11"
   },
   "complianceScope": {
     "summary": "Darty's agent-facing CLI is AXI-informed at this upstream commit. It intentionally keeps the CLI Transport v1 JSON envelope instead of AXI's preferred TOON stdout format.",

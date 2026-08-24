@@ -18,10 +18,21 @@ export declare class DartyError extends Error {
 export interface RequestOptions {
     readonly signal?: AbortSignal;
 }
+export type MarketKind = "kospi" | "kosdaq" | "konex" | "etc" | "unknown";
+export type Completeness = "complete" | "partial";
+export type SortDirection = "asc" | "desc";
+export type ResponseDetail = "concise" | "detailed" | "raw";
+export type OutputFormat = "html" | "markdown";
 export interface SearchCompanyInput {
     readonly companyName: string;
     readonly page?: number;
     readonly pageSize?: number;
+}
+/** The normalized request echoed by the Rust SDK in a company response. */
+export interface SearchCompanyRequest {
+    readonly companyName: string;
+    readonly page: number;
+    readonly pageSize: number;
 }
 export interface SearchCompanyReportsInput {
     readonly companyCode: string;
@@ -29,7 +40,7 @@ export interface SearchCompanyReportsInput {
     readonly endDate: string;
     readonly page?: number;
     readonly pageSize?: number;
-    readonly sortDirection?: "asc" | "desc";
+    readonly sortDirection?: SortDirection;
     readonly presenterName?: string;
     readonly reportName?: string;
     readonly disclosureTypes?: readonly string[];
@@ -37,16 +48,43 @@ export interface SearchCompanyReportsInput {
     readonly corporationType?: string;
     readonly closingAccountsMonth?: string;
     readonly includeAllReports?: boolean;
-    readonly detail?: "concise" | "detailed" | "raw";
+    readonly detail?: ResponseDetail;
+}
+/** The normalized request echoed by the Rust SDK in a filing response. */
+export interface SearchCompanyReportsRequest {
+    readonly companyCode: string;
+    readonly startDate: string;
+    readonly endDate: string;
+    readonly page: number;
+    readonly pageSize: number;
+    readonly sortDirection: SortDirection;
+    readonly presenterName?: string;
+    readonly reportName?: string;
+    readonly disclosureTypes: readonly string[];
+    readonly industryCode: string;
+    readonly corporationType: string;
+    readonly closingAccountsMonth: string;
+    readonly includeAllReports: boolean;
+    readonly detail: ResponseDetail;
 }
 export interface ViewReportInput {
     readonly receipt: string;
     readonly documentId?: string;
     readonly sectionId?: string;
-    readonly outputFormat?: "html" | "markdown";
+    readonly outputFormat?: OutputFormat;
     readonly maxBytes?: number;
     readonly contentStartByte?: number;
-    readonly detail?: "concise" | "detailed" | "raw";
+    readonly detail?: ResponseDetail;
+}
+/** The normalized request echoed by the Rust SDK in a report response. */
+export interface ViewReportRequest {
+    readonly receipt: string;
+    readonly documentId?: string;
+    readonly sectionId?: string;
+    readonly outputFormat: OutputFormat;
+    readonly maxBytes: number;
+    readonly contentStartByte: number;
+    readonly detail: ResponseDetail;
 }
 export interface Pagination {
     readonly currentPage: number;
@@ -59,15 +97,62 @@ export interface Warning {
     readonly message: string;
     readonly droppedItemCount?: number;
 }
+export interface SearchSource {
+    readonly system: string;
+    readonly surface: string;
+    readonly endpoint: string;
+}
+export interface CompanySourceBehavior {
+    readonly searchMode: string;
+    readonly callerControlsPageSize: boolean;
+    readonly maxObservedPageSize: number;
+    readonly observationStatus: string;
+}
+export interface ReportsSourceBehavior {
+    readonly searchMode: string;
+    readonly sortBy: string;
+    readonly callerControlsPageSize: boolean;
+    readonly pageSizeChoices: readonly number[];
+    readonly finalReportDefault: boolean;
+    readonly observationStatus: string;
+}
+export interface SearchCompanyMetadata {
+    readonly fetchedAt: string;
+    readonly source: SearchSource;
+    readonly sourceBehavior: CompanySourceBehavior;
+    readonly completeness: Completeness;
+    readonly droppedItemCount: number;
+}
+export interface SearchCompanyReportsMetadata {
+    readonly fetchedAt: string;
+    readonly source: SearchSource;
+    readonly sourceBehavior: ReportsSourceBehavior;
+    readonly completeness: Completeness;
+    readonly droppedItemCount: number;
+}
+export interface ReportEndpoints {
+    readonly shell: string;
+    readonly content?: string;
+}
+export interface ReportSource {
+    readonly system: string;
+    readonly surface: string;
+    readonly endpoints: ReportEndpoints;
+}
+export interface ViewReportMetadata {
+    readonly fetchedAt: string;
+    readonly source: ReportSource;
+    readonly tocSource: string;
+}
 export interface SearchCompanyResponse {
     readonly result: {
-        readonly request: Required<SearchCompanyInput>;
+        readonly request: SearchCompanyRequest;
         readonly pagination: Pagination;
         readonly items: readonly {
             readonly companyCode: string;
             readonly companyName: string;
             readonly stockCode?: string;
-            readonly marketKind: "kospi" | "kosdaq" | "konex" | "etc" | "unknown";
+            readonly marketKind: MarketKind;
             readonly marketLabel?: string;
             readonly references: {
                 readonly detailEndpoint: string;
@@ -78,7 +163,7 @@ export interface SearchCompanyResponse {
             };
         }[];
     };
-    readonly metadata: Record<string, unknown>;
+    readonly metadata: SearchCompanyMetadata;
     readonly references: {
         readonly searchUrl: string;
     };
@@ -86,21 +171,12 @@ export interface SearchCompanyResponse {
 }
 export interface SearchCompanyReportsResponse {
     readonly result: {
-        readonly request: SearchCompanyReportsInput & {
-            readonly page: number;
-            readonly pageSize: number;
-            readonly sortDirection: "asc" | "desc";
-            readonly disclosureTypes: readonly string[];
-            readonly industryCode: string;
-            readonly corporationType: string;
-            readonly closingAccountsMonth: string;
-            readonly includeAllReports: boolean;
-        };
+        readonly request: SearchCompanyReportsRequest;
         readonly company: FilingCompany;
         readonly pagination: Pagination;
         readonly items: readonly FilingItem[];
     };
-    readonly metadata: Record<string, unknown>;
+    readonly metadata: SearchCompanyReportsMetadata;
     readonly references: {
         readonly searchUrl: string;
     };
@@ -141,11 +217,7 @@ export interface FilingItem {
 }
 export interface ViewReportResponse {
     readonly result: {
-        readonly request: ViewReportInput & {
-            readonly outputFormat: "html" | "markdown";
-            readonly maxBytes: number;
-            readonly contentStartByte: number;
-        };
+        readonly request: ViewReportRequest;
         readonly receipt: {
             readonly receiptNumber: string;
         };
@@ -168,7 +240,7 @@ export interface ViewReportResponse {
                 readonly id: string;
                 readonly title: string;
             };
-            readonly format: "html" | "markdown";
+            readonly format: OutputFormat;
             readonly body: string;
         };
         readonly navigation?: {
@@ -178,7 +250,7 @@ export interface ViewReportResponse {
             readonly children: readonly NavigationEntry[];
         };
     };
-    readonly metadata: Record<string, unknown>;
+    readonly metadata: ViewReportMetadata;
     readonly references: {
         readonly viewerUrl: string;
     };

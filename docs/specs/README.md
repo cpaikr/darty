@@ -1,30 +1,39 @@
-# Specs
+# Specifications
 
-This directory is for stable, evidence-backed capability specs.
+This directory owns stable, evidence-backed capability and transport
+contracts. [ARCHITECTURE.md](../../ARCHITECTURE.md) owns implementation status,
+[ROADMAP.md](../../ROADMAP.md) owns delivery, and
+[`docs/research/`](../research/) owns non-normative source observations.
 
-A document belongs here when it defines an implementation target, such as:
+## Capability contracts
 
-- a v1 operation set
-- request and response schemas
-- identifier and citation rules
-- explicit errors, warnings, and constraints
-- active transport contracts such as CLI subprocess I/O
+- [Company search](dsae001-search-company-v1.md)
+- [Company filing search](dsab007-search-company-reports-v1.md)
+- [Report viewing](dsaf001-view-report-v1.md)
+- [Body-content search](dsab007-search-v1.md)
+- [Company detail](dsae001-company-detail-v1.md)
+- [Company RSS](company-rss-v1.md)
+- [Disclosure-type lookup](disclosure-types-v1.md)
+- [Report guide](report-guide-v1.md)
+- [DART filter-code reference](dart-filter-codes.md)
 
-Current specs:
+## Transport and wire authority
 
-- [cli-transport-v1.md](cli-transport-v1.md)
-- [dart-wire-v1.openapi.yaml](dart-wire-v1.openapi.yaml), the sole HTTP/form/query authority for the supported DART vertical subset
-- [dart-html-viewer-v1.md](dart-html-viewer-v1.md), the sole companion authority for decoding and HTML/viewer grammar that OpenAPI cannot express
-- [company-rss-v1.md](company-rss-v1.md)
-- [dart-filter-codes.md](dart-filter-codes.md)
-- [dsae001-company-detail-v1.md](dsae001-company-detail-v1.md)
-- [dsae001-search-company-v1.md](dsae001-search-company-v1.md)
-- [dsab007-search-company-reports-v1.md](dsab007-search-company-reports-v1.md)
-- [dsab007-search-v1.md](dsab007-search-v1.md)
-- [dsaf001-view-report-v1.md](dsaf001-view-report-v1.md)
+- [CLI transport v1](cli-transport-v1.md) owns process arguments, stdout,
+  stderr, exits, and discovery compatibility.
+- [dart-wire-v1 OpenAPI](dart-wire-v1.openapi.yaml) is the sole HTTP, query,
+  and form authority for the currently specified three-operation vertical. It
+  contains four upstream calls serving three public operations.
+- [DART HTML/viewer companion](dart-html-viewer-v1.md) owns decoding and source
+  grammar that OpenAPI cannot express.
 
-Do not put product vision or open-ended investigation notes here. Keep product direction in the repo root and source investigation under `docs/research/`.
+The TypeScript product predates full wire conformance. The retained candidate
+conforms to the specified vertical; remaining ports must extend the authority
+before relying on it. The deterministic lock couples canonical documents,
+provider qualification, scripts, and fictional fixture evidence.
 
-The deterministic lock in `dart-wire-v1.lock.json` makes canonical documents,
-provider qualification, and fictional fixture evidence change together. Run
-`bun run check:dart-wire` after editing any of them.
+Run after changing any locked input:
+
+```bash
+bun run check:dart-wire
+```

@@ -18,6 +18,9 @@ use serde_json::{Value, json};
     disable_help_subcommand = true
 )]
 struct Cli {
+    /// Compatibility flag; it does not change JSON output or emit diagnostics.
+    #[arg(long, global = true)]
+    debug: bool,
     #[command(subcommand)]
     command: Option<Command>,
 }
@@ -292,7 +295,9 @@ async fn main() -> ExitCode {
 }
 
 async fn run(cli: Cli) -> Result<(), CliFailure> {
-    let Some(command) = cli.command else {
+    // Keep this accepted global flag as a no-op so the frozen CLI stays stdout-only.
+    let Cli { command, debug: _ } = cli;
+    let Some(command) = command else {
         write_value(
             &json!({
                 "result": {"name": "darty", "operations": ["search-company", "search-company-reports", "view-report"]},
@@ -527,6 +532,9 @@ fn detail(value: Option<DetailArg>, default: ResponseDetail) -> ResponseDetail {
 
 fn view_help(response: &ViewReportResponse) -> Vec<String> {
     let request = &response.result.request;
+    let document_argument = request.document_id.as_ref().map_or_else(String::new, |id| {
+        format!(" --document-id {}", quote_cli_value(id))
+    });
     if let Some(content) = response
         .result
         .content
@@ -563,8 +571,9 @@ fn view_help(response: &ViewReportResponse) -> Vec<String> {
             .and_then(|navigation| navigation.next.as_ref())
         {
             help.push(format!(
-                "Read next section: darty view-report --receipt {} --section-id {}",
+                "Read next section: darty view-report --receipt {}{} --section-id {}",
                 quote_cli_value(&request.receipt),
+                document_argument,
                 quote_cli_value(&next.id)
             ));
         }
@@ -575,8 +584,9 @@ fn view_help(response: &ViewReportResponse) -> Vec<String> {
             .and_then(|navigation| navigation.previous.as_ref())
         {
             help.push(format!(
-                "Read previous section: darty view-report --receipt {} --section-id {}",
+                "Read previous section: darty view-report --receipt {}{} --section-id {}",
                 quote_cli_value(&request.receipt),
+                document_argument,
                 quote_cli_value(&previous.id)
             ));
         }
@@ -587,8 +597,9 @@ fn view_help(response: &ViewReportResponse) -> Vec<String> {
     if let Some(first) = response.result.toc.as_ref().and_then(|toc| toc.first()) {
         return vec![
             format!(
-                "Read first section: darty view-report --receipt {} --section-id {}",
+                "Read first section: darty view-report --receipt {}{} --section-id {}",
                 quote_cli_value(&request.receipt),
+                document_argument,
                 quote_cli_value(&first.id)
             ),
             "Choose a different returned toc[].id to read another section.".to_owned(),
@@ -805,12 +816,17 @@ fn limit_toc(nodes: &mut Vec<Value>, depth: u32) {
 
 fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
     let pretty = argv.iter().any(|value| value == "--pretty");
-    let command = argv.get(1).map(String::as_str).filter(|value| {
-        matches!(
-            *value,
-            "search-company" | "search-company-reports" | "view-report"
-        )
-    });
+    let command = argv
+        .iter()
+        .skip(1)
+        .map(String::as_str)
+        .find(|value| *value != "--debug")
+        .filter(|value| {
+            matches!(
+                *value,
+                "search-company" | "search-company-reports" | "view-report"
+            )
+        });
     if command == Some("view-report") && argv.iter().any(|value| value == "--dcm-no") {
         return Some(CliFailure::new(
             failure(
@@ -1142,7 +1158,39 @@ fn client() -> Result<DartyClient, DartyError> {
 mod tests {
     use darty::{DartyError, ErrorCode, ResponseDetail};
 
-    use super::{CliFailure, DetailArg, VIEW_CLI_PARAMETERS, detail, preparse_failure};
+    use clap::{CommandFactory, Parser};
+
+    use super::{Cli, CliFailure, DetailArg, VIEW_CLI_PARAMETERS, detail, preparse_failure};
+
+    #[test]
+    fn debug_is_a_preserved_global_option() {
+        let before = Cli::try_parse_from([
+            "darty",
+            "--debug",
+            "search-company",
+            "--company-name",
+            "삼성전자",
+        ])
+        .expect("root debug parses");
+        assert!(before.debug);
+
+        let after = Cli::try_parse_from([
+            "darty",
+            "search-company",
+            "--company-name",
+            "삼성전자",
+            "--debug",
+        ])
+        .expect("global debug parses after a subcommand");
+        assert!(after.debug);
+    }
+
+    #[test]
+    fn debug_help_describes_the_compatibility_noop() {
+        let help = Cli::command().render_help().to_string();
+        assert!(help.contains("--debug"));
+        assert!(help.contains("does not change JSON output or emit diagnostics"));
+    }
 
     #[test]
     fn negative_window_error_reports_the_rejected_argument() {
@@ -1166,6 +1214,23 @@ mod tests {
     fn zero_toc_depth_uses_the_frozen_cli_failure() {
         let argv = [
             "darty".to_owned(),
+            "view-report".to_owned(),
+            "--toc-depth".to_owned(),
+            "0".to_owned(),
+        ];
+        let failure = preparse_failure(&argv).expect("zero depth is rejected");
+        assert_eq!(failure.value["error"]["parameter"], "--toc-depth");
+        assert_eq!(
+            failure.value["error"]["message"],
+            "error: option '--toc-depth <number>' argument '0' is invalid. Expected an integer greater than or equal to 1."
+        );
+    }
+
+    #[test]
+    fn global_debug_before_view_report_preserves_toc_depth_validation() {
+        let argv = [
+            "darty".to_owned(),
+            "--debug".to_owned(),
             "view-report".to_owned(),
             "--toc-depth".to_owned(),
             "0".to_owned(),
