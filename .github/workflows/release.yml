@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   metadata:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       package_name: ${{ steps.package.outputs.package_name }}
       package_version: ${{ steps.package.outputs.package_version }}
@@ -120,7 +120,7 @@ jobs:
           echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
   npm_validation:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     needs: metadata
 
     steps:
@@ -178,7 +178,7 @@ jobs:
         run: node scripts/prove-cli-v1-mutation.mjs
 
   publish:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     needs:
       - metadata
       - npm_validation
