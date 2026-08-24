@@ -1,4 +1,11 @@
 import type { ToolExecution } from "../harness/tool-trace.ts";
+import {
+  getArray,
+  getRecord,
+  getString,
+  isRecord,
+  type JsonRecord,
+} from "../harness/json-record.ts";
 import type { AgentWorkflowScenario } from "./agent-scenarios.ts";
 import {
   type ParsedWorkflowInvocation,
@@ -9,8 +16,6 @@ type ParsedWorkflowOperation = Extract<
   ParsedWorkflowInvocation,
   { readonly kind: "operation" }
 >;
-
-type JsonRecord = Record<string, unknown>;
 
 const samsungCompanyCode = "00126380";
 
@@ -24,6 +29,7 @@ export type WorkflowFilingFact = {
 export type WorkflowTocFact = {
   readonly receiptNumber: string;
   readonly sectionIds: readonly string[];
+  readonly operationIndex: number;
 };
 
 export type WorkflowSectionCitation = {
@@ -31,6 +37,7 @@ export type WorkflowSectionCitation = {
   readonly sectionId: string;
   readonly sectionTitle: string;
   readonly bodyExcerpt: string;
+  readonly operationIndex: number;
 };
 
 export type WorkflowCompanyCodeFact = {
@@ -60,33 +67,6 @@ export type WorkflowTraceAssertion = {
   readonly pass: boolean;
   readonly reasons: readonly string[];
   readonly facts: WorkflowTraceFacts;
-};
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const getRecord = (
-  value: JsonRecord | undefined,
-  key: string,
-): JsonRecord | undefined => {
-  const child = value?.[key];
-  return isRecord(child) ? child : undefined;
-};
-
-const getArray = (
-  value: JsonRecord | undefined,
-  key: string,
-): readonly unknown[] | undefined => {
-  const child = value?.[key];
-  return Array.isArray(child) ? child : undefined;
-};
-
-const getString = (
-  value: JsonRecord | undefined,
-  key: string,
-): string | undefined => {
-  const child = value?.[key];
-  return typeof child === "string" ? child : undefined;
 };
 
 const parseJsonObject = (text: string): JsonRecord | undefined => {
@@ -288,7 +268,7 @@ const buildTraceFacts = (
     if (toc !== undefined) {
       const sectionIds = toc.flatMap((entry) => collectTocIds(entry));
       if (sectionIds.length > 0) {
-        tocs.push({ receiptNumber, sectionIds });
+        tocs.push({ receiptNumber, sectionIds, operationIndex });
       }
     }
 
@@ -316,6 +296,7 @@ const buildTraceFacts = (
         sectionId,
         sectionTitle,
         bodyExcerpt: body.slice(0, 1_200),
+        operationIndex,
       });
     }
   }
@@ -347,7 +328,7 @@ const assertCommonWorkflow = (
     }
   }
 
-  if (!facts.companyCodes.includes("00126380")) {
+  if (!facts.companyCodes.includes(samsungCompanyCode)) {
     reasons.push(`workflow did not resolve Samsung Electronics companyCode ${samsungCompanyCode}`);
   }
 
@@ -423,6 +404,16 @@ const assertCommonWorkflow = (
   }
 };
 
+const everySectionUsesEarlierOwnToc = (facts: WorkflowTraceFacts): boolean =>
+  facts.sectionCitations.every((citation) =>
+    facts.tocs.some(
+      (toc) =>
+        toc.receiptNumber === citation.receiptNumber &&
+        toc.operationIndex < citation.operationIndex &&
+        toc.sectionIds.includes(citation.sectionId),
+    ),
+  );
+
 const assertExactSectionCitations = (
   facts: WorkflowTraceFacts,
   reasons: string[],
@@ -432,16 +423,9 @@ const assertExactSectionCitations = (
     return;
   }
 
-  const everyCitationHasTocMatch = facts.sectionCitations.every((citation) =>
-    facts.tocs.some(
-      (toc) =>
-        toc.receiptNumber === citation.receiptNumber &&
-        toc.sectionIds.includes(citation.sectionId),
-    ),
-  );
-  if (!everyCitationHasTocMatch) {
+  if (!everySectionUsesEarlierOwnToc(facts)) {
     reasons.push(
-      "every retrieved section citation must pair its sectionId with the TOC returned for the same receiptNumber",
+      "every retrieved section citation must use a sectionId returned earlier by the TOC for the same receiptNumber",
     );
   }
 };
@@ -460,16 +444,9 @@ const assertRelatedFilingsComparison = (
     reasons.push("comparison workflow did not retrieve sections from two distinct receipts");
   }
 
-  const hasTocMatchForEverySection = facts.sectionCitations.every((citation) =>
-    facts.tocs.some(
-      (toc) =>
-        toc.receiptNumber === citation.receiptNumber &&
-        toc.sectionIds.includes(citation.sectionId),
-    ),
-  );
-  if (!hasTocMatchForEverySection) {
+  if (!everySectionUsesEarlierOwnToc(facts)) {
     reasons.push(
-      "each comparison section citation must use a sectionId returned by that receipt's TOC",
+      "each comparison section citation must use a sectionId returned earlier by that receipt's TOC",
     );
   }
 

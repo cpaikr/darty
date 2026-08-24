@@ -51,8 +51,15 @@ for (const scenario of agentWorkflowScenarios) {
     printFinalAnswer(result.finalAnswer);
   } catch (error) {
     failed += 1;
+    const message = error instanceof Error ? error.message : String(error);
+    const artifactPath = await artifacts.writeScenario(scenario.id, {
+      suite: "workflow-agent",
+      model,
+      judgeModel,
+      error: message,
+    });
     console.error(
-      `✗ ${scenario.id}: ${error instanceof Error ? error.message : String(error)}`,
+      `✗ ${scenario.id}: ${message} (${artifactPath})`,
     );
   }
 }

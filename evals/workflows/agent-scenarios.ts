@@ -30,6 +30,6 @@ export const agentWorkflowScenarios = [
     startDate: "20250331",
     endDate: "20260331",
     task:
-      "Use the local darty CLI to compare Samsung Electronics across two distinct related filings in the 20250331–20260331 window. Find the filings, inspect each report's table of contents separately, and retrieve the same or clearly comparable section from each report. Give a concise comparison grounded in the returned section bodies. Include at least two exact citations, each pairing that filing's receiptNumber with the sectionId returned for that same receipt; never invent or reuse a sectionId across reports.",
+      "Use the local darty CLI to compare Samsung Electronics across two distinct related filings in the 20250331–20260331 window. Find the filings, inspect each report's table of contents separately, and retrieve sections with the same normalized title from each report. Give a concise comparison grounded in the returned section bodies. Include at least two exact citations, each pairing that filing's receiptNumber with the sectionId returned for that same receipt; never invent or reuse a sectionId across reports.",
   },
 ] as const satisfies readonly AgentWorkflowScenario[];

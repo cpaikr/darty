@@ -72,7 +72,7 @@ export const runAgentWorkflowScenario = async (input: {
 
   return {
     scenario: input.scenario,
-    pass: trace.pass && finalAnswerJudge.pass,
+    pass: trace.pass && finalAnswerCitations.pass && finalAnswerJudge.pass,
     reasons,
     finalAnswer: loop.finalAnswer,
     toolExecutions: loop.toolExecutions,

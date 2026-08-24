@@ -27,6 +27,14 @@ export type WorkflowCliValidation =
   | { readonly ok: false; readonly reason: string };
 
 const commandTimeoutMs = 45_000;
+const terminationGraceMs = 2_000;
+const streamGraceMs = 2_000;
+
+export type WorkflowToolExecutionOptions = {
+  readonly commandTimeoutMs?: number;
+  readonly terminationGraceMs?: number;
+  readonly streamGraceMs?: number;
+};
 
 export const workflowAgentTools = [
   {
@@ -173,6 +181,7 @@ const createDartyCliEnv = (): Record<string, string> => {
   for (const key of [
     "ALL_PROXY",
     "APP_ENV",
+    "DARTY_LOG_LEVEL",
     "HTTPS_PROXY",
     "HTTP_PROXY",
     "HOME",
@@ -195,9 +204,34 @@ const createDartyCliEnv = (): Record<string, string> => {
   return env;
 };
 
+const collectStreamText = (stream: ReadableStream<Uint8Array>) => {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  const result = (async () => {
+    try {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) {
+          return text + decoder.decode();
+        }
+        text += decoder.decode(chunk.value, { stream: true });
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  })();
+
+  return {
+    result,
+    cancel: (reason?: unknown) => reader.cancel(reason),
+  };
+};
+
 const runDartyCli = async (
   repoRoot: string,
   input: unknown,
+  options: WorkflowToolExecutionOptions,
 ): Promise<WorkflowToolExecution> => {
   if (!isRecord(input)) {
     return rejectToolCall("run_darty_cli", input, "arguments must be an object");
@@ -229,17 +263,19 @@ const runDartyCli = async (
     env: createDartyCliEnv(),
   });
 
-  const stdoutPromise = new Response(proc.stdout).text();
-  const stderrPromise = new Response(proc.stderr).text();
+  const stdoutCollector = collectStreamText(proc.stdout);
+  const stderrCollector = collectStreamText(proc.stderr);
 
   let timeout: Timer | undefined;
-  const exitCode = await Promise.race([
+  let timedOut = false;
+  const completedExitCode = await Promise.race([
     proc.exited,
     new Promise<number>((resolve) => {
       timeout = setTimeout(() => {
+        timedOut = true;
         proc.kill();
         resolve(124);
-      }, commandTimeoutMs);
+      }, options.commandTimeoutMs ?? commandTimeoutMs);
     }),
   ]);
 
@@ -247,14 +283,49 @@ const runDartyCli = async (
     clearTimeout(timeout);
   }
 
-  const [stdout, stderr] = await Promise.all([stdoutPromise, stderrPromise]);
+  if (timedOut) {
+    const terminated = await Promise.race([
+      proc.exited.then(() => true),
+      Bun.sleep(options.terminationGraceMs ?? terminationGraceMs).then(() => false),
+    ]);
+    if (!terminated) {
+      proc.kill("SIGKILL");
+      await proc.exited;
+    }
+  }
+
+  const streamResults = Promise.all([
+    stdoutCollector.result,
+    stderrCollector.result,
+  ] as const);
+  let output: readonly [string, string];
+  if (timedOut) {
+    const boundedOutput = await Promise.race([
+      streamResults,
+      Bun.sleep(options.streamGraceMs ?? streamGraceMs).then(() => null),
+    ]);
+    if (boundedOutput === null) {
+      void stdoutCollector
+        .cancel("timed-out subprocess stdout remained open")
+        .catch(() => undefined);
+      void stderrCollector
+        .cancel("timed-out subprocess stderr remained open")
+        .catch(() => undefined);
+      output = await streamResults;
+    } else {
+      output = boundedOutput;
+    }
+  } else {
+    output = await streamResults;
+  }
+  const [stdout, stderr] = output;
 
   return {
     toolName: "run_darty_cli",
     input,
     display: formatDartyDisplay(argv),
-    exitCode,
-    stdout: truncate(stdout.trim(), 16_000),
+    exitCode: timedOut ? 124 : completedExitCode,
+    stdout: stdout.trim(),
     stderr: truncate(stderr.trim(), 4_000),
   };
 };
@@ -262,6 +333,7 @@ const runDartyCli = async (
 export const executeWorkflowToolCall = async (
   repoRoot: string,
   toolCall: WorkflowToolCall,
+  options: WorkflowToolExecutionOptions = {},
 ): Promise<WorkflowToolExecution> => {
   let input: unknown;
   try {
@@ -274,5 +346,5 @@ export const executeWorkflowToolCall = async (
     );
   }
 
-  return runDartyCli(repoRoot, input);
+  return runDartyCli(repoRoot, input, options);
 };

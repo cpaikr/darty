@@ -1,39 +1,17 @@
 import { fileURLToPath } from "node:url";
 
+import {
+  getArray,
+  getRecord,
+  getString,
+  isRecord,
+  type JsonRecord,
+} from "../harness/json-record.ts";
 import { runFixedDartyCli } from "../surfaces/cli/fixed-cli-runner.ts";
 
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
-
-type JsonRecord = Record<string, unknown>;
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const getRecord = (
-  value: JsonRecord | undefined,
-  key: string,
-): JsonRecord | undefined => {
-  const child = value?.[key];
-  return isRecord(child) ? child : undefined;
-};
-
-const getArray = (
-  value: JsonRecord | undefined,
-  key: string,
-): readonly unknown[] | undefined => {
-  const child = value?.[key];
-  return Array.isArray(child) ? child : undefined;
-};
-
-const getString = (
-  value: JsonRecord | undefined,
-  key: string,
-): string | undefined => {
-  const child = value?.[key];
-  return typeof child === "string" ? child : undefined;
-};
 
 const parseJsonObject = (text: string): JsonRecord => {
   const parsed: unknown = JSON.parse(text);
@@ -193,7 +171,7 @@ const assertSectionWindow = (
         "truncated view-report section did not expose a matching continuation command in help[]",
       );
     }
-  } else if (!helpText.some((entry) => entry.includes("toc"))) {
+  } else if (!helpText.some((entry) => entry.includes("--toc-depth"))) {
     reasons.push("complete view-report section omitted a TOC/navigation recovery hint");
   }
 };

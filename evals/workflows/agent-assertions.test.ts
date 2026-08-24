@@ -143,6 +143,18 @@ describe("agent workflow trace assertions", () => {
     expect(result.reasons.join(" ")).toContain("same receiptNumber");
   });
 
+  test("requires the matching TOC to be returned before section retrieval", () => {
+    const result = evaluateWorkflowTrace(exactScenario, [
+      company,
+      reports,
+      section("20260331000001", "section:1", "Guessed evidence"),
+      toc("20260331000001", "section:1"),
+    ]);
+
+    expect(result.pass).toBe(false);
+    expect(result.reasons.join(" ")).toContain("returned earlier by the TOC");
+  });
+
   test("rejects a mixed trace containing one cross-report section ID", () => {
     const result = evaluateWorkflowTrace(exactScenario, [
       company,
