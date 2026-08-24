@@ -10,8 +10,9 @@ Release without overwriting an existing release.
 
 ## Current state
 
-The local implementation removes the Release Please workflow, configuration,
-manifest, credential dependency, and active ownership references. The retained
+Completed in [PR #24](https://github.com/cpaikr/darty/pull/24). The
+implementation removes the Release Please workflow, configuration, manifest,
+credential dependency, and active ownership references. The retained
 `.github/workflows/release.yml` now resolves a real `vx.y.z` tag to immutable
 source, requires successful CI for that exact `main` commit, reconciles the tag
 with `package.json`, repeats tagged validation, publishes
@@ -23,9 +24,10 @@ audit, DART wire authority, 24 focused release tests, typechecking, 436 passing
 tests with 23 opt-in live tests skipped, build, 31-scenario CLI compatibility,
 mutation proof, workflow YAML syntax, and diff checks. Security review findings
 for prerelease tags, ambiguous npm lookup failures, and existing-version
-artifact identity are resolved. PR delivery and feedback resolution remain. No
-release, tag, publication, secret deletion, or repository-setting mutation has
-occurred.
+artifact identity are resolved. Codex review found no issue; CodeRabbit's sole
+documentation finding was fixed and confirmed, every review thread is resolved,
+and exact-head CI passed. No release, tag, publication, secret deletion, or
+repository-setting mutation occurred.
 
 The shipped product remains the TypeScript npm package during rewrite Phase 3.
 Native archives, checksums, installers, and the supported target matrix belong
@@ -111,5 +113,4 @@ weakened release gate or accidental candidate publication.
 
 ## Next action
 
-Deliver the single reviewable PR, wait for required reviews and checks, and
-address all feedback without running the release workflow.
+_None — plan complete._

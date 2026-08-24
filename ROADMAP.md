@@ -2,17 +2,19 @@
 
 ## Current
 
-[Retire Release Please without weakening releases](plans/retire-release-please.md)
+[Complete the Rust SDK, Node SDK, and CLI rewrite](plans/rust-sdk-node-sdk-cli-rewrite.md)
 
-The replacement keeps one explicit source-tag workflow for the shipped
-TypeScript npm package. Local implementation, complete release-safety
-validation, and security review pass; PR delivery and feedback resolution
-remain. No release, tag, publication, secret deletion, or repository-setting
-change is part of this work.
+The shipped TypeScript product supports all eight operations. The retained,
+unpublished Rust/Node/CLI candidate supports the three-operation
+company-to-report workflow. Phase 3—porting the remaining five operations—is
+active. The immediate action is to resolve current viewer-provider drift, then
+select the next operation after reviewing its contract and evidence plan. The
+TypeScript package remains the shipped product until full parity and atomic
+cutover.
 
 ## Plans
 
-1. [Complete the Rust SDK, Node SDK, and CLI rewrite](plans/rust-sdk-node-sdk-cli-rewrite.md)
+_None._
 
 ## Tasks
 
