@@ -41,6 +41,7 @@
     "env:check": "varlock load",
     "check:axi": "bun run scripts/check-axi-upstream.ts",
     "check:dart-wire": "bun run scripts/check-dart-wire.mjs && bun run scripts/check-dart-fixture-conformance.ts",
+    "check:release": "bun test test/release",
     "eval:search-body:cli": "bun run evals/search-body/cli/run-eval.ts",
     "eval:search-body:agent:cli": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
     "eval:cli:search-body": "bun run evals/search-body/cli/run-eval.ts",

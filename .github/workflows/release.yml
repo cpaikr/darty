@@ -15,6 +15,10 @@ permissions:
   contents: read
   actions: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   metadata:
     runs-on: blacksmith-2vcpu-ubuntu-2404
@@ -49,6 +53,11 @@ jobs:
               exit 1
             fi
             SOURCE_TAG="${EVENT_REF#refs/tags/}"
+          fi
+
+          if [[ ! "$SOURCE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Source tag $SOURCE_TAG is not a stable vx.y.z tag." >&2
+            exit 1
           fi
 
           TAG_REF="refs/tags/$SOURCE_TAG"
@@ -243,9 +252,50 @@ jobs:
         run: bun run build
 
       - name: Publish npm package
+        run: >-
+          node scripts/publish-npm-package.mjs
+          --name "$PACKAGE_NAME"
+          --version "$PACKAGE_VERSION"
+
+  github_release:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    needs:
+      - metadata
+      - publish
+    permissions:
+      contents: write
+    env:
+      SOURCE_TAG: ${{ needs.metadata.outputs.source_tag }}
+      SOURCE_SHA: ${{ needs.metadata.outputs.source_sha }}
+
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.metadata.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Recheck source tag immediately before release completion
+        shell: bash
         run: |
-          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version >/dev/null 2>&1; then
-            echo "$PACKAGE_NAME@$PACKAGE_VERSION is already published; skipping npm publish."
-          else
-            npm publish --access public
+          set -euo pipefail
+          TAG_REF="refs/tags/$SOURCE_TAG"
+          if ! git ls-remote --exit-code --refs origin "$TAG_REF" >/dev/null; then
+            echo "Source tag $TAG_REF no longer exists." >&2
+            exit 1
           fi
+          git fetch --force --no-tags origin "$TAG_REF:$TAG_REF"
+          RESOLVED_SHA="$(git rev-parse --verify "${TAG_REF}^{commit}")"
+          if [ "$RESOLVED_SHA" != "$SOURCE_SHA" ]; then
+            echo "Tag $TAG_REF resolved to $RESOLVED_SHA, expected $SOURCE_SHA." >&2
+            exit 1
+          fi
+
+      - name: Create or verify GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node scripts/complete-github-release.mjs
+          --repository "$GITHUB_REPOSITORY"
+          --tag "$SOURCE_TAG"
+          --sha "$SOURCE_SHA"
