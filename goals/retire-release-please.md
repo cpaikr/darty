@@ -35,9 +35,12 @@ Release authority replacement.
 
 ### Next in-scope action
 
-Select the fail-closed GitHub Release integrity boundary, then implement and validate the single tag-driven release path.
+Complete the single tag-driven release path's PR lifecycle and feedback resolution.
 
 ### Evidence and blockers
 
 - Boundary classification: release authority replacement is included; durable goal initialization and a temporary integration branch are necessary for the required PR lifecycle.
 - GitHub immutable releases remain unchanged and outside this goal's external authority. The replacement will refuse to overwrite an existing release and recheck tag-to-source identity immediately before idempotent release creation or verification.
+- Local implementation retires the credential-based authority and adds tested create-or-verify completion after OIDC npm publication; no release side effects have run.
+- Review decision: existing npm versions must match the validated source pack's registry integrity; version-string presence alone is insufficient to bind the source tag and GitHub Release to an npm artifact.
+- Validation passes: frozen install, npm audit, wire checks, 24 focused release tests, typecheck, 436 full-suite tests (23 opt-in live skips), build, 31 CLI compatibility scenarios, mutation proof, workflow YAML syntax, and diff checks. Independent security review findings were fixed; no local review finding remains.

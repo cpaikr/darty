@@ -32,7 +32,14 @@ candidate, and target boundaries.
   fixtures and observations are evidence.
 - Preserve the TypeScript product as the runnable comparison baseline until
   the complete replacement passes the atomic-cutover gates.
-- Keep publication, releases, tags, and remote pushes outside this plan.
+- Keep executing publication, creating GitHub Releases, and pushing tags or
+  branches outside this plan. Phase 4 includes the local workflow and package
+  integration needed to make the cutover releasable without performing a
+  release.
+- Keep release-administration replacement separate in
+  [the Release Please retirement plan](retire-release-please.md). Phase 4 later
+  extends that plan's single tag-driven release line with the verified native
+  artifacts selected at cutover.
 
 ## Completed foundation
 
@@ -56,7 +63,6 @@ entry points. The durable results live in the
 | Viewer shell conformance | unresolved TS/Rust mismatches for regex literals, explicit no-TOC initialization, and tree bounds | Claiming cross-language viewer grammar parity | Port the two canonical TS rules to Rust; decide whether Rust bounds become canonical and add equivalent TS/fixture coverage or remove the candidate-only limits. |
 | Provider approvals | no approval records | Completion of each source-backed port and final cutover qualification | Record named maintainer decisions only after reviewing an immutable evidence revision. |
 | Model-assisted workflow eval | awaiting owner authorization for credentials and external model use | Release-readiness signoff for relevant CLI/eval/prompt changes; not local porting | Run after authorization, preserving deterministic trace and citation checks as prerequisites. |
-| Release Please credential | external repository-owner action | Automated release administration; not local porting | Track and verify through [the repair task](../tasks/repair-release-please-token.md). |
 
 These are evidence or operational gates. They do not authorize publication,
 candidate promotion, relaxed source validation, or invented approval records.
@@ -107,8 +113,12 @@ The shipped TypeScript entry points remain unchanged at this milestone.
 - Switch root exports and `bin`; remove the TypeScript conformer, toolset,
   superseded tests/build paths, and unused dependencies in one reviewable
   change with a normal local revert path.
+- Extend the tag-driven release path established by
+  [the Release Please retirement plan](retire-release-please.md) with the
+  selected native packages, GitHub Release assets, checksums, and clean-consumer
+  verification; keep npm as the same versioned release's Node projection.
 - Update product, architecture, release, and CI documentation to describe only
-  the implemented Rust-backed product.
+  the implemented Rust-backed product and its supported distribution matrix.
 
 Phase 4 exits when one Rust implementation owns all supported source behavior,
 all three target surfaces expose all eight operations, every claimed platform
@@ -120,7 +130,8 @@ superseded TypeScript/toolset surface remains.
 - XBRL support, industry-code discovery, more held-out workflow cases, and a
   new large-report pagination contract; see [ROADMAP.md](../ROADMAP.md).
 - CLI v2 or intentional redesign of current command behavior.
-- Registry publication, GitHub Release creation, or remote tags.
+- Executing registry publication, creating a GitHub Release, or pushing remote
+  tags or branches.
 
 ## Next action
 
