@@ -1,7 +1,23 @@
 import { describe, expect, test } from "bun:test";
 
 import { SourceChanged } from "../../errors.ts";
-import { buildReportViewerUrl } from "./fetch.ts";
+import { buildReportShellUrl, buildReportViewerUrl } from "./fetch.ts";
+
+describe("buildReportShellUrl", () => {
+  test("preserves a valid receipt and document query", () => {
+    const url = new URL(buildReportShellUrl("rcpNo=20260331004166&dcmNo=11213016"));
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      rcpNo: "20260331004166",
+      dcmNo: "11213016",
+    });
+  });
+
+  test("rejects missing or malformed receipt numbers", () => {
+    for (const query of ["", "dcmNo=11213016", "rcpNo=bad"]) {
+      expect(() => buildReportShellUrl(query)).toThrow(SourceChanged);
+    }
+  });
+});
 
 describe("buildReportViewerUrl", () => {
   test("replays valid locator fields without rewriting them", () => {

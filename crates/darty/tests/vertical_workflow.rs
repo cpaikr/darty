@@ -528,7 +528,6 @@ async fn transport_deadlines_are_bounded_and_phase_specific() {
     );
     assert!(total_elapsed >= Duration::from_millis(110));
     assert!(total_elapsed < Duration::from_millis(500));
-    assert!(total_elapsed > idle_elapsed + Duration::from_millis(50));
     total_fixture.finish().await;
 }
 

@@ -265,6 +265,99 @@ describe("DART transport policy", () => {
     await expect(pending).rejects.toMatchObject({ name: "AbortError" });
   });
 
+  test("enforces the connect deadline", async () => {
+    const error = await withFetch(
+      async (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = init?.signal;
+          if (signal === null || signal === undefined) {
+            reject(new Error("missing request signal"));
+            return;
+          }
+          signal.addEventListener(
+            "abort",
+            () => reject(signal.reason ?? new Error("request aborted")),
+            { once: true },
+          );
+        }),
+      () =>
+        fetchDartWebTextResponse(sourceUrl, {
+          ...policy,
+          deadlines: { connectMs: 20, idleMs: 100, totalMs: 100 },
+        }).then(
+          () => undefined,
+          (cause: unknown) => cause,
+        ),
+    );
+
+    expect(error).toMatchObject({
+      _tag: "SourceUnavailable",
+      diagnostics: { cause: { message: "connect deadline exceeded" } },
+    });
+  });
+
+  test("enforces the idle deadline after headers arrive", async () => {
+    const error = await withFetch(
+      async () =>
+        new Response(new ReadableStream<Uint8Array>({}), {
+          status: 200,
+          headers: { "content-type": "text/html; charset=UTF-8" },
+        }),
+      () =>
+        fetchDartWebTextResponse(sourceUrl, {
+          ...policy,
+          deadlines: { connectMs: 100, idleMs: 20, totalMs: 100 },
+        }).then(
+          () => undefined,
+          (cause: unknown) => cause,
+        ),
+    );
+
+    expect(error).toMatchObject({
+      _tag: "SourceUnavailable",
+      diagnostics: { cause: { message: "idle deadline exceeded" } },
+    });
+  });
+
+  test("enforces the total deadline while data continues arriving", async () => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const error = await withFetch(
+      async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              interval = setInterval(() => {
+                controller.enqueue(new TextEncoder().encode("x"));
+              }, 5);
+            },
+            cancel() {
+              if (interval !== undefined) {
+                clearInterval(interval);
+              }
+            },
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "text/html; charset=UTF-8" },
+          },
+        ),
+      () =>
+        fetchDartWebTextResponse(sourceUrl, {
+          ...policy,
+          maxBytes: 1_024,
+          deadlines: { connectMs: 100, idleMs: 100, totalMs: 30 },
+        }).then(
+          () => undefined,
+          (cause: unknown) => cause,
+        ),
+    );
+
+    expect(error).toMatchObject({
+      _tag: "SourceUnavailable",
+      diagnostics: { cause: { message: "total deadline exceeded" } },
+    });
+  });
+
   test("rejects malformed or non-DART URLs without rewriting or fetching them", async () => {
     expect(canonicalizeDartSourceUrl(
       "https://user:pass@dart.fss.or.kr/test.ax",

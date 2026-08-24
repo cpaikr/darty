@@ -37,22 +37,26 @@ const fetchDecodedHtml = async (
   );
 };
 
-export const buildReportShellUrl = (query: string): string =>
-  (() => {
-    const input = new URLSearchParams(query);
-    const url = new URL(reportShellEndpoint);
-    const receiptNumber = input.get("rcpNo");
-    const documentNumber = input.get("dcmNo");
+export const buildReportShellUrl = (query: string): string => {
+  const input = new URLSearchParams(query);
+  const url = new URL(reportShellEndpoint);
+  const receiptNumber = input.get("rcpNo");
+  const documentNumber = input.get("dcmNo");
 
-    if (receiptNumber !== null && /^\d{14}$/.test(receiptNumber)) {
-      url.searchParams.set("rcpNo", receiptNumber);
-    }
-    if (documentNumber !== null && /^\d+$/.test(documentNumber)) {
-      url.searchParams.set("dcmNo", documentNumber);
-    }
+  if (receiptNumber === null || !/^\d{14}$/.test(receiptNumber)) {
+    throw new SourceChanged({
+      message: dsaf001ReportMessages.shellChanged,
+      sourceUrl: reportShellEndpoint,
+    });
+  }
 
-    return url.toString();
-  })();
+  url.searchParams.set("rcpNo", receiptNumber);
+  if (documentNumber !== null && /^\d+$/.test(documentNumber)) {
+    url.searchParams.set("dcmNo", documentNumber);
+  }
+
+  return url.toString();
+};
 
 export const buildReportViewerUrl = (locator: SourceReportLocator): string => {
   if (

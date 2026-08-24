@@ -38,7 +38,13 @@ export const dartTransportLimits = {
   companyRss: 8 * 1024 * 1024,
 } as const;
 
-export const dartTransportDeadlines = {
+export type DartTransportDeadlines = {
+  readonly connectMs: number;
+  readonly idleMs: number;
+  readonly totalMs: number;
+};
+
+export const dartTransportDeadlines: DartTransportDeadlines = {
   connectMs: 5_000,
   idleMs: 10_000,
   totalMs: 30_000,
@@ -54,6 +60,8 @@ export type DartTextTransportPolicy = {
   readonly parseFailureMessage: string;
   readonly maxBytes: number;
   readonly responseKind: DartResponseKind;
+  /** Internal override for deterministic transport tests. */
+  readonly deadlines?: DartTransportDeadlines;
 };
 
 type CollectedBytes = {
@@ -62,22 +70,22 @@ type CollectedBytes = {
 };
 
 class DartConnectTimeout extends Error {
-  constructor() {
-    super(`DART connection exceeded ${dartTransportDeadlines.connectMs}ms.`);
+  constructor(connectMs: number) {
+    super(`DART connection exceeded ${connectMs}ms.`);
     this.name = "DartConnectTimeout";
   }
 }
 
 class DartIdleTimeout extends Error {
-  constructor() {
-    super(`DART response was idle for ${dartTransportDeadlines.idleMs}ms.`);
+  constructor(idleMs: number) {
+    super(`DART response was idle for ${idleMs}ms.`);
     this.name = "DartIdleTimeout";
   }
 }
 
 class DartTotalTimeout extends Error {
-  constructor() {
-    super(`DART request exceeded ${dartTransportDeadlines.totalMs}ms.`);
+  constructor(totalMs: number) {
+    super(`DART request exceeded ${totalMs}ms.`);
     this.name = "DartTotalTimeout";
   }
 }
@@ -231,9 +239,10 @@ const allocateBytes = (collected: CollectedBytes): Uint8Array => {
 const collectResponseBytes = (
   response: HttpClientResponseType,
   maxBytes: number,
+  idleMs: number,
 ): Effect.Effect<CollectedBytes, DartResponseTooLarge | Error> =>
   response.stream.pipe(
-    Stream.timeoutFail(() => new DartIdleTimeout(), dartTransportDeadlines.idleMs),
+    Stream.timeoutFail(() => new DartIdleTimeout(idleMs), idleMs),
     Stream.runFoldEffect(
       {
         chunks: [] as Uint8Array[],
@@ -350,7 +359,11 @@ const decodeHttpResponse = (
       );
     }
 
-    const collected = yield* collectResponseBytes(response, policy.maxBytes).pipe(
+    const collected = yield* collectResponseBytes(
+      response,
+      policy.maxBytes,
+      policy.deadlines?.idleMs ?? dartTransportDeadlines.idleMs,
+    ).pipe(
       Effect.mapError((error) =>
         error instanceof DartResponseTooLarge
           ? toParseFailure(
@@ -410,6 +423,7 @@ export const requestDartTextResponse = (
 ): Effect.Effect<DartSourceTextResponse, SourceUnavailable | ParseFailure> => {
   const sourceUrl = canonicalizeDartSourceUrl(policy.sourceUrl, dartOrigin);
   const safePolicy = { ...policy, sourceUrl };
+  const deadlines = policy.deadlines ?? dartTransportDeadlines;
   const operation = Effect.gen(function* () {
     if (parseDartUrl(request.url) === undefined) {
       return yield* Effect.fail(
@@ -425,8 +439,8 @@ export const requestDartTextResponse = (
 
     const response = yield* client.execute(request).pipe(
       Effect.timeoutFail({
-        duration: dartTransportDeadlines.connectMs,
-        onTimeout: () => new DartConnectTimeout(),
+        duration: deadlines.connectMs,
+        onTimeout: () => new DartConnectTimeout(deadlines.connectMs),
       }),
       Effect.mapError((error) => toSourceUnavailable(safePolicy, error)),
     );
@@ -436,8 +450,8 @@ export const requestDartTextResponse = (
 
   return operation.pipe(
     Effect.timeoutFail({
-      duration: dartTransportDeadlines.totalMs,
-      onTimeout: () => new DartTotalTimeout(),
+      duration: deadlines.totalMs,
+      onTimeout: () => new DartTotalTimeout(deadlines.totalMs),
     }),
     Effect.mapError((error) =>
       error instanceof SourceUnavailable || error instanceof ParseFailure
@@ -496,7 +510,7 @@ const readWebChunk = async <T>(
       new Promise<T>((_, reject) => {
         timer = setTimeout(() => {
           onTimeout();
-          reject(new DartIdleTimeout());
+          reject(new DartIdleTimeout(timeoutMs));
         }, timeoutMs);
       }),
     ]);
@@ -510,6 +524,7 @@ const readWebChunk = async <T>(
 const collectWebResponseBytes = async (
   response: Response,
   maxBytes: number,
+  idleMs: number,
   onIdleTimeout: () => void,
   onReader: (reader: DartReadableStreamReader) => void,
 ): Promise<WebCollectedBytes> => {
@@ -524,7 +539,7 @@ const collectWebResponseBytes = async (
 
   try {
     while (true) {
-      const result = await readWebChunk(reader.read(), dartTransportDeadlines.idleMs, onIdleTimeout);
+      const result = await readWebChunk(reader.read(), idleMs, onIdleTimeout);
 
       if (result.done) {
         break;
@@ -582,6 +597,7 @@ export const fetchDartWebTextResponse = async (
 ): Promise<DartSourceTextResponse> => {
   const sourceUrl = canonicalizeDartSourceUrl(policy.sourceUrl, dartOrigin);
   const parsedRequestUrl = parseDartUrl(url);
+  const deadlines = policy.deadlines ?? dartTransportDeadlines;
 
   if (parsedRequestUrl === undefined) {
     throw new SourceUnavailable({
@@ -615,13 +631,13 @@ export const fetchDartWebTextResponse = async (
 
   totalTimer = setTimeout(() => {
     deadlineKind = "total";
-    controller.abort(new DartTotalTimeout());
+    controller.abort(new DartTotalTimeout(deadlines.totalMs));
     void activeReader?.cancel().catch(() => undefined);
-  }, dartTransportDeadlines.totalMs);
+  }, deadlines.totalMs);
   connectTimer = setTimeout(() => {
     deadlineKind = "connect";
-    controller.abort(new DartConnectTimeout());
-  }, dartTransportDeadlines.connectMs);
+    controller.abort(new DartConnectTimeout(deadlines.connectMs));
+  }, deadlines.connectMs);
 
   let response: Response | undefined;
 
@@ -695,13 +711,19 @@ export const fetchDartWebTextResponse = async (
 
     let collected: WebCollectedBytes;
     try {
-      collected = await collectWebResponseBytes(response, policy.maxBytes, () => {
-        deadlineKind = "idle";
-        controller.abort(new DartIdleTimeout());
-        void activeReader?.cancel().catch(() => undefined);
-      }, (reader) => {
-        activeReader = reader;
-      });
+      collected = await collectWebResponseBytes(
+        response,
+        policy.maxBytes,
+        deadlines.idleMs,
+        () => {
+          deadlineKind = "idle";
+          controller.abort(new DartIdleTimeout(deadlines.idleMs));
+          void activeReader?.cancel().catch(() => undefined);
+        },
+        (reader) => {
+          activeReader = reader;
+        },
+      );
     } catch (error) {
       if (callerAborted) {
         throw callerSignal?.reason ?? error;

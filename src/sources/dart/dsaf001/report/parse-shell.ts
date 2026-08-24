@@ -7,6 +7,7 @@ import {
   type DartSourceTextResponse,
 } from "../../source-response.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
+import { parseReportQueryIdentity } from "./query-identity.ts";
 import type {
   SourceReportDocument,
   SourceReportDocumentKind,
@@ -27,6 +28,8 @@ type JavaScriptToken =
 
 const isIdentifierStart = (value: string): boolean => /[A-Za-z_$]/.test(value);
 const isIdentifierPart = (value: string): boolean => /[A-Za-z0-9_$]/.test(value);
+const twoHexDigits = /^[0-9A-Fa-f]{2}$/;
+const fourHexDigits = /^[0-9A-Fa-f]{4}$/;
 
 const regexAfterKeywords = new Set([
   "case",
@@ -202,7 +205,7 @@ const tokenizeJavaScript = (source: string): readonly JavaScriptToken[] => {
         const digits = escaped === "x" ? 2 : 4;
         const hexadecimal = source.slice(index + 1, index + 1 + digits);
 
-        if (new RegExp(`^[0-9A-Fa-f]{${digits}}$`).test(hexadecimal)) {
+        if ((digits === 2 ? twoHexDigits : fourHexDigits).test(hexadecimal)) {
           value += String.fromCodePoint(Number.parseInt(hexadecimal, 16));
           index += digits + 1;
           continue;
@@ -398,8 +401,7 @@ const isEmptyObject = (tokens: readonly JavaScriptToken[], start: number): boole
   isToken(tokens[start], "punctuation", "{") &&
   isToken(tokens[start + 1], "punctuation", "}");
 
-const parseTreeData = (source: string): ParsedTreeData => {
-  const tokens = tokenizeJavaScript(source);
+const parseTreeData = (tokens: readonly JavaScriptToken[]): ParsedTreeData => {
   const nodes = new Map<string, RawNode>();
   const rootNames: string[] = [];
   let declared = false;
@@ -573,28 +575,6 @@ const parseUrlIdentity = (sourceUrl: string): RequestedDocumentIdentity | undefi
   }
 };
 
-const parseDocumentQuery = (
-  query: string,
-): { readonly receiptNumber: string; readonly dcmNo: string | undefined } | undefined => {
-  try {
-    const params = new URLSearchParams(query.replaceAll("&amp;", "&"));
-    const receiptNumber = params.get("rcpNo")?.trim();
-
-    if (receiptNumber === undefined || receiptNumber.length === 0) {
-      return undefined;
-    }
-
-    const dcmNo = params.get("dcmNo")?.trim();
-
-    return {
-      receiptNumber,
-      dcmNo: dcmNo === undefined || dcmNo.length === 0 ? undefined : dcmNo,
-    };
-  } catch {
-    return undefined;
-  }
-};
-
 const parseDocuments = (
   $: cheerio.CheerioAPI,
   identity: RequestedDocumentIdentity,
@@ -618,7 +598,7 @@ const parseDocuments = (
         }
 
         const query = rawValue.replaceAll("&amp;", "&");
-        const queryIdentity = parseDocumentQuery(query);
+        const queryIdentity = parseReportQueryIdentity(query);
 
         // A selector option is a replay token. Never expose a token for a
         // different receipt, even when it happens to be displayed in the
@@ -651,7 +631,7 @@ const parseDocuments = (
 const documentQueryIdentity = (
   document: SourceReportDocument,
 ): { readonly receiptNumber: string; readonly dcmNo: string | undefined } | undefined =>
-  parseDocumentQuery(document.query);
+  parseReportQueryIdentity(document.query);
 
 const selectDocument = (
   documents: readonly SourceReportDocument[],
@@ -820,8 +800,7 @@ type ParsedViewDoc = {
   readonly locator: SourceReportLocator;
 };
 
-const parseViewDocCalls = (source: string): readonly ParsedViewDoc[] => {
-  const tokens = tokenizeJavaScript(source);
+const parseViewDocCalls = (tokens: readonly JavaScriptToken[]): readonly ParsedViewDoc[] => {
   const locators: ParsedViewDoc[] = [];
 
   for (let index = 0; index < tokens.length; index += 1) {
@@ -931,8 +910,9 @@ export const parseReportShell = (
     }
 
     const scripts = scriptSource($);
-    const tree = parseTreeData(scripts);
-    const viewDocLocators = parseViewDocCalls(scripts).map((entry) => entry.locator);
+    const tokens = tokenizeJavaScript(scripts);
+    const tree = parseTreeData(tokens);
+    const viewDocLocators = parseViewDocCalls(tokens).map((entry) => entry.locator);
     const selectedDocumentDcmNo = documentQueryIdentity(selectedDocument)?.dcmNo;
     const receiptViewDocDcmNos = new Set(
       viewDocLocators

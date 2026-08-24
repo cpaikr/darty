@@ -246,18 +246,15 @@ describe("parseReportShell", () => {
     );
   });
 
-  test("rejects partial, cyclic, and orphan TOC graphs", () => {
-    const cases = [
-      `node1['children'].push(node2); var node1={};`,
-      `node1['children'].push(node1); var node1={};`,
-      `var node1={}; var node2={}; treeData.push(node1);`,
-      `node1['children'].push(notANode); var node1={};`,
-      `node1['children'] = [node2]; var node1={};`,
-      `treeData.push(notANode); var node1={};`,
-    ];
-
-    for (const graph of cases) {
-      const html = `
+  test.each([
+    `node1['children'].push(node2); var node1={};`,
+    `node1['children'].push(node1); var node1={};`,
+    `var node1={}; var node2={}; treeData.push(node1);`,
+    `node1['children'].push(notANode); var node1={};`,
+    `node1['children'] = [node2]; var node1={};`,
+    `treeData.push(notANode); var node1={};`,
+  ])("rejects the partial, cyclic, or orphan TOC graph %p", (graph) => {
+    const html = `
         <select id="family"><option value="rcpNo=20260331004166" selected>사업보고서</option></select>
         <script>
           var treeData=[]; ${graph}
@@ -267,10 +264,9 @@ describe("parseReportShell", () => {
         </script>
       `;
 
-      expect(() => parseReportShell(sourceResponse(html, "20260331004166"))).toThrow(
-        SourceChanged,
-      );
-    }
+    expect(() => parseReportShell(sourceResponse(html, "20260331004166"))).toThrow(
+      SourceChanged,
+    );
   });
 
   test("rejects mixed document locators in a bare receipt shell", () => {

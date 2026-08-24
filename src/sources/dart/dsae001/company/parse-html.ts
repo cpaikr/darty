@@ -68,6 +68,9 @@ const toMarketKind = (
   return "unknown";
 };
 
+const companyResultRows = ($: cheerio.CheerioAPI) =>
+  $("#corpTable").first().children("tbody").first().children("tr");
+
 const parsePagination = (
   $: cheerio.CheerioAPI,
   request: SourceCompanyReplayInput,
@@ -86,7 +89,7 @@ const parsePagination = (
       );
     }
 
-    const rows = tbody.children("tr");
+    const rows = companyResultRows($);
     const sentinelRows = rows.filter((_, row) => $(row).hasClass("noData"));
     const noResults = sentinelRows.length > 0;
     if (
@@ -187,20 +190,15 @@ const parseRows = (
   readonly rows: readonly SourceCompanyRow[];
   readonly warnings: readonly SourceCompanyParseWarning[];
 } => {
-  if (
-    $("#corpTable").first().children("tbody").first().children("tr.noData")
-      .length > 0
-  ) {
+  const resultRows = companyResultRows($);
+  if (resultRows.filter(".noData").length > 0) {
     return { rows: [], warnings: [] };
   }
 
   const rows: SourceCompanyRow[] = [];
   const warnings: SourceCompanyParseWarning[] = [];
 
-  $("#corpTable").first()
-    .children("tbody")
-    .first()
-    .children("tr")
+  resultRows
     .toArray()
     .forEach((row, rowIndex) => {
       try {

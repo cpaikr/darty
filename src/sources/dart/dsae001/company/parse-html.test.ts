@@ -3,6 +3,7 @@ import { Effect, Either } from "effect";
 
 import { SourceChanged } from "../../errors.ts";
 import { createDartSourceTextResponse } from "../../source-response.ts";
+import { dsae001CompanyMessages } from "./messages.ts";
 import { parseCompanySearchHtml } from "./parse-html.ts";
 
 const sourceUrl = "https://dart.fss.or.kr/dsae001/search.ax";
@@ -152,6 +153,9 @@ describe("parseCompanySearchHtml", () => {
     expect(Either.isLeft(result)).toBe(true);
     if (Either.isLeft(result)) {
       expect(result.left).toBeInstanceOf(SourceChanged);
+      expect(result.left).toMatchObject({
+        message: dsae001CompanyMessages.missingResultTable,
+      });
     }
   });
 
@@ -165,6 +169,9 @@ describe("parseCompanySearchHtml", () => {
     expect(Either.isLeft(result)).toBe(true);
     if (Either.isLeft(result)) {
       expect(result.left).toBeInstanceOf(SourceChanged);
+      expect(result.left).toMatchObject({
+        message: dsae001CompanyMessages.missingResultRows,
+      });
     }
   });
 });

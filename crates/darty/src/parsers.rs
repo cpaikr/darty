@@ -30,30 +30,6 @@ static RECEIPT_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\d{14}$").expect("static receipt regex"));
 static RECEIPT_DATE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").expect("static receipt-date regex"));
-#[cfg(test)]
-static SHELL_ASSIGNMENT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
-        r#"(?ms)(node\d+)(?:\['(?P<single_field>[A-Za-z]+)'\]|\[\"(?P<double_field>[A-Za-z]+)\"\])\s*=\s*(?:\"(?P<double>(?:\\.|[^\"\\])*)\"|'(?P<single>(?:\\.|[^'\\])*)')\s*;"#,
-    )
-    .expect("static shell assignment regex")
-});
-#[cfg(test)]
-static SHELL_CHILD: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?m)(node\d+)(?:\['children'\]|\[\"children\"\])\.push\((node\d+)\)\s*;"#)
-        .expect("static shell child regex")
-});
-#[cfg(test)]
-#[allow(dead_code)]
-static SHELL_ROOT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?m)treeData\.push\((node\d+)\)\s*;").expect("static shell root regex")
-});
-#[cfg(test)]
-static VIEW_DOC: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
-        r#"viewDoc\(\s*(?:'(?P<receipt_single>[^']+)'|\"(?P<receipt_double>[^\"]+)\")\s*,\s*(?:'(?P<document_single>[^']+)'|\"(?P<document_double>[^\"]+)\")\s*,\s*(?:'(?P<element_single>[^']+)'|\"(?P<element_double>[^\"]+)\")\s*,\s*(?:'(?P<offset_single>[^']+)'|\"(?P<offset_double>[^\"]+)\")\s*,\s*(?:'(?P<length_single>[^']+)'|\"(?P<length_double>[^\"]+)\")\s*,\s*(?:'(?P<dtd_single>[^']+)'|\"(?P<dtd_double>[^\"]+)\")(?:\s*,\s*(?:'(?P<toc_single>[^']*)'|\"(?P<toc_double>[^\"]*)\"))?\s*\)"#,
-    )
-    .expect("static viewDoc regex")
-});
 static PAGINATION: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"\[(\d+)/(\d+)\]\s*\[총\s*([\d,]+)건\]").expect("static pagination regex")
 });
@@ -441,7 +417,7 @@ pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, ShellParseError> {
     let selected_query = &documents[selected_document_index].query;
     let (receipt_number, selected_document_number) = document_identity(selected_query)
         .ok_or("report shell selected document has no receipt number")?;
-    let (toc, initial_locator) = parse_shell_script(html)?;
+    let (toc, initial_locator) = parse_shell_script(html, &receipt_number)?;
     if documents.iter().any(|document| {
         document_identity(&document.query)
             .is_none_or(|(document_receipt, _)| document_receipt != receipt_number)
@@ -530,7 +506,10 @@ struct ScriptRoot {
     declared_at_use: bool,
 }
 
-fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator), ShellParseError> {
+fn parse_shell_script(
+    html: &str,
+    receipt_number: &str,
+) -> Result<(Vec<ParsedTocNode>, ViewerLocator), ShellParseError> {
     let mut nodes: BTreeMap<String, ScriptNode> = BTreeMap::new();
     let mut invalid_nodes = BTreeSet::new();
     let mut roots = Vec::new();
@@ -623,7 +602,7 @@ fn parse_shell_script(html: &str) -> Result<(Vec<ParsedTocNode>, ViewerLocator),
     }
     let initial = initial_locators
         .into_iter()
-        .find(|locator| valid_locator(locator, &locator.receipt_number, None))
+        .find(|locator| valid_locator(locator, receipt_number, None))
         .ok_or("report shell has no valid initial viewer locator")?;
     Ok((toc, initial))
 }
@@ -1330,18 +1309,6 @@ mod tests {
         assert!(!super::COMPANY_LINK.is_match(r#"select('00000001")"#));
         assert!(super::REPORT_COMPANY_LINK.is_match(r#"openCorpInfoNew("00000001", 'window')"#));
         assert!(!super::REPORT_COMPANY_LINK.is_match(r#"openCorpInfoNew('00000001", 'window')"#));
-        assert!(super::SHELL_ASSIGNMENT.is_match(r#"node1["text"] = 'title';"#));
-        assert!(!super::SHELL_ASSIGNMENT.is_match(r#"node1['text"] = "title";"#));
-        assert!(super::SHELL_CHILD.is_match(r#"node1["children"].push(node2);"#));
-        assert!(!super::SHELL_CHILD.is_match(r#"node1['children"].push(node2);"#));
-        assert!(
-            super::VIEW_DOC
-                .is_match(r#"viewDoc('20260101000001', "10000001", '1', "0", '1', "dart4.xsd")"#)
-        );
-        assert!(
-            !super::VIEW_DOC
-                .is_match(r#"viewDoc('20260101000001", "10000001", "1", "0", "1", "dart4.xsd")"#)
-        );
     }
 
     #[test]
@@ -1455,6 +1422,17 @@ treeData.push(node1);"#,
                 .document_number,
             "10000001"
         );
+    }
+
+    #[test]
+    fn skips_a_foreign_initial_call_before_the_requested_receipt() {
+        let foreign_then_genuine = SHELL.replace(
+            "viewDoc(\"20260101000001\"",
+            "viewDoc(\"20260101000009\", \"90000001\", \"9\", \"0\", \"1\", \"dart4.xsd\");\nviewDoc(\"20260101000001\"",
+        );
+        let shell = report_shell(&foreign_then_genuine).unwrap();
+        assert_eq!(shell.initial_locator.receipt_number, "20260101000001");
+        assert_eq!(shell.initial_locator.document_number, "10000001");
     }
 
     #[test]

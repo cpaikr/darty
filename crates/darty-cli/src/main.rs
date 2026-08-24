@@ -816,12 +816,17 @@ fn limit_toc(nodes: &mut Vec<Value>, depth: u32) {
 
 fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
     let pretty = argv.iter().any(|value| value == "--pretty");
-    let command = argv.get(1).map(String::as_str).filter(|value| {
-        matches!(
-            *value,
-            "search-company" | "search-company-reports" | "view-report"
-        )
-    });
+    let command = argv
+        .iter()
+        .skip(1)
+        .map(String::as_str)
+        .find(|value| *value != "--debug")
+        .filter(|value| {
+            matches!(
+                *value,
+                "search-company" | "search-company-reports" | "view-report"
+            )
+        });
     if command == Some("view-report") && argv.iter().any(|value| value == "--dcm-no") {
         return Some(CliFailure::new(
             failure(
@@ -1209,6 +1214,23 @@ mod tests {
     fn zero_toc_depth_uses_the_frozen_cli_failure() {
         let argv = [
             "darty".to_owned(),
+            "view-report".to_owned(),
+            "--toc-depth".to_owned(),
+            "0".to_owned(),
+        ];
+        let failure = preparse_failure(&argv).expect("zero depth is rejected");
+        assert_eq!(failure.value["error"]["parameter"], "--toc-depth");
+        assert_eq!(
+            failure.value["error"]["message"],
+            "error: option '--toc-depth <number>' argument '0' is invalid. Expected an integer greater than or equal to 1."
+        );
+    }
+
+    #[test]
+    fn global_debug_before_view_report_preserves_toc_depth_validation() {
+        let argv = [
+            "darty".to_owned(),
+            "--debug".to_owned(),
             "view-report".to_owned(),
             "--toc-depth".to_owned(),
             "0".to_owned(),

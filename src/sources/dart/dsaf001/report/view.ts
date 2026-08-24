@@ -17,6 +17,7 @@ import { buildReportContent } from "./content.ts";
 import { dsaf001ReportMessages } from "./messages.ts";
 import { buildReportNavigation } from "./navigation.ts";
 import { resolveReportContentPlan } from "./plan.ts";
+import { parseReportQueryIdentity } from "./query-identity.ts";
 import {
   defaultDsaf001ReportSource,
   type Dsaf001ReportSource,
@@ -70,28 +71,6 @@ const extractInitialDocumentQuery = (
   }
 };
 
-const parseQueryIdentity = (
-  query: string,
-): { readonly receiptNumber: string; readonly dcmNo: string | undefined } | undefined => {
-  try {
-    const params = new URLSearchParams(query.replaceAll("&amp;", "&"));
-    const receiptNumber = params.get("rcpNo")?.trim();
-
-    if (receiptNumber === undefined || receiptNumber.length === 0) {
-      return undefined;
-    }
-
-    const dcmNo = params.get("dcmNo")?.trim();
-
-    return {
-      receiptNumber,
-      dcmNo: dcmNo === undefined || dcmNo.length === 0 ? undefined : dcmNo,
-    };
-  } catch {
-    return undefined;
-  }
-};
-
 const assertShellIdentity = (
   shell: SourceReportShell,
   receiptNumber: string,
@@ -131,12 +110,12 @@ const assertShellIdentity = (
     });
   }
 
-  const selectedQueryIdentity = parseQueryIdentity(shell.selectedDocument.query);
+  const selectedQueryIdentity = parseReportQueryIdentity(shell.selectedDocument.query);
   const selectedIsReturned = shell.documents.some(
     (document) => document.id === shell.selectedDocument.id,
   );
   const allDocumentsMatchReceipt = shell.documents.every(
-    (document) => parseQueryIdentity(document.query)?.receiptNumber === receiptNumber,
+    (document) => parseReportQueryIdentity(document.query)?.receiptNumber === receiptNumber,
   );
 
   if (
