@@ -75,7 +75,7 @@ tag, and a release tag must never be moved or reused.
    two commands. Creating or pushing the tag is an explicit release action and
    is never part of ordinary implementation work.
 
-The source tag starts `.github/workflows/release.yml`. A manual dispatch is
+Pushing the source tag starts `.github/workflows/release.yml`. A manual dispatch is
 only a rerun mechanism for a real, unmoved source tag; it cannot nominate a
 branch or untagged SHA.
 
