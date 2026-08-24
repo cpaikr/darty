@@ -17,7 +17,7 @@ const DART_ORIGIN: &str = "https://dart.fss.or.kr";
 const USER_AGENT_VALUE: &str = concat!(
     "darty/",
     env!("CARGO_PKG_VERSION"),
-    " (+https://github.com/sjunepark/darty)"
+    " (+https://github.com/cpaikr/darty)"
 );
 const REQUEST_START_INTERVAL: Duration = Duration::from_millis(250);
 const MAX_RETRY_AFTER_SECONDS: u64 = 86_400;

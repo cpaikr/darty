@@ -1129,7 +1129,7 @@ impl Reply {
             Some(concat!(
                 "darty/",
                 env!("CARGO_PKG_VERSION"),
-                " (+https://github.com/sjunepark/darty)"
+                " (+https://github.com/cpaikr/darty)"
             ))
         );
         if self.method == "POST" {

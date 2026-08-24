@@ -9,7 +9,7 @@ unpublished and outside this flow.
 ## Manual prerequisites
 
 Configure npm trusted publishing for `@sjunepark/darty` with GitHub Actions,
-repository `sjunepark/darty`, and workflow `release.yml`. Publishing uses OIDC,
+repository `cpaikr/darty`, and workflow `release.yml`. Publishing uses OIDC,
 so no npm token is required.
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained PAT or GitHub App token with
