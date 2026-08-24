@@ -7,10 +7,11 @@ DART detail-code catalog.
 
 ## Current state
 
-The catalog data remains locally retained and tested, but the pinned
-`sjunepark/open-dart` GitHub repository/commit URL in
-`src/capabilities/disclosure-types/data.ts` returns 404. Documentation records
-the source as unavailable instead of presenting the link as current evidence.
+The catalog data remains locally retained and tested. **Observed 2026-08-24:**
+the immutable
+[`sjunepark/open-dart@85e7a07` source URL](https://github.com/sjunepark/open-dart/blob/85e7a07dee1d24cd810c705c1400c4ac3bbf6add/src/docs/pblntf_detail_ty.md)
+returns 404. Documentation records the source as unavailable instead of
+presenting the link as current evidence.
 
 ## Next step
 

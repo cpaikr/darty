@@ -7,7 +7,9 @@ through the repository's exact-commit release gates.
 
 ## Current state
 
-The `RELEASE_PLEASE_TOKEN` secret exists, but the latest Release Please run
+The `RELEASE_PLEASE_TOKEN` secret exists. **Observed 2026-08-22:** Release
+Please workflow run
+[`32559940325`](https://github.com/sjunepark/darty/actions/runs/32559940325)
 failed with `Bad credentials`. The credential is external repository
 administration and cannot be repaired from the codebase. This blocks automated
 release administration, not local rewrite work.

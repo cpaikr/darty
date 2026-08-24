@@ -13,7 +13,12 @@ live provider.
 - The CLI success exception prints the guide as human-readable Markdown rather
   than the normal JSON envelope, as frozen by
   [CLI transport v1](cli-transport-v1.md).
-- Failures are non-retryable `invalid_request` or `internal_error`.
+- Direct capability execution and the CLI expose non-retryable
+  `invalid_request` or `internal_error` failures. The toolset validates its
+  generic command envelope first: malformed values use `invalid_parameter`,
+  unknown fields use `unknown_parameter`, and an execution-stage capability
+  rejection is wrapped as `validation_failed` while retaining the underlying
+  validation issue.
 
 [`dart-report-guide.md`](../research/dart-report-guide.md) owns the maintained
 source guide and its source caveat. The TypeScript capability compiles an
