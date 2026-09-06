@@ -1,0 +1,57 @@
+name: Candidate package (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cost exception: Darwin ARM64 packaging is opt-in only; see docs/release.md.
+jobs:
+  candidate_darwin_arm64:
+    name: Candidate package (darwin-arm64, unpublished)
+    runs-on: blacksmith-6vcpu-macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.12.0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify current host
+        run: |
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = arm64
+
+      - name: Set up Rust 1.88
+        run: rustup toolchain install 1.88.0 --profile minimal
+
+      - name: Build unpublished candidate
+        run: |
+          cargo +1.88.0 build --release --locked -p darty-cli
+          cargo +1.88.0 build --release --locked -p darty-node
+
+      - name: Build isolated fixture candidate
+        run: |
+          cargo +1.88.0 build --release --locked -p darty-cli --features fixture-origin --target-dir target/candidate-fixture
+          cargo +1.88.0 build --release --locked -p darty-node --features test-fixture --target-dir target/candidate-fixture
+
+      - name: Test packaged candidate
+        env:
+          DARTY_CANDIDATE_FIXTURE_TARGET: target/candidate-fixture
+        run: node scripts/test-rust-candidate.mjs
+
+      - name: Test candidate compatibility
+        run: node scripts/judge-cli-v1.mjs --profile candidate -- target/candidate-fixture/release/darty

@@ -48,8 +48,8 @@ Run `bun run env:check` before hosted-model checks. The default
    normal `feat:` and `fix:` commits create patch releases; `!` or a
    `BREAKING CHANGE:` footer creates a minor release.
 2. `CI` runs the high-severity dependency audit, wire locks, CLI compatibility
-   and mutation proof, TypeScript validation, Rust validation, and candidate
-   package acceptance.
+   and mutation proof, TypeScript validation, and Rust validation on Linux
+   x86_64.
 3. After successful `CI`, Release Please verifies that the exact commit remains
    the `main` head and opens or updates the release PR.
 4. Merge the release PR after CI passes. Release Please creates the source tag
@@ -60,6 +60,18 @@ Run `bun run env:check` before hosted-model checks. The default
 Version `x.y.z` uses source tag `vx.y.z`, and the tag must match
 `package.json`. A concurrent `main` push may close an exact-head window; the
 next successful CI run evaluates the new head.
+
+## CI runner policy
+
+Automatic workflows use `blacksmith-2vcpu-ubuntu-2404` (Linux x86_64) to limit
+CI costs. macOS, Windows, and ARM jobs must remain manual-only.
+
+The [Candidate package (manual) workflow](../.github/workflows/candidate-package.yml)
+is the retained exception: an opt-in Darwin ARM64 packaging and CLI
+compatibility check on `blacksmith-6vcpu-macos-15`. Once the workflow exists on
+the default branch, select it in GitHub Actions and use **Run workflow** for
+the desired branch. It publishes nothing and is not a release prerequisite.
+Any future cross-platform artifact workflow must also be manual-only.
 
 ## Dependency audit policy
 
