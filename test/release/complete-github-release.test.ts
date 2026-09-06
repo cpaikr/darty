@@ -13,7 +13,6 @@ const input = {
 
 const release = {
   tagName: input.sourceTag,
-  targetCommitish: input.sourceSha,
   isDraft: false,
   isPrerelease: false,
   name: input.sourceTag,
@@ -25,6 +24,14 @@ const success = (stdout = "") => ({ status: 0, stdout, stderr: "" });
 const failure = (stderr: string) => ({ status: 1, stdout: "", stderr });
 
 describe("completeGitHubRelease", () => {
+  test("accepts branch-valued release metadata after the workflow verifies the tag", () => {
+    const result = completeGitHubRelease(input, () =>
+      success(JSON.stringify({ ...release, targetCommitish: "main" })),
+    );
+
+    expect(result.disposition).toBe("verified");
+  });
+
   test("verifies an existing matching release without changing it", () => {
     const calls: string[][] = [];
     const result = completeGitHubRelease(input, (args) => {
@@ -99,7 +106,7 @@ describe("completeGitHubRelease", () => {
 
 describe("verifyRelease", () => {
   test.each([
-    [{ ...release, targetCommitish: "b".repeat(40) }, "does not match"],
+    [{ ...release, tagName: "v0.7.0" }, "does not match"],
     [{ ...release, isDraft: true }, "must be published"],
     [{ ...release, isPrerelease: true }, "must not be a prerelease"],
     [{ ...release, name: "" }, "has no title"],

@@ -1,6 +1,5 @@
 export interface ReleaseIdentity {
   tagName: string;
-  targetCommitish: string;
   isDraft: boolean;
   isPrerelease: boolean;
   name: string;
@@ -27,7 +26,7 @@ export interface CompletionResult {
 
 export function verifyRelease(
   release: ReleaseIdentity,
-  expected: Pick<ReleaseInput, "sourceTag" | "sourceSha">,
+  expected: Pick<ReleaseInput, "sourceTag">,
 ): ReleaseIdentity;
 
 export function completeGitHubRelease(

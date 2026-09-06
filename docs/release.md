@@ -19,10 +19,11 @@ identity: a release tag must resolve to a commit on `main` with a successful
 require `CI / validate` as defense in depth.
 
 GitHub immutable releases are disabled for this repository. The workflow
-rechecks tag identity immediately before release completion, refuses to edit or
-replace an existing release, and accepts an existing release only when its tag,
-target SHA, published stable state, title, and release notes match the enforced
-contract. Repository administrators can still mutate release records outside
+resolves the actual tag to the validated commit immediately before release
+completion, refuses to edit or replace an existing release, and verifies its
+tag name, published stable state, title, release notes, and public URL. GitHub's
+`targetCommitish` metadata may be a branch name and is not tag identity.
+Repository administrators can still mutate release records outside
 the workflow; enabling immutable releases later would strengthen this external
 boundary without changing the flow.
 
@@ -95,10 +96,11 @@ The Release workflow performs these gates in order:
    is independently verified. If the exact version exists, compare its
    registry integrity with a dry-run pack of the validated source and skip only
    when the package bytes match.
-4. After npm succeeds or is verified already present, recheck the tag
-   immediately before GitHub Release completion. Create a published stable
+4. After npm succeeds or is verified already present, recheck that the remote
+   tag's peeled commit equals the validated source SHA immediately before
+   GitHub Release completion. Create a published stable
    release with generated notes only when none exists. Otherwise verify the
-   existing release's tag, exact target SHA, non-draft/non-prerelease state,
+   existing release's tag name, non-draft/non-prerelease state,
    non-empty title and notes, and public URL without editing it.
 
 The final job has `contents: write`; npm publication alone has `id-token: write`.
@@ -145,7 +147,7 @@ and verify frozen installation plus the audit after every change.
   workflow stops before GitHub Release completion. Do not overwrite or reuse
   the version; investigate the publication and prepare a new reviewed version.
 - If the workflow reports that an existing GitHub Release does not match the
-  tag, exact target SHA, or stable published state, it will not overwrite the
+  tag name or stable published state, it will not overwrite the
   record. Stop and have a repository administrator investigate the external
   mutation before rerunning.
 - If a concurrent run creates the same valid release, the losing run verifies
@@ -168,7 +170,8 @@ bun run build
 bun run test:compat:cli
 ```
 
-The release tests use a fake GitHub CLI boundary and never create a tag,
+The release tests use a fake GitHub CLI boundary and temporary local Git
+repositories to verify tag identity. They never change remote GitHub tags,
 publish a package, or create a GitHub Release. Live DART and hosted-model evals
 remain opt-in evidence for product behavior changes and are not required for
 release-administration-only changes.

@@ -5,7 +5,6 @@ import { pathToFileURL } from "node:url";
 
 const RELEASE_FIELDS = [
   "tagName",
-  "targetCommitish",
   "isDraft",
   "isPrerelease",
   "name",
@@ -29,14 +28,11 @@ function validateInputs({ repository, sourceTag, sourceSha }) {
   }
 }
 
-export function verifyRelease(release, { sourceTag, sourceSha }) {
+// The workflow verifies the tag's peeled commit before calling this helper.
+// GitHub's targetCommitish metadata may be a branch; it is not tag identity.
+export function verifyRelease(release, { sourceTag }) {
   if (release.tagName !== sourceTag) {
     fail(`GitHub Release tag ${release.tagName ?? "<missing>"} does not match ${sourceTag}.`);
-  }
-  if (release.targetCommitish !== sourceSha) {
-    fail(
-      `GitHub Release target ${release.targetCommitish ?? "<missing>"} does not match ${sourceSha}.`,
-    );
   }
   if (release.isDraft !== false) {
     fail(`GitHub Release ${sourceTag} must be published, not draft.`);
@@ -84,7 +80,7 @@ export function completeGitHubRelease(
   runGh,
 ) {
   validateInputs({ repository, sourceTag, sourceSha });
-  const expected = { sourceTag, sourceSha };
+  const expected = { sourceTag };
   const viewArgs = [
     "release",
     "view",
