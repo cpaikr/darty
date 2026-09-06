@@ -10,11 +10,10 @@ Release without overwriting an existing release.
 
 ## Current state
 
-Implemented in [PR #24](https://github.com/cpaikr/darty/pull/24), initially
-merged into its temporary integration branch and now integrated on `dev`.
-Promotion to `main` remains separate; until then, the default branch retains
-the previous release automation. The implementation removes the Release Please
-workflow, configuration, manifest,
+Implemented in [PR #24](https://github.com/cpaikr/darty/pull/24) and integrated
+with Linux-only automatic CI and the project skill setup for promotion to
+`main`. The implementation removes the Release Please workflow, configuration,
+manifest,
 credential dependency, and active ownership references. The retained
 `.github/workflows/release.yml` now resolves a real `vx.y.z` tag to immutable
 source, requires successful CI for that exact `main` commit, reconciles the tag
@@ -116,5 +115,4 @@ weakened release gate or accidental candidate publication.
 
 ## Next action
 
-Implementation and its original PR delivery are complete. Promote the validated
-`dev` integration to `main` through a separately authorized delivery step.
+_None — implementation and integration complete._
