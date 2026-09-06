@@ -52,10 +52,12 @@ not add placeholder build, lint, or format commands.
 ## Release and Publishing
 
 - Read `docs/release.md` before release work.
-- Release Please owns normal version bumps and `CHANGELOG.md`; do not edit them
-  manually except for the documented fallback.
-- Use Conventional Commits and follow the version/tag semantics in
-  `docs/release.md`.
+- Prepare releases through reviewed `package.json` version commits, then use
+  the explicit source-tag procedure in `docs/release.md` only after exact-commit
+  CI succeeds. Do not move or reuse a release tag.
+- Keep `CHANGELOG.md` as release history through `v0.5.0`. GitHub generated
+  release notes own later release summaries; do not maintain a second
+  changelog line.
 - The current release workflow publishes only the TypeScript npm product. The
   Rust candidate must not be published or described as supported before the
   active plan's cutover gates are complete and `docs/release.md` is updated.

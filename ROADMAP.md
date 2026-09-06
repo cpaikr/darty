@@ -22,5 +22,4 @@ _None._
 - [Make DART industry codes discoverable](tasks/discover-industry-codes.md)
 - [Support XBRL views](tasks/support-xbrl-views.md)
 - [Improve large report content windows](tasks/improve-large-report-content-windows.md)
-- [Repair the Release Please credential](tasks/repair-release-please-token.md)
 - [Repair disclosure-type provenance](tasks/repair-disclosure-type-provenance.md)

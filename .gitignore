@@ -7,3 +7,8 @@ target/
 .env
 .env.local
 .env.*.local
+
+# sjskills.toml owns project skill selection; these are local generated state.
+/.agents/skills/
+/.claude/skills/
+/.sjskills/
