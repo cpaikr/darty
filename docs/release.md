@@ -90,13 +90,20 @@ The Release workflow performs these gates in order:
 2. Recheck the tag, install the frozen dependency graph, audit high-severity
    dependencies, validate DART wire authority, typecheck, test, build, check the
    CLI v1 compatibility corpus, and prove mutation sensitivity.
-3. Recheck the tag again, rebuild the shipped TypeScript package, and publish
+3. Pack the validated build once with pinned npm, inspect the package member
+   allowlist and required exports, and record SHA-256 and SHA-512 digests.
+   Pass that archive to the shared clean-consumer matrix. Each consumer verifies
+   its digest and source version, installs it with npm, checks the installed bin
+   and toolset export, and runs the full CLI v1 compatibility corpus.
+4. Recheck the tag again, download the certified archive, verify its digest and
+   source identity, and publish that exact tarball with lifecycle scripts disabled
    through npm trusted publishing. Publish only when the registry returns a
    definite missing-version response and the existing public package identity
    is independently verified. If the exact version exists, compare its
-   registry integrity with a dry-run pack of the validated source and skip only
-   when the package bytes match.
-4. After npm succeeds or is verified already present, recheck that the remote
+   registry integrity with the certified archive digest and skip only
+   when the package bytes match. After a new publication, read back registry
+   version and integrity before allowing GitHub Release completion.
+5. After npm succeeds or is verified already present, recheck that the remote
    tag's peeled commit equals the validated source SHA immediately before
    GitHub Release completion. Create a published stable
    release with generated notes only when none exists. Otherwise verify the
@@ -113,15 +120,34 @@ settings.
 Pull requests and pushes to either branch run `CI`. Successful `dev` validation
 does not replace the exact-commit `main` CI evidence required for a release.
 
-Automatic workflows use `blacksmith-2vcpu-ubuntu-2404` (Linux x86_64) to limit
-CI costs. macOS, Windows, and ARM jobs must remain manual-only.
+All GitHub Actions jobs run on Linux. Ordinary validation and development-branch
+consumer checks use Linux x86_64 on `blacksmith-2vcpu-ubuntu-2404`. Pull requests
+targeting `main` and every release also certify Linux ARM64. Both architectures
+check Node 22.12.0 and 24. The shared
+[`package-consumer.yml`](../.github/workflows/package-consumer.yml) owns this
+matrix. Post-merge pushes retain Linux x86_64 validation and exact-SHA CI
+evidence without repeating ARM64 checks.
 
-The [Candidate package (manual) workflow](../.github/workflows/candidate-package.yml)
-is the retained exception: an opt-in Darwin ARM64 packaging and CLI
-compatibility check on `blacksmith-6vcpu-macos-15`. Once the workflow exists on
-the default branch, select it in GitHub Actions and use **Run workflow** for
-the desired branch. It publishes nothing and is not a release prerequisite.
-Any future cross-platform artifact workflow must also be manual-only.
+Project policy explicitly excludes macOS and Windows CI, including manual
+workflows, even when distributing software for those platforms. This overrides
+mytech's full supported-platform verification preference. The platform-neutral
+npm package remains available on macOS and Windows, but publication does not
+claim automated verification on those systems. Linux uses 2-vCPU Blacksmith
+runners. The first remote run must establish hosted Linux evidence.
+
+npm remains the supported installation and durable versioned artifact channel
+for the shipped TypeScript package. Following krx-cli's build-once archive
+handoff, consumers install the exact `.tgz` that publication sends to npm;
+temporary Actions artifacts are only handoff storage. Darty retains
+package-manager delivery rather than introducing a standalone binary/installer
+before the Rust cutover. Future native publication must account for this
+Linux-only CI policy separately; no Rust candidate artifacts enter this
+workflow.
+
+Candidate packaging remains a local, opt-in check using
+`node scripts/test-rust-candidate.mjs` after the candidate builds described in
+the script's preconditions. It publishes nothing and is not a release
+prerequisite.
 
 ## Dependency audit policy
 
@@ -136,8 +162,8 @@ and verify frozen installation plus the audit after every change.
 
 - If validation fails before npm publication, do not move the tag. Fix the
   problem through a newly reviewed package version and a new source tag.
-- If npm published but GitHub Release completion failed, manually dispatch the
-  Release workflow with the same existing tag. The npm step verifies and skips
+- If npm published but registry readback or GitHub Release completion failed,
+  manually dispatch the Release workflow with the same existing tag. The npm step verifies and skips
   the byte-identical published version, then the final job creates or verifies
   the release.
 - If npm lookup fails for authentication, registry, or transport reasons, the
@@ -168,7 +194,12 @@ bun run typecheck
 bun test
 bun run build
 bun run test:compat:cli
+bun run test:package
 ```
+
+`bun run test:package` builds and packs locally, then installs the archive in a
+temporary clean npm project and verifies the installed CLI and toolset. It
+requires registry access for runtime dependencies and publishes nothing.
 
 The release tests use a fake GitHub CLI boundary and temporary local Git
 repositories to verify tag identity. They never change remote GitHub tags,

@@ -14,17 +14,36 @@ Pi 어댑터나 Pi 전용 패키지 export는 제공하지 않습니다.
 
 ## 설치
 
+Node.js 22.12.0 이상과 npm이 필요합니다. CLI 사용에는 Bun이나 저장소 복제가
+필요하지 않습니다.
+
+터미널 어디서나 `darty` 명령을 사용하려면 전역으로 설치하세요.
+
+```bash
+npm install --global @sjunepark/darty@latest
+darty --help
+```
+
+전역 설치 없이 한 번 실행하려면 `npx`를 사용하세요.
+
+```bash
+npx --yes @sjunepark/darty@latest --help
+npx --yes @sjunepark/darty@latest search-company --company-name 삼성전자
+```
+
+전역 설치한 CLI를 최신 버전으로 갱신하려면 설치 명령을 다시 실행하세요.
+
+```bash
+npm install --global @sjunepark/darty@latest
+```
+
+JS/TS 서버에서 toolset을 사용하려면 해당 프로젝트에 의존성으로 설치하세요.
+
 ```bash
 npm install @sjunepark/darty
 ```
 
-CLI를 바로 실행하려면 다음처럼 사용할 수 있습니다.
-
-```bash
-npx @sjunepark/darty --help
-```
-
-npm/npx 환경에서는 Node.js 22.12.0 이상이 필요합니다. 이 저장소의 개발, 테스트, 빌드는 Bun을 사용합니다.
+저장소 개발, 테스트, 빌드는 Bun을 사용합니다.
 
 ## CLI
 

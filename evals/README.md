@@ -64,7 +64,7 @@ opt-in manual/readiness check and is never a credential-free CI requirement.
 
 Required branch CI runs the wire lock, TypeScript typecheck/tests/build, full
 CLI judge and mutation proof, and Rust checks. Candidate package acceptance
-is manual-only under the [CI runner policy](../docs/release.md#ci-runner-policy).
+is a local opt-in check under the [CI runner policy](../docs/release.md#ci-runner-policy).
 Live/model evals remain manual. Run the default-model agent eval and the
 research workflow eval before release-readiness signoff when changing CLI
 contracts, the eval harness, or answer-quality prompts. A passing workflow

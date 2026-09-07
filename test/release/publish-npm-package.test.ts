@@ -5,6 +5,8 @@ import { completeNpmPublication } from "../../scripts/publish-npm-package.mjs";
 const input = {
   packageName: "@sjunepark/darty",
   packageVersion: "0.6.0",
+  tarball: "/verified/darty.tgz",
+  integrity: "sha512-release-integrity",
 };
 const integrity = "sha512-release-integrity";
 const success = (value: unknown = "") => ({
@@ -22,7 +24,6 @@ describe("completeNpmPublication", () => {
   test("verifies matching immutable package bytes without publishing", () => {
     const responses = [
       success({ version: input.packageVersion, "dist.integrity": integrity }),
-      success([{ integrity }]),
     ];
     const calls: string[][] = [];
     const result = completeNpmPublication(input, (args) => {
@@ -31,14 +32,12 @@ describe("completeNpmPublication", () => {
     });
 
     expect(result).toEqual({ disposition: "verified", integrity });
-    expect(calls).toHaveLength(2);
-    expect(calls[1]).toEqual(["pack", "--ignore-scripts", "--dry-run", "--json"]);
+    expect(calls).toHaveLength(1);
   });
 
   test("refuses an existing version with different package bytes", () => {
     const responses = [
-      success({ version: input.packageVersion, "dist.integrity": integrity }),
-      success([{ integrity: "sha512-different" }]),
+      success({ version: input.packageVersion, "dist.integrity": "sha512-different" }),
     ];
 
     expect(() =>
@@ -51,6 +50,7 @@ describe("completeNpmPublication", () => {
       failure("E404"),
       success(JSON.stringify(input.packageName)),
       success(),
+      success({ version: input.packageVersion, "dist.integrity": integrity }),
     ];
     const calls: string[][] = [];
     const result = completeNpmPublication(input, (args) => {
@@ -59,7 +59,7 @@ describe("completeNpmPublication", () => {
     });
 
     expect(result).toEqual({ disposition: "published" });
-    expect(calls[2]).toEqual(["publish", "--access", "public"]);
+    expect(calls[2]).toEqual(["publish", input.tarball, "--ignore-scripts", "--access", "public"]);
   });
 
   test.each(["E401", "E500", "EAI_AGAIN"]) (
@@ -92,6 +92,16 @@ describe("completeNpmPublication", () => {
     expect(() =>
       completeNpmPublication(input, () => responses.shift()!),
     ).toThrow("Could not publish");
+  });
+
+  test("does not complete when publication readback differs from the certified archive", () => {
+    const responses = [
+      failure("E404"),
+      success(JSON.stringify(input.packageName)),
+      success(),
+      success({ version: input.packageVersion, "dist.integrity": "sha512-wrong" }),
+    ];
+    expect(() => completeNpmPublication(input, () => responses.shift()!)).toThrow("registry identity or integrity differs");
   });
 
   test("rejects prerelease and leading-zero versions before registry access", () => {

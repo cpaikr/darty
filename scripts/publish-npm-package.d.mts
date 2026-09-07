@@ -1,6 +1,8 @@
 export interface NpmPublicationInput {
   packageName: string;
   packageVersion: string;
+  tarball: string;
+  integrity: string;
 }
 
 export interface NpmResult {

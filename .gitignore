@@ -12,3 +12,5 @@ target/
 /.agents/skills/
 /.claude/skills/
 /.sjskills/
+
+/release-artifact/

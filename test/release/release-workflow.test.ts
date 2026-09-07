@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dir, "../..");
@@ -53,5 +53,42 @@ describe("release authority", () => {
     expect(metadataJob).toContain(
       'if [[ ! "$SOURCE_TAG" =~ ^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$ ]]',
     );
+  });
+});
+
+describe("certified archive delivery", () => {
+  test("publishes the downloaded archive only after consumer certification", () => {
+    const publish = workflow.slice(workflow.indexOf("  publish:"), workflow.indexOf("  github_release:"));
+    expect(publish).toContain("      - consume");
+    expect(publish).toContain("name: darty-package");
+    expect(publish).toContain("--artifact release-artifact");
+    expect(publish).not.toMatch(/bun run build|bun install|setup-bun/);
+    expect(workflow).toContain("linux_arm64: true");
+  });
+
+  test("uses the shared consumer matrix for main PRs and releases", () => {
+    const ci = read(".github/workflows/ci.yml");
+    const consumer = read(".github/workflows/package-consumer.yml");
+    expect(ci).toContain("github.event_name == 'pull_request' && github.base_ref == 'main'");
+    for (const runner of ["blacksmith-2vcpu-ubuntu-2404", "blacksmith-2vcpu-ubuntu-2404-arm"]) expect(consumer).toContain(runner);
+    expect(consumer).toContain("['22.12.0', '24']");
+    expect(consumer).toContain("node scripts/release-artifact.mjs consume release-artifact");
+  });
+
+  test("keeps every workflow free of macOS and Windows runners", () => {
+    for (const name of readdirSync(resolve(repositoryRoot, ".github/workflows"))) {
+      if (!/\.ya?ml$/.test(name)) continue;
+      const inspect = (value: unknown): void => {
+        if (!value || typeof value !== "object") return;
+        for (const [key, child] of Object.entries(value)) {
+          // Platform asset names are allowed; execution runners must stay Linux.
+          if (key === "runs-on" || key === "runner") {
+            expect(JSON.stringify(child)).not.toMatch(/macos|windows/i);
+          }
+          inspect(child);
+        }
+      };
+      inspect(Bun.YAML.parse(read(`.github/workflows/${name}`)));
+    }
   });
 });

@@ -1,0 +1,39 @@
+name: Package consumer
+
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        required: true
+        type: string
+      linux_arm64:
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  consume:
+    name: Consume / ${{ matrix.runner }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ${{ inputs.linux_arm64 && fromJSON('["blacksmith-2vcpu-ubuntu-2404", "blacksmith-2vcpu-ubuntu-2404-arm"]') || fromJSON('["blacksmith-2vcpu-ubuntu-2404"]') }}
+        node: ['22.12.0', '24']
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: darty-package
+          path: release-artifact
+      - name: Certify the exact archive in a clean npm consumer
+        run: node scripts/release-artifact.mjs consume release-artifact
