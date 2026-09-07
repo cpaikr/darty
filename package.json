@@ -8,24 +8,6 @@
     "type": "git",
     "url": "git+https://github.com/cpaikr/darty.git"
   },
-  "bin": {
-    "darty": "dist/cli.js"
-  },
-  "exports": {
-    "./toolset": {
-      "types": "./dist/toolset.d.ts",
-      "import": "./dist/toolset.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE.md"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
   "overrides": {
     "nanoid": "3.3.18",
     "postcss": "8.5.26",
@@ -36,12 +18,9 @@
   },
   "scripts": {
     "build": "bun run scripts/build-cli.ts",
-    "prepack": "bun run build",
-    "prepublishOnly": "bun run typecheck && bun test",
     "env:check": "varlock load",
     "check:axi": "bun run scripts/check-axi-upstream.ts",
     "check:dart-wire": "bun run scripts/check-dart-wire.mjs && bun run scripts/check-dart-fixture-conformance.ts",
-    "test:package": "bun run build && node scripts/release-artifact.mjs pack release-artifact && node scripts/release-artifact.mjs consume release-artifact",
     "check:release": "bun test test/release",
     "eval:search-body:cli": "bun run evals/search-body/cli/run-eval.ts",
     "eval:search-body:agent:cli": "varlock run -- bun run evals/search-body/agent-cli/run-eval.ts",
@@ -54,7 +33,8 @@
     "test:compat:cli": "bun run build && node scripts/judge-cli-v1.mjs --profile full -- node dist/cli.js",
     "test:compat:cli:mutation": "bun run build && node scripts/prove-cli-v1-mutation.mjs",
     "test:live": "LIVE_DART_TESTS=1 bun test",
-    "search": "bun run src/cli.ts search-body"
+    "search": "bun run src/cli.ts search-body",
+    "test:standalone": "node scripts/standalone.mjs check-host"
   },
   "dependencies": {
     "@effect/platform": "^0.91.0",
@@ -70,5 +50,6 @@
     "@types/sanitize-html": "^2.16.1",
     "typescript": "^5.9.0",
     "varlock": "^0.9.0"
-  }
+  },
+  "private": true
 }

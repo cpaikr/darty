@@ -1,62 +1,59 @@
 # Release
 
-This repository publishes the shipped TypeScript npm package
-`@sjunepark/darty`, including its Node-based `darty` CLI. A reviewed
-`package.json` version commit and an explicit matching source tag authorize the
-single Release workflow. The retained Rust/Node/CLI candidate is unpublished
-and outside this flow.
+Darty's release pipeline distributes the TypeScript CLI as standalone executables
+with an embedded Bun runtime through **private GitHub Releases**. Consumers need
+no Node.js, npm, Bun, source checkout, or GitHub CLI. npm publication is retired;
+the root `package.json` is private and remains the development dependency and
+version authority. The incomplete Rust/Node candidate is not published.
 
-## Manual prerequisites
+[Standalone delivery status](../plans/standalone-cli-delivery.md) owns first-release
+readiness. [README installation](../README.md#설치) owns consumer instructions.
 
-Configure npm trusted publishing for `@sjunepark/darty` with GitHub Actions,
-repository `cpaikr/darty`, and workflow `release.yml`. Publishing uses OIDC, so
-no npm token or long-lived GitHub credential is required.
+## Targets and verification
 
-Branch protection and rulesets are unavailable for the current private-repo
-account plan. Repository workflows therefore fail closed on exact source
-identity: a release tag must resolve to a commit on `main` with a successful
-`CI` push run for that exact SHA. If branch protection becomes available,
-require `CI / validate` as defense in depth.
+[`scripts/release-targets.json`](../scripts/release-targets.json) owns target IDs,
+compiler targets, executable names, and Linux consumer runners. Versioned archives
+contain only the executable and `LICENSE.md`. Releases also contain `install.sh`,
+`install.ps1`, `SHA256SUMS`, and a source-bound `release-manifest.json`.
 
-GitHub immutable releases are disabled for this repository. The workflow
-resolves the actual tag to the validated commit immediately before release
-completion, refuses to edit or replace an existing release, and verifies its
-tag name, published stable state, title, release notes, and public URL. GitHub's
-`targetCommitish` metadata may be a branch name and is not tag identity.
-Repository administrators can still mutate release records outside
-the workflow; enabling immutable releases later would strengthen this external
-boundary without changing the flow.
+All CI jobs, **including release builds**, run on Linux. The pinned Bun compiler
+cross-builds Linux GNU x64/ARM64, macOS ARM64, and Windows x64. Only Linux archives
+receive automated runtime certification. macOS and Windows are cross-built and
+checked for binary format/architecture, but their manifest entries explicitly set
+`runtimeCertified: false`. This owner-selected policy overrides mytech's default
+of testing every distributed platform. Linux GNU archives do not target Alpine/musl.
 
-## Version selection
+Each Linux consumer downloads the exact archive, verifies its checksum, installs
+it through the published installer, and checks the installed executable digest.
+It runs CLI v1 parity with an empty PATH so Node, npm, and Bun cannot supply a
+runtime, and verifies failed-checksum recovery. Runtime config autoloading is
+disabled in the compiler so the installed CLI does not read a nearby Bun config,
+package manifest, tsconfig, or `.env` file.
 
-`package.json` is the shipped package's version authority. For the current
-pre-1.0 line:
+Ordinary CI certifies Linux x64. Main-targeting PRs and release/candidate runs
+build every target and certify both Linux architectures. Post-merge CI keeps the
+Linux x64 gate without repeating ARM64. The Rust candidate's existing Linux
+checks remain separate. No manual macOS or Windows jobs exist.
 
-- backward-compatible `feat:` and `fix:` changes advance the patch version;
-- a public-contract break marked with `!` or a `BREAKING CHANGE:` footer
-  advances the minor version; and
-- non-user-facing documentation, test, refactor, build, and maintenance work
-  does not require a release by itself.
+## Version preparation and authority
 
-Assess the actual CLI, package, toolset, runtime, and support-policy diff rather
-than relying only on commit prefixes. `CHANGELOG.md` is retained as generated
-history through `v0.5.0`; GitHub generated release notes own later summaries.
-Do not update both.
+An operator owns the reviewed version change and source tag; CI owns archive
+certification and GitHub publication. For the pre-1.0 line, compatible features
+and fixes advance patch, and public-contract breaks advance minor. Assess the
+actual contract rather than commit prefixes. Retiring npm/toolset distribution
+requires a new minor version for the first standalone release. Historical npm
+versions and GitHub releases remain untouched.
 
-Version `x.y.z` uses source tag `vx.y.z`. A version is never inferred from a
-tag, and a release tag must never be moved or reused.
+`package.json` owns `x.y.z`; its source tag is `vx.y.z`. A tag must identify an
+exact `main` commit with successful `CI` push evidence. Do not infer a version
+from a tag, move a tag, or reuse a published version. `CHANGELOG.md` remains
+history through `v0.5.0`; GitHub generated notes own subsequent release summaries.
 
-## Prepare and authorize a release
-
-1. Choose the next version from the policy above. Update only the reviewed
-   package version authority and any lockfile field that the package manager
-   actually derives from it.
-2. Land that version change on `main` through normal review, using a commit such
-   as `chore(release): prepare v0.5.1`.
-3. Wait for `CI` to succeed for that exact `main` SHA. A later `main` commit
-   requires its own successful CI evidence before it can be tagged.
-4. Resolve the reviewed version and exact remote source, verify that the tag is
-   unused, then create and push only the matching source tag:
+1. Validate the pipeline with a build-only candidate run and review its artifacts.
+2. Prepare and review the version change; land it on `main`.
+3. Wait for `CI` to succeed for that exact `main` SHA.
+4. Fetch the remote source and tags, verify that the matching tag is unused,
+   and explicitly create and push only that source tag:
 
    ```sh
    set -eu
@@ -70,120 +67,51 @@ tag, and a release tag must never be moved or reused.
    git push origin "refs/tags/$SOURCE_TAG"
    ```
 
-   An empty successful `git ls-remote` result establishes that the tag is
-   unused; a network failure or a non-empty result must stop the procedure.
-   Confirm the successful exact-SHA CI run in GitHub before executing the final
-   two commands. Creating or pushing the tag is an explicit release action and
-   is never part of ordinary implementation work.
+   Confirm exact-SHA CI success before the last two commands. A failed remote
+   lookup is not evidence that a tag is unused. Tagging is an explicit release
+   action and is not part of ordinary implementation work.
 
-Pushing the source tag starts `.github/workflows/release.yml`. A manual dispatch is
-only a rerun mechanism for a real, unmoved source tag; it cannot nominate a
-branch or untagged SHA.
+The **Release** workflow also accepts manual dispatch. Leave `tag` empty for a
+candidate run of the selected branch: it builds, certifies, and uploads temporary
+workflow artifacts without creating a tag or GitHub Release. Supply an existing
+source tag only to complete or verify that tagged release.
 
-## Fail-closed workflow
+## Publication and recovery
 
-The Release workflow performs these gates in order:
+The workflow rechecks the remote tag before publication. The publisher validates
+the complete bundle inventory, source/version identity, and every checksum, then
+creates a draft with generated notes. It uploads only missing assets, downloads
+all assets, compares their exact bytes, rechecks the tag, and finally publishes
+the draft. It reads back the published state and downloads the assets again
+before reporting success. Temporary Actions artifacts are handoff storage, not
+the supported installation channel.
 
-1. Resolve the real remote `vx.y.z` tag to immutable source, check out that
-   exact commit, require a successful `CI` push run for the same SHA on `main`,
-   and require `package.json` version equality.
-2. Recheck the tag, install the frozen dependency graph, audit high-severity
-   dependencies, validate DART wire authority, typecheck, test, build, check the
-   CLI v1 compatibility corpus, and prove mutation sensitivity.
-3. Pack the validated build once with pinned npm, inspect the package member
-   allowlist and required exports, and record SHA-256 and SHA-512 digests.
-   Pass that archive to the shared clean-consumer matrix. Each consumer verifies
-   its digest and source version, installs it with npm, checks the installed bin
-   and toolset export, and runs the full CLI v1 compatibility corpus.
-4. Recheck the tag again, download the certified archive, verify its digest and
-   source identity, and publish that exact tarball with lifecycle scripts disabled
-   through npm trusted publishing. Publish only when the registry returns a
-   definite missing-version response and the existing public package identity
-   is independently verified. If the exact version exists, compare its
-   registry integrity with the certified archive digest and skip only
-   when the package bytes match. After a new publication, read back registry
-   version and integrity before allowing GitHub Release completion.
-5. After npm succeeds or is verified already present, recheck that the remote
-   tag's peeled commit equals the validated source SHA immediately before
-   GitHub Release completion. Create a published stable
-   release with generated notes only when none exists. Otherwise verify the
-   existing release's tag name, non-draft/non-prerelease state,
-   non-empty title and notes, and public URL without editing it.
+Only the final job has `contents: write`. npm credentials, OIDC publication
+permissions, and npm lifecycle hooks are not part of this pipeline. The repository
+stays private; downloads require repository access through the authenticated
+GitHub Releases page. Do not place credentials in URLs or installers.
 
-The final job has `contents: write`; npm publication alone has `id-token: write`.
-No workflow step administers pull requests, branches, tags, or repository
-settings.
+GitHub immutable releases are currently disabled. The pipeline never replaces
+existing assets or tags and refuses to alter a published release. Administrators
+can still mutate records outside it; immutability is enforced by the publisher,
+not claimed as a repository setting. Exact-source CI checks remain necessary
+because branch protection is unavailable on the current account plan.
 
-## CI runner policy
+The release operator owns failures and recovery:
 
-`dev` is the development integration branch; `main` is the release source.
-Pull requests and pushes to either branch run `CI`. Successful `dev` validation
-does not replace the exact-commit `main` CI evidence required for a release.
+- Source/validation failures require a reviewed fix and a new version/tag.
+  Infrastructure failures may retry unchanged source.
+- An interrupted upload leaves a draft. Rerun failed jobs to reuse the same
+  bundle; existing assets must match byte-for-byte before missing assets upload.
+- If a rebuild differs from the existing draft, stop and inspect it. The
+  publisher will not replace assets. Prefer reusing the original CI artifact or
+  preparing a new version; do not move the source tag.
+- A published release is verified without mutation. Missing, extra, or differing
+  assets fail verification; corrections require a new version.
+- A moved or deleted tag, uncertain GitHub lookup, or failed asset readback stops
+  completion. Inspect the remaining draft/published state before retrying.
 
-All GitHub Actions jobs run on Linux. Ordinary validation and development-branch
-consumer checks use Linux x86_64 on `blacksmith-2vcpu-ubuntu-2404`. Pull requests
-targeting `main` and every release also certify Linux ARM64. Both architectures
-check Node 22.12.0 and 24. The shared
-[`package-consumer.yml`](../.github/workflows/package-consumer.yml) owns this
-matrix. Post-merge pushes retain Linux x86_64 validation and exact-SHA CI
-evidence without repeating ARM64 checks.
-
-Project policy explicitly excludes macOS and Windows CI, including manual
-workflows, even when distributing software for those platforms. This overrides
-mytech's full supported-platform verification preference. The platform-neutral
-npm package remains available on macOS and Windows, but publication does not
-claim automated verification on those systems. Linux uses 2-vCPU Blacksmith
-runners. The first remote run must establish hosted Linux evidence.
-
-npm remains the supported installation and durable versioned artifact channel
-for the shipped TypeScript package. Following krx-cli's build-once archive
-handoff, consumers install the exact `.tgz` that publication sends to npm;
-temporary Actions artifacts are only handoff storage. Darty retains
-package-manager delivery rather than introducing a standalone binary/installer
-before the Rust cutover. Future native publication must account for this
-Linux-only CI policy separately; no Rust candidate artifacts enter this
-workflow.
-
-Candidate packaging remains a local, opt-in check using
-`node scripts/test-rust-candidate.mjs` after the candidate builds described in
-the script's preconditions. It publishes nothing and is not a release
-prerequisite.
-
-## Dependency audit policy
-
-`bun audit --audit-level=high` is required in CI and tagged validation.
-`package.json` may use narrow Bun `overrides` for vulnerable transitives only
-when the selected releases are compatible with the supported Node engine.
-Treat `package.json` and the lockfile as the exact dependency authority. Remove
-or update an override when the direct dependency graph incorporates the fix,
-and verify frozen installation plus the audit after every change.
-
-## Recovery and idempotent reruns
-
-- If validation fails before npm publication, do not move the tag. Fix the
-  problem through a newly reviewed package version and a new source tag.
-- If npm published but registry readback or GitHub Release completion failed,
-  manually dispatch the Release workflow with the same existing tag. The npm step verifies and skips
-  the byte-identical published version, then the final job creates or verifies
-  the release.
-- If npm lookup fails for authentication, registry, or transport reasons, the
-  workflow stops without attempting publication. Rerun only after the registry
-  is healthy.
-- If the source pack differs from an existing immutable npm version, the
-  workflow stops before GitHub Release completion. Do not overwrite or reuse
-  the version; investigate the publication and prepare a new reviewed version.
-- If the workflow reports that an existing GitHub Release does not match the
-  tag name or stable published state, it will not overwrite the
-  record. Stop and have a repository administrator investigate the external
-  mutation before rerunning.
-- If a concurrent run creates the same valid release, the losing run verifies
-  it and succeeds. Other creation failures remain failures.
-- If the tag was deleted or moved, the workflow fails every identity recheck.
-  Do not recreate or retarget it; prepare a new version.
-
-## Release-safety validation
-
-Before merging release-path changes, run:
+## Local validation
 
 ```sh
 bun install --frozen-lockfile
@@ -194,21 +122,16 @@ bun run typecheck
 bun test
 bun run build
 bun run test:compat:cli
-bun run test:package
+bun run test:standalone
 ```
 
-`bun run test:package` builds and packs locally, then installs the archive in a
-temporary clean npm project and verifies the installed CLI and toolset. It
-requires registry access for runtime dependencies and publishes nothing.
+`build` retains the Node-compatible TypeScript comparison baseline for the Rust
+rewrite; it is not an npm release build. `test:standalone` compiles and certifies
+the current supported Unix host without publishing. Cross-compilation may download
+Bun's target runtime. Unit release tests use fake GitHub responses and temporary
+local files; they never publish or mutate remote tags. Live DART/model evals remain
+opt-in under [evals/README.md](../evals/README.md).
 
-The release tests use a fake GitHub CLI boundary and temporary local Git
-repositories to verify tag identity. They never change remote GitHub tags,
-publish a package, or create a GitHub Release. Live DART and hosted-model evals
-remain opt-in evidence for product behavior changes and are not required for
-release-administration-only changes.
-
-For CLI contract, workflow, eval-harness, or answer-quality changes, select the
-relevant opt-in readiness checks from [`evals/README.md`](../evals/README.md).
-Run `bun run env:check` before any hosted-model check. The default
-`OPENAI_MODEL` is the readiness baseline; overrides remain exploratory unless
-the eval documentation promotes them.
+The dependency audit remains required in CI and tagged validation. Narrow Bun
+`overrides` may resolve vulnerable transitives; validate frozen installation,
+audit, and affected behavior when changing them.

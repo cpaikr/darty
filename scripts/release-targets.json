@@ -1,0 +1,32 @@
+[
+  {
+    "id": "linux-x64-gnu",
+    "os": "linux",
+    "arch": "x64",
+    "bunTarget": "bun-linux-x64-baseline",
+    "executable": "darty",
+    "runner": "blacksmith-2vcpu-ubuntu-2404"
+  },
+  {
+    "id": "linux-arm64-gnu",
+    "os": "linux",
+    "arch": "arm64",
+    "bunTarget": "bun-linux-arm64",
+    "executable": "darty",
+    "runner": "blacksmith-2vcpu-ubuntu-2404-arm"
+  },
+  {
+    "id": "darwin-arm64",
+    "os": "darwin",
+    "arch": "arm64",
+    "bunTarget": "bun-darwin-arm64",
+    "executable": "darty"
+  },
+  {
+    "id": "win32-x64",
+    "os": "win32",
+    "arch": "x64",
+    "bunTarget": "bun-windows-x64-baseline",
+    "executable": "darty.exe"
+  }
+]

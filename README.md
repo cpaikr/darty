@@ -4,50 +4,58 @@
 
 Darty는 DART 공개 웹 화면을 읽기 전용으로 사용합니다. 공식 OpenDART API가 아니며, DART 웹 동작이 바뀌면 결과나 파서가 영향을 받을 수 있습니다.
 
-## 공개 통합 표면
-
-권장 기본 표면은 `darty` CLI입니다. 사람, subprocess를 실행하는 에이전트, Creo desktop처럼 프로세스 경계가 필요한 호스트는 CLI를 사용하세요.
-
-신뢰할 수 있는 JS/TS 서버 호스트는 `@sjunepark/darty/toolset`을 사용할 수 있습니다. 이 표면은 Darty를 같은 서버 런타임 안에서 실행해야 하는 호스트를 위한 transport-neutral 도구 계약입니다.
-
-Pi 어댑터나 Pi 전용 패키지 export는 제공하지 않습니다.
-
 ## 설치
 
-Node.js 22.12.0 이상과 npm이 필요합니다. CLI 사용에는 Bun이나 저장소 복제가
-필요하지 않습니다.
+배포 경로는 [비공개 GitHub Releases](https://github.com/cpaikr/darty/releases)입니다.
+저장소 접근 권한으로 로그인한 뒤 버전별 실행 파일 압축본, `SHA256SUMS`,
+운영체제에 맞는 설치 스크립트를 내려받으세요. Node.js, npm, Bun, 소스 빌드,
+GitHub CLI는 필요하지 않습니다.
 
-터미널 어디서나 `darty` 명령을 사용하려면 전역으로 설치하세요.
+**첫 standalone 릴리스는 아직 게시 전입니다.** 아래 절차는 실행 파일 압축본과
+설치 스크립트가 포함된 릴리스부터 적용됩니다. 이전 npm 배포는 갱신하지 않습니다.
 
-```bash
-npm install --global @sjunepark/darty@latest
-darty --help
+| 실행 환경 | `<target>` | 설치 스크립트 |
+|---|---|---|
+| Linux GNU x64 | `linux-x64-gnu` | `install.sh` |
+| Linux GNU ARM64 | `linux-arm64-gnu` | `install.sh` |
+| macOS Apple Silicon | `darwin-arm64` | `install.sh` |
+| Windows x64 | `win32-x64` | `install.ps1` |
+
+모든 실행 파일은 Linux에서 빌드합니다. CI 실행 검증은 Linux에서만 수행하며,
+macOS와 Windows 압축본은 교차 빌드 결과입니다. Linux 압축본은 Alpine/musl용이 아닙니다.
+
+macOS/Linux에서는 같은 릴리스의 `darty-<version>-<target>.tar.gz`,
+`SHA256SUMS`, `install.sh`를 같은 폴더에 내려받은 뒤 실행하세요.
+
+```sh
+sh install.sh "darty-<version>-<target>.tar.gz" SHA256SUMS
+"$HOME/.local/bin/darty" --help
 ```
 
-전역 설치 없이 한 번 실행하려면 `npx`를 사용하세요.
+`<version>`과 `<target>`을 내려받은 파일 이름에 맞게 바꾸세요. 설치 스크립트는
+현재 운영체제와 아키텍처를 확인하고 SHA-256을 검증한 뒤 실행 파일을 설치합니다.
+`$HOME/.local/bin`을 `PATH`에 추가하면 어디서나 `darty`로 실행할 수 있습니다.
+세 번째 인자로 다른 설치 디렉터리를 지정할 수 있습니다.
 
-```bash
-npx --yes @sjunepark/darty@latest --help
-npx --yes @sjunepark/darty@latest search-company --company-name 삼성전자
+Windows에서는 `darty-<version>-win32-x64.tar.gz`, `SHA256SUMS`,
+`install.ps1`을 내려받고 PowerShell에서 실행하세요. Windows의 기본 `tar`를 사용합니다.
+
+```powershell
+.\install.ps1 -Archive ".\darty-<version>-win32-x64.tar.gz" -Checksums ".\SHA256SUMS"
+& "$env:LOCALAPPDATA\darty\bin\darty.exe" --help
 ```
 
-전역 설치한 CLI를 최신 버전으로 갱신하려면 설치 명령을 다시 실행하세요.
+기본 설치 위치는 `%LOCALAPPDATA%\darty\bin`입니다. 이 폴더를 `PATH`에 추가하거나
+`-BinDirectory`로 다른 위치를 지정하세요. 조직의 PowerShell 실행 정책이 스크립트를
+제한한다면 해당 정책에 따라 스크립트를 검토·승인한 뒤 실행하세요.
 
-```bash
-npm install --global @sjunepark/darty@latest
-```
-
-JS/TS 서버에서 toolset을 사용하려면 해당 프로젝트에 의존성으로 설치하세요.
-
-```bash
-npm install @sjunepark/darty
-```
-
-저장소 개발, 테스트, 빌드는 Bun을 사용합니다.
+업데이트도 새 릴리스의 파일들을 내려받아 같은 절차로 설치합니다. 체크섬 검증이나
+새 실행 파일 확인에 실패하면 기존 실행 파일은 교체하지 않습니다. 설치 스크립트와
+체크섬은 반드시 같은 인증된 릴리스에서 받으세요.
 
 ## CLI
 
-기존 `darty` 명령을 계속 제공합니다.
+사람과 에이전트는 같은 `darty` 명령과 JSON 프로세스 계약을 사용합니다.
 
 ```bash
 darty --help
@@ -77,23 +85,6 @@ darty <command> --help
 - `disclosure-types`: 공시상세유형 코드 조회
 - `report-guide`: 필요한 정보가 어떤 DART 보고서에 있는지 안내하는 Markdown 가이드 출력
 - `view-report`: 보고서 목차 또는 본문 조회
-
-## JS/TS 서버 toolset
-
-서버 호스트에서 subprocess wrapper 없이 Darty 기능을 실행해야 한다면 toolset export를 import하세요.
-
-```ts
-import { createDartyToolset } from "@sjunepark/darty/toolset";
-
-const darty = createDartyToolset();
-const validation = darty.validateInput("search-company", { companyName: "삼성전자" });
-
-if (validation.ok) {
-  const result = await darty.execute("search-company", validation.input);
-}
-```
-
-toolset은 명령 discovery/help, 입력 검증, source-owned serialized errors, `AbortSignal` 취소를 제공합니다. 신뢰할 수 없는 플러그인이나 로컬 데스크톱 경계에는 CLI subprocess 계약을 선호하세요.
 
 ## 주의사항
 

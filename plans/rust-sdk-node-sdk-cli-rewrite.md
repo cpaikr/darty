@@ -4,14 +4,16 @@
 
 Darty has one Rust-owned implementation of all eight accepted operations,
 exposed through an idiomatic Rust SDK, an asynchronous Node SDK, and a separate
-Rust `darty` CLI. The root npm package exports the Node SDK and forwards its
-`bin` to platform-native artifacts. The superseded TypeScript conformer and
-`@sjunepark/darty/toolset` are removed in one atomic cutover.
+Rust `darty` CLI. Private GitHub Releases deliver the standalone executable
+without Node/npm; the Node SDK installation projection must be specified before
+publishing it. The superseded TypeScript conformer and source-local toolset are
+removed in one atomic cutover.
 
 ## Current state
 
-Phase 3 is active. The Bun/TypeScript CLI and toolset remain the shipped
-eight-operation product. The retained, unpublished candidate implements the
+Phase 3 is active. The Bun/TypeScript CLI remains the eight-operation
+implementation. Its standalone release pipeline replaces npm delivery separately
+from this rewrite; the toolset remains source-local. The retained, unpublished candidate implements the
 three-operation company-to-report workflow through the Rust SDK, Rust CLI,
 async Node SDK, and a current-host npm packaging proof. See
 [ARCHITECTURE.md](../ARCHITECTURE.md) for the authoritative implementation,
@@ -19,14 +21,14 @@ candidate, and target boundaries.
 
 ## Durable decisions
 
-- Preserve the repository, npm identity, `darty` command, eight operation
+- Preserve the repository, `darty` command, eight operation
   names, and [CLI transport v1](../docs/specs/cli-transport-v1.md).
 - Make the Rust SDK the sole owner of DART request construction, transport,
   bounds, decoding, parsing, normalization, and source failures.
 - Keep the Node-API binding limited to asynchronous runtime translation and
-  Node ergonomics, the Rust CLI as a `clap` executable over the SDK, and the
-  npm launcher as native-artifact selection and process forwarding only.
-- Remove the toolset export at cutover. Pi adapters, MCP servers, and other
+  Node ergonomics and the Rust CLI as a `clap` executable over the SDK. CLI
+  installation must not depend on a Node/npm launcher.
+- Remove the source-local toolset at cutover. Pi adapters, MCP servers, and other
   runtime-specific toolsets are not target products.
 - Treat the OpenAPI document and HTML/viewer companion as wire authority;
   fixtures and observations are evidence.
@@ -37,9 +39,8 @@ candidate, and target boundaries.
   integration needed to make the cutover releasable without performing a
   release.
 - Keep release-administration replacement separate in
-  [the Release Please retirement plan](retire-release-please.md). Phase 4 later
-  extends that plan's single tag-driven release line with the verified native
-  artifacts selected at cutover.
+  [standalone CLI delivery](standalone-cli-delivery.md). Phase 4 replaces the
+  compiled TypeScript executable in that release line with verified Rust artifacts.
 
 ## Completed foundation
 
@@ -110,19 +111,19 @@ The shipped TypeScript entry points remain unchanged at this milestone.
 - Test crates, SDKs, native packages, and CLI as clean external consumers.
 - Verify declarations, cancellation, executable discovery, output bytes and
   exits, licenses, dependency policy, artifact contents, and secret hygiene.
-- Switch root exports and `bin`; remove the TypeScript conformer, toolset,
+- Replace the standalone TypeScript binary with the Rust CLI; remove the conformer, toolset,
   superseded tests/build paths, and unused dependencies in one reviewable
   change with a normal local revert path.
-- Extend the tag-driven release path established by
-  [the Release Please retirement plan](retire-release-please.md) with the
-  selected native packages, GitHub Release assets, checksums, and clean-consumer
-  verification; keep npm as the same versioned release's Node projection.
+- Extend [standalone delivery](standalone-cli-delivery.md) with Rust artifacts
+  and the selected Node SDK projection. Preserve one GitHub Release authority,
+  checksums, Linux-only CI, and runtime-independent CLI installation.
 - Update product, architecture, release, and CI documentation to describe only
   the implemented Rust-backed product and its supported distribution matrix.
 
 Phase 4 exits when one Rust implementation owns all supported source behavior,
-all three target surfaces expose all eight operations, every claimed platform
-passes clean-consumer validation, CLI v1 compatibility holds, and no
+all three target surfaces expose all eight operations, Linux platforms pass
+clean-consumer validation, non-Linux verification limits are explicit, CLI v1
+compatibility holds, and no
 superseded TypeScript/toolset surface remains.
 
 ## Out of scope

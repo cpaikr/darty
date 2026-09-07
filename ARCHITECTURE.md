@@ -9,17 +9,18 @@ destination and delivery order live in [VISION.md](VISION.md) and
 
 | State | Public status | Location | Capability coverage |
 |---|---|---|---|
-| Shipped product | Active `@sjunepark/darty` package | `src/`, root `package.json` | Eight operations through the Node-based CLI; `./toolset` remains supported until cutover |
+| Current implementation | TypeScript CLI; standalone delivery configured, first release pending | `src/`, `scripts/standalone.mjs` | Eight operations through the CLI with an embedded Bun runtime |
+| Historical distribution | Existing npm versions retained, no further publication | Earlier `@sjunepark/darty` releases | Node-based CLI and `./toolset` in those released versions |
 | Rewrite candidate | Retained, reviewed, unpublished | `crates/`, `candidate/npm/` | `search-company`, `search-company-reports`, and `view-report` through Rust SDK, async Node SDK, and Rust CLI |
 | Accepted target | Selected, partially implemented | `VISION.md` | One Rust-owned implementation for all eight operations, exposed through Rust SDK, Node SDK, and CLI |
 
-The candidate does not replace root package exports or `bin`. Its current-host
+The candidate does not replace the standalone TypeScript CLI. Its current-host
 native package proves Darwin ARM64 packaging only; it is not a supported
 platform matrix or release artifact.
 
 ## Repository Map
 
-- [`README.md`](README.md) — installation and usage for the shipped package.
+- [`README.md`](README.md) — standalone CLI installation and usage.
 - [`VISION.md`](VISION.md) — accepted product shape, scope, and non-goals.
 - [`ROADMAP.md`](ROADMAP.md) and [`plans/`](plans/) — delivery status, remaining
   work, and next action.
@@ -31,6 +32,9 @@ platform matrix or release artifact.
   implementation status.
 - [`docs/learning/`](docs/learning/INDEX.md) — a short onboarding route to the
   canonical documents and code.
+- [`scripts/standalone.mjs`](scripts/standalone.mjs) and
+  [`release-targets.json`](scripts/release-targets.json) — cross-builds, archives,
+  installation certification, and release inventory; operations remain in `src/`.
 - [`src/`](src/ARCHITECTURE.md) — active Bun/TypeScript implementation and
   deterministic tests.
 - `crates/darty` — retained Rust SDK candidate and sole candidate DART conformer.
@@ -44,12 +48,12 @@ platform matrix or release artifact.
   CLI compatibility corpus.
 - [`evals/`](evals/README.md) — opt-in live and model-in-the-loop task checks.
 
-## Current TypeScript Product
+## Current TypeScript Implementation
 
 The active product has four layers:
 
 ```text
-CLI or ./toolset
+CLI or source-local toolset
       -> src/app composition
       -> src/capabilities semantic contracts and execution
       -> src/sources/dart request, transport, parsing, and source errors
@@ -83,15 +87,22 @@ authorities.
 
 ## Target Boundary
 
-At cutover, all eight accepted operations move behind the Rust SDK; the root
-npm export becomes the Node SDK; the npm `darty` bin becomes a forwarding-only
-launcher for the Rust CLI; and the TypeScript conformer plus `./toolset` are
-removed. Until then, the shipped and candidate states above must remain visibly
-separate.
+The current release pipeline cross-compiles `src/cli.ts` with Bun into native
+executables and publishes private GitHub Release archives. The Bun runtime is
+embedded; no external JS runtime is part of CLI installation. The root package
+is private. `bun run build` still produces the Node-compatible comparison
+baseline and source-local toolset modules for rewrite validation, not npm delivery.
+
+At cutover, all eight operations move behind the Rust SDK and its CLI replaces
+the compiled TypeScript executable through the same standalone release channel.
+The Node SDK remains a target surface; its independent installation projection
+must be specified and verified before it is published. CLI installation must
+remain independent of Node/npm. The TypeScript conformer and source-local toolset
+are removed only when the full rewrite passes its cutover gates.
 
 ## Documentation Invariants
 
-- README describes only the shipped package.
+- README distinguishes available release artifacts from pending delivery.
 - Architecture records implementation topology and status, not delivery order.
 - Vision records the selected destination, not completion claims.
 - Roadmap and the active plan own progress and next actions.

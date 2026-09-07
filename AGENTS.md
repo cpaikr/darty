@@ -25,7 +25,8 @@
 - Validate DART wire authority: `bun run check:dart-wire`
 - Typecheck: `bun run typecheck`
 - Test the TypeScript product: `bun test`
-- Build the shipped npm CLI: `bun run build`
+- Build the TypeScript comparison baseline: `bun run build`
+- Check local standalone installation: `bun run test:standalone`
 - Check CLI v1 compatibility: `bun run test:compat:cli`
 - Run live tests: `bun run test:live`
 - Manually search: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
@@ -37,7 +38,7 @@ not add placeholder build, lint, or format commands.
 
 ## Document Ownership
 
-- Shipped package usage: `README.md`
+- CLI installation and usage: `README.md`
 - Product scope, target surfaces, and non-goals: `VISION.md`
 - Repository topology and implementation status: `ARCHITECTURE.md`
 - Source implementation details: `src/ARCHITECTURE.md`
@@ -58,8 +59,9 @@ not add placeholder build, lint, or format commands.
 - Keep `CHANGELOG.md` as release history through `v0.5.0`. GitHub generated
   release notes own later release summaries; do not maintain a second
   changelog line.
-- The current release workflow publishes only the TypeScript npm product. The
-  Rust candidate must not be published or described as supported before the
+- Release standalone TypeScript CLI archives through private GitHub Releases;
+  npm publishing is retired. All CI jobs, including cross-builds, stay on Linux.
+  The Rust candidate must not be published or described as supported before the
   active plan's cutover gates are complete and `docs/release.md` is updated.
 
 ## Working Rules

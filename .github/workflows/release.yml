@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing source tag to publish, for example v0.2.1"
-        required: true
+        description: "Existing source tag to publish; leave empty for a build-only candidate run"
+        required: false
         type: string
 
 permissions:
@@ -23,8 +23,6 @@ jobs:
   metadata:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
-      package_name: ${{ steps.package.outputs.package_name }}
-      package_version: ${{ steps.package.outputs.package_version }}
       source_tag: ${{ steps.source.outputs.source_tag }}
       source_sha: ${{ steps.source.outputs.source_sha }}
 
@@ -42,8 +40,15 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           DISPATCH_TAG: ${{ inputs.tag }}
           EVENT_REF: ${{ github.ref }}
+          CANDIDATE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -z "$DISPATCH_TAG" ]; then
+            echo "source_tag=" >> "$GITHUB_OUTPUT"
+            echo "source_sha=$CANDIDATE_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             SOURCE_TAG="$DISPATCH_TAG"
@@ -93,6 +98,7 @@ jobs:
         run: git checkout --detach "$SOURCE_SHA"
 
       - name: Require successful CI for exact source commit
+        if: steps.source.outputs.source_tag != ''
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -117,18 +123,16 @@ jobs:
         env:
           SOURCE_TAG: ${{ steps.source.outputs.source_tag }}
         run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
-          if [ "$SOURCE_TAG" != "v$PACKAGE_VERSION" ]; then
+          if [ -n "$SOURCE_TAG" ] && [ "$SOURCE_TAG" != "v$PACKAGE_VERSION" ]; then
             echo "Tag $SOURCE_TAG does not match package version v$PACKAGE_VERSION." >&2
             exit 1
           fi
 
-          echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
           echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
-  npm_validation:
+  validation:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     needs: metadata
 
@@ -139,6 +143,7 @@ jobs:
           ref: ${{ needs.metadata.outputs.source_sha }}
 
       - name: Verify source tag still resolves to immutable source
+        if: needs.metadata.outputs.source_tag != ''
         shell: bash
         env:
           SOURCE_TAG: ${{ needs.metadata.outputs.source_tag }}
@@ -182,7 +187,7 @@ jobs:
       - name: Test
         run: bun test
 
-      - name: Build npm CLI bundle
+      - name: Build TypeScript comparison baseline
         run: bun run build
 
       - name: Check CLI v1 compatibility baseline
@@ -191,92 +196,19 @@ jobs:
       - name: Prove CLI parity mutation sensitivity
         run: node scripts/prove-cli-v1-mutation.mjs
 
-      - name: Pin the archive producer
-        run: npm install --global npm@11.6.2
-
-      - name: Pack the release artifact once
-        run: node scripts/release-artifact.mjs pack release-artifact
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: darty-package
-          path: release-artifact/*
-          if-no-files-found: error
-          retention-days: 14
-
-  consume:
-    needs: [metadata, npm_validation]
-    uses: ./.github/workflows/package-consumer.yml
+  standalone:
+    needs: [metadata, validation]
+    uses: ./.github/workflows/standalone.yml
     with:
       source_sha: ${{ needs.metadata.outputs.source_sha }}
-      linux_arm64: true
-
-  publish:
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    needs:
-      - metadata
-      - consume
-    permissions:
-      contents: read
-      id-token: write
-    env:
-      PACKAGE_NAME: ${{ needs.metadata.outputs.package_name }}
-      PACKAGE_VERSION: ${{ needs.metadata.outputs.package_version }}
-
-    steps:
-      - name: Check out source
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          ref: ${{ needs.metadata.outputs.source_sha }}
-
-      - name: Verify source tag still resolves to immutable source
-        shell: bash
-        env:
-          SOURCE_TAG: ${{ needs.metadata.outputs.source_tag }}
-          SOURCE_SHA: ${{ needs.metadata.outputs.source_sha }}
-        run: |
-          set -euo pipefail
-          TAG_REF="refs/tags/$SOURCE_TAG"
-          if ! git ls-remote --exit-code --refs origin "$TAG_REF" >/dev/null; then
-            echo "Source tag $TAG_REF no longer exists." >&2
-            exit 1
-          fi
-          git fetch --force --no-tags origin "$TAG_REF:$TAG_REF"
-          RESOLVED_SHA="$(git rev-parse --verify "${TAG_REF}^{commit}")"
-          if [ "$RESOLVED_SHA" != "$SOURCE_SHA" ]; then
-            echo "Tag $TAG_REF resolved to $RESOLVED_SHA, expected $SOURCE_SHA." >&2
-            exit 1
-          fi
-
-      - name: Set up Node for npm publishing
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          package-manager-cache: false
-
-      - name: Use pinned npm with trusted publishing support
-        run: |
-          npm install --global npm@11.6.2
-          npm --version
-
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
-        with:
-          name: darty-package
-          path: release-artifact
-
-      - name: Publish npm package
-        run: >-
-          node scripts/publish-npm-package.mjs
-          --name "$PACKAGE_NAME"
-          --version "$PACKAGE_VERSION"
-          --artifact release-artifact
+      all_targets: true
 
   github_release:
+    if: needs.metadata.outputs.source_tag != ''
     runs-on: blacksmith-2vcpu-ubuntu-2404
     needs:
       - metadata
-      - publish
+      - standalone
     permissions:
       contents: write
     env:
@@ -289,6 +221,11 @@ jobs:
         with:
           ref: ${{ needs.metadata.outputs.source_sha }}
           fetch-depth: 0
+
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: darty-release
+          path: release-artifact/bundle
 
       - name: Recheck source tag immediately before release completion
         shell: bash
@@ -314,3 +251,4 @@ jobs:
           --repository "$GITHUB_REPOSITORY"
           --tag "$SOURCE_TAG"
           --sha "$SOURCE_SHA"
+          --directory release-artifact/bundle

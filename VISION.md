@@ -52,13 +52,13 @@ argument parsing, help, validation presentation, stdout, stderr, and exit
 behavior while reusing the SDK instead of becoming a second DART
 implementation.
 
-The `@sjunepark/darty` npm package exposes the Node SDK at its root and retains
-the `darty` package `bin` for `npx` and npm consumers. That bin is a tiny
-platform-selection launcher: it selects and executes the packaged Rust CLI but
-owns no argument parsing, help, validation, output shaping, or DART behavior.
-Platform-specific optional packages carry the matching Rust executable and
-Node-API addon. The Rust SDK may therefore be compiled into both artifacts,
-while source and behavior remain single-owned.
+Private GitHub Releases own the versioned standalone CLI archives, checksums,
+and installation path. CLI installation requires no Node.js, npm, source
+checkout, or language toolchain. All release builds and automated checks run on
+Linux; non-Linux binaries are cross-built with their runtime verification limits
+made explicit. Distribution of the Node SDK is separate from CLI installation
+and must be specified before SDK publication; npm registry delivery is not an
+accepted requirement.
 
 Pi adapters, MCP servers, runtime-specific toolsets, and a
 `@sjunepark/darty/toolset` compatibility surface are not target products.
@@ -84,7 +84,8 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - `one conformer`: keep DART wire behavior in the Rust SDK and expose it through the Node SDK and separate Rust CLI without a second protocol implementation
 - `CLI-stable`: preserve the discoverable CLI v1 subprocess contract across the rewrite
 - `SDK-idiomatic`: let Rust and Node callers use language-appropriate APIs while sharing operation semantics, identifiers, references, and failures
-- `launcher-only`: keep the npm bin limited to native artifact selection and process forwarding
+- `standalone installation`: keep CLI delivery independent of Node/npm and share
+  one versioned GitHub Release authority across any future SDK projection
 - `public-read first`: v1 should target read-only access
 
 ## v1 Boundaries

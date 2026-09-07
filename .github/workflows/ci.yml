@@ -43,7 +43,7 @@ jobs:
       - name: Test
         run: bun test
 
-      - name: Build npm CLI bundle
+      - name: Build TypeScript comparison baseline
         run: bun run build
 
       - name: Check CLI v1 compatibility baseline
@@ -52,25 +52,12 @@ jobs:
       - name: Prove CLI parity mutation sensitivity
         run: node scripts/prove-cli-v1-mutation.mjs
 
-      - name: Pin the archive producer
-        run: npm install --global npm@11.6.2
-
-      - name: Pack the release artifact once
-        run: node scripts/release-artifact.mjs pack release-artifact
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: darty-package
-          path: release-artifact/*
-          if-no-files-found: error
-          retention-days: 14
-
-  consume:
+  standalone:
     needs: validate
-    uses: ./.github/workflows/package-consumer.yml
+    uses: ./.github/workflows/standalone.yml
     with:
       source_sha: ${{ github.sha }}
-      linux_arm64: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
+      all_targets: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
 
   rust_candidate:
     name: Rust candidate (1.88)

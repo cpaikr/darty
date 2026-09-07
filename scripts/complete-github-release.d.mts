@@ -5,12 +5,14 @@ export interface ReleaseIdentity {
   name: string;
   body: string;
   url: string;
+  assets: { name: string }[];
 }
 
 export interface ReleaseInput {
   repository: string;
   sourceTag: string;
   sourceSha: string;
+  directory: string;
 }
 
 export interface GhResult {
@@ -20,13 +22,14 @@ export interface GhResult {
 }
 
 export interface CompletionResult {
-  disposition: "verified" | "created" | "verified-after-race";
+  disposition: "verified-or-resumed" | "published";
   release: ReleaseIdentity;
 }
 
 export function verifyRelease(
   release: ReleaseIdentity,
   expected: Pick<ReleaseInput, "sourceTag">,
+  allowDraft?: boolean,
 ): ReleaseIdentity;
 
 export function completeGitHubRelease(

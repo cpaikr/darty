@@ -4,7 +4,8 @@
 
 [Complete the Rust SDK, Node SDK, and CLI rewrite](plans/rust-sdk-node-sdk-cli-rewrite.md)
 
-The shipped TypeScript product supports all eight operations. The retained,
+The TypeScript CLI supports all eight operations. Standalone GitHub Release
+delivery replaces npm separately under the plan below. The retained,
 unpublished Rust/Node/CLI candidate supports the three-operation
 company-to-report workflow. Phase 3—porting the remaining five operations—is
 active. The immediate action is to resolve current viewer-provider drift, then
@@ -14,7 +15,7 @@ cutover.
 
 ## Plans
 
-_None._
+- [Replace npm delivery with standalone CLI releases](plans/standalone-cli-delivery.md)
 
 ## Tasks
 

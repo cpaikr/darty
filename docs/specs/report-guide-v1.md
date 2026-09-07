@@ -23,6 +23,6 @@ live provider.
 [`dart-report-guide.md`](../research/dart-report-guide.md) owns the maintained
 source guide and its source caveat. The TypeScript capability compiles an
 English rendering into code. Its `guidePath` names that repository authoring
-source for provenance; the published npm package does not include the Markdown
-file as a separately readable asset. The port must preserve the public content
+source for provenance; the standalone executable does not read the Markdown
+file at runtime or distribute it as a separate asset. The port must preserve the public content
 and provenance contract.

@@ -13,9 +13,9 @@ The source tree implements eight public operations:
   `search-company-reports`, `company-detail`, `company-rss`, and `view-report`;
 - static: `disclosure-types` and `report-guide`.
 
-The active public surfaces are the `darty` CLI and the trusted-host
-`@sjunepark/darty/toolset` export. Both are thin adapters over the same
-capability core. Pi adapters are not supported.
+The distributed surface is the `darty` CLI. The source-local toolset remains
+a comparison adapter for the rewrite, but is no longer exported as an npm
+product. Both reuse the same capability core. Pi adapters are not supported.
 
 ## Layers
 
@@ -110,5 +110,5 @@ HTML, and produces bounded content windows with best-effort Markdown.
 - [`src/app/`](app/) for operation composition.
 - [`src/capabilities/`](capabilities/) for public contracts and behavior.
 - [`src/sources/dart/`](sources/dart/) for DART adapters and shared transport.
-- [`src/cli/`](cli/) and [`src/toolset.ts`](toolset.ts) for public adapters.
+- [`src/cli/`](cli/) and [`src/toolset.ts`](toolset.ts) for CLI and source-local host adapters.
 - [Specification index](../docs/specs/README.md) for stable contracts.
