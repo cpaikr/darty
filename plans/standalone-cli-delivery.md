@@ -33,5 +33,5 @@ resume only matching partial drafts and never overwrite published artifacts.
 
 ## Remaining
 
-First standalone publication remains a separate release action. Do not create a
-release tag as part of this change.
+Publish the first standalone release as v0.6.0 after the version commit passes
+exact-source CI, then verify the published assets and record the release here.
