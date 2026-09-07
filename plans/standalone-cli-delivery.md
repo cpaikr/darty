@@ -1,6 +1,6 @@
 # Standalone CLI release delivery
 
-Status: implementation reviewed; hosted candidate validation passed.
+Status: delivered in [v0.6.0](https://github.com/cpaikr/darty/releases/tag/v0.6.0).
 
 ## Accepted scope
 
@@ -31,7 +31,9 @@ resume only matching partial drafts and never overwrite published artifacts.
   targets cross-built on Linux, both Linux consumers certified, and the release
   bundle verified. Publication was skipped because no source tag was supplied.
 
-## Remaining
+## Publication
 
-Publish the first standalone release as v0.6.0 after the version commit passes
-exact-source CI, then verify the published assets and record the release here.
+[Release run](https://github.com/cpaikr/darty/actions/runs/34106935042) published
+v0.6.0 from `8bac7c9741c3253d11a95e448dfed97f95c30074` after exact-source CI
+passed. All four archives, both installers, checksums, and the manifest were
+verified after publication. GitHub reports v0.6.0 as the latest stable release.
