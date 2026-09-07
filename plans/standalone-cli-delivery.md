@@ -1,6 +1,6 @@
 # Standalone CLI release delivery
 
-Status: implementation reviewed; hosted candidate validation pending.
+Status: implementation reviewed; hosted candidate validation passed.
 
 ## Accepted scope
 
@@ -26,9 +26,12 @@ resume only matching partial drafts and never overwrite published artifacts.
 - Full local suite, audit, typecheck, wire checks, comparison parity, and mutation
   proof passed. Bounded code review found no remaining actionable issues.
 - Reconciled installation, release, architecture, vision, and rewrite-plan docs.
+- Hosted [build-only candidate run](https://github.com/cpaikr/darty/actions/runs/34104759559)
+  passed for source `87d4ae0fac991f9f4e019a9b2d39673e1ce79e9b`: all four
+  targets cross-built on Linux, both Linux consumers certified, and the release
+  bundle verified. Publication was skipped because no source tag was supplied.
 
 ## Remaining
 
-Run the hosted build-only candidate workflow and record Linux cross-build and
-consumer evidence. First standalone publication remains a separate release action. Do not create a release tag as part of
-this change.
+First standalone publication remains a separate release action. Do not create a
+release tag as part of this change.
