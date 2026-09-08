@@ -6,8 +6,9 @@ use std::{
 };
 
 use darty::{
-    DartyClient, DartyError, ErrorCode, SearchCompanyReportsRequest, SearchCompanyRequest,
-    ViewReportRequest,
+    CompanyDetailRequest, CompanyRssRequest, DartyClient, DartyError, DisclosureTypesRequest,
+    ErrorCode, ReportGuideRequest, SearchBodyRequest, SearchCompanyReportsRequest,
+    SearchCompanyRequest, ViewReportRequest,
 };
 use futures_util::FutureExt;
 use serde::Serialize;
@@ -146,22 +147,45 @@ async fn run_operation(
     input_json: String,
 ) -> Result<Value, DartyError> {
     match operation.as_str() {
+        "search-body" => serialize(
+            client
+                .search_body(parse_input::<SearchBodyRequest>(&input_json, &operation)?)
+                .await?,
+        ),
+        "company-detail" => serialize(
+            client
+                .company_detail(parse_input::<CompanyDetailRequest>(
+                    &input_json,
+                    &operation,
+                )?)
+                .await?,
+        ),
+        "company-rss" => serialize(
+            client
+                .company_rss(parse_input::<CompanyRssRequest>(&input_json, &operation)?)
+                .await?,
+        ),
         "search-company" => {
-            let input = parse_input::<SearchCompanyRequest>(&input_json)?;
+            let input = parse_input::<SearchCompanyRequest>(&input_json, &operation)?;
             serialize(client.search_company(input).await?)
         }
         "search-company-reports" => {
-            let input = parse_input::<SearchCompanyReportsRequest>(&input_json)?;
+            let input = parse_input::<SearchCompanyReportsRequest>(&input_json, &operation)?;
             serialize(client.search_company_reports(input).await?)
         }
+        "disclosure-types" => serialize(client.disclosure_types(parse_input::<
+            DisclosureTypesRequest,
+        >(
+            &input_json, &operation
+        )?)?),
+        "report-guide" => serialize(
+            client.report_guide(parse_input::<ReportGuideRequest>(&input_json, &operation)?),
+        ),
         "view-report" => {
-            let input = parse_input::<ViewReportRequest>(&input_json)?;
+            let input = parse_input::<ViewReportRequest>(&input_json, &operation)?;
             serialize(client.view_report(input).await?)
         }
-        _ => Err(invalid_request(
-            "operation must be search-company, search-company-reports, or view-report.",
-            "operation",
-        )),
+        _ => Err(invalid_request("Unknown Darty operation.", "operation")),
     }
 }
 
@@ -196,9 +220,32 @@ fn build_client() -> Result<DartyClient, DartyError> {
     DartyClient::for_fixture_origin(origin, fetched_at)
 }
 
-fn parse_input<T: serde::de::DeserializeOwned>(input: &str) -> Result<T, DartyError> {
-    serde_json::from_str(input)
-        .map_err(|_| invalid_request("input must match the operation request schema.", "input"))
+fn parse_input<T: serde::de::DeserializeOwned>(
+    input: &str,
+    operation: &str,
+) -> Result<T, DartyError> {
+    let mut deserializer = serde_json::Deserializer::from_str(input);
+    let value = serde_path_to_error::deserialize(&mut deserializer).map_err(|error| {
+        let path = error.path().to_string();
+        // Missing/unknown struct fields are reported at the containing object.
+        // Only take a field identifier from Serde's diagnostic, never a value.
+        let diagnostic = error.inner().to_string();
+        let field = ["missing field `", "unknown field `"].iter().find_map(|prefix| {
+            diagnostic.strip_prefix(prefix).and_then(|tail| tail.split('`').next())
+        });
+        let parameter = field.unwrap_or_else(|| if path.is_empty() || path == "." { "input" } else { &path });
+        let mut failure = invalid_request("Input must match the operation request schema.", parameter);
+        failure.recovery_hint = Some(if parameter == "companyCode" {
+            "If you only know a company name or 6-digit stock code, first use search-company to find the 8-digit companyCode, then call this operation again.".to_owned()
+        } else {
+            format!("Check {parameter} against the {operation} request schema and retry.")
+        });
+        failure
+    })?;
+    deserializer
+        .end()
+        .map_err(|_| invalid_request("Input must contain one JSON request object.", "input"))?;
+    Ok(value)
 }
 
 fn serialize<T: Serialize>(value: T) -> Result<Value, DartyError> {

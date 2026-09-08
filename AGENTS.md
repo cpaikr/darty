@@ -4,17 +4,19 @@
 
 - Darty is a read-only DART querying and retrieval tool, not only a body-search
   command.
-- The shipped product is the Bun/strict TypeScript implementation in
-  `src/`. A reviewed Rust/Node/CLI candidate exists under `crates/` and
-  `candidate/`, but it is unpublished and supports only the vertical workflow.
-- Treat repository docs, code, tests, and configuration as the source of truth.
-  Do not promote candidate or target behavior to shipped behavior.
+- The repository implementation is Rust: `crates/darty` owns all eight
+  operations, `crates/darty-cli` exposes the CLI, and `crates/darty-node` plus
+  `packages/node` expose the async Node SDK. The superseded TypeScript DART source, conformer,
+  source-local toolset, and candidate npm launcher are removed.
+- Rust v0.6.1 is unpublished; `ROADMAP.md` owns integration delivery status.
+  The published v0.6.0 standalone CLI is historical Bun/TypeScript. Treat repository docs,
+  code, tests, and configuration as truth; implementation is not publication.
 
 ## Read First
 
-- Start with `README.md` for the shipped package.
+- Start with `README.md` for usage and release availability.
 - Read `VISION.md` for the accepted target and non-goals.
-- Read `ARCHITECTURE.md` for current, candidate, and target boundaries.
+- Read `ARCHITECTURE.md` for SDK, CLI, and artifact boundaries.
 - Read `ROADMAP.md` and its linked plan for active delivery state.
 - For DART wire, parser, or capability work, read the relevant documents under
   `docs/research/` and `docs/specs/`.
@@ -24,14 +26,16 @@
 - Install dependencies: `bun install`
 - Validate DART wire authority: `bun run check:dart-wire`
 - Typecheck: `bun run typecheck`
-- Test the TypeScript product: `bun test`
-- Build the TypeScript comparison baseline: `bun run build`
+- Test development/eval/release tooling: `bun test`
+- Build release Rust CLI and native addon: `bun run build`
+- Check version agreement: `bun run check:versions`
+- Check clean SDK consumers: `bun run test:sdk`
 - Check local standalone installation: `bun run test:standalone`
 - Check CLI v1 compatibility: `bun run test:compat:cli`
-- Run live tests: `bun run test:live`
+- Run the opt-in live CLI workflow: `bun run test:live`
 - Manually search: `bun run search --keyword <text> --start-date YYYYMMDD --end-date YYYYMMDD`
-- Test the Rust candidate: `cargo test --workspace --all-features --locked`
-- Lint the Rust candidate: `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`
+- Test the Rust workspace: `cargo test --workspace --all-features --locked`
+- Lint the Rust workspace: `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`
 
 Document only commands that exist or direct Cargo commands enforced in CI. Do
 not add placeholder build, lint, or format commands.
@@ -41,7 +45,6 @@ not add placeholder build, lint, or format commands.
 - CLI installation and usage: `README.md`
 - Product scope, target surfaces, and non-goals: `VISION.md`
 - Repository topology and implementation status: `ARCHITECTURE.md`
-- Source implementation details: `src/ARCHITECTURE.md`
 - Active order and backlog: `ROADMAP.md`, `plans/`, and `tasks/`
 - Live DART evidence: `docs/research/`
 - Stable capability and transport contracts: `docs/specs/`
@@ -59,17 +62,22 @@ not add placeholder build, lint, or format commands.
 - Keep `CHANGELOG.md` as release history through `v0.5.0`. GitHub generated
   release notes own later release summaries; do not maintain a second
   changelog line.
-- Release standalone TypeScript CLI archives through private GitHub Releases;
-  npm publishing is retired. All CI jobs, including cross-builds, stay on Linux.
-  The Rust candidate must not be published or described as supported before the
-  active plan's cutover gates are complete and `docs/release.md` is updated.
+- Private GitHub Releases own standalone CLI archives, Rust SDK archives, and
+  platform-specific Node SDK tarballs; npm registry publishing is retired.
+  Node SDK installation is separate from CLI installation.
+- All CI jobs, including cross-builds and automated runtime certification,
+  stay on Linux. Do not infer macOS/Windows runtime certification from successful
+  cross-builds. The release runbook owns the target-specific evidence.
+- Publication, paid model evals, and human production approval remain separate
+  gates. Never infer them from repository completion or passing tests.
 
 ## Working Rules
 
 - Keep diffs small and edit the canonical document instead of repeating facts.
-- Preserve the TypeScript product as the runnable comparison baseline until the
-  rewrite's atomic cutover. Phase 3 work belongs in the Rust SDK, Node SDK
-  candidate, and Rust CLI, not in a parallel extension of TypeScript behavior.
+- Keep DART semantics in the Rust SDK. The CLI and Node facade are adapters;
+  do not recreate a TypeScript conformer or npm CLI installation path.
+- Preserve independent wire fixtures and CLI expectations. Do not regenerate
+  acceptance expectations from the implementation to hide a contract change.
 - Keep the implementation read-only and reference-first unless product docs
   change that contract.
 - Update nearby tests and docs together when behavior, contracts, or evidence

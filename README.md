@@ -4,6 +4,11 @@
 
 Darty는 DART 공개 웹 화면을 읽기 전용으로 사용합니다. 공식 OpenDART API가 아니며, DART 웹 동작이 바뀌면 결과나 파서가 영향을 받을 수 있습니다.
 
+현재 저장소는 여덟 작업을 Rust SDK, Node SDK, CLI가 공유하도록 전환 중입니다.
+Rust v0.6.1은 아직 배포되지 않았습니다. 현재 내려받을 수 있는 v0.6.0 CLI는
+기존 Bun/TypeScript 구현이며, 아래 설치 절차는 해당 배포 아티팩트에 적용됩니다.
+검증과 배포 진행 상태는 [로드맵](ROADMAP.md)에서 확인하세요.
+
 ## 설치
 
 배포 경로는 [비공개 GitHub Releases](https://github.com/cpaikr/darty/releases)입니다.
@@ -86,6 +91,29 @@ darty <command> --help
 - `report-guide`: 필요한 정보가 어떤 DART 보고서에 있는지 안내하는 Markdown 가이드 출력
 - `view-report`: 보고서 목차 또는 본문 조회
 
+## SDK와 로컬 개발
+
+저장소의 Rust SDK는 [`crates/darty`](crates/darty/), 비동기 Node SDK는
+[`packages/node`](packages/node/)에 있습니다. 두 SDK와 CLI가 같은 Rust 구현을
+사용합니다. Node SDK는 Node.js 22.12.0 이상이 필요합니다.
+
+예정된 SDK 배포는 비공개 GitHub Release의 `.crate`와 플랫폼별 Node `.tgz`입니다.
+Node 대상은 Linux GNU x64와 macOS Apple Silicon이며, tarball 안에 네이티브
+애드온을 포함합니다. npm 레지스트리 배포나 CLI 런처는 제공하지 않습니다.
+SDK 아티팩트 검증은 진행 중이며 설치·버전 계약은 [배포 문서](docs/release.md)가
+관리합니다. CLI 설치에는 Node SDK가 필요하지 않습니다.
+
+로컬 개발 환경에서는 의존성을 설치하고 Rust 실행 파일을 빌드합니다.
+
+```sh
+bun install
+bun run build
+./target/release/darty --help
+```
+
+Bun은 개발·검증 도구에만 사용합니다. Rust 도구 모음 1.88.0이 필요하며,
+실행 검증이 끝나지 않은 플랫폼을 지원 완료로 해석하지 마세요.
+
 ## 주의사항
 
 - 이 도구는 DART 공개 웹 동작을 읽기 전용으로 사용합니다.
@@ -96,7 +124,7 @@ darty <command> --help
 ## 개발 문서
 
 - [제품 방향](VISION.md)
-- [현재·후보·목표 아키텍처](ARCHITECTURE.md)
+- [구현 및 배포 아키텍처](ARCHITECTURE.md)
 - [진행 중인 작업과 백로그](ROADMAP.md)
 - [기능 및 전송 계약](docs/specs/README.md)
 

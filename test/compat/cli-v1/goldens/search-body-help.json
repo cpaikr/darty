@@ -1,0 +1,31 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "Usage: darty search-body [options]"
+  ],
+  "requiredNormalizedFragments": [
+    "Usage: darty search-body [options]",
+    "Search submitted filing text through DART 공시통합검색 `본문내용` mode. DART shared search syntax: `사과 포도`=AND, `사과|포도`=OR, `사과!포도`=NOT, `\"사과 포도\"`=exact phrase.",
+    "Options: --page <number> [default: 1] DART search result page, starting at 1. --sort-by <date|reportName> [default: date] Sort key for DART 본문내용 results (date=접수일자, reportName=보고서명). --sort-direction <asc|desc> [default: desc] Sort direction for the selected sort key. --detail <concise|detailed|raw> [default: concise] Source evidence detail level. evidence contains parser-check fields such as raw DART row text or snippet HTML. concise omits it; detailed/raw include it. raw still does not return full DART source HTML. Use --verbose with the CLI to see evidence. --keyword <text> [required] Search term for DART 공시통합검색 본문내용 mode. DART shared search syntax: `사과 포도`=AND, `사과|포도`=OR, `사과!포도`=NOT, `\"사과 포도\"`=exact phrase. --start-date <YYYYMMDD> [required] DART search period start date (YYYYMMDD). --end-date <YYYYMMDD> [required] DART search period end date (YYYYMMDD). --company-code <text> 8-digit DART company code. Free-text company names are not accepted. --presenter-name <text> 제출인명 (presenter name). Useful when the presenter may differ from the target company. --report-name <text> 보고서명 (report title) filter. Provide report-title text, not a body keyword (for example, 사업보고서 or 주주총회소집공고). --pretty Print human-readable indented JSON. --verbose Include source evidence and diagnostic fields omitted from the default CLI output. If --detail is omitted, request detail=raw. --agent Print compact agent-focused JSON with contextual next-step help. -h, --help Display command help.",
+    "Examples: # Search DART 본문내용 matches by keyword. darty search-body --keyword 배당 --start-date 20250331 --end-date 20260331",
+    "# Search with a verified company code and presenter name. darty search-body --keyword 배당 --start-date 20250331 --end-date 20260331 --company-code 01368637 --presenter-name 유일에너테크 --sort-by reportName",
+    "Search tips: - 본문내용 search is document-level keyword search. Multiple space-separated terms mean all terms exist somewhere in the same document, not necessarily in the same paragraph, table, or item. - For context-sensitive searches such as key audit matters (KAM), use search-body to narrow candidates, then pass a result viewerUrl or receipt number to view-report and inspect the actual filing body. - Use `--detail detailed` or `--detail raw` with `--verbose` when you need source evidence such as raw DART row text or snippet HTML. raw adds row-level evidence fields, not the full DART search HTML."
+  ],
+  "longOptions": [
+    "--agent",
+    "--company-code",
+    "--detail",
+    "--end-date",
+    "--help",
+    "--keyword",
+    "--page",
+    "--presenter-name",
+    "--pretty",
+    "--report-name",
+    "--sort-by",
+    "--sort-direction",
+    "--start-date",
+    "--verbose"
+  ]
+}

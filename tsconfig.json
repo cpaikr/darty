@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
@@ -15,7 +17,14 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
-    "types": ["bun"]
+    "types": [
+      "bun"
+    ]
   },
-  "include": ["src", "test", "evals", "scripts"]
+  "include": [
+    "test",
+    "evals",
+    "scripts",
+    "packages/node"
+  ]
 }

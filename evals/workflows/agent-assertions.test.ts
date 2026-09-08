@@ -54,6 +54,7 @@ const reports = execution(
   ],
   {
     result: {
+      request: { companyCode: "00126380", startDate: "20250331", endDate: "20260331" },
       items: [
         {
           companyCode: "00126380",
@@ -87,6 +88,7 @@ const outOfRangeReports = execution(
   ],
   {
     result: {
+      request: { companyCode: "00126380", startDate: "19000101", endDate: "21000101" },
       items: [
         {
           companyCode: "00126380",

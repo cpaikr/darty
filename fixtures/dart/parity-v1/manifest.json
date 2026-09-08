@@ -1,0 +1,1080 @@
+{
+  "schemaVersion": 1,
+  "authorityVersion": "dart-wire-v1",
+  "description": "Independent fictional parity evidence; not live qualification.",
+  "selectionRule": "Match method, path, required headers, complete form and query; never select by case id alone.",
+  "cases": [
+    {
+      "id": "body-populated",
+      "operationId": "searchBodyFragment",
+      "rules": [
+        "BODY-TABLE-1",
+        "BODY-ROW-1",
+        "BODY-REFERENCE-1"
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {},
+        "form": {
+          "currentPage": "1",
+          "maxResults": "10",
+          "maxLinks": "10",
+          "sort": "DATE",
+          "sortType": "desc",
+          "textCrpCik": "",
+          "lateKeyword": "",
+          "flrCik": "",
+          "dspTypeTab": "",
+          "isSort": "false",
+          "isTab": "false",
+          "tocSrch": "",
+          "b_textCrpCik": "",
+          "b_flrCik": "",
+          "b_keyword": "배당",
+          "b_docType": "",
+          "b_textPresenterNm": "",
+          "b_reportName": "",
+          "b_startDate": "20260101",
+          "b_endDate": "20260331",
+          "b_dspType": "",
+          "b_synonym": "",
+          "b_reSearch": "",
+          "reportNamePopYn": "",
+          "autoSearch": "N",
+          "option": "contents",
+          "keyword": "배당",
+          "textCrpNm": "",
+          "textPresenterNm": "",
+          "startDate": "20260101",
+          "endDate": "20260331",
+          "decadeType": "",
+          "docType": "",
+          "reportName": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/body-populated.utf8.html",
+        "sha256": "5d4f3ceb3d53bac186b2bf9585cf981b9aba2f565ffccc27b9129614ae806f54"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "body-search",
+        "rows": 1,
+        "droppedRows": 0,
+        "pagination": {
+          "currentPage": 1,
+          "totalPages": 1,
+          "totalCount": 1,
+          "returnedCount": 1
+        },
+        "first": {
+          "companyName": "가람전자",
+          "companyCode": "00000001",
+          "receiptNumber": "20260331000001",
+          "documentNumber": "10000001",
+          "reportTitle": "사업보고서",
+          "reportModifier": "정정",
+          "reportPeriod": "2025.12",
+          "reportNameSuffix": "정관",
+          "receiptDate": "2026-03-31",
+          "snippetText": "현금 배당 계획",
+          "snippetHtml": "현금 <strong>배당</strong> 계획",
+          "viewerUrl": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331000001&dcmNo=10000001"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "body-empty",
+      "operationId": "searchBodyFragment",
+      "rules": [
+        "BODY-EMPTY-1"
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {},
+        "form": {
+          "currentPage": "1",
+          "maxResults": "10",
+          "maxLinks": "10",
+          "sort": "DATE",
+          "sortType": "desc",
+          "textCrpCik": "",
+          "lateKeyword": "",
+          "flrCik": "",
+          "dspTypeTab": "",
+          "isSort": "false",
+          "isTab": "false",
+          "tocSrch": "",
+          "b_textCrpCik": "",
+          "b_flrCik": "",
+          "b_keyword": "없는문구",
+          "b_docType": "",
+          "b_textPresenterNm": "",
+          "b_reportName": "",
+          "b_startDate": "20260101",
+          "b_endDate": "20260331",
+          "b_dspType": "",
+          "b_synonym": "",
+          "b_reSearch": "",
+          "reportNamePopYn": "",
+          "autoSearch": "N",
+          "option": "contents",
+          "keyword": "없는문구",
+          "textCrpNm": "",
+          "textPresenterNm": "",
+          "startDate": "20260101",
+          "endDate": "20260331",
+          "decadeType": "",
+          "docType": "",
+          "reportName": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/body-empty.utf8.html",
+        "sha256": "1b8cc81e5e6576d8261cd87cdebd88a16f832377224ddbf8495b6ff9d2c9f7ef"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "body-search",
+        "rows": 0,
+        "droppedRows": 0,
+        "pagination": {
+          "currentPage": 1,
+          "totalPages": 0,
+          "totalCount": 0,
+          "returnedCount": 0
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "body-partial",
+      "operationId": "searchBodyFragment",
+      "rules": [
+        "BODY-REFERENCE-1"
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {},
+        "form": {
+          "currentPage": "1",
+          "maxResults": "10",
+          "maxLinks": "10",
+          "sort": "DATE",
+          "sortType": "desc",
+          "textCrpCik": "",
+          "lateKeyword": "",
+          "flrCik": "",
+          "dspTypeTab": "",
+          "isSort": "false",
+          "isTab": "false",
+          "tocSrch": "",
+          "b_textCrpCik": "",
+          "b_flrCik": "",
+          "b_keyword": "부분",
+          "b_docType": "",
+          "b_textPresenterNm": "",
+          "b_reportName": "",
+          "b_startDate": "20260101",
+          "b_endDate": "20260331",
+          "b_dspType": "",
+          "b_synonym": "",
+          "b_reSearch": "",
+          "reportNamePopYn": "",
+          "autoSearch": "N",
+          "option": "contents",
+          "keyword": "부분",
+          "textCrpNm": "",
+          "textPresenterNm": "",
+          "startDate": "20260101",
+          "endDate": "20260331",
+          "decadeType": "",
+          "docType": "",
+          "reportName": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/body-partial.utf8.html",
+        "sha256": "d1a11df26b90c417601a54110e896dda58e5e81f1c39563f5172836064d24337"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "body-search",
+        "rows": 1,
+        "droppedRows": 1,
+        "pagination": {
+          "currentPage": 1,
+          "totalPages": 1,
+          "totalCount": 2,
+          "returnedCount": 1
+        },
+        "first": {
+          "companyName": "가람전자",
+          "companyCode": "00000001",
+          "receiptNumber": "20260331000001",
+          "documentNumber": "10000001",
+          "reportTitle": "사업보고서",
+          "reportModifier": "정정",
+          "reportPeriod": "2025.12",
+          "reportNameSuffix": "정관",
+          "receiptDate": "2026-03-31",
+          "snippetText": "현금 배당 계획",
+          "snippetHtml": "현금 <strong>배당</strong> 계획",
+          "viewerUrl": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331000001&dcmNo=10000001"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "body-changed",
+      "operationId": "searchBodyFragment",
+      "rules": [
+        "BODY-TABLE-1"
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {},
+        "form": {
+          "currentPage": "1",
+          "maxResults": "10",
+          "maxLinks": "10",
+          "sort": "DATE",
+          "sortType": "desc",
+          "textCrpCik": "",
+          "lateKeyword": "",
+          "flrCik": "",
+          "dspTypeTab": "",
+          "isSort": "false",
+          "isTab": "false",
+          "tocSrch": "",
+          "b_textCrpCik": "",
+          "b_flrCik": "",
+          "b_keyword": "변경",
+          "b_docType": "",
+          "b_textPresenterNm": "",
+          "b_reportName": "",
+          "b_startDate": "20260101",
+          "b_endDate": "20260331",
+          "b_dspType": "",
+          "b_synonym": "",
+          "b_reSearch": "",
+          "reportNamePopYn": "",
+          "autoSearch": "N",
+          "option": "contents",
+          "keyword": "변경",
+          "textCrpNm": "",
+          "textPresenterNm": "",
+          "startDate": "20260101",
+          "endDate": "20260331",
+          "decadeType": "",
+          "docType": "",
+          "reportName": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/body-changed.utf8.html",
+        "sha256": "6fc1c9d906041cea55f1451e541030724a1cd2963eb5511c4c25a69cce2d7275"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_changed",
+        "retryable": false
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "body-mixed-empty",
+      "operationId": "searchBodyFragment",
+      "rules": [
+        "BODY-EMPTY-1"
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {},
+        "form": {
+          "currentPage": "1",
+          "maxResults": "10",
+          "maxLinks": "10",
+          "sort": "DATE",
+          "sortType": "desc",
+          "textCrpCik": "",
+          "lateKeyword": "",
+          "flrCik": "",
+          "dspTypeTab": "",
+          "isSort": "false",
+          "isTab": "false",
+          "tocSrch": "",
+          "b_textCrpCik": "",
+          "b_flrCik": "",
+          "b_keyword": "혼합",
+          "b_docType": "",
+          "b_textPresenterNm": "",
+          "b_reportName": "",
+          "b_startDate": "20260101",
+          "b_endDate": "20260331",
+          "b_dspType": "",
+          "b_synonym": "",
+          "b_reSearch": "",
+          "reportNamePopYn": "",
+          "autoSearch": "N",
+          "option": "contents",
+          "keyword": "혼합",
+          "textCrpNm": "",
+          "textPresenterNm": "",
+          "startDate": "20260101",
+          "endDate": "20260331",
+          "decadeType": "",
+          "docType": "",
+          "reportName": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/body-mixed-empty.utf8.html",
+        "sha256": "8ae6fa5fd4f0bf6209d1e1f0cf597af376f6b33a4a4a8e48cb34371ca5b3b048"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_changed",
+        "retryable": false
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "detail-populated",
+      "operationId": "fetchCompanyDetail",
+      "rules": [
+        "DETAIL-TABLE-1",
+        "DETAIL-FIELDS-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/dsae001/select.ax",
+        "headers": {
+          "user-agent": {
+            "present": true
+          },
+          "referer": "https://dart.fss.or.kr/dsae001/main.do"
+        },
+        "query": {
+          "selectKey": "00000001"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/detail-populated.utf8.html",
+        "sha256": "76dd71106f705e53010258d996b3633fbfd2d65c02a5615abf02311fe74c51e4"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-detail",
+        "company": {
+          "companyCode": "00000001",
+          "companyName": "가람전자",
+          "englishName": "Garam Electronics",
+          "stockCode": "123456",
+          "homepage": "https://garam.example/",
+          "fiscalMonth": "12"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "detail-empty",
+      "operationId": "fetchCompanyDetail",
+      "rules": [
+        "DETAIL-TABLE-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/dsae001/select.ax",
+        "headers": {
+          "user-agent": {
+            "present": true
+          },
+          "referer": "https://dart.fss.or.kr/dsae001/main.do"
+        },
+        "query": {
+          "selectKey": "00000002"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/detail-empty.utf8.html",
+        "sha256": "0b7e98b35bbd1af7e889caed67a77dd22ca6600ba47d8b302d095c5542f28743"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "not_found",
+        "retryable": false
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "detail-partial",
+      "operationId": "fetchCompanyDetail",
+      "rules": [
+        "DETAIL-FIELDS-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/dsae001/select.ax",
+        "headers": {
+          "user-agent": {
+            "present": true
+          },
+          "referer": "https://dart.fss.or.kr/dsae001/main.do"
+        },
+        "query": {
+          "selectKey": "00000003"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/detail-partial.utf8.html",
+        "sha256": "46d89a9167f4df15e067fb8ec17476f3639fdbc1fb56642cfe781bc8a1906e8d"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-detail",
+        "company": {
+          "companyCode": "00000003",
+          "companyName": "다온연구소",
+          "homepage": "https://daon.example/"
+        },
+        "omittedCompanyFields": [
+          "englishName",
+          "stockCode"
+        ]
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "detail-changed",
+      "operationId": "fetchCompanyDetail",
+      "rules": [
+        "DETAIL-TABLE-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/dsae001/select.ax",
+        "headers": {
+          "user-agent": {
+            "present": true
+          },
+          "referer": "https://dart.fss.or.kr/dsae001/main.do"
+        },
+        "query": {
+          "selectKey": "00000004"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/detail-changed.utf8.html",
+        "sha256": "c7a0019c3c574bb3373622ed2799b2a579b20a22770bf75298630e4cb080a143"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_changed",
+        "retryable": false
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "detail-missing-label",
+      "operationId": "fetchCompanyDetail",
+      "rules": [
+        "DETAIL-TABLE-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/dsae001/select.ax",
+        "headers": {
+          "user-agent": {
+            "present": true
+          },
+          "referer": "https://dart.fss.or.kr/dsae001/main.do"
+        },
+        "query": {
+          "selectKey": "00000005"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/detail-missing-label.utf8.html",
+        "sha256": "4a83761d7b69152cd8769dfec11ddb000e49233ab76a0a95bb90a629397de8f9"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_changed",
+        "retryable": false
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "rss-populated",
+      "operationId": "fetchCompanyRss",
+      "rules": [
+        "RSS-CHANNEL-1",
+        "RSS-ITEM-1",
+        "RSS-PROJECTION-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/companyRSS.xml",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "crpCd": "00000001"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "bodyPath": "bodies/rss-populated.utf8.xml",
+        "sha256": "d707bcd6ace00fcc51eb1b34cab60042f8ae668f784b207b25581910c8ef5e4e"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-rss",
+        "items": 1,
+        "channel": {
+          "title": "가람전자 공시",
+          "link": "https://dart.fss.or.kr/"
+        },
+        "first": {
+          "title": "가람전자 사업보고서",
+          "receiptNumber": "20260331000001",
+          "publishedAt": "2026-03-31T09:00:00+09:00",
+          "creator": "가람전자",
+          "guid": "fictional-report-1"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "rss-empty",
+      "operationId": "fetchCompanyRss",
+      "rules": [
+        "RSS-CHANNEL-1",
+        "RSS-PROJECTION-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/companyRSS.xml",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "crpCd": "00000002"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "bodyPath": "bodies/rss-empty.utf8.xml",
+        "sha256": "1729f13ec1267363d33c8ca3b4887deddcaef5363df199c5e7ac0c16a04e2438"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-rss",
+        "items": 0
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "rss-optional-fields",
+      "operationId": "fetchCompanyRss",
+      "rules": [
+        "RSS-ITEM-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/companyRSS.xml",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "crpCd": "00000003"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "bodyPath": "bodies/rss-optional-fields.utf8.xml",
+        "sha256": "eede9ae624a4164a9dec75a29469c21be6c6ea76582aa157dd833365cb4e029d"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-rss",
+        "items": 1,
+        "first": {
+          "title": "기타 자료",
+          "publishedAt": "Tue, 31 Mar 2026 09:00:00 +0900"
+        },
+        "omittedItemFields": [
+          "receiptNumber",
+          "creator",
+          "guid"
+        ]
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "rss-changed",
+      "operationId": "fetchCompanyRss",
+      "rules": [
+        "RSS-CHANNEL-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/companyRSS.xml",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "crpCd": "00000004"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "bodyPath": "bodies/rss-changed.utf8.xml",
+        "sha256": "fcaaef6936f5bc715c3eb4572be242f9676241894bfa18ba21d8ea79f86d2c4e"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_changed",
+        "retryable": false
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "rss-malformed-item",
+      "operationId": "fetchCompanyRss",
+      "rules": [
+        "RSS-ITEM-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/companyRSS.xml",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "crpCd": "00000005"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "bodyPath": "bodies/rss-malformed-item.utf8.xml",
+        "sha256": "7d5db394d58c434f4a8c8ec046f239970eb76ea50a061001185a9687dcc38697"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_changed",
+        "retryable": false
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "rss-invalid-xml",
+      "operationId": "fetchCompanyRss",
+      "rules": [
+        "RSS-XML-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/companyRSS.xml",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "crpCd": "00000006"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "bodyPath": "bodies/rss-invalid-xml.utf8.xml",
+        "sha256": "ce9045b81795489cc5b308d7b9f9020068e1a8c9006b5d93d7b3c12876a2feeb"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_parse_failure",
+        "retryable": false
+      },
+      "baselineDisposition": "Candidate safety decision; permissive TypeScript XML recovery is not the oracle for this case.",
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "rss-dtd",
+      "operationId": "fetchCompanyRss",
+      "rules": [
+        "RSS-XML-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/companyRSS.xml",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "crpCd": "00000007"
+        },
+        "form": {}
+      },
+      "response": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "bodyPath": "bodies/rss-dtd.utf8.xml",
+        "sha256": "b95b7313a09edda0747a8d05e4970299ad4c02801546ee3e1b6ccb7ef999a187"
+      },
+      "expected": {
+        "kind": "failure",
+        "code": "source_parse_failure",
+        "retryable": false
+      },
+      "baselineDisposition": "Candidate safety decision; permissive TypeScript XML recovery is not the oracle for this case.",
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "body-advanced-filters",
+      "operationId": "searchBodyFragment",
+      "rules": [
+        "BODY-TABLE-1",
+        "BODY-ROW-1",
+        "BODY-REFERENCE-1"
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {},
+        "form": {
+          "currentPage": "2",
+          "maxResults": "10",
+          "maxLinks": "10",
+          "sort": "rpt_nm",
+          "sortType": "asc",
+          "textCrpCik": "00000001",
+          "lateKeyword": "",
+          "flrCik": "",
+          "dspTypeTab": "",
+          "isSort": "false",
+          "isTab": "false",
+          "tocSrch": "",
+          "b_textCrpCik": "00000001",
+          "b_flrCik": "",
+          "b_keyword": "배당",
+          "b_docType": "",
+          "b_textPresenterNm": "가람전자",
+          "b_reportName": "사업보고서",
+          "b_startDate": "20260101",
+          "b_endDate": "20260331",
+          "b_dspType": "",
+          "b_synonym": "",
+          "b_reSearch": "",
+          "reportNamePopYn": "",
+          "autoSearch": "N",
+          "option": "contents",
+          "keyword": "배당",
+          "textCrpNm": "",
+          "textPresenterNm": "가람전자",
+          "startDate": "20260101",
+          "endDate": "20260331",
+          "decadeType": "",
+          "docType": "",
+          "reportName": "사업보고서"
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/body-advanced-filters.utf8.html",
+        "sha256": "5caca284176c445c2b2602ceb9847ce086685c0633eacbd7ec184cd21d7bcf00"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "body-search",
+        "rows": 1,
+        "droppedRows": 0,
+        "pagination": {
+          "currentPage": 2,
+          "totalPages": 2,
+          "totalCount": 11,
+          "returnedCount": 1
+        },
+        "first": {
+          "companyName": "가람전자",
+          "companyCode": "00000001",
+          "receiptNumber": "20260331000001",
+          "documentNumber": "10000001",
+          "reportTitle": "사업보고서",
+          "reportModifier": "정정",
+          "reportPeriod": "2025.12",
+          "reportNameSuffix": "정관",
+          "receiptDate": "2026-03-31",
+          "snippetText": "현금 배당 계획",
+          "snippetHtml": "현금 <strong>배당</strong> 계획",
+          "viewerUrl": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331000001&dcmNo=10000001"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "body-company-mismatch",
+      "operationId": "searchBodyFragment",
+      "rules": [
+        "BODY-TABLE-1",
+        "BODY-ROW-1",
+        "BODY-REFERENCE-1"
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/dsab007/search.ax",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {},
+        "form": {
+          "currentPage": "2",
+          "maxResults": "10",
+          "maxLinks": "10",
+          "sort": "rpt_nm",
+          "sortType": "asc",
+          "textCrpCik": "00000001",
+          "lateKeyword": "",
+          "flrCik": "",
+          "dspTypeTab": "",
+          "isSort": "false",
+          "isTab": "false",
+          "tocSrch": "",
+          "b_textCrpCik": "00000001",
+          "b_flrCik": "",
+          "b_keyword": "회사불일치",
+          "b_docType": "",
+          "b_textPresenterNm": "가람전자",
+          "b_reportName": "사업보고서",
+          "b_startDate": "20260101",
+          "b_endDate": "20260331",
+          "b_dspType": "",
+          "b_synonym": "",
+          "b_reSearch": "",
+          "reportNamePopYn": "",
+          "autoSearch": "N",
+          "option": "contents",
+          "keyword": "회사불일치",
+          "textCrpNm": "",
+          "textPresenterNm": "가람전자",
+          "startDate": "20260101",
+          "endDate": "20260331",
+          "decadeType": "",
+          "docType": "",
+          "reportName": "사업보고서"
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/body-company-mismatch.utf8.html",
+        "sha256": "78621855efc81edeee747d51960be1d69bfa14f2f9177030c85af1ac422ee49e"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "body-search",
+        "rows": 0,
+        "droppedRows": 1,
+        "pagination": {
+          "currentPage": 2,
+          "totalPages": 2,
+          "totalCount": 11,
+          "returnedCount": 0
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    }
+  ],
+  "faults": [
+    {
+      "id": "parity-response-cap",
+      "operationIds": [
+        "searchBodyFragment",
+        "fetchCompanyDetail",
+        "fetchCompanyRss"
+      ],
+      "rule": "WIRE-SIZE-1",
+      "recipe": {
+        "status": 200,
+        "bodyBytes": 8388609,
+        "byteValue": 32,
+        "contentTypeByOperation": {
+          "searchBodyFragment": "text/html; charset=UTF-8",
+          "fetchCompanyDetail": "text/html; charset=UTF-8",
+          "fetchCompanyRss": "application/xml; charset=UTF-8"
+        }
+      },
+      "classification": "source_parse_failure",
+      "retryable": false
+    },
+    {
+      "id": "rss-node-limit",
+      "operationIds": [
+        "fetchCompanyRss"
+      ],
+      "rule": "RSS-XML-1",
+      "recipe": {
+        "status": 200,
+        "contentType": "application/xml; charset=UTF-8",
+        "prefix": "<rss><channel><title>fictional</title><link>https://dart.fss.or.kr/</link>",
+        "repeat": "<extra/>",
+        "repeatCount": 100001,
+        "suffix": "</channel></rss>"
+      },
+      "classification": "source_parse_failure",
+      "retryable": false
+    }
+  ]
+}

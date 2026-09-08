@@ -382,12 +382,59 @@
       },
       "expected": { "kind": "success", "parser": "report-content", "decodedSha256": "120d080feb030bc7887ca94d69ec8c7903d0af44528e814481f57d171bbcd16c", "requiredText": "fictional malformed:", "replacementCount": 1 },
       "provenance": { "kind": "fictional", "containsLiveResponseData": false }
+    },
+    {
+      "id": "report-shell-rebound",
+      "operationId": "fetchReportShell",
+      "rules": [
+        "SHELL-TREE-1",
+        "SHELL-INITIAL-1"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/dsaf001/main.do",
+        "headers": {
+          "user-agent": {
+            "present": true
+          }
+        },
+        "query": {
+          "rcpNo": "20260101000030"
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/report-shell-rebound.utf8.html",
+        "sha256": "418e6c8e07ffddc41c8f5d8318c673e284886ef22228af0991c39e45b148a295"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "report-shell",
+        "tocRoots": 4,
+        "titles": [
+          "Fictional section 1",
+          "Fictional section 2",
+          "Fictional section 3",
+          "Fictional section 4"
+        ]
+      },
+      "baselineExpected": {
+        "kind": "error",
+        "parser": "report-shell",
+        "classification": "source_changed"
+      },
+      "baselineDisposition": "Observed variable rebinding creates fresh tree objects; Rust fixes the baseline duplicate-variable rejection and preserves each pushed identity.",
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
     }
   ],
   "faults": [
     {
       "id": "source-http-503",
-      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent", "searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"],
       "recipe": { "status": 503, "contentType": "text/html; charset=UTF-8", "bodyBytes": 0 },
       "rule": "WIRE-STATUS-1",
       "classification": "source_unavailable",
@@ -395,7 +442,7 @@
     },
     {
       "id": "source-redirect",
-      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent", "searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"],
       "recipe": { "status": 302, "location": "https://example.invalid/outside-dart", "bodyBytes": 0, "followRedirects": false },
       "rule": "WIRE-REDIRECT-1",
       "classification": "source_unavailable",
@@ -403,7 +450,7 @@
     },
     {
       "id": "source-connect-timeout",
-      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent", "searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"],
       "recipe": { "stallDuringConnectMilliseconds": 5001, "timeoutMilliseconds": 5000 },
       "rule": "WIRE-TIMEOUT-1",
       "classification": "source_unavailable",
@@ -411,7 +458,7 @@
     },
     {
       "id": "source-idle-read-timeout",
-      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent", "searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"],
       "recipe": { "status": 200, "contentType": "text/html; charset=UTF-8", "initialBodyBytes": 1, "stallAfterBodyMilliseconds": 10001, "timeoutMilliseconds": 10000 },
       "rule": "WIRE-TIMEOUT-1",
       "classification": "source_unavailable",
@@ -419,7 +466,7 @@
     },
     {
       "id": "source-total-timeout",
-      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent", "searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"],
       "recipe": { "stallAfterRequestMilliseconds": 30001, "timeoutMilliseconds": 30000 },
       "rule": "WIRE-TIMEOUT-1",
       "classification": "source_unavailable",
@@ -427,7 +474,7 @@
     },
     {
       "id": "source-wrong-media-type",
-      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent", "searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"],
       "recipe": { "status": 200, "contentType": "application/json; charset=UTF-8", "bodyBytes": 2 },
       "rule": "WIRE-CONTENT-TYPE-1",
       "classification": "source_parse_failure",
@@ -435,7 +482,7 @@
     },
     {
       "id": "source-unsupported-charset",
-      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent"],
+      "operationIds": ["searchCompanyFragment", "searchCompanyReportsFragment", "fetchReportShell", "fetchReportContent", "searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"],
       "recipe": { "status": 200, "contentType": "text/html; charset=shift_jis", "bodyBytes": 0 },
       "rule": "DECODE-CHARSET-2",
       "classification": "source_parse_failure",

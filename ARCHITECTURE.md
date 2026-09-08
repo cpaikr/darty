@@ -1,111 +1,80 @@
 # Architecture
 
-This document owns repository topology and implementation status. Detailed
-TypeScript layering lives in [src/ARCHITECTURE.md](src/ARCHITECTURE.md); product
-destination and delivery order live in [VISION.md](VISION.md) and
-[ROADMAP.md](ROADMAP.md).
+Darty has one Rust implementation of eight read-only DART operations, shared
+by a Rust SDK, asynchronous Node SDK, and standalone CLI. This document owns
+repository topology; [VISION.md](VISION.md) owns product scope and
+[ROADMAP.md](ROADMAP.md) owns delivery state.
 
-## Implementation Status
+## Implementation and release status
 
-| State | Public status | Location | Capability coverage |
-|---|---|---|---|
-| Current implementation | TypeScript CLI; standalone delivery configured, first release pending | `src/`, `scripts/standalone.mjs` | Eight operations through the CLI with an embedded Bun runtime |
-| Historical distribution | Existing npm versions retained, no further publication | Earlier `@sjunepark/darty` releases | Node-based CLI and `./toolset` in those released versions |
-| Rewrite candidate | Retained, reviewed, unpublished | `crates/`, `candidate/npm/` | `search-company`, `search-company-reports`, and `view-report` through Rust SDK, async Node SDK, and Rust CLI |
-| Accepted target | Selected, partially implemented | `VISION.md` | One Rust-owned implementation for all eight operations, exposed through Rust SDK, Node SDK, and CLI |
+The repository implements the Rust cutover for version 0.6.1. Artifact
+validation passes; [ROADMAP.md](ROADMAP.md) tracks integration delivery. Rust
+remains unpublished. The latest
+published standalone release, v0.6.0, contains the earlier Bun/TypeScript CLI.
+Its availability does not certify the new Rust artifacts. Older npm releases
+remain historical; npm registry publication is retired.
 
-The candidate does not replace the standalone TypeScript CLI. Its current-host
-native package proves Darwin ARM64 packaging only; it is not a supported
-platform matrix or release artifact.
+The superseded TypeScript DART implementation, entry points, source-local
+toolset, superseded TypeScript tests, and npm CLI launcher are removed.
+TypeScript remains only in the thin Node facade and development, evaluation,
+and release tooling.
 
-## Repository Map
-
-- [`README.md`](README.md) — standalone CLI installation and usage.
-- [`VISION.md`](VISION.md) — accepted product shape, scope, and non-goals.
-- [`ROADMAP.md`](ROADMAP.md) and [`plans/`](plans/) — delivery status, remaining
-  work, and next action.
-- [`docs/specs/`](docs/specs/README.md) — stable public capability, CLI, and
-  supported upstream wire contracts.
-- [`docs/research/`](docs/research/dart-source-map.md) — non-normative source
-  observations, provenance, provider qualification, and feasibility evidence.
-- [`docs/tools/`](docs/tools/) — reusable tool-design guidance; not product
-  implementation status.
-- [`docs/learning/`](docs/learning/INDEX.md) — a short onboarding route to the
-  canonical documents and code.
-- [`scripts/standalone.mjs`](scripts/standalone.mjs) and
-  [`release-targets.json`](scripts/release-targets.json) — cross-builds, archives,
-  installation certification, and release inventory; operations remain in `src/`.
-- [`src/`](src/ARCHITECTURE.md) — active Bun/TypeScript implementation and
-  deterministic tests.
-- `crates/darty` — retained Rust SDK candidate and sole candidate DART conformer.
-- `crates/darty-cli` — thin Clap subprocess adapter over the Rust SDK.
-- `crates/darty-node` — narrow asynchronous Node-API binding.
-- `candidate/npm/` — unpublished root Node SDK/launcher and current-host native
-  package shapes.
-- [`fixtures/dart/vertical-v1/`](fixtures/dart/vertical-v1/README.md) — fictional,
-  cross-language wire evidence.
-- [`test/compat/cli-v1/`](test/compat/cli-v1/README.md) — implementation-neutral
-  CLI compatibility corpus.
-- [`evals/`](evals/README.md) — opt-in live and model-in-the-loop task checks.
-
-## Current TypeScript Implementation
-
-The active product has four layers:
+## Runtime boundaries
 
 ```text
-CLI or source-local toolset
-      -> src/app composition
-      -> src/capabilities semantic contracts and execution
-      -> src/sources/dart request, transport, parsing, and source errors
+Rust CLI (crates/darty-cli) ──┐
+                            ├─ Rust SDK (crates/darty) → DART
+Node facade (packages/node) ─┘
+       through Node-API (crates/darty-node)
 ```
 
-The capability layer owns semantic validation and result/failure envelopes;
-the CLI owns process UX; DART-shaped fields remain inside source adapters. See
-[src/ARCHITECTURE.md](src/ARCHITECTURE.md) for the component and runtime maps.
+The SDK owns request validation, fixed-origin transport, pacing, deadlines,
+byte limits, decoding, source parsing, identifiers, projections, and typed
+failures. Static disclosure types and report guide are embedded SDK resources.
 
-## Retained Rewrite Candidate
+The CLI adapts SDK results to the CLI v1 process contract: arguments, help,
+JSON/text output, diagnostics, and exits. The Node binding translates async
+calls, cancellation, cleanup, and panic containment; the facade supplies public
+TypeScript types and Promise ergonomics. Neither adapter parses DART itself.
 
-```text
-Rust SDK (crates/darty) -> DART
-          |-> Rust CLI (crates/darty-cli)
-          `-> Node-API binding (crates/darty-node)
-                    `-> Node SDK facade (candidate/npm/darty)
+The HTTP authority is [dart-wire-v1](docs/specs/dart-wire-v1.openapi.yaml).
+Its [HTML/XML/viewer companion](docs/specs/dart-html-viewer-v1.md) owns source
+grammar. Fictional fixtures and dated provider observations supply evidence,
+not competing contracts.
 
-candidate npm bin -> platform package -> compiled Rust CLI
-```
+## Code and validation map
 
-The Rust SDK owns candidate request construction, transport policy, bounds,
-decoding, parsing, domain normalization, and sanitized source failures. The CLI
-and Node binding translate surface concerns without creating a second DART
-implementation.
+- [`crates/darty`](crates/darty/) — Rust SDK and embedded static resources.
+- [`crates/darty-cli`](crates/darty-cli/) — standalone executable adapter.
+- [`crates/darty-node`](crates/darty-node/) and [`packages/node`](packages/node/) —
+  asynchronous native binding and thin Node facade.
+- [`fixtures/dart/vertical-v1`](fixtures/dart/vertical-v1/README.md) and
+  [`fixtures/dart/parity-v1`](fixtures/dart/parity-v1/README.md) — fictional wire
+  cases checked by Rust integration tests.
+- [`test/compat/cli-v1`](test/compat/cli-v1/README.md) — independent CLI contract
+  and golden expectations; `full` covers fixtures/faults and `process` runs
+  without network access.
+- [`scripts/test-sdk-consumers.mjs`](scripts/test-sdk-consumers.mjs) — clean
+  external SDK consumers, declaration checks, cancellation and runtime safety.
+- [`evals`](evals/README.md) — optional live subprocess and hosted-model checks.
 
-The supported upstream subset for the vertical candidate is canonical in
-[`dart-wire-v1.openapi.yaml`](docs/specs/dart-wire-v1.openapi.yaml) and
-[`dart-html-viewer-v1.md`](docs/specs/dart-html-viewer-v1.md). The fictional
-fixture corpus and provider qualification are evidence, not competing
-authorities.
+## Artifact boundary
 
-## Target Boundary
+[Private GitHub Releases](https://github.com/cpaikr/darty/releases) remain the
+artifact authority. [`scripts/standalone.mjs`](scripts/standalone.mjs) and the
+[CLI target inventory](scripts/release-targets.json) build and certify native
+archives, checksums, and installers. CLI installation loads no Node runtime.
 
-The current release pipeline cross-compiles `src/cli.ts` with Bun into native
-executables and publishes private GitHub Release archives. The Bun runtime is
-embedded; no external JS runtime is part of CLI installation. The root package
-is private. `bun run build` still produces the Node-compatible comparison
-baseline and source-local toolset modules for rewrite validation, not npm delivery.
+[`scripts/sdk-artifacts.mjs`](scripts/sdk-artifacts.mjs) packages the Rust SDK
+as a `.crate` and the Node SDK as platform-specific private tarballs for Linux
+GNU x64 and Darwin ARM64. Each Node tarball includes its native addon; there
+is no CLI launcher, install script, or optional platform-package dependency.
+[`package.json`](package.json) is the version authority, checked against Cargo
+and Node package versions.
 
-At cutover, all eight operations move behind the Rust SDK and its CLI replaces
-the compiled TypeScript executable through the same standalone release channel.
-The Node SDK remains a target surface; its independent installation projection
-must be specified and verified before it is published. CLI installation must
-remain independent of Node/npm. The TypeScript conformer and source-local toolset
-are removed only when the full rewrite passes its cutover gates.
-
-## Documentation Invariants
-
-- README distinguishes available release artifacts from pending delivery.
-- Architecture records implementation topology and status, not delivery order.
-- Vision records the selected destination, not completion claims.
-- Roadmap and the active plan own progress and next actions.
-- Specs own stable contracts; research owns observations and unknowns.
-- Source evidence must be labeled, and candidate evidence must not imply a
-  supported release or platform.
+All CI builds and automated runtime certification stay on Linux. Non-Linux
+CLI targets and the Darwin addon are cross-built; local macOS checks do not
+establish CI certification. Windows has no runtime certification claim.
+The [release runbook](docs/release.md) owns exact artifact checks, installation,
+recovery, and remaining approval/publication gates. Repository implementation
+must not be presented as completed signoff or publication.

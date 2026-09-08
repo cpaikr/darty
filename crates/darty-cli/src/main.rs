@@ -1,9 +1,13 @@
 mod help;
+mod operations;
 
 use std::process::ExitCode;
 
 use chrono::{Months, NaiveDate};
-use clap::{Args, Parser, Subcommand, ValueEnum, error::ErrorKind};
+use clap::{
+    Args, Parser, Subcommand, ValueEnum,
+    error::{ContextKind, ContextValue, ErrorKind},
+};
 use darty::{
     DartyClient, DartyError, ErrorCode, OutputFormat, ResponseDetail, SearchCompanyReportsRequest,
     SearchCompanyRequest, SortDirection, ViewReportRequest, ViewReportResponse,
@@ -18,7 +22,7 @@ use serde_json::{Value, json};
     disable_help_subcommand = true
 )]
 struct Cli {
-    /// Compatibility flag; it does not change JSON output or emit diagnostics.
+    /// Write bounded error classification diagnostics to stderr on failure.
     #[arg(long, global = true)]
     debug: bool,
     #[command(subcommand)]
@@ -27,6 +31,11 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    SearchBody(operations::SearchBodyArgs),
+    CompanyDetail(operations::CompanyDetailArgs),
+    CompanyRss(operations::CompanyRssArgs),
+    DisclosureTypes(operations::DisclosureTypesArgs),
+    ReportGuide,
     #[command(
         name = "search-company",
         long_about = help::COMPANY_ABOUT,
@@ -252,12 +261,13 @@ enum OutputFormatArg {
 #[tokio::main]
 async fn main() -> ExitCode {
     let argv = std::env::args().collect::<Vec<_>>();
+    let debug = argv.iter().any(|arg| arg == "--debug");
     if let Some(command_help) = help::command_help(&argv) {
         print!("{command_help}");
         return ExitCode::SUCCESS;
     }
     if let Some(problem) = preparse_failure(&argv) {
-        write_value(&problem.value, problem.pretty);
+        write_failure(&problem.value, problem.pretty, debug);
         return ExitCode::FAILURE;
     }
     let cli = match Cli::try_parse_from(&argv) {
@@ -273,14 +283,36 @@ async fn main() -> ExitCode {
         }
         Err(error) => {
             let pretty = argv.iter().any(|value| value == "--pretty");
+            if error.kind() == ErrorKind::InvalidSubcommand {
+                let command = argv
+                    .iter()
+                    .skip(1)
+                    .find(|arg| !arg.starts_with('-'))
+                    .map_or("", String::as_str);
+                write_failure(
+                    &failure(
+                        format!("error: unknown command '{command}'"),
+                        None,
+                        "Run darty --help to list commands.",
+                    ),
+                    pretty,
+                    debug,
+                );
+                return ExitCode::FAILURE;
+            }
+            if let Some(problem) = parser_value_failure(&error) {
+                write_failure(&problem, pretty, debug);
+                return ExitCode::FAILURE;
+            }
             let rendered_error = error.to_string();
             let message = rendered_error
                 .lines()
                 .next()
                 .unwrap_or("Invalid command options.");
-            write_value(
+            write_failure(
                 &failure(message, None, "Run darty --help for options and examples."),
                 pretty,
+                debug,
             );
             return ExitCode::FAILURE;
         }
@@ -288,28 +320,96 @@ async fn main() -> ExitCode {
     match run(cli).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(problem) => {
-            write_value(&problem.value, problem.pretty);
+            write_failure(&problem.value, problem.pretty, debug);
             ExitCode::FAILURE
         }
     }
 }
 
+// Adapt structured parser failures to the existing CLI v1 contract.
+fn parser_value_failure(error: &clap::Error) -> Option<Value> {
+    if !matches!(
+        error.kind(),
+        ErrorKind::InvalidValue | ErrorKind::ValueValidation
+    ) {
+        return None;
+    }
+    let ContextValue::String(argument) = error.get(ContextKind::InvalidArg)? else {
+        return None;
+    };
+    let flag = argument.split_whitespace().next()?;
+    let parameter = match flag {
+        "--sort-by" => Some("sortBy"),
+        "--sort-direction" => Some("sortDirection"),
+        "--detail" => Some("detail"),
+        "--output-format" => Some("outputFormat"),
+        _ => None,
+    };
+    if let (Some(parameter), Some(ContextValue::Strings(values))) =
+        (parameter, error.get(ContextKind::ValidValue))
+    {
+        return Some(failure(
+            format!("Option \"{flag}\" must be one of: {}.", values.join(", ")),
+            Some(parameter),
+            "Run darty --help for options and examples.",
+        ));
+    }
+    let ContextValue::String(value) = error.get(ContextKind::InvalidValue)? else {
+        return None;
+    };
+    if matches!(
+        flag,
+        "--page" | "--page-size" | "--max-bytes" | "--content-start-byte" | "--toc-depth"
+    ) && value.parse::<u32>().is_err()
+    {
+        return Some(failure(
+            format!(
+                "error: option '{flag} <number>' argument '{value}' is invalid. Expected an integer but received \"{value}\"."
+            ),
+            Some(flag),
+            "Run darty --help for options and examples.",
+        ));
+    }
+    None
+}
+
+fn write_failure(value: &Value, pretty: bool, debug: bool) {
+    write_value(value, pretty);
+    if debug {
+        // Do not log request values, provider bodies, or unsanitized cause text.
+        eprintln!(
+            "{}",
+            json!({"diagnostics": {
+                "code": value["error"]["code"],
+                "retryable": value["error"]["retryable"]
+            }})
+        );
+    }
+}
+
 async fn run(cli: Cli) -> Result<(), CliFailure> {
-    // Keep this accepted global flag as a no-op so the frozen CLI stays stdout-only.
+    // Failure diagnostics are emitted at the process boundary in main.
     let Cli { command, debug: _ } = cli;
     let Some(command) = command else {
-        write_value(
-            &json!({
-                "result": {"name": "darty", "operations": ["search-company", "search-company-reports", "view-report"]},
-                "metadata": {"cliTransportVersion": "1", "output": "home"},
-                "references": {}, "warnings": [], "help": ["Run darty --help for command help."]
-            }),
-            false,
-        );
+        print!("{}", include_str!("../resources/home.json"));
         return Ok(());
     };
     let client = client().map_err(|error| CliFailure::sdk(&error, false, &[], &[]))?;
     match command {
+        Command::SearchBody(args) => operations::run_body(&client, args).await,
+        Command::CompanyDetail(args) => operations::run_detail(&client, args).await,
+        Command::CompanyRss(args) => operations::run_rss(&client, args).await,
+        Command::DisclosureTypes(args) => operations::run_types(&client, args),
+        Command::ReportGuide => {
+            println!(
+                "{}",
+                client
+                    .report_guide(darty::ReportGuideRequest {})
+                    .result
+                    .content_markdown
+            );
+            Ok(())
+        }
         Command::SearchCompany(args) => run_company(&client, args).await,
         Command::SearchCompanyReports(args) => run_reports(&client, args).await,
         Command::ViewReport(args) => run_view(&client, args).await,
@@ -633,6 +733,7 @@ fn quote_cli_value(value: &str) -> String {
 enum SearchKind {
     Company,
     Reports,
+    Body,
 }
 
 const COMPANY_CLI_PARAMETERS: &[(&str, &str)] = &[
@@ -690,12 +791,14 @@ fn present_search<T: Serialize>(
                 *item = match kind {
                     SearchKind::Company => company_agent_item(item),
                     SearchKind::Reports => reports_agent_item(item),
+                    SearchKind::Body => operations::body_agent_item(item),
                 };
             }
         }
         value["metadata"] = json!({"output": "agent", "source": value["metadata"]["source"].clone(), "completeness": value["metadata"]["completeness"].clone()});
     }
     value["help"] = match (kind, first.as_ref()) {
+        (SearchKind::Body, _) => operations::body_help(&value, first.as_ref()),
         (SearchKind::Company, Some(item)) => json!([format!(
             "Search filings: darty search-company-reports --company-code {} --start-date YYYYMMDD --end-date YYYYMMDD --agent",
             item["companyCode"].as_str().unwrap_or_default()
@@ -814,6 +917,8 @@ fn limit_toc(nodes: &mut Vec<Value>, depth: u32) {
     }
 }
 
+// Keep the frozen option-specific pre-parser failures together.
+#[allow(clippy::too_many_lines)]
 fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
     let pretty = argv.iter().any(|value| value == "--pretty");
     let command = argv
@@ -824,7 +929,14 @@ fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
         .filter(|value| {
             matches!(
                 *value,
-                "search-company" | "search-company-reports" | "view-report"
+                "search-company"
+                    | "search-company-reports"
+                    | "view-report"
+                    | "search-body"
+                    | "company-detail"
+                    | "company-rss"
+                    | "disclosure-types"
+                    | "report-guide"
             )
         });
     if command == Some("view-report") && argv.iter().any(|value| value == "--dcm-no") {
@@ -889,8 +1001,13 @@ fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
         }
     }
     if command == Some("view-report")
-        && let Some(rejected) = argv.windows(2).find_map(|pair| {
-            (pair[0] == "--content-start-byte" && pair[1].starts_with('-')).then_some(&pair[1])
+        && let Some(rejected) = argv.iter().enumerate().find_map(|(index, value)| {
+            let argument = if value == "--content-start-byte" {
+                argv.get(index + 1).map(String::as_str)
+            } else {
+                value.strip_prefix("--content-start-byte=")
+            }?;
+            argument.starts_with('-').then_some(argument)
         })
     {
         return Some(CliFailure::new(
@@ -1022,9 +1139,13 @@ fn apply_report_filter_copy(error: &mut DartyError, parameter: &str, flag: &str)
     match parameter {
         "presenterName" | "reportName" => {
             error.message = format!("Option \"{flag}\" cannot be empty.");
-            error.recovery_hint = Some(
-                "Run darty search-company-reports --help for options and examples.".to_owned(),
-            );
+            if error.recovery_hint.as_deref()
+                != Some("Run darty search-body --help for options and examples.")
+            {
+                error.recovery_hint = Some(
+                    "Run darty search-company-reports --help for options and examples.".to_owned(),
+                );
+            }
             true
         }
         "disclosureTypes" => {
@@ -1186,10 +1307,10 @@ mod tests {
     }
 
     #[test]
-    fn debug_help_describes_the_compatibility_noop() {
+    fn debug_help_describes_bounded_failure_diagnostics() {
         let help = Cli::command().render_help().to_string();
         assert!(help.contains("--debug"));
-        assert!(help.contains("does not change JSON output or emit diagnostics"));
+        assert!(help.contains("bounded error classification diagnostics"));
     }
 
     #[test]

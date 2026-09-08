@@ -1,0 +1,22 @@
+{
+  "kind": "text",
+  "exitCode": 0,
+  "requiredFragments": [
+    "Usage: darty disclosure-types [options]"
+  ],
+  "requiredNormalizedFragments": [
+    "Usage: darty disclosure-types [options]",
+    "Look up DART 공시상세유형 detailed codes for search-company-reports disclosureTypes/--disclosure-type. Can be narrowed by category (A-J) or query.",
+    "Options: --category <A-J> Filter by disclosure type category (A-J). Omit it to return the full list. --query <text> Code or Korean-label search term. Examples: 사업보고서, 수시공시, A001. --pretty Print human-readable indented JSON. -h, --help Display command help.",
+    "Examples: # Print the full DART 공시상세유형 code list. darty disclosure-types",
+    "# Print only category A codes (정기공시 family). darty disclosure-types --category A",
+    "# Find codes whose label or code contains 사업보고서. darty disclosure-types --query 사업보고서",
+    "Search tips: - Categories: A=정기공시, B=주요사항보고, C=발행공시, D=지분공시, E=기타공시, F=외부감사관련, G=펀드공시, H=자산유동화, I=거래소공시, J=공정위공시. - If the same label appears in multiple categories, inspect categoryLabel/categoryDescription or narrow with `--category`. Example: B001=general 주요사항보고, H006=자산유동화 주요사항보고서. - Pass detailed codes returned by this command, such as A001 or I001, to search-company-reports `--disclosure-type`. - Use search-company-reports `--report-name` when you want report-title text filtering instead of disclosure type codes."
+  ],
+  "longOptions": [
+    "--category",
+    "--help",
+    "--pretty",
+    "--query"
+  ]
+}

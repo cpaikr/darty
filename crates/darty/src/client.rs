@@ -1,3 +1,5 @@
+mod extra;
+
 use std::sync::Arc;
 
 #[cfg(feature = "fixture-origin")]

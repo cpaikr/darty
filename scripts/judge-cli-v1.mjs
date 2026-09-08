@@ -32,12 +32,12 @@ const parseArguments = (argv) => {
     index += 1;
   }
 
-  if (profile !== "vertical" && profile !== "candidate" && profile !== "full") {
+  if (profile !== "full" && profile !== "process") {
     throw new Error(`Unknown profile: ${profile}`);
   }
   if (command.length === 0) {
     throw new Error(
-      "Expected a subject command after --, for example: -- node dist/cli.js",
+      "Expected a subject command after --, for example: -- target/release/darty",
     );
   }
 
@@ -66,13 +66,10 @@ const validateManifest = (manifest) => {
     if (
       typeof scenario.id !== "string" ||
       ids.has(scenario.id) ||
-      !Array.isArray(scenario.profiles) ||
-      !scenario.profiles.every(
-        (profile) => profile === "vertical" || profile === "candidate" || profile === "full",
-      ) ||
       !Array.isArray(scenario.argv) ||
       !scenario.argv.every((argument) => typeof argument === "string") ||
       typeof scenario.golden !== "string" ||
+      (scenario.requiresFixture !== undefined && typeof scenario.requiresFixture !== "boolean") ||
       (scenario.fixtureFault !== undefined && typeof scenario.fixtureFault !== "string") ||
       (scenario.fixtureFaultPhase !== undefined &&
         !["shell", "content"].includes(scenario.fixtureFaultPhase)) ||
@@ -303,7 +300,7 @@ const launchFixture = ({ cwd, name, fault, phase }) => {
           ? {}
           : {
               DARTY_FIXTURE_FAULT_DELAY_SCALE: "0.01",
-              // Fast reset bounds the candidate judge. It is explicitly a
+              // Fast reset bounds the fixture judge. It is explicitly a
               // transport-failure equivalent, not deadline-duration proof.
               DARTY_FIXTURE_FAULT_FAST: "1",
             }),
@@ -339,21 +336,13 @@ if (parsed !== undefined) {
   let checked = 0;
 
   try {
-    if (parsed.profile === "candidate") {
+    if (parsed.profile === "full") {
       const normalFixture = launchFixture({ cwd: isolatedCwd, name: "normal" });
       fixtureServer = normalFixture.child;
       fixtureOrigin = normalFixture.origin;
     }
     for (const scenario of manifest.scenarios) {
-      const selected =
-        (parsed.profile === "full" &&
-          scenario.profiles.some((profile) => profile === "full" || profile === "vertical")) ||
-        (parsed.profile === "candidate" &&
-          scenario.profiles.some(
-            (profile) => profile === "candidate" || profile === "vertical",
-          )) ||
-        scenario.profiles.includes(parsed.profile);
-      if (!selected) {
+      if (parsed.profile === "process" && scenario.requiresFixture) {
         continue;
       }
 
@@ -362,7 +351,7 @@ if (parsed !== undefined) {
       const golden = readJson(goldenPath);
       validateGolden(golden, goldenPath);
       const faultFixture =
-        parsed.profile === "candidate" && scenario.fixtureFault !== undefined
+        scenario.fixtureFault !== undefined
           ? launchFixture({
               cwd: isolatedCwd,
               name: `fault-${scenario.id}`,

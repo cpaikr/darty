@@ -1,6 +1,6 @@
 [package]
 name = "darty-node"
-description = "Node.js binding candidate for the supported DART workflow"
+description = "Asynchronous Node.js binding for the Darty Rust SDK"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -18,12 +18,13 @@ default = []
 test-fixture = ["darty/fixture-origin", "dep:url"]
 
 [dependencies]
-darty = { path = "../darty", version = "0.5.0" }
+darty = { path = "../darty", version = "0.6.1" }
 futures-util.workspace = true
 napi.workspace = true
 napi-derive.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_path_to_error = "0.1.20"
 tokio.workspace = true
 tokio-util.workspace = true
 url = { workspace = true, optional = true }

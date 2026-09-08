@@ -1,14 +1,14 @@
-# CLI v1 compatibility baseline
+# CLI v1 compatibility corpus
 
-This corpus is the implementation-neutral process boundary for the TypeScript
-baseline and rewrite candidates. It runs a supplied command in a fresh process
+This corpus is the implementation-neutral process boundary retained through
+the Rust repository cutover. It runs a supplied command in a fresh process
 for every scenario and compares exit status, stdout framing and value, and
 stderr without importing product code.
 
 Help expectations compare the exact long-option set plus hand-authored,
 whitespace-normalized semantic fragments. This preserves descriptions,
 defaults, examples, and cautions without coupling a later Clap implementation
-to Commander's line wrapping.
+to historical Commander's line wrapping.
 
 The checked-in expectations were authored from
 [`docs/specs/cli-transport-v1.md`](../../../docs/specs/cli-transport-v1.md), the
@@ -18,38 +18,35 @@ golden review.
 
 ## Profiles
 
-- `vertical` covers the candidate `search-company` →
-  `search-company-reports` → `view-report` help and validation surface.
-- `candidate` adds independently authored fixture-backed success, agent
-  projection, TOC, and section-window expectations to the vertical profile.
-- `full` also freezes the active root home, the other five operation entry
-  paths, and the two deterministic static operations. It is the guard that the
-  TypeScript comparison product remains unchanged while the candidate is built.
+- `process` covers root discovery, all operation help and validation, and static
+  results without network calls. Use it for production standalone executables.
+- `full` covers every scenario, including fixture-backed operation results,
+  projections, viewer handoffs, and transport faults. It requires a Rust build
+  with the test-only `fixture-origin` feature; production binaries contain no
+  fixture seam.
 
-The current source adapters use fixed DART HTTPS endpoints. The deterministic
-baseline therefore covers process transport, help, semantic validation, and
-network-free operations without adding a test-only seam to the active product.
-Fixture-backed successful searches and the four-step report workflow use the
-candidate profile and the canonical wire authority's runtime-neutral
-fake-upstream boundary. The active TypeScript product never receives that
-test-only seam.
+Production archive checks combine the network-free process contract with
+separately authorized live workflows. Repository cutover and artifact checks
+remain in progress; the Rust CLI is not yet published.
 
 ## Running
 
 ```bash
+# Build a separate fixture-enabled Rust executable and run all scenarios.
 bun run test:compat:cli
+
+# Check an exact production executable without contacting DART.
+node scripts/judge-cli-v1.mjs --profile process -- /absolute/path/to/darty
+
+# Verify that the judge rejects a deliberate transport-version mutation.
+bun run build
 bun run test:compat:cli:mutation
-
-# Run help and validation compatibility against any candidate command.
-node scripts/judge-cli-v1.mjs --profile vertical -- ./path/to/darty
-
-# Run the retained Rust candidate's full vertical acceptance profile.
-node scripts/judge-cli-v1.mjs --profile candidate -- ./path/to/darty
 ```
 
-The mutation proof changes the transport version only in a disposable copy of
-the built CLI and requires the judge to reject it. It never edits `src/` or the
-normal `dist/cli.js` artifact.
+The mutation proof wraps the executable in a disposable subprocess adapter that
+changes only the emitted transport version. The independent judge must reject
+that output; source and production executables remain unchanged. `DARTY_CLI`
+can select an exact installed executable for this proof.
 
 ## Reviewed inventory
 
@@ -72,7 +69,7 @@ projections omit evidence and low-value metadata while preserving identifiers,
 references, and `help[]`. `view-report` has no agent mode but provides TOC,
 section, and continuation hints.
 
-The active npm baseline is `@sjunepark/darty@0.5.0`: `darty` points to
+The frozen historical npm baseline is `@sjunepark/darty@0.5.0`: `darty` points to
 `dist/cli.js`, exports are `./toolset` and `./package.json`, and packed contents
 are `dist`, `README.md`, and `LICENSE.md`. The implementation commit recorded in
 [`baseline.json`](baseline.json) is the code identity beneath the later

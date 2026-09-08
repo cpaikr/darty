@@ -1,0 +1,39 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "result": {
+      "request": {
+        "companyCode": "00000001",
+        "detail": "concise"
+      },
+      "channel": {
+        "title": "가람전자 공시",
+        "link": "https://dart.fss.or.kr/"
+      },
+      "items": [
+        {
+          "title": "가람전자 사업보고서",
+          "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331000001",
+          "receiptNumber": "20260331000001",
+          "publishedAt": "2026-03-31T09:00:00+09:00",
+          "creator": "가람전자"
+        }
+      ]
+    },
+    "metadata": {
+      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "source": {
+        "system": "dart",
+        "surface": "companyRSS",
+        "endpoint": "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00000001"
+      },
+      "completeness": "complete",
+      "itemCount": 1
+    },
+    "references": {
+      "rssUrl": "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00000001"
+    }
+  }
+}

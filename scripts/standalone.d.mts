@@ -2,7 +2,7 @@ export interface Target {
   id: string;
   os: string;
   arch: string;
-  bunTarget: string;
+  rustTarget: string;
   executable: string;
   runner?: string;
 }

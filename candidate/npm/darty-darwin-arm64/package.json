@@ -1,8 +1,0 @@
-{
-  "name": "@sjunepark/darty-darwin-arm64",
-  "version": "0.5.0",
-  "os": ["darwin"],
-  "cpu": ["arm64"],
-  "files": ["LICENSE.md", "darty", "darty.node"],
-  "license": "Elastic-2.0"
-}
