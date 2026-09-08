@@ -10,6 +10,8 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
 const fixtureRoot = join(repoRoot, "fixtures/dart/vertical-v1");
 const manifest = JSON.parse(readFileSync(join(fixtureRoot, "manifest.json"), "utf8"));
+const parityRoot = join(repoRoot, "fixtures/dart/parity-v1");
+const parityManifest = JSON.parse(readFileSync(join(parityRoot, "manifest.json"), "utf8"));
 const readyPath = process.argv[2];
 const faultId = process.env.DARTY_FIXTURE_FAULT;
 const faultPhase = process.env.DARTY_FIXTURE_FAULT_PHASE;
@@ -31,9 +33,10 @@ const enabledCases = new Set([
   "company-populated",
   "reports-populated",
   "report-shell-toc",
+  "report-shell-rebound",
   "report-content-utf8",
 ]);
-const cases = manifest.cases.filter((fixtureCase) => enabledCases.has(fixtureCase.id));
+const cases = [...manifest.cases.filter((fixtureCase) => enabledCases.has(fixtureCase.id)).map((entry) => ({ ...entry, root: fixtureRoot })), ...parityManifest.cases.map((entry) => ({ ...entry, root: parityRoot }))];
 const faults = new Map((manifest.faults ?? []).map((fault) => [fault.id, fault]));
 
 if (faultId !== undefined && !faults.has(faultId)) {
@@ -80,10 +83,10 @@ const matches = (fixtureCase, request, body) => {
   ) {
     return false;
   }
-  if (expected.form !== undefined) {
+  if (expected.headers["content-type"] !== undefined) {
     if (request.headers["content-type"] !== expected.headers["content-type"]) return false;
-    if (request.headers.referer !== expected.headers.referer) return false;
   }
+  if (request.headers.referer !== expected.headers.referer) return false;
   return (
     typeof request.headers["user-agent"] === "string" &&
     request.headers["user-agent"].length > 0
@@ -197,7 +200,7 @@ const server = createServer((request, response) => {
     }
 
     const send = () => {
-      const fixtureBody = readFileSync(join(fixtureRoot, fixtureCase.response.bodyPath));
+      const fixtureBody = readFileSync(join(fixtureCase.root, fixtureCase.response.bodyPath));
       response.writeHead(fixtureCase.response.status, {
         "content-type": fixtureCase.response.contentType,
       });

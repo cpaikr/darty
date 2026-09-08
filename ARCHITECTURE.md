@@ -9,10 +9,10 @@ destination and delivery order live in [VISION.md](VISION.md) and
 
 | State | Public status | Location | Capability coverage |
 |---|---|---|---|
-| Current implementation | TypeScript CLI; standalone delivery configured, first release pending | `src/`, `scripts/standalone.mjs` | Eight operations through the CLI with an embedded Bun runtime |
+| Current implementation | TypeScript CLI; standalone delivery published in v0.6.0 | `src/`, `scripts/standalone.mjs` | Eight operations through the CLI with an embedded Bun runtime |
 | Historical distribution | Existing npm versions retained, no further publication | Earlier `@sjunepark/darty` releases | Node-based CLI and `./toolset` in those released versions |
-| Rewrite candidate | Retained, reviewed, unpublished | `crates/`, `candidate/npm/` | `search-company`, `search-company-reports`, and `view-report` through Rust SDK, async Node SDK, and Rust CLI |
-| Accepted target | Selected, partially implemented | `VISION.md` | One Rust-owned implementation for all eight operations, exposed through Rust SDK, Node SDK, and CLI |
+| Rewrite candidate | Implemented; Phase 3 validation and PR delivery in progress; unpublished | `crates/`, `candidate/npm/` | All eight operations through Rust SDK, async Node SDK, and Rust CLI |
+| Accepted target | Capability implementation present; artifact delivery and cutover pending | `VISION.md` | One Rust-owned implementation for all eight operations, exposed through Rust SDK, Node SDK, and CLI |
 
 The candidate does not replace the standalone TypeScript CLI. Its current-host
 native package proves Darwin ARM64 packaging only; it is not a supported
@@ -42,8 +42,9 @@ platform matrix or release artifact.
 - `crates/darty-node` — narrow asynchronous Node-API binding.
 - `candidate/npm/` — unpublished root Node SDK/launcher and current-host native
   package shapes.
-- [`fixtures/dart/vertical-v1/`](fixtures/dart/vertical-v1/README.md) — fictional,
-  cross-language wire evidence.
+- [`fixtures/dart/vertical-v1/`](fixtures/dart/vertical-v1/README.md) and
+  [`fixtures/dart/parity-v1/`](fixtures/dart/parity-v1/README.md) — fictional,
+  cross-language wire evidence for all source-backed operations.
 - [`test/compat/cli-v1/`](test/compat/cli-v1/README.md) — implementation-neutral
   CLI compatibility corpus.
 - [`evals/`](evals/README.md) — opt-in live and model-in-the-loop task checks.
@@ -79,7 +80,7 @@ decoding, parsing, domain normalization, and sanitized source failures. The CLI
 and Node binding translate surface concerns without creating a second DART
 implementation.
 
-The supported upstream subset for the vertical candidate is canonical in
+The supported seven-call upstream subset for the candidate is canonical in
 [`dart-wire-v1.openapi.yaml`](docs/specs/dart-wire-v1.openapi.yaml) and
 [`dart-html-viewer-v1.md`](docs/specs/dart-html-viewer-v1.md). The fictional
 fixture corpus and provider qualification are evidence, not competing

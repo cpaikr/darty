@@ -34,7 +34,7 @@ Phase 3 — full capability parity and refreshed source evidence.
 
 ### Next in-scope action
 
-Reproduce viewer drift, reconcile contracts, and implement full eight-operation parity across the Rust SDK, Node SDK, and CLI before Phase 4 cutover.
+Finish the bounded integration review and deliver the validated parity PR before Phase 4 artifact validation and cutover.
 
 ### Evidence and blockers
 
@@ -43,3 +43,13 @@ Reproduce viewer drift, reconcile contracts, and implement full eight-operation 
 - Existing uncommitted planning changes in architecture, roadmap, release runbook, rewrite plan, and standalone plan predate this run and are preserved for reconciliation.
 - Boundary classification: Phase 3 parity is included; integration branch and durable contract initialization are necessary for Delivery. Release tags, publication, paid evals, and human production signoff remain excluded.
 
+
+- Phase 3 implementation in progress on `codex/rust-full-parity`: all eight Rust SDK and Node/CLI adapters implemented; TypeScript baseline retained.
+- Viewer drift reproduced: DART rebinds one JavaScript variable to four fresh TOC objects. Rust now preserves object identity; independently fictional fixture covers rebinding. Regex/no-TOC and graph-bound acceptance rules reconciled in the canonical companion.
+- Independent SDK review found strict-date and whitespace-normalization defects; both corrected with regression tests. Initial workspace validation passed 49 SDK unit tests, 20 integration tests, 9 CLI tests and Node panic containment; additional transport cases are in progress.
+- Independent parity corpus: 19 body/detail/RSS cases pass Rust request/result checks. Expanded CLI full judge covers baseline-derived network projections. A baseline Effect error-wrapping bug is explicitly dispositioned: recognized missing company is `not_found` in Rust.
+- Phase 3 validation: 50 SDK unit tests, 22 integration tests, 9 CLI tests, Node panic containment, workspace Clippy and rustdoc pass. Rust and retained TypeScript each pass 51 full CLI scenarios, with the missing-company baseline defect explicitly dispositioned.
+- Packaged Node consumers pass all eight operations, public declarations, validation, pre-abort and in-flight cancellation for new network operations. Wire authority passes 7 operations, 43 rules, 37 fictional cases and 10 shared fault recipes.
+- Bounded 2026-09-08 release CLI live refresh succeeds across all six source-backed operations, including repaired four-root TOC and section content; provider record retains pending human approval. No live response bodies retained.
+- Bounded SDK, CLI/Node, and integration reviews completed. Fixed strict input handling, body error hints, and baseline/standalone judge integration findings. Scoped documentation reconciliation completed. TypeScript installed archive passes 36 network-free process scenarios; release checks and mutation proof pass.
+- PR Delivery remains next. No publication or approval records created.

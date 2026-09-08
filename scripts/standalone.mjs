@@ -153,14 +153,14 @@ function certify(id, directory, reportPath) {
     writeFileSync(join(consumer, ".env"), "NODE_OPTIONS=--invalid-darty-test-option\n");
     writeFileSync(join(consumer, "bunfig.toml"), "this is deliberately invalid TOML [\n");
     run(executable, ["--help"], { cwd: consumer, env });
-    console.log(run(process.execPath, [join(root, "scripts/judge-cli-v1.mjs"), "--profile", "full", "--", executable], { cwd: consumer, env }));
+    console.log(run(process.execPath, [join(root, "scripts/judge-cli-v1.mjs"), "--profile", "process", "--", executable], { cwd: consumer, env }));
     // Check recovery at the supported installation boundary, preserving the old binary.
     writeFileSync(checksums, `${"0".repeat(64)}  ${record.archive}\n`);
     const rejected = spawnSync("sh", [installer, join(directory, record.archive), checksums, bin], { cwd: consumer, encoding: "utf8" });
     assert.notEqual(rejected.status, 0, "Corrupt checksum must fail installation");
     assert.equal(digest(readFileSync(executable)), record.executableSha256, "Failed install changed previous binary");
     mkdirSync(dirname(reportPath), { recursive: true });
-    writeJson(reportPath, { ...record, certified: true, os: process.platform, arch: process.arch, contract: "cli-v1-full", runtimeRequired: false });
+    writeJson(reportPath, { ...record, certified: true, os: process.platform, arch: process.arch, contract: "cli-v1-process", runtimeRequired: false });
   } finally {
     rmSync(consumer, { recursive: true, force: true });
   }
@@ -198,7 +198,7 @@ function assemble(archives, reports, directory) {
     if (target.os === "linux") {
       const report = json(join(reports, `${target.id}.json`));
       assert.equal(report.certified, true);
-      assert.equal(report.contract, "cli-v1-full");
+      assert.equal(report.contract, "cli-v1-process");
       assert.equal(report.runtimeRequired, false);
       assert.equal(report.os, target.os);
       assert.equal(report.arch, target.arch);

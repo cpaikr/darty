@@ -1,0 +1,55 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "result": {
+      "request": {
+        "page": 1,
+        "sortBy": "date",
+        "sortDirection": "desc",
+        "detail": "concise",
+        "keyword": "없는문구",
+        "startDate": "20260101",
+        "endDate": "20260331"
+      },
+      "pagination": {
+        "currentPage": 1,
+        "totalPages": 0,
+        "totalCount": 0,
+        "returnedCount": 0
+      },
+      "items": []
+    },
+    "metadata": {
+      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "source": {
+        "system": "dart",
+        "surface": "dsab007",
+        "endpoint": "https://dart.fss.or.kr/dsab007/search.ax"
+      },
+      "sourceBehavior": {
+        "effectivePageSize": 10,
+        "effectivePagerWidth": 10,
+        "callerControlsPageSize": false,
+        "callerControlsPagerWidth": false,
+        "observationStatus": "observed"
+      },
+      "completeness": "complete",
+      "droppedItemCount": 0
+    },
+    "references": {
+      "searchUrl": "https://dart.fss.or.kr/dsab007/search.ax"
+    },
+    "warnings": [
+      {
+        "code": "no_results",
+        "message": "No DART 본문내용 results. DART applies document-level keywords plus explicit date/company/report filters; widen the date range or remove optional filters, then search again."
+      }
+    ],
+    "help": [
+      "No filings matched. Widen the date range, relax filters, or try DART search syntax such as OR with |.",
+      "Run darty search-body --help for keyword syntax and filters."
+    ]
+  }
+}

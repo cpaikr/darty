@@ -1,4 +1,5 @@
 mod help;
+mod operations;
 
 use std::process::ExitCode;
 
@@ -27,6 +28,11 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    SearchBody(operations::SearchBodyArgs),
+    CompanyDetail(operations::CompanyDetailArgs),
+    CompanyRss(operations::CompanyRssArgs),
+    DisclosureTypes(operations::DisclosureTypesArgs),
+    ReportGuide,
     #[command(
         name = "search-company",
         long_about = help::COMPANY_ABOUT,
@@ -272,6 +278,22 @@ async fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Err(error) => {
+            if error.kind() == ErrorKind::InvalidSubcommand {
+                let command = argv
+                    .iter()
+                    .skip(1)
+                    .find(|arg| !arg.starts_with('-'))
+                    .map_or("", String::as_str);
+                write_value(
+                    &failure(
+                        format!("error: unknown command '{command}'"),
+                        None,
+                        "Run darty --help to list commands.",
+                    ),
+                    false,
+                );
+                return ExitCode::FAILURE;
+            }
             let pretty = argv.iter().any(|value| value == "--pretty");
             let rendered_error = error.to_string();
             let message = rendered_error
@@ -298,18 +320,25 @@ async fn run(cli: Cli) -> Result<(), CliFailure> {
     // Keep this accepted global flag as a no-op so the frozen CLI stays stdout-only.
     let Cli { command, debug: _ } = cli;
     let Some(command) = command else {
-        write_value(
-            &json!({
-                "result": {"name": "darty", "operations": ["search-company", "search-company-reports", "view-report"]},
-                "metadata": {"cliTransportVersion": "1", "output": "home"},
-                "references": {}, "warnings": [], "help": ["Run darty --help for command help."]
-            }),
-            false,
-        );
+        print!("{}", include_str!("../resources/home.json"));
         return Ok(());
     };
     let client = client().map_err(|error| CliFailure::sdk(&error, false, &[], &[]))?;
     match command {
+        Command::SearchBody(args) => operations::run_body(&client, args).await,
+        Command::CompanyDetail(args) => operations::run_detail(&client, args).await,
+        Command::CompanyRss(args) => operations::run_rss(&client, args).await,
+        Command::DisclosureTypes(args) => operations::run_types(&client, args),
+        Command::ReportGuide => {
+            println!(
+                "{}",
+                client
+                    .report_guide(darty::ReportGuideRequest {})
+                    .result
+                    .content_markdown
+            );
+            Ok(())
+        }
         Command::SearchCompany(args) => run_company(&client, args).await,
         Command::SearchCompanyReports(args) => run_reports(&client, args).await,
         Command::ViewReport(args) => run_view(&client, args).await,
@@ -633,6 +662,7 @@ fn quote_cli_value(value: &str) -> String {
 enum SearchKind {
     Company,
     Reports,
+    Body,
 }
 
 const COMPANY_CLI_PARAMETERS: &[(&str, &str)] = &[
@@ -690,12 +720,14 @@ fn present_search<T: Serialize>(
                 *item = match kind {
                     SearchKind::Company => company_agent_item(item),
                     SearchKind::Reports => reports_agent_item(item),
+                    SearchKind::Body => operations::body_agent_item(item),
                 };
             }
         }
         value["metadata"] = json!({"output": "agent", "source": value["metadata"]["source"].clone(), "completeness": value["metadata"]["completeness"].clone()});
     }
     value["help"] = match (kind, first.as_ref()) {
+        (SearchKind::Body, _) => operations::body_help(&value, first.as_ref()),
         (SearchKind::Company, Some(item)) => json!([format!(
             "Search filings: darty search-company-reports --company-code {} --start-date YYYYMMDD --end-date YYYYMMDD --agent",
             item["companyCode"].as_str().unwrap_or_default()
@@ -824,7 +856,14 @@ fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
         .filter(|value| {
             matches!(
                 *value,
-                "search-company" | "search-company-reports" | "view-report"
+                "search-company"
+                    | "search-company-reports"
+                    | "view-report"
+                    | "search-body"
+                    | "company-detail"
+                    | "company-rss"
+                    | "disclosure-types"
+                    | "report-guide"
             )
         });
     if command == Some("view-report") && argv.iter().any(|value| value == "--dcm-no") {
@@ -1022,9 +1061,13 @@ fn apply_report_filter_copy(error: &mut DartyError, parameter: &str, flag: &str)
     match parameter {
         "presenterName" | "reportName" => {
             error.message = format!("Option \"{flag}\" cannot be empty.");
-            error.recovery_hint = Some(
-                "Run darty search-company-reports --help for options and examples.".to_owned(),
-            );
+            if error.recovery_hint.as_deref()
+                != Some("Run darty search-body --help for options and examples.")
+            {
+                error.recovery_hint = Some(
+                    "Run darty search-company-reports --help for options and examples.".to_owned(),
+                );
+            }
             true
         }
         "disclosureTypes" => {

@@ -5,27 +5,31 @@
   "files": [
     {
       "path": "docs/specs/dart-wire-v1.openapi.yaml",
-      "sha256": "f696c64d73020d029266691e979e78b3ef069c7af22a187ed93966994d40eeb0"
+      "sha256": "0c6ea26ca5bc427f679d1e1181f5331831e0ea8f7e69db7b351e4bdd3c70bfec"
     },
     {
       "path": "docs/specs/dart-html-viewer-v1.md",
-      "sha256": "b92f8505625616c91cca2f1cb6fb3831fbb0d0a1d0d3f47ce44d056df36f4d87"
+      "sha256": "0927068aed5c17bdbbccf3cb72e382efa3c691ab667ae1f5a1e68a339fc55019"
     },
     {
       "path": "docs/research/dart-provider-qualification.md",
-      "sha256": "38a75d1ed7c1a81167cf9f344506ce51d3d0e77a10aa37d3c1578838cc7ae492"
+      "sha256": "78d3acc1286c0f2455248f693b28f20604404bffa61259b10a5ab87096541216"
     },
     {
       "path": "fixtures/dart/vertical-v1/manifest.json",
-      "sha256": "e18efb11973f4708f9d5c2340652c6160a7d03461bfa167f9140285848e09563"
+      "sha256": "6b2eb95ca16a6a165517331c6abab1a48ce1a1efa1f484b0b2a6b51e2896ccc2"
     },
     {
       "path": "scripts/check-dart-wire.mjs",
-      "sha256": "24460fc840f04be26bc30a918db13ccc60d2ed66877e18a643955163d980cd97"
+      "sha256": "e3b9cb15558dcca541ae16cfa0d0f6e5ddae17937bd86c8ae6150645b4443ac9"
     },
     {
       "path": "scripts/check-dart-fixture-conformance.ts",
-      "sha256": "1a49af9288ada263bb3763f54d7264058fd301d08356df3c31bd907fa7913324"
+      "sha256": "7345cc5332f73f29d9489e4ee0edc134ad0132d911efff28358d628721052348"
+    },
+    {
+      "path": "fixtures/dart/parity-v1/manifest.json",
+      "sha256": "39e6274d12d9bb8ca49f4d2e091fd5533990250ee55af6be09e4a3d502266547"
     }
   ]
 }

@@ -1,0 +1,41 @@
+Usage: darty [options] [command]
+
+Tool-friendly DART search and retrieval commands.
+
+Options:
+  --debug                           Write execution diagnostics to stderr when
+                                    available.
+  -h, --help                        Display help.
+
+Commands:
+  company-detail [options]          Fetch DART 기업개황 company details.
+  company-rss [options]             Fetch the DART company disclosure RSS feed.
+  disclosure-types [options]        List DART 공시상세유형 disclosure type codes.
+  report-guide                      Print a guide to information by DART report
+                                    family.
+  search-body [options]             Search DART 공시통합검색 본문내용.
+  search-company [options]          Find 8-digit DART company codes through DART
+                                    기업개황 회사별 search.
+  search-company-reports [options]  Search company-specific DART filings by DART
+                                    company code.
+  view-report [options]             Fetch a DART report table of contents or
+                                    body content.
+  help [command]                    Display help for a command.
+
+Common agent flow:
+  1. Find a company code: darty search-company --company-name 삼성전자
+  2. Search filings: darty search-company-reports --company-code 00126380 --start-date YYYYMMDD --end-date YYYYMMDD
+  3. Inspect a filing: darty view-report --receipt <filing.receiptNumber-or-viewerUrl>
+  4. Read a section: darty view-report --receipt <receipt> --section-id <toc[].id>
+  Use search-body for document-level keyword search and disclosure-types for --disclosure-type codes.
+
+Output:
+  - Commands print a JSON response object to stdout on success and failure; failures exit non-zero.
+  - Use --pretty for indented JSON.
+  - Help and report-guide print human-readable text.
+
+Cautions:
+  - This tool replays read-only DART web requests observed during browser interaction.
+  - It does not use DART's official OpenDART API.
+  - It does not guarantee accuracy. You are responsible for how you use the information, and this tool provides no warranty.
+

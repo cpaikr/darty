@@ -310,7 +310,12 @@ try {
   const productionSdk = await import(pathToFileURL(join(productionPackageRoot, "index.js")));
   assert.deepEqual(Object.keys(productionSdk).sort(), ["DartyClient", "DartyError"]);
   assert.deepEqual(Object.getOwnPropertyNames(productionSdk.DartyClient.prototype).sort(), [
+    "companyDetail",
+    "companyRss",
     "constructor",
+    "disclosureTypes",
+    "reportGuide",
+    "searchBody",
     "searchCompany",
     "searchCompanyReports",
     "viewReport",
@@ -323,15 +328,25 @@ try {
     "public response metadata must use project-owned declarations",
   );
   const declaredMethods = [
-    ...declarations.matchAll(/^\s+(searchCompany(?:Reports)?|viewReport)\(/gm),
+    ...declarations.matchAll(/^\s+(searchCompany(?:Reports)?|viewReport|searchBody|companyDetail|companyRss|disclosureTypes|reportGuide)\(/gm),
   ]
     .map((match) => match[1])
     .sort();
-  assert.deepEqual(declaredMethods, ["searchCompany", "searchCompanyReports", "viewReport"]);
+  assert.deepEqual(declaredMethods, ["companyDetail", "companyRss", "disclosureTypes", "reportGuide", "searchBody", "searchCompany", "searchCompanyReports", "viewReport"]);
   writeFileSync(
     join(productionConsumer, "consumer.ts"),
     `import { DartyClient, DartyError } from "@sjunepark/darty";\nconst client = new DartyClient();\nconst typedError = new DartyError({ code: "invalid_request", message: "invalid", retryable: false, parameter: "companyName" });\nconst company = client.searchCompany({ companyName: "가람" });\nconst companyCode: Promise<string> = company.then((response) => response.result.items[0]!.companyCode);\nconst companyPage: Promise<number> = company.then((response) => response.result.request.page);\nconst companyEndpoint: Promise<string> = company.then((response) => response.metadata.source.endpoint);\nconst reports = client.searchCompanyReports({ companyCode: "00000001", startDate: "20250101", endDate: "20260101" });\nconst reportPageSize: Promise<number> = reports.then((response) => response.result.request.pageSize);\nconst reportDetail: Promise<"concise" | "detailed" | "raw"> = reports.then((response) => response.result.request.detail);\nconst reportSource: Promise<string> = reports.then((response) => response.metadata.sourceBehavior.sortBy);\nconst report = client.viewReport({ receipt: "20260101000001", sectionId: "section:1.1" }, { signal: new AbortController().signal });\nconst viewFormat: Promise<"html" | "markdown"> = report.then((response) => response.result.request.outputFormat);\nconst viewDetail: Promise<"concise" | "detailed" | "raw"> = report.then((response) => response.result.request.detail);\nconst viewEndpoint: Promise<string> = report.then((response) => response.metadata.source.endpoints.shell);\nvoid [companyCode, companyPage, companyEndpoint, reports, reportPageSize, reportDetail, reportSource, report, viewFormat, viewDetail, viewEndpoint, typedError];\n`,
   );
+  writeFileSync(join(productionConsumer, "consumer.ts"), readFileSync(join(productionConsumer, "consumer.ts"), "utf8") + `
+const body = client.searchBody({ keyword: "배당", startDate: "20260101", endDate: "20260331" });
+const snippet: Promise<string> = body.then(r => r.result.items[0]!.match.snippetText);
+const bodyPage: Promise<number> = body.then(r => r.result.request.page);
+const detailCompany: Promise<string> = client.companyDetail({ companyCode: "00000001" }).then(r => r.result.company.companyName);
+const rss: Promise<string> = client.companyRss({ companyCode: "00000001", detail: "raw" }).then(r => r.result.channel.title);
+const codes: Promise<string> = client.disclosureTypes({ query: "사업" }).then(r => r.result.categories[0]!.items[0]!.code);
+const guide: Promise<string> = client.reportGuide().then(r => r.result.contentMarkdown);
+void [snippet, bodyPage, detailCompany, rss, codes, guide];
+`);
   run(
     join(repoRoot, "node_modules/.bin/tsc"),
     [
@@ -361,6 +376,11 @@ try {
     ["searchCompany", {}],
     ["searchCompanyReports", {}],
     ["viewReport", {}],
+    ["searchBody", {}],
+    ["companyDetail", {}],
+    ["companyRss", {}],
+    ["disclosureTypes", { unexpected: true }],
+    ["reportGuide", { unexpected: true }],
   ]) {
     await assert.rejects(
       productionClient[operation](input),
@@ -385,7 +405,12 @@ try {
   const sdk = await import(pathToFileURL(join(packageRoot, "index.js")));
   assert.deepEqual(Object.keys(sdk).sort(), ["DartyClient", "DartyError"]);
   assert.deepEqual(Object.getOwnPropertyNames(sdk.DartyClient.prototype).sort(), [
+    "companyDetail",
+    "companyRss",
     "constructor",
+    "disclosureTypes",
+    "reportGuide",
+    "searchBody",
     "searchCompany",
     "searchCompanyReports",
     "viewReport",
@@ -592,6 +617,35 @@ try {
   assert.equal(section.result.content.section.id, "section:1.1");
   assert.equal(section.result.content.format, "markdown");
   assert.match(section.result.content.body, /CP949 확장 음절 갂/);
+  for (const [method, input, goldenName] of [
+    ["searchBody", { keyword: "배당", startDate: "20260101", endDate: "20260331", detail: "raw" }, "parity-body-verbose"],
+    ["companyDetail", { companyCode: "00000001" }, "parity-detail-populated"],
+    ["companyRss", { companyCode: "00000001", detail: "raw" }, "parity-rss-raw"],
+    ["companyRss", { companyCode: "00000002" }, "parity-rss-empty"],
+    ["disclosureTypes", { query: "I001" }, "disclosure-types-static-success"],
+  ]) {
+    const golden = JSON.parse(readFileSync(join(repoRoot, "test/compat/cli-v1/goldens", `${goldenName}.json`), "utf8")).value;
+    delete golden.help;
+    assert.deepEqual(await client[method](input), golden, `packaged Node ${method} independent result`);
+  }
+  assert.equal((await client.reportGuide()).result.contentMarkdown, JSON.parse(readFileSync(join(repoRoot, "crates/darty/resources/report-guide.json"), "utf8")).result.contentMarkdown);
+  await assert.rejects(client.companyDetail({ companyCode: "00000002" }), error => error instanceof sdk.DartyError && error.code === "not_found" && error.retryable === false && error.recoveryHint.includes("search-company"));
+  await assert.rejects(client.companyRss({ companyCode: "00000007" }), error => error instanceof sdk.DartyError && error.code === "source_parse_failure");
+  for (const [method, input] of [["searchBody", { keyword: "배당", startDate: "20260101", endDate: "20260331" }], ["companyDetail", { companyCode: "00000001" }], ["companyRss", { companyCode: "00000001" }], ["disclosureTypes", {}], ["reportGuide", {}]]) {
+    const aborted = new AbortController();
+    aborted.abort();
+    await assert.rejects(client[method](input, { signal: aborted.signal }), error => error.name === "AbortError" && error.code === "ABORT_ERR");
+  }
+  for (const [method, input] of [
+    ["searchBody", { keyword: "배당", startDate: "20260101", endDate: "20260331", reportName: null }],
+    ["searchCompanyReports", { companyCode: "00000001", startDate: "20250101", endDate: "20260101", reportName: null }],
+    ["viewReport", { receipt: "20260101000001", sectionId: null }],
+    ["disclosureTypes", { query: null }],
+  ]) {
+    await assert.rejects(client[method](input), error => error instanceof sdk.DartyError && error.code === "invalid_request");
+  }
+  assert.deepEqual(await client.companyDetail({ companyCode: " 00000001 " }), await client.companyDetail({ companyCode: "00000001" }));
+  assert.deepEqual(await client.companyRss({ companyCode: " 00000001 " }), await client.companyRss({ companyCode: "00000001" }));
   const pacedClient = new sdk.DartyClient();
   const pacedAt = Date.now();
   await Promise.all([
@@ -653,6 +707,25 @@ try {
     "an in-flight cancellation must allow the next request to progress",
   );
   await stopFixture(delayedFixture.child);
+
+  for (const [method, input] of [
+    ["searchBody", { keyword: "배당", startDate: "20260101", endDate: "20260331" }],
+    ["companyDetail", { companyCode: "00000001" }],
+    ["companyRss", { companyCode: "00000001" }],
+  ]) {
+    const delayed = await startFixture(`cancel-${method}`, 0, { firstDelay: 5_000 });
+    process.env.DARTY_NODE_TEST_FIXTURE_ORIGIN = delayed.origin;
+    const cancellable = new sdk.DartyClient();
+    const abort = new AbortController();
+    const pending = cancellable[method](input, { signal: abort.signal });
+    await waitForRequest(delayed.requestMarker, 1);
+    const cancellationTime = Date.now();
+    abort.abort();
+    await assert.rejects(pending, error => error.name === "AbortError" && error.code === "ABORT_ERR");
+    assert.ok(Date.now() - cancellationTime < 1_000, `${method} native cancellation is prompt`);
+    await cancellable[method](input);
+    await stopFixture(delayed.child);
+  }
 
   const installedNative = join(
     consumer,

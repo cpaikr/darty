@@ -1,0 +1,21 @@
+Usage: darty company-rss [options]
+
+Fetch recent disclosure items from DART companyRSS for an 8-digit DART company
+code.
+
+Options:
+  --company-code <text>            [required] 8-digit DART company code.
+                                   Example: Samsung Electronics 00126380.
+  --detail <concise|detailed|raw>  [default: concise] Supplemental RSS field
+                                   detail level. concise returns channel
+                                   title/link and key item fields; detailed/raw
+                                   include channel
+                                   description/language/publishedAt and item
+                                   guid. raw still does not return full RSS XML.
+  --pretty                         Print human-readable indented JSON.
+  -h, --help                       Display command help.
+
+Examples:
+  # Fetch company disclosure RSS by DART company code.
+  darty company-rss --company-code 00126380
+

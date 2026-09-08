@@ -1,0 +1,16 @@
+Usage: darty report-guide [options]
+
+Static guide for deciding whether needed information is usually in 사업보고서,
+주요사항보고서, 발행공시, merger filings, or ownership filings.
+
+Options:
+  -h, --help  Display command help.
+
+Examples:
+  # Print the DART report information guide.
+  darty report-guide
+
+Usage tips:
+  - Use this before choosing a report type when you need to know where DART usually places the information.
+  - This command is network-free and prints a guide bundled with the package.
+

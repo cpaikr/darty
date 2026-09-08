@@ -506,12 +506,15 @@ struct ScriptRoot {
     declared_at_use: bool,
 }
 
+#[allow(clippy::too_many_lines)] // Keep ordered object-state transitions visible together.
 fn parse_shell_script(
     html: &str,
     receipt_number: &str,
 ) -> Result<(Vec<ParsedTocNode>, ViewerLocator), ShellParseError> {
     let mut nodes: BTreeMap<String, ScriptNode> = BTreeMap::new();
     let mut invalid_nodes = BTreeSet::new();
+    let mut bindings = BTreeMap::new();
+    let mut tree_initialized = false;
     let mut roots = Vec::new();
     let mut initial_locators = Vec::new();
     let document = Html::parse_document(html);
@@ -523,14 +526,31 @@ fn parse_shell_script(
         let tokens = tokenize_script(&script.inner_html());
         let mut index = 0;
         while index < tokens.len() {
+            if is_identifier(tokens.get(index), "treeData")
+                && is_punctuation(tokens.get(index + 1), '=')
+            {
+                if tree_initialized
+                    || !is_punctuation(tokens.get(index + 2), '[')
+                    || !is_punctuation(tokens.get(index + 3), ']')
+                {
+                    return Err("report shell has ambiguous tree initialization".into());
+                }
+                tree_initialized = true;
+            }
             if let Some((name, end)) = match_node_creation(&tokens, index) {
-                nodes.insert(name, ScriptNode::default());
+                // Pushes retain an object, not the variable's final binding.
+                let identity = format!("object:{}", nodes.len());
+                if invalid_nodes.contains(&name) {
+                    invalid_nodes.insert(identity.clone());
+                }
+                bindings.insert(name, identity.clone());
+                nodes.insert(identity, ScriptNode::default());
                 index = end;
                 continue;
             }
             if let Some((name, field, raw_value, end)) = match_field_assignment(&tokens, index) {
                 let value = decode_script_string(raw_value)?;
-                if let Some(node) = nodes.get_mut(&name) {
+                if let Some(node) = bindings.get(&name).and_then(|id| nodes.get_mut(id)) {
                     node.fields.insert(field, value);
                 } else {
                     invalid_nodes.insert(name);
@@ -539,20 +559,23 @@ fn parse_shell_script(
                 continue;
             }
             if let Some((parent, child, end)) = match_child_push(&tokens, index) {
-                if nodes.contains_key(&parent) && nodes.contains_key(&child) {
+                if let (Some(parent_id), Some(child_id)) =
+                    (bindings.get(&parent), bindings.get(&child))
+                {
                     nodes
-                        .get_mut(&parent)
-                        .expect("parent node was checked above")
+                        .get_mut(parent_id)
+                        .expect("bound object exists")
                         .children
-                        .push(child);
+                        .push(child_id.clone());
                 } else {
-                    invalid_nodes.insert(parent);
+                    invalid_nodes.insert(bindings.get(&parent).unwrap_or(&parent).clone());
                 }
                 index = end;
                 continue;
             }
             if let Some((name, end)) = match_root_push(&tokens, index) {
-                let declared_at_use = nodes.contains_key(&name);
+                let declared_at_use = bindings.contains_key(&name);
+                let name = bindings.get(&name).unwrap_or(&name).clone();
                 if !declared_at_use {
                     invalid_nodes.insert(name.clone());
                 }
@@ -572,6 +595,9 @@ fn parse_shell_script(
         }
     }
 
+    if !tree_initialized && roots.is_empty() {
+        return Err("report shell has no explicit empty tree initialization".into());
+    }
     let mut toc = Vec::new();
     let mut visiting = BTreeSet::new();
     let mut expansions = 0;
@@ -599,6 +625,9 @@ fn parse_shell_script(
         return Err(ShellParseError::changed(
             "report shell TOC contains declared but unusable roots",
         ));
+    }
+    if visiting.len() != nodes.len() {
+        return Err("report shell TOC contains orphan objects".into());
     }
     let initial = initial_locators
         .into_iter()
@@ -628,10 +657,13 @@ fn is_executable_script(script: ElementRef<'_>) -> bool {
     )
 }
 
+#[allow(clippy::too_many_lines)] // A single cursor owns the literal/comment scanner.
 fn tokenize_script(source: &str) -> Vec<ScriptToken> {
     let characters = source.chars().collect::<Vec<_>>();
     let mut tokens = Vec::new();
     let mut index = 0;
+    let mut control_parentheses = Vec::new();
+    let mut last_control_close = None;
     while index < characters.len() {
         let character = characters[index];
         if character.is_whitespace() {
@@ -664,6 +696,39 @@ fn tokenize_script(source: &str) -> Vec<ScriptToken> {
             while index < characters.len() && !matches!(characters[index], '\n' | '\r') {
                 index += 1;
             }
+            continue;
+        }
+        if character == '/'
+            && (can_start_regex(tokens.last())
+                || last_control_close.is_some_and(|last| last + 1 == tokens.len()))
+        {
+            index += 1;
+            let mut escaped = false;
+            let mut character_class = false;
+            while index < characters.len() {
+                let current = characters[index];
+                index += 1;
+                if escaped {
+                    escaped = false;
+                    continue;
+                }
+                match current {
+                    '\\' => escaped = true,
+                    '[' => character_class = true,
+                    ']' => character_class = false,
+                    '/' if !character_class => break,
+                    '\n' | '\r' => break,
+                    _ => {}
+                }
+            }
+            while characters.get(index).is_some_and(char::is_ascii_alphabetic) {
+                index += 1;
+            }
+            // An opaque literal also prevents adjacent tokens from matching statements.
+            tokens.push(ScriptToken::String {
+                quote: '`',
+                raw: String::new(),
+            });
             continue;
         }
         if matches!(character, '\'' | '"' | '`') {
@@ -704,10 +769,40 @@ fn tokenize_script(source: &str) -> Vec<ScriptToken> {
             ));
             continue;
         }
+        if character == '(' {
+            control_parentheses.push(matches!(tokens.last(), Some(ScriptToken::Identifier(name))
+                if matches!(name.as_str(), "catch" | "for" | "if" | "switch" | "while" | "with")));
+        } else if character == ')' && control_parentheses.pop() == Some(true) {
+            last_control_close = Some(tokens.len());
+        }
         tokens.push(ScriptToken::Punctuation(character));
         index += 1;
     }
     tokens
+}
+
+fn can_start_regex(token: Option<&ScriptToken>) -> bool {
+    match token {
+        None => true,
+        Some(ScriptToken::Identifier(name)) => matches!(
+            name.as_str(),
+            "case"
+                | "delete"
+                | "do"
+                | "else"
+                | "in"
+                | "instanceof"
+                | "new"
+                | "of"
+                | "return"
+                | "throw"
+                | "typeof"
+                | "void"
+                | "yield"
+        ),
+        Some(ScriptToken::Punctuation(value)) => "([{=,:;!?~+-*%&|^<>".contains(*value),
+        Some(ScriptToken::String { .. }) => false,
+    }
 }
 
 fn is_script_identifier_start(character: char) -> bool {
@@ -905,18 +1000,16 @@ fn build_toc(
         return Err("report shell TOC exceeds the supported depth");
     }
     if !visiting.insert(name.to_owned()) {
-        return Err("report shell TOC contains a cycle");
+        return Err("report shell TOC contains a cycle or reused object");
     }
     *expansions += 1;
     if *expansions > MAX_TOC_EXPANSIONS {
         return Err("report shell TOC exceeds the supported size");
     }
     if invalid_nodes.contains(name) {
-        visiting.remove(name);
         return Ok(None);
     }
     let Some(node) = nodes.get(name) else {
-        visiting.remove(name);
         return Ok(None);
     };
     let field = |key: &str| node.fields.get(key).cloned();
@@ -939,7 +1032,6 @@ fn build_toc(
         Some(title),
     ) = required
     else {
-        visiting.remove(name);
         return Ok(None);
     };
     let locator = ViewerLocator {
@@ -963,12 +1055,10 @@ fn build_toc(
             depth + 1,
         )?
         else {
-            visiting.remove(name);
             return Err("report shell TOC contains an unusable child");
         };
         children.push(child);
     }
-    visiting.remove(name);
     Ok(Some(ParsedTocNode {
         id: format!("section:{position}"),
         title,
@@ -1268,6 +1358,77 @@ mod tests {
     }
 
     #[test]
+    fn fresh_objects_survive_variable_rebinding() {
+        let html = include_str!(
+            "../../../fixtures/dart/vertical-v1/bodies/report-shell-rebound.utf8.html"
+        );
+        let shell = report_shell(html).unwrap();
+        assert_eq!(shell.toc.len(), 4);
+        for (index, node) in shell.toc.iter().enumerate() {
+            let ordinal = index + 1;
+            assert_eq!(node.id, format!("section:{ordinal}"));
+            assert_eq!(node.title, format!("Fictional section {ordinal}"));
+            assert_eq!(node.locator.element_id, ordinal.to_string());
+            assert_eq!(node.locator.offset, (ordinal * 100).to_string());
+        }
+    }
+
+    #[test]
+    fn pushed_children_keep_identity_and_later_mutations() {
+        let html = SHELL.replace(
+            "treeData.push(node1);",
+            r#"
+node2['text'] = "Updated child";
+var node2 = {};
+node2['text'] = "Separate root";
+node2['rcpNo'] = "20260101000001";
+node2['dcmNo'] = "10000001";
+node2['eleId'] = "3";
+node2['offset'] = "500";
+node2['length'] = "100";
+node2['dtd'] = "dart4.xsd";
+treeData.push(node1);
+treeData.push(node2);
+"#,
+        );
+        let shell = report_shell(&html).unwrap();
+        assert_eq!(shell.toc[0].children[0].title, "Updated child");
+        assert_eq!(shell.toc[0].children[0].locator.element_id, "2");
+        assert_eq!(shell.toc[1].title, "Separate root");
+    }
+
+    #[test]
+    fn rejects_duplicate_root_objects_and_abandoned_creations() {
+        for replacement in [
+            "treeData.push(node1); treeData.push(node1);",
+            "treeData.push(node1); var node1 = {};",
+            "var node1 = {}; treeData.push(node1);",
+        ] {
+            assert!(report_shell(&SHELL.replace("treeData.push(node1);", replacement)).is_err());
+        }
+    }
+
+    #[test]
+    fn excludes_regex_decoys_in_expression_and_control_contexts() {
+        for prefix in ["const fake =", "if (true)", "return"] {
+            let replacement = format!(
+                "var treeData = []; {prefix} /treeData.push(node99); viewDoc('bad','bad','bad','bad','bad','bad')/;"
+            );
+            let shell = report_shell(&SHELL.replace("var treeData = [];", &replacement)).unwrap();
+            assert_eq!(shell.toc.len(), 1);
+        }
+    }
+
+    #[test]
+    fn no_toc_requires_explicit_executable_empty_initialization() {
+        let html =
+            include_str!("../../../fixtures/dart/vertical-v1/bodies/report-shell-no-toc.utf8.html");
+        assert!(report_shell(html).is_ok());
+        assert!(report_shell(&html.replace("var treeData = [];", "")).is_err());
+        assert!(report_shell(&html.replace("var treeData = [];", "var treeData = {};")).is_err());
+    }
+
+    #[test]
     fn decodes_escaped_shell_titles() {
         let escaped = SHELL.replace(
             r#"node1['text'] = "I. 회사의 개요";"#,
@@ -1366,9 +1527,10 @@ treeData.push(node1);"#,
     #[test]
     fn shell_parser_distinguishes_zero_roots_from_unusable_and_mixed_roots() {
         let zero_roots = SHELL.replace("treeData.push(node1);", "// treeData.push(node1);");
-        let shell = report_shell(&zero_roots).unwrap();
-        assert!(shell.toc.is_empty());
-        assert_eq!(shell.initial_locator.document_number, "10000001");
+        assert_eq!(
+            report_shell(&zero_roots).unwrap_err().reason,
+            "report shell TOC contains orphan objects"
+        );
 
         let unusable_root = SHELL.replace("treeData.push(node1);", "treeData.push(node99);");
         let failure = report_shell(&unusable_root).unwrap_err();
@@ -1392,7 +1554,7 @@ treeData.push(node1);"#,
         );
         assert_eq!(
             report_shell(&cyclic).unwrap_err().reason,
-            "report shell TOC contains a cycle"
+            "report shell TOC contains a cycle or reused object"
         );
     }
 
@@ -1436,31 +1598,56 @@ treeData.push(node1);"#,
     }
 
     #[test]
-    fn rejects_toc_graphs_beyond_the_depth_bound() {
-        let mut script = String::new();
-        for index in 1..=65 {
-            use std::fmt::Write as _;
-            write!(
+    fn toc_depth_accepts_64_levels_and_rejects_65() {
+        for depth in [64, 65] {
+            let mut script = String::new();
+            for index in 1..=depth {
+                use std::fmt::Write as _;
+                write!(
                 script,
                 "var node{index} = {{}};\nnode{index}['text'] = \"Section {index}\";\nnode{index}['rcpNo'] = \"20260101000001\";\nnode{index}['dcmNo'] = \"10000001\";\nnode{index}['eleId'] = \"{index}\";\nnode{index}['offset'] = \"0\";\nnode{index}['length'] = \"1\";\nnode{index}['dtd'] = \"dart4.xsd\";\nnode{index}['children'] = [];\n"
             )
             .unwrap();
-            if index > 1 {
-                writeln!(script, "node{}['children'].push(node{index});", index - 1).unwrap();
+                if index > 1 {
+                    writeln!(script, "node{}['children'].push(node{index});", index - 1).unwrap();
+                }
+            }
+            script.push_str("treeData.push(node1);\n");
+            let shell = format!(
+                "<script>{script}viewDoc(\"20260101000001\", \"10000001\", \"1\", \"0\", \"1\", \"dart4.xsd\");</script><select id=\"family\"><option value=\"rcpNo=20260101000001\" selected>body</option></select><select id=\"att\"></select>"
+            );
+            if depth == 64 {
+                assert!(report_shell(&shell).is_ok());
+            } else {
+                assert_eq!(
+                    report_shell(&shell).unwrap_err().reason,
+                    "report shell TOC exceeds the supported depth"
+                );
             }
         }
-        script.push_str("treeData.push(node1);\n");
-        let shell = format!(
-            "<script>{script}viewDoc(\"20260101000001\", \"10000001\", \"1\", \"0\", \"1\", \"dart4.xsd\");</script><select id=\"family\"><option value=\"rcpNo=20260101000001\" selected>body</option></select><select id=\"att\"></select>"
-        );
-        assert_eq!(
-            report_shell(&shell).unwrap_err().reason,
-            "report shell TOC exceeds the supported depth"
-        );
     }
 
     #[test]
-    fn rejects_toc_dag_expansion_beyond_the_size_bound() {
+    fn toc_forest_accepts_ten_thousand_objects_and_rejects_one_more() {
+        use std::fmt::Write as _;
+        for count in [10_000, 10_001] {
+            let mut script = String::new();
+            for index in 1..=count {
+                writeln!(script, "var node1 = {{}}; node1['text'] = 'Section {index}'; node1['rcpNo'] = '20260101000001'; node1['dcmNo'] = '10000001'; node1['eleId'] = '{index}'; node1['offset'] = '0'; node1['length'] = '1'; node1['dtd'] = 'dart4.xsd'; treeData.push(node1);").unwrap();
+            }
+            let html = format!(
+                "<script>{script}viewDoc('20260101000001','10000001','1','0','1','dart4.xsd');</script><select id='family'><option value='rcpNo=20260101000001' selected>body</option></select><select id='att'></select>"
+            );
+            if count == 10_000 {
+                assert_eq!(report_shell(&html).unwrap().toc.len(), count);
+            } else {
+                assert!(report_shell(&html).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn rejects_shared_objects_before_expanding_a_dag() {
         let mut script = String::new();
         for index in 1..=15 {
             use std::fmt::Write as _;
@@ -1480,7 +1667,7 @@ treeData.push(node1);"#,
         );
         assert_eq!(
             report_shell(&shell).unwrap_err().reason,
-            "report shell TOC exceeds the supported size"
+            "report shell TOC contains a cycle or reused object"
         );
     }
 

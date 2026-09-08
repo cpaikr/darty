@@ -1,9 +1,10 @@
 # DART Website Provider Qualification
 
-Status: `search-company` and `search-company-reports` conditionally qualified;
-`view-report` requires requalification.
+Status: technical live evidence refreshed for all six source-backed operations;
+maintainer production approval remains pending. Viewer drift is technically
+reconciled; explicit maintainer requalification is still required.
 Owner: Darty maintainers.
-Last reviewed: 2026-08-23.
+Last reviewed: 2026-09-08.
 
 This record evaluates whether the DART website is operationally suitable for
 bounded, read-only use by the candidate. It is not protocol authority, a public
@@ -19,15 +20,19 @@ Evidence labels in this document are `documented`, `observed`, `inferred`,
 
 | Candidate operation | State | Evidence | Unknowns | Recheck trigger |
 |---|---|---|---|---|
-| `search-company` | conditional | **Observed, 2026-08-22:** direct unauthenticated POST returned HTTP 200, UTF-8 HTML, 7,315 bytes. Earlier request/HTML evidence is in the source map. | Official availability, rate limits, and geographic policy. | Access failure, redirect, content-type drift, parser drift, or DART policy notice. |
-| `search-company-reports` | conditional | **Observed, 2026-08-22:** direct code-first POST returned HTTP 200, UTF-8 HTML, 18,514 bytes. Earlier filter/date evidence is in the source map. | Official availability, rate limits, and whether all accepted filters remain stable. | Access failure, redirect, content-type drift, parser drift, misleading empty result inside an accepted window, or DART policy notice. |
-| `view-report` | requalification required | **Observed, 2026-08-22:** the seeded shell, UTF-8 section, and a no-TOC MS949 document succeeded. **Observed, 2026-08-23:** the live workflow reached a newly selected receipt `20260331000460`, then reproducibly returned `source_changed` while parsing its report shell/TOC. | Whether DART introduced a new supported shell grammar or this receipt is outside the accepted grammar; official availability, maximum document sizes, and offset/length units. | Reconcile the failing shell against the canonical grammar; refresh fixtures and contract only when evidence supports a bounded rule. |
+| `search-company` | conditional technical evidence | **Observed, 2026-09-08:** release-built Rust CLI search for `삼성전자` returned six rows. | Official availability, rate limits, and geographic policy. | Access failure, redirect, parser drift, or DART policy notice. |
+| `search-company-reports` | conditional technical evidence | **Observed, 2026-09-08:** company `00126380`, dates `20260330`–`20260331`, returned four rows. | Stability of every accepted filter and official service policy. | Access or grammar failure, misleading empty result, or DART policy notice. |
+| `view-report` | technical drift resolved; maintainer requalification pending | **Observed, 2026-09-08:** receipt `20260331000460` returned four distinct TOC roots; `section:1` returned 868 bytes with `hasMore=false`. The original TypeScript CLI `source_changed` failure was reproduced. | Maximum document sizes, locator offset/length units, and official availability. | Reproducible shell/content grammar failure or unsupported source behavior. |
+| `search-body` | conditional technical evidence | **Observed, 2026-09-08:** keyword `배당`, dates `20260330`–`20260331`, returned ten rows; source total 6,722 and 673 pages. | Stability of all accepted filters and body-search behavior outside this probe. | Access or grammar failure, paging drift, or increasing dropped rows. |
+| `company-detail` | conditional technical evidence | **Observed, 2026-09-08:** company `00126380` returned a successful normalized detail result. | Coverage of optional fields across companies and official availability. | Missing required table/name grammar or DART policy notice. |
+| `company-rss` | conditional technical evidence | **Observed, 2026-09-08:** company `00126380` returned a valid empty channel with zero items. | Current populated-item behavior was not observed in this refresh; fictional fixtures cover item parsing. | Invalid channel/item grammar, media-type drift, or DART policy notice. |
 
-Conditional means deterministic conformance must be proven with fictional
-fixtures and live use must obey the policies below. Requalification-required
-means the reproducible-drift threshold below was reached and current evidence
-cannot qualify that operation. Unknowns do not establish qualification by
-themselves.
+Conditional technical evidence supports continued bounded candidate validation;
+it does not grant production approval. Deterministic conformance and repository
+review remain required. The viewer's source discrepancy has a technical
+resolution, but its separate maintainer requalification gate remains open.
+Static `disclosure-types` and `report-guide` make no provider requests and need
+no live provider qualification. Unknowns do not establish qualification.
 
 ## Maintainer approval records
 
@@ -81,6 +86,16 @@ records:
   live workflow runs, but report viewing for selected receipt
   `20260331000460` reproducibly failed closed as `source_changed`. No live body
   was retained.
+- **Observed, 2026-09-08:** bounded reproduction fetched the affected viewer
+  shell as HTTP 200 UTF-8, 36,671 wire bytes. Its four fresh `node1 = {}`
+  creations and four root pushes require object identity across rebinding.
+  The old TypeScript CLI failed as `source_changed`; the old Rust parser
+  repeated the last root. The corrected Rust CLI returned four distinct roots.
+- **Observed, 2026-09-08:** the release-built Rust CLI completed the serial
+  company → filings → viewer → section workflow and the body/detail/RSS probes
+  listed above, with at least 250 ms between requests. Live bodies remained
+  in memory; only bounded result counts and public identifiers were retained.
+  This is technical source evidence, not human approval or release signoff.
 - **Inferred:** the tested routes are usable for low-volume public reads from
   the current host. This does not imply availability from every network or at
   production volume.
@@ -92,16 +107,16 @@ records:
 - **Observed:** the five 2026-08-22 probes required no login, session cookie,
   credential, or browser automation and did not redirect.
 - **Project decision:** the candidate sends only public read requests, a
-  non-empty identifying user agent, and the observed page referer for the two
-  POST fragments. It does not attempt to bypass access controls.
+  non-empty identifying user agent, and the endpoint-specific referers in the
+  canonical OpenAPI contract. It does not attempt to bypass access controls.
 - **Unknown:** whether DART applies network, geographic, user-agent, or volume
   policies that were not visible in the bounded probes.
 
 ## Pacing
 
 - **Project decision:** one in-flight DART request per SDK client and at least
-  250 milliseconds between request starts. The four-step workflow therefore
-  remains sequential.
+  250 milliseconds between request starts. Multi-step workflows remain
+  sequential.
 - **Project decision:** no burst pool or background crawling is qualified.
 - **Unknown:** DART does not provide an official limit in the evidence held by
   this repository. The local policy is conservative and is not presented as an
@@ -122,7 +137,7 @@ unbounded internal loop.
 | HTTP 5xx | retryable `source_unavailable` | no |
 | redirect | retryable `source_unavailable` plus qualification review | no |
 | unexpected media type, charset, oversize body, or decode failure | non-retryable `source_parse_failure` | no |
-| required HTML/viewer grammar drift | non-retryable `source_changed` | no |
+| required HTML/XML/viewer grammar drift | non-retryable `source_changed` | no |
 
 Transport deadlines and byte limits are canonical project decisions in the
 HTML/viewer companion. A caller retry must pass the same validation, pacing,

@@ -10,20 +10,33 @@ pub const VIEW_ABOUT: &str = "Fetch a DART report document list and table of con
 
 pub const VIEW_AFTER: &str = "Notes:\n  - toc[].id/section ID values are valid only inside one report. Do not reuse them across years, corrections, or other receipt numbers; fetch the TOC for each report first.\n  - If content.window.hasMore is true, continue with the same `--receipt`, `--document-id`, `--section-id`, and `--output-format`, passing content.window.nextStartByte as `--content-start-byte`. This value is based on the rendered body, not DART viewer offsets.\n  - Darty does not process PDFs internally. Download PDF links directly or open them with a separate PDF processing/reading tool.";
 
-pub const COMPANY_HELP: &str = "Search companies through DART 기업개황 `회사별` mode and return DART 8-digit company codes plus 6-digit stock codes when present.\n\nUsage: darty search-company [options]\n\nOptions:\n  --company-name <text> [required] Company-name search term for DART 기업개황 회사별 search. Use at least 2 characters.\n  --page <number> [default: 1] DART 기업개황 company-search result page, starting at 1.\n  --page-size <number> [default: 15] Number of companies to request per page (maximum 45).\n  --agent Print compact agent-focused JSON with contextual next-step help.\n  --verbose Include diagnostic/source fields omitted from the default output.\n  --pretty Print human-readable indented JSON.\n  --help Display command help.\n\nExamples:\n  Find an 8-digit DART company code by company name. darty search-company --company-name 삼성전자\n  Fetch the next page for a broad company-name search. darty search-company --company-name 삼성 --page 2 --page-size 20\n\nNotes:\n  companyCode is DART's 8-digit company identifier embedded in company links such as select('00126380').\n  stockCode is a 6-digit listed-company stock code shown only for listed companies; it is not the DART company code.\n";
-
-pub const REPORTS_HELP: &str = "Return company-specific DART filings for an 8-digit DART company code. This operation does not resolve company names; use search-company first when you need companyCode lookup.\n\nUsage: darty search-company-reports [options]\n\nOptions:\n  --company-code <text> [required] 8-digit DART company code. Use search-company first if you only know a company name or stock code.\n  --start-date <YYYYMMDD> [required] DART search period start date (YYYYMMDD). The search period is limited to 10 years.\n  --end-date <YYYYMMDD> [required] DART search period end date (YYYYMMDD). The search period is limited to 10 years.\n  --page <number> [default: 1] DART search result page, starting at 1.\n  --page-size <number> [default: 15] Number of filings to request per page (15, 30, 50, 100; 5/10 normalize to 15).\n  --sort-direction <asc|desc> [default: desc] Receipt-date sort direction (asc or desc).\n  --presenter-name <text> Narrow results by 제출인명 (presenter name).\n  --report-name <text> Narrow results by 보고서명 (report title), for example 사업보고서. Use --disclosure-type for disclosure type codes.\n  --disclosure-type <code> Add a 공시상세유형 detailed code. Repeat for multiple codes. Examples: A001(사업보고서), A002(반기보고서), A003(분기보고서), I001(수시공시).\n  --industry-code <code> Narrow results by DART industry code. Default is all. Example: 612(전기 통신업). Use all if unknown.\n  --corporation-type <all|P|A|N|E> Narrow results by corporation type (all=전체, P=유가증권시장, A=코스닥시장, N=코넥스시장, E=기타법인).\n  --closing-accounts-month <all|1-12|01-12> Narrow results by fiscal closing month (all, 1-12, or 01-12). Values 1-9 normalize to 01-09.\n  --include-all-reports Include pre-correction filings. Default behavior applies DART's final-report filter.\n  --detail <concise|detailed|raw> [default: concise] Source evidence detail level. evidence contains parser-check fields such as raw DART row text or snippet HTML. concise omits it; detailed/raw include it. raw still does not return full DART source HTML. Use --verbose with the CLI to see evidence.\n  --agent Print compact agent-focused JSON with contextual next-step help.\n  --verbose Include source evidence and diagnostic fields omitted from the default CLI output. If --detail is omitted, request detail=raw.\n  --pretty Print human-readable indented JSON.\n  --help Display command help.\n\nNotes:\n  If you know the company name but not the company code, first run `darty search-company --company-name <company name>` to find the 8-digit companyCode.\n  The search period is limited to 10 years. Split longer ranges into windows of 10 years or less because DART can respond as if there are no results.\n  By default, DART's final-report filter is applied. `--include-all-reports` includes pre-correction filings and may increase the total count.\n  Pass a result filing.receiptNumber or references.viewerUrl to `view-report` for follow-up retrieval.\n";
-
-pub const VIEW_HELP: &str = "Fetch a DART report document list and table of contents by receipt number or viewer URL, then return the selected body as HTML or Markdown.\n\nUsage: darty view-report [options]\n\nOptions:\n  --receipt <receipt-or-url> [required] DART receipt number or viewer URL\n  --document-id <id> Darty document ID to fetch (documents[].id, not DART dcmNo)\n  --section-id <id> TOC section ID to fetch (toc[].id). It is report-specific; do not reuse it across reports.\n  --output-format <html|markdown> [default: markdown] Body format in the JSON result (html or markdown)\n  --max-bytes <number> [default: 50000, range: 1000~1000000] Maximum body bytes to return. Larger values can increase output/context size.\n  --content-start-byte <number> [default: 0] UTF-8 start byte in the rendered body. Continue with the same outputFormat.\n  --detail <concise|detailed|raw> [default: concise] Supplemental locator detail level. Locators are documents/toc identifier lists used for follow-up retrieval. This does not change content.body rendering or windows. For sectionId requests, concise omits documents/toc; detailed/raw include them.\n  --toc-depth <number> Include TOC entries to the specified depth. For section body output, this also enables TOC inclusion.\n  --verbose Include locator fields (documents/toc) and diagnostics omitted from the default CLI output. If --detail is omitted, request detail=raw.\n  --pretty Print human-readable indented JSON.\n  --help Display command help.\n\nNotes:\n  toc[].id/section ID values are valid only inside one report. Do not reuse them across years, corrections, or other receipt numbers; fetch the TOC for each report first.\n  If content.window.hasMore is true, continue with the same `--receipt`, `--document-id`, `--section-id`, and `--output-format`, passing content.window.nextStartByte as `--content-start-byte`. This value is based on the rendered body, not DART viewer offsets.\n  Darty does not process PDFs internally. Download PDF links directly or open them with a separate PDF processing/reading tool.\n";
-
 pub fn command_help(argv: &[String]) -> Option<&'static str> {
-    if argv.len() != 3 || !matches!(argv[2].as_str(), "--help" | "-h") {
-        return None;
-    }
-    match argv[1].as_str() {
-        "search-company" => Some(COMPANY_HELP),
-        "search-company-reports" => Some(REPORTS_HELP),
-        "view-report" => Some(VIEW_HELP),
+    let arguments = argv
+        .iter()
+        .skip(1)
+        .filter(|arg| arg.as_str() != "--debug")
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    match arguments.as_slice() {
+        ["--help" | "-h"] => Some(include_str!("../resources/root-help.txt")),
+        ["search-company", "--help" | "-h"] => {
+            Some(include_str!("../resources/search-company-help.txt"))
+        }
+        ["search-company-reports", "--help" | "-h"] => {
+            Some(include_str!("../resources/search-company-reports-help.txt"))
+        }
+        ["search-body", "--help" | "-h"] => Some(include_str!("../resources/search-body-help.txt")),
+        ["view-report", "--help" | "-h"] => Some(include_str!("../resources/view-report-help.txt")),
+        ["disclosure-types", "--help" | "-h"] => {
+            Some(include_str!("../resources/disclosure-types-help.txt"))
+        }
+        ["company-detail", "--help" | "-h"] => {
+            Some(include_str!("../resources/company-detail-help.txt"))
+        }
+        ["company-rss", "--help" | "-h"] => Some(include_str!("../resources/company-rss-help.txt")),
+        ["report-guide", "--help" | "-h"] => {
+            Some(include_str!("../resources/report-guide-help.txt"))
+        }
         _ => None,
     }
 }

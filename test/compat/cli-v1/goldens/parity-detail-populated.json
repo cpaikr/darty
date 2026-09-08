@@ -1,0 +1,42 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "result": {
+      "request": {
+        "companyCode": "00000001"
+      },
+      "company": {
+        "companyCode": "00000001",
+        "companyName": "가람전자",
+        "englishName": "Garam Electronics",
+        "disclosureCompanyName": "가람전자",
+        "stockCode": "123456",
+        "representativeName": "가상대표",
+        "corporationKind": "유가증권시장",
+        "corporateRegistrationNumber": "000000-0000001",
+        "businessRegistrationNumber": "000-00-00001",
+        "address": "가상시 가상로 1",
+        "homepage": "https://garam.example/",
+        "phoneNumber": "000-000-0001",
+        "faxNumber": "000-000-0002",
+        "industryName": "전자부품 제조업",
+        "establishedDate": "20000101",
+        "fiscalMonth": "12"
+      }
+    },
+    "metadata": {
+      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "source": {
+        "system": "dart",
+        "surface": "dsae001",
+        "endpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000001"
+      },
+      "completeness": "complete"
+    },
+    "references": {
+      "detailUrl": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000001"
+    }
+  }
+}

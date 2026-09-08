@@ -19,11 +19,16 @@ const fail = (message) => {
 
 const parseArguments = (argv) => {
   let profile = "full";
+  let baseline = false;
   const separator = argv.indexOf("--");
   const options = separator === -1 ? argv : argv.slice(0, separator);
   const command = separator === -1 ? [] : argv.slice(separator + 1);
 
   for (let index = 0; index < options.length; index += 1) {
+    if (options[index] === "--typescript-baseline") {
+      baseline = true;
+      continue;
+    }
     if (options[index] !== "--profile") {
       throw new Error(`Unknown judge option: ${options[index]}`);
     }
@@ -32,7 +37,7 @@ const parseArguments = (argv) => {
     index += 1;
   }
 
-  if (profile !== "vertical" && profile !== "candidate" && profile !== "full") {
+  if (profile !== "vertical" && profile !== "candidate" && profile !== "full" && profile !== "process") {
     throw new Error(`Unknown profile: ${profile}`);
   }
   if (command.length === 0) {
@@ -41,7 +46,8 @@ const parseArguments = (argv) => {
     );
   }
 
-  return { profile, command };
+  if (baseline && profile !== "full") throw new Error("--typescript-baseline requires --profile full.");
+  return { profile, command, baseline };
 };
 
 const resolveCommandPaths = (command) =>
@@ -73,6 +79,7 @@ const validateManifest = (manifest) => {
       !Array.isArray(scenario.argv) ||
       !scenario.argv.every((argument) => typeof argument === "string") ||
       typeof scenario.golden !== "string" ||
+      (scenario.requiresFixture !== undefined && typeof scenario.requiresFixture !== "boolean") ||
       (scenario.fixtureFault !== undefined && typeof scenario.fixtureFault !== "string") ||
       (scenario.fixtureFaultPhase !== undefined &&
         !["shell", "content"].includes(scenario.fixtureFaultPhase)) ||
@@ -339,27 +346,28 @@ if (parsed !== undefined) {
   let checked = 0;
 
   try {
-    if (parsed.profile === "candidate") {
+    if (parsed.profile === "candidate" || parsed.profile === "full") {
       const normalFixture = launchFixture({ cwd: isolatedCwd, name: "normal" });
       fixtureServer = normalFixture.child;
       fixtureOrigin = normalFixture.origin;
     }
     for (const scenario of manifest.scenarios) {
       const selected =
-        (parsed.profile === "full" &&
+        ((parsed.profile === "full" || parsed.profile === "process") &&
           scenario.profiles.some((profile) => profile === "full" || profile === "vertical")) ||
         (parsed.profile === "candidate" &&
           scenario.profiles.some(
             (profile) => profile === "candidate" || profile === "vertical",
           )) ||
         scenario.profiles.includes(parsed.profile);
-      if (!selected) {
+      if (!selected || (parsed.profile === "process" && scenario.requiresFixture)) {
         continue;
       }
 
       checked += 1;
       const goldenPath = join(dirname(manifestPath), scenario.golden);
       const golden = readJson(goldenPath);
+      if (parsed.baseline && golden.baselineValue !== undefined) golden.value = golden.baselineValue;
       validateGolden(golden, goldenPath);
       const faultFixture =
         parsed.profile === "candidate" && scenario.fixtureFault !== undefined
@@ -373,7 +381,7 @@ if (parsed !== undefined) {
       let failures;
       try {
         failures = runScenario({
-          command,
+          command: parsed.baseline ? [command[0], "--import", join(scriptDir, "preload-typescript-fixture.mjs"), ...command.slice(1)] : command,
           scenario,
           golden,
           cwd: isolatedCwd,

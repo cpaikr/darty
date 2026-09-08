@@ -6,8 +6,9 @@ use std::{
 };
 
 use darty::{
-    DartyClient, DartyError, ErrorCode, SearchCompanyReportsRequest, SearchCompanyRequest,
-    ViewReportRequest,
+    CompanyDetailRequest, CompanyRssRequest, DartyClient, DartyError, DisclosureTypesRequest,
+    ErrorCode, ReportGuideRequest, SearchBodyRequest, SearchCompanyReportsRequest,
+    SearchCompanyRequest, ViewReportRequest,
 };
 use futures_util::FutureExt;
 use serde::Serialize;
@@ -146,6 +147,21 @@ async fn run_operation(
     input_json: String,
 ) -> Result<Value, DartyError> {
     match operation.as_str() {
+        "search-body" => serialize(
+            client
+                .search_body(parse_input::<SearchBodyRequest>(&input_json)?)
+                .await?,
+        ),
+        "company-detail" => serialize(
+            client
+                .company_detail(parse_input::<CompanyDetailRequest>(&input_json)?)
+                .await?,
+        ),
+        "company-rss" => serialize(
+            client
+                .company_rss(parse_input::<CompanyRssRequest>(&input_json)?)
+                .await?,
+        ),
         "search-company" => {
             let input = parse_input::<SearchCompanyRequest>(&input_json)?;
             serialize(client.search_company(input).await?)
@@ -154,14 +170,17 @@ async fn run_operation(
             let input = parse_input::<SearchCompanyReportsRequest>(&input_json)?;
             serialize(client.search_company_reports(input).await?)
         }
+        "disclosure-types" => {
+            serialize(client.disclosure_types(parse_input::<DisclosureTypesRequest>(&input_json)?)?)
+        }
+        "report-guide" => {
+            serialize(client.report_guide(parse_input::<ReportGuideRequest>(&input_json)?))
+        }
         "view-report" => {
             let input = parse_input::<ViewReportRequest>(&input_json)?;
             serialize(client.view_report(input).await?)
         }
-        _ => Err(invalid_request(
-            "operation must be search-company, search-company-reports, or view-report.",
-            "operation",
-        )),
+        _ => Err(invalid_request("Unknown Darty operation.", "operation")),
     }
 }
 

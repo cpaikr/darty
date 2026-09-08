@@ -47,7 +47,7 @@ jobs:
         run: bun run build
 
       - name: Check CLI v1 compatibility baseline
-        run: node scripts/judge-cli-v1.mjs --profile full -- node dist/cli.js
+        run: node scripts/judge-cli-v1.mjs --profile full --typescript-baseline -- node dist/cli.js
 
       - name: Prove CLI parity mutation sensitivity
         run: node scripts/prove-cli-v1-mutation.mjs

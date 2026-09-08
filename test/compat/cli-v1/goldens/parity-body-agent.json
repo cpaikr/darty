@@ -1,0 +1,52 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "result": {
+      "request": {
+        "page": 1,
+        "sortBy": "date",
+        "sortDirection": "desc",
+        "detail": "concise",
+        "keyword": "배당",
+        "startDate": "20260101",
+        "endDate": "20260331"
+      },
+      "pagination": {
+        "currentPage": 1,
+        "totalPages": 1,
+        "totalCount": 1,
+        "returnedCount": 1
+      },
+      "items": [
+        {
+          "companyName": "가람전자",
+          "receiptNumber": "20260331000001",
+          "reportTitle": "사업보고서",
+          "receiptDate": "2026-03-31",
+          "snippetText": "현금 배당 계획",
+          "viewerUrl": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331000001&dcmNo=10000001",
+          "companyCode": "00000001"
+        }
+      ]
+    },
+    "metadata": {
+      "output": "agent",
+      "source": {
+        "system": "dart",
+        "surface": "dsab007",
+        "endpoint": "https://dart.fss.or.kr/dsab007/search.ax"
+      },
+      "completeness": "complete"
+    },
+    "references": {
+      "searchUrl": "https://dart.fss.or.kr/dsab007/search.ax"
+    },
+    "warnings": [],
+    "help": [
+      "Inspect filing TOC: darty view-report --receipt 'https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331000001&dcmNo=10000001'",
+      "Read a returned section: darty view-report --receipt 'https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260331000001&dcmNo=10000001' --section-id <toc[].id>"
+    ]
+  }
+}

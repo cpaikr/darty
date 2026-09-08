@@ -6,7 +6,8 @@
   command.
 - The shipped product is the Bun/strict TypeScript implementation in
   `src/`. A reviewed Rust/Node/CLI candidate exists under `crates/` and
-  `candidate/`, but it is unpublished and supports only the vertical workflow.
+  `candidate/`, but it is unpublished; all eight operations are implemented pending the active
+  plan's parity acceptance and artifact cutover.
 - Treat repository docs, code, tests, and configuration as the source of truth.
   Do not promote candidate or target behavior to shipped behavior.
 

@@ -354,11 +354,158 @@ const invoke = async <T>(
   }
 };
 
+export interface DisclosureTypesInput { readonly category?: string; readonly query?: string; }
+export interface DisclosureTypesResponse {
+  readonly result: { readonly request: DisclosureTypesInput; readonly totalCount: number; readonly categories: readonly {
+    readonly category: string; readonly categoryLabel: string; readonly categoryDescription: string;
+    readonly items: readonly { readonly code: string; readonly label: string }[];
+  }[] };
+  readonly metadata: {
+    readonly source: { readonly system: string; readonly repository: string; readonly commit: string; readonly path: string };
+    readonly categoryLabelSource: { readonly system: string; readonly url: string; readonly codeSet: string };
+    readonly categoryDescriptionProvenance: { readonly status: string; readonly basis: string };
+    readonly sourceBehavior: { readonly codeSet: string; readonly categoryCodeSet: string; readonly observationStatus: string };
+    readonly completeness: Completeness;
+  };
+  readonly references: { readonly sourceUrl: string };
+  readonly warnings: readonly { readonly code: string; readonly message: string }[];
+}
+export type ReportGuideInput = Record<string, never>;
+export interface ReportGuideResponse {
+  readonly result: { readonly request: ReportGuideInput; readonly title: string; readonly contentMarkdown: string };
+  readonly metadata: { readonly source: { readonly status: string; readonly path: string } };
+  readonly references: { readonly guidePath: string; readonly sourceUrls: readonly string[] };
+  readonly warnings: readonly { readonly code: string; readonly message: string }[];
+}
+
+export interface SearchBodyInput {
+  readonly keyword: string;
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly page?: number;
+  readonly sortBy?: "date" | "reportName";
+  readonly sortDirection?: SortDirection;
+  readonly companyCode?: string;
+  readonly presenterName?: string;
+  readonly reportName?: string;
+  readonly detail?: ResponseDetail;
+}
+export interface SearchBodyRequest extends SearchBodyInput {
+  readonly page: number;
+  readonly sortBy: "date" | "reportName";
+  readonly sortDirection: SortDirection;
+  readonly detail: ResponseDetail;
+}
+export interface SearchBodyItem {
+  readonly company: { readonly name: string; readonly companyCode?: string; readonly marketLabel?: string };
+  readonly filing: {
+    readonly receiptNumber: string;
+    readonly documentNumber?: string;
+    readonly reportTitle: string;
+    readonly reportModifier?: string;
+    readonly reportPeriod?: string;
+    readonly reportNameSuffix?: string;
+    readonly receiptDate: string;
+  };
+  readonly match: {
+    readonly snippetText: string;
+    readonly disclosureTypeLabel?: string;
+    readonly contentTypeLabel?: string;
+    readonly presenterName?: string;
+  };
+  readonly references: { readonly viewerUrl: string };
+  readonly evidence?: { readonly reportNameRaw: string; readonly rawInfoText: string; readonly snippetHtml: string };
+}
+export interface SearchBodyResponse {
+  readonly result: { readonly request: SearchBodyRequest; readonly pagination: Pagination; readonly items: readonly SearchBodyItem[] };
+  readonly metadata: {
+    readonly fetchedAt: string;
+    readonly source: SearchSource;
+    readonly completeness: Completeness;
+    readonly droppedItemCount: number;
+    readonly sourceBehavior: {
+      readonly effectivePageSize: number;
+      readonly effectivePagerWidth: number;
+      readonly callerControlsPageSize: boolean;
+      readonly callerControlsPagerWidth: boolean;
+      readonly observationStatus: string;
+    };
+  };
+  readonly references: { readonly searchUrl: string };
+  readonly warnings: readonly Warning[];
+}
+export interface CompanyDetailInput { readonly companyCode: string }
+export interface CompanyDetailInfo {
+  readonly companyCode: string;
+  readonly companyName: string;
+  readonly englishName?: string;
+  readonly disclosureCompanyName?: string;
+  readonly stockCode?: string;
+  readonly representativeName?: string;
+  readonly corporationKind?: string;
+  readonly corporateRegistrationNumber?: string;
+  readonly businessRegistrationNumber?: string;
+  readonly address?: string;
+  readonly homepage?: string;
+  readonly phoneNumber?: string;
+  readonly faxNumber?: string;
+  readonly industryName?: string;
+  readonly establishedDate?: string;
+  readonly fiscalMonth?: string;
+}
+export interface CompanyDetailResponse {
+  readonly result: { readonly request: CompanyDetailInput; readonly company: CompanyDetailInfo };
+  readonly metadata: { readonly fetchedAt: string; readonly source: SearchSource; readonly completeness: Completeness };
+  readonly references: { readonly detailUrl: string };
+}
+export interface CompanyRssInput { readonly companyCode: string; readonly detail?: ResponseDetail }
+export interface CompanyRssRequest extends CompanyRssInput { readonly detail: ResponseDetail }
+export interface CompanyRssChannel {
+  readonly title: string;
+  readonly link: string;
+  readonly description?: string;
+  readonly language?: string;
+  readonly publishedAt?: string;
+}
+export interface CompanyRssItem {
+  readonly title: string;
+  readonly link: string;
+  readonly receiptNumber?: string;
+  readonly publishedAt?: string;
+  readonly creator?: string;
+  readonly guid?: string;
+}
+export interface CompanyRssResponse {
+  readonly result: { readonly request: CompanyRssRequest; readonly channel: CompanyRssChannel; readonly items: readonly CompanyRssItem[] };
+  readonly metadata: { readonly fetchedAt: string; readonly source: SearchSource; readonly completeness: Completeness; readonly itemCount: number };
+  readonly references: { readonly rssUrl: string };
+}
+
 export class DartyClient {
   readonly #nativeClient: NativeDartyClient;
 
   constructor() {
     this.#nativeClient = new native.NativeDartyClient();
+  }
+
+  searchBody(input: SearchBodyInput, options?: RequestOptions): Promise<SearchBodyResponse> {
+    return invoke(this.#nativeClient, "search-body", input, options);
+  }
+
+  companyDetail(input: CompanyDetailInput, options?: RequestOptions): Promise<CompanyDetailResponse> {
+    return invoke(this.#nativeClient, "company-detail", input, options);
+  }
+
+  companyRss(input: CompanyRssInput, options?: RequestOptions): Promise<CompanyRssResponse> {
+    return invoke(this.#nativeClient, "company-rss", input, options);
+  }
+
+  disclosureTypes(input: DisclosureTypesInput = {}, options?: RequestOptions): Promise<DisclosureTypesResponse> {
+    return invoke(this.#nativeClient, "disclosure-types", input, options);
+  }
+
+  reportGuide(input: ReportGuideInput = {}, options?: RequestOptions): Promise<ReportGuideResponse> {
+    return invoke(this.#nativeClient, "report-guide", input, options);
   }
 
   searchCompany(
