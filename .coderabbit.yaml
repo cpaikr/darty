@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+inheritance: true
+reviews:
+  # Retired trees: keep the atomic removal within the review file limit.
+  # The Rust core, adapters, artifacts, tests, and docs remain in review scope.
+  path_filters:
+    - "!src/**"
+    - "!candidate/**"
