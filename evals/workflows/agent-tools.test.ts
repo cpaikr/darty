@@ -5,6 +5,9 @@ import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
 
 import { toTruncatedToolMessageContent } from "../harness/tool-trace.ts";
+import { executeAgentCliToolCall } from "../search-body/agent-cli/tools.ts";
+import { evaluateAgentCliInvocation } from "../search-body/agent-cli/invocation-assertions.ts";
+import { searchBodyCliScenarios, type SearchBodyCliScenario } from "../search-body/shared/cli-scenarios.ts";
 import { executeWorkflowToolCall } from "./agent-tools.ts";
 
 const toolCall = {
@@ -59,4 +62,22 @@ describe("workflow CLI execution", () => {
     expect(execution.exitCode).toBe(124);
     expect(performance.now() - startedAt).toBeLessThan(1_000);
   });
+});
+
+test("search-body assertions parse complete subprocess output beyond the trace limit", async () => {
+  const scenario: SearchBodyCliScenario = searchBodyCliScenarios[0]!;
+  const payload = { result: { request: {
+    keyword: scenario.keyword, startDate: scenario.startDate, endDate: scenario.endDate,
+    ...(scenario.companyCode === undefined ? {} : { companyCode: scenario.companyCode }),
+  }, body: "x".repeat(20_000) } };
+  const execution = await withFakeCli(
+    `console.log(${JSON.stringify(JSON.stringify(payload))});`,
+    (repoRoot) => executeAgentCliToolCall(repoRoot, {
+      ...toolCall, function: { name: "run_darty_cli", arguments: JSON.stringify({ argv: scenario.argv }) },
+    }),
+  );
+  expect(execution.exitCode).toBe(0);
+  expect(evaluateAgentCliInvocation(scenario, [execution])).toEqual([]);
+  expect(JSON.parse(execution.stdout)).toEqual(payload);
+  expect(toTruncatedToolMessageContent(execution)).toContain("...<truncated>");
 });

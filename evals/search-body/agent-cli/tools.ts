@@ -1,5 +1,4 @@
 import { dartyExecutable } from "../../surfaces/cli/executable.ts";
-import { truncate } from "../../harness/tool-trace.ts";
 import type { AgentCliToolName, ToolCall, ToolExecution } from "./types.ts";
 
 export type ParsedDartyCliInvocation =
@@ -211,8 +210,8 @@ const runDartyCli = async (
     input,
     display: formatDartyDisplay(argv),
     exitCode,
-    stdout: truncate(stdout.trim(), 16_000),
-    stderr: truncate(stderr.trim(), 4_000),
+    stdout: stdout.trim(),
+    stderr: stderr.trim(),
   };
 };
 
