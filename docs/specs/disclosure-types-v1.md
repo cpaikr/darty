@@ -21,5 +21,5 @@ equal labels across multiple categories, the result includes an
 `ambiguous_label_match` warning.
 
 Failures are non-retryable `invalid_request` or `internal_error`. The canonical
-catalog and its provenance live in `src/capabilities/disclosure-types/data.ts`;
+catalog and its provenance live in [`crates/darty/resources/disclosure-types.json`](../../crates/darty/resources/disclosure-types.json);
 [the filter-code reference](dart-filter-codes.md) explains caller usage.

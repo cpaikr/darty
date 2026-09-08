@@ -13,16 +13,13 @@ live provider.
 - The CLI success exception prints the guide as human-readable Markdown rather
   than the normal JSON envelope, as frozen by
   [CLI transport v1](cli-transport-v1.md).
-- Direct capability execution and the CLI expose non-retryable
-  `invalid_request` or `internal_error` failures. The toolset validates its
-  generic command envelope first: malformed values use `invalid_parameter`,
-  unknown fields use `unknown_parameter`, and an execution-stage capability
-  rejection is wrapped as `validation_failed` while retaining the underlying
-  validation issue.
+- SDK input and CLI execution expose non-retryable `invalid_request` or
+  `internal_error` failures. The historical TypeScript toolset's generic-envelope
+  error wrapping is not a supported repository surface after cutover.
 
 [`dart-report-guide.md`](../research/dart-report-guide.md) owns the maintained
-source guide and its source caveat. The TypeScript capability compiles an
-English rendering into code. Its `guidePath` names that repository authoring
-source for provenance; the standalone executable does not read the Markdown
-file at runtime or distribute it as a separate asset. The port must preserve the public content
-and provenance contract.
+source guide and its source caveat. The Rust SDK embeds the English rendering
+from [`report-guide.json`](../../crates/darty/resources/report-guide.json).
+Its `guidePath` retains the repository authoring source for provenance; the
+standalone executable does not read that Markdown file at runtime or require
+it as a separate asset. Public content and frozen provenance remain unchanged.

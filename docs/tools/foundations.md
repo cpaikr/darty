@@ -15,6 +15,6 @@ Keep four concerns distinct:
 The core should not depend on transport syntax. A transport should not become
 a second implementation of DART behavior.
 
-For this repository, the shipped TypeScript layering and accepted Rust target
+For this repository, the Rust SDK and its Node/CLI adapters
 are mapped in [ARCHITECTURE.md](../../ARCHITECTURE.md). Operation boundaries
 and transport rules belong in [specs](../specs/README.md).

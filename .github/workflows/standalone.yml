@@ -36,7 +36,7 @@ jobs:
     name: Cross-build / ${{ matrix.id }}
     needs: targets
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    timeout-minutes: 20
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.targets.outputs.build) }}
@@ -45,16 +45,33 @@ jobs:
         with:
           ref: ${{ inputs.source_sha }}
           persist-credentials: false
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          bun-version: 1.3.13
-      - run: bun install --frozen-lockfile
-      - name: Compile and archive standalone CLI
-        run: node scripts/standalone.mjs build ${{ matrix.id }} release-artifact/archive
+          node-version: 22.12.0
+      - run: rustup toolchain install 1.88.0 --profile minimal
+      - name: Cross-build Rust CLI and applicable Node addon
+        env:
+          TARGET_ID: ${{ matrix.id }}
+        run: |
+          RUST_TARGET=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("scripts/release-targets.json")).find(t => t.id === process.env.TARGET_ID).rustTarget)')
+          bash scripts/cross-build.sh "$TARGET_ID" "$RUST_TARGET"
+          EXECUTABLE=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("scripts/release-targets.json")).find(t => t.id === process.env.TARGET_ID).executable)')
+          node scripts/standalone.mjs build "$TARGET_ID" release-artifact/archive "target/$RUST_TARGET/release/$EXECUTABLE"
+          case "$TARGET_ID" in
+            linux-x64-gnu) node scripts/sdk-artifacts.mjs node "$TARGET_ID" "target/$RUST_TARGET/release/libdarty_node.so" release-artifact/sdk ;;
+            darwin-arm64) node scripts/sdk-artifacts.mjs node "$TARGET_ID" "target/$RUST_TARGET/release/libdarty_node.dylib" release-artifact/sdk ;;
+          esac
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: darty-archive-${{ matrix.id }}
           path: release-artifact/archive/*
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: matrix.id == 'linux-x64-gnu' || matrix.id == 'darwin-arm64'
+        with:
+          name: darty-sdk-${{ matrix.id }}
+          path: release-artifact/sdk/*
           if-no-files-found: error
           retention-days: 14
 
@@ -62,7 +79,7 @@ jobs:
     name: Certify / ${{ matrix.id }}
     needs: [targets, build]
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 20
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.targets.outputs.consume) }}
@@ -87,9 +104,37 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  sdk:
+    needs: build
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.12.0
+      - run: rustup toolchain install 1.88.0 --profile minimal
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: darty-sdk-linux-x64-gnu
+          path: release-artifact/sdk
+      - name: Certify exact native tarball in a clean Node consumer
+        run: node scripts/sdk-artifacts.mjs certify-node release-artifact/sdk linux-x64-gnu
+      - name: Package and certify Rust SDK in a clean external consumer
+        run: node scripts/sdk-artifacts.mjs rust release-artifact/sdk
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: darty-sdk-certified
+          path: release-artifact/sdk/*
+          if-no-files-found: error
+          retention-days: 14
+
   bundle:
     if: inputs.all_targets
-    needs: [build, consume]
+    needs: [build, consume, sdk]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -106,8 +151,16 @@ jobs:
           pattern: darty-certification-*
           path: release-artifact/reports
           merge-multiple: true
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: darty-sdk-certified
+          path: release-artifact/sdks
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: darty-sdk-darwin-arm64
+          path: release-artifact/sdks
       - name: Require complete target inventory and Linux certification
-        run: node scripts/standalone.mjs assemble release-artifact/archives release-artifact/reports release-artifact/bundle
+        run: node scripts/standalone.mjs assemble release-artifact/archives release-artifact/reports release-artifact/sdks release-artifact/bundle
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: darty-release

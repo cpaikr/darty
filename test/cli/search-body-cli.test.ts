@@ -5,7 +5,7 @@ const repoRoot = join(import.meta.dir, "..", "..");
 
 const runCli = (argv: readonly string[]) =>
   Bun.spawnSync({
-    cmd: [process.execPath, "run", "src/cli.ts", ...argv],
+    cmd: [process.env.DARTY_CLI ?? "./target/release/darty", ...argv],
     cwd: repoRoot,
     stdout: "pipe",
     stderr: "pipe",
@@ -295,4 +295,25 @@ describe("search-body CLI subprocess", () => {
       ],
     });
   });
+});
+
+test("numeric parser errors name their option for malformed and out-of-range values", () => {
+  for (const [command, flag] of [
+    ["search-body", "--page"], ["search-company", "--page-size"],
+    ["view-report", "--max-bytes"], ["view-report", "--content-start-byte"],
+    ["view-report", "--toc-depth"],
+  ] as const) {
+    for (const value of ["abc", "-1", "4294967296"]) {
+      expectJsonFailure(runCli([command, `${flag}=${value}`]), {
+        code: "invalid_request", parameter: flag,
+        messageIncludes: ["Expected an integer"],
+      });
+    }
+  }
+});
+
+test("negative content offsets preserve the same failure for both argument forms", () => {
+  const separate = runCli(["view-report", "--content-start-byte", "-27"]);
+  const attached = runCli(["view-report", "--content-start-byte=-27"]);
+  expect(parseJsonStdout(attached)).toEqual(parseJsonStdout(separate));
 });

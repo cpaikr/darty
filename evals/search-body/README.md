@@ -1,9 +1,8 @@
 # Contents Search Evals
 
-These evals cover the shipped TypeScript `search-body` capability through fixed
-CLI commands and LLM-backed CLI tool use. The retained Rust candidate does not
-yet implement this operation; [the active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md)
-owns its delivery status.
+These evals cover Rust `search-body` through fixed CLI commands and model-backed
+CLI tool use. Repository cutover is in progress and Rust remains unpublished;
+[the active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md) owns delivery status.
 
 ## Goal
 
@@ -60,11 +59,16 @@ The search-body scenarios still stop at filing-level output. Multi-step report-v
 
 ## Running
 
-Install deps first:
+Install development dependencies and build the local Rust executable:
 
 ```bash
 bun install
+bun run build
 ```
+
+The default executable is `target/release/darty`; set `DARTY_CLI` to an absolute
+installed executable path to check that exact artifact. Rust validates arguments,
+and invocation assertions use normalized `result.request` from successful output.
 
 Run the fixed-command CLI eval. This track does not require an OpenAI API key:
 
@@ -87,8 +91,8 @@ bun run eval:agent-cli:search-body
 ## Notes
 
 - The live DART surface changes over time, so these are scenario evals, not golden-output tests.
-- Raw source correctness belongs in direct tests, especially `test/live/`.
-- CLI subprocess UX checks belong in `test/cli/`; these evals focus on live scenario usefulness and agent structured-tool invocation behavior.
+- Source correctness belongs in Rust SDK tests and the independent wire fixtures.
+- CLI subprocess UX checks belong in `test/compat/cli-v1/`; these evals focus on live scenario usefulness and structured tool invocation.
 - Deterministic assertions are preferred here when output shape, echoed request parameters, item counts, receipt numbers, URL prefixes, or command arguments are objective.
 - Do not add an `llm-rubric` judge to tracks where checks can be expressed in JavaScript.
 - Do not fold final-answer prose checks into this invocation track; use the

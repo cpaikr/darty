@@ -15,22 +15,34 @@ claim they have happened.
 
 ## Current state
 
-The published v0.6.0 CLI is Bun/TypeScript and implements all eight operations.
-[Standalone delivery](standalone-cli-delivery.md) is complete. The unpublished
-candidate now implements all eight operations through Rust and Node SDKs and
-the Rust CLI; TypeScript remains runnable as the comparison baseline. The native
-Node package is a current-host proof, not a supported distribution matrix.
+The published v0.6.0 CLI is Bun/TypeScript. Phase 3 completed through
+[PR #27](https://github.com/cpaikr/darty/pull/27), merged into the rewrite
+integration branch as `3c4ba7e`. All eight operations have Rust, Node, and CLI
+parity, fictional wire evidence, consumer checks, and explicit compatibility
+dispositions. Bounded live refresh on 2026-09-08 passed all six source-backed
+operations, including the repaired viewer; the
+[provider record](../docs/research/dart-provider-qualification.md) owns evidence
+and pending human approval.
 
-Phase 3 remains active pending final validation, review, and PR delivery. Viewer
-object rebinding, regex/no-TOC acceptance, and graph bounds are reconciled in the
-canonical companion and fictional fixtures. The new body/detail/RSS corpus and
-baseline-derived CLI projections cover the remaining operations; strict XML
-acceptance and the TypeScript missing-company error-wrapping defect have explicit
-contract dispositions. Bounded live refresh on 2026-09-08 exercised all six
-source-backed operations successfully through the release-built Rust CLI,
-including the previously failing viewer. The [provider record](../docs/research/dart-provider-qualification.md)
-owns results and pending human approval. Phase 4 artifact validation and atomic
-cutover have not started. [Architecture](../ARCHITECTURE.md) owns topology.
+Phase 4 technical validation is complete at `f38654b`: CI and build-only run
+[34183249366](https://github.com/cpaikr/darty/actions/runs/34183249366) pass all
+four cross-builds, both Linux installed CLI archives, clean Linux Rust/Node
+consumers, and bundle assembly. Downloaded artifact hashes and source identity
+verify; the exact macOS artifacts also pass local Node consumption and installed
+CLI process/live checks. Bounded code review and documentation reconciliation
+are complete for the aggregate change. The first replacement commit switches
+runtime and artifact paths to Rust and removes TypeScript tests, entry points,
+and the candidate npm launcher; inactive source files remain for the second.
+
+The user requested smaller commit-based PRs after
+[PR #28](https://github.com/cpaikr/darty/pull/28) exceeded CodeRabbit’s 150-file
+limit. Deliver two sequential PRs into the rewrite integration branch: runtime
+and artifacts (144 files), then remaining inactive source and evidence cleanup
+(fewer than 150 files). Each receives its initial reviews and CI before merge;
+prepare the second only after the first merges. Remove the temporary inactive
+source before declaring repository completion. Rust v0.6.1 remains unpublished.
+[Architecture](../ARCHITECTURE.md) owns topology and
+[release.md](../docs/release.md) owns artifact contracts and the operator handoff.
 
 ## Decisions and authority
 
@@ -42,7 +54,9 @@ cutover have not started. [Architecture](../ARCHITECTURE.md) owns topology.
   translate runtime concerns; the separate Rust CLI adapts the SDK to subprocess
   use. Neither adapter owns another DART implementation.
 - Keep TypeScript runnable as the comparison baseline until full parity and
-  artifact evidence permit one reviewable cutover with a normal Git revert path.
+  artifact evidence permit the runtime cutover with a normal Git revert path.
+  The user-authorized review split retains inactive source only until the
+  immediately following deletion PR; no second runtime path remains.
   Preserve independent contract tests after deleting migration-only machinery.
 - On 2026-09-08 the owner delegated remaining SDK packaging, platform details,
   and technical repository-cutover decisions within this outcome. Resolve them
@@ -135,9 +149,11 @@ remain intact until Phase 4.
 - Verify a build-only CI candidate without a source tag, including source-bound
   archives, checksums, installers, and clean consumers. Temporary artifacts prove
   repository readiness, not a published release.
-- Replace TypeScript entry points and release build paths with Rust in one
-  reviewable cutover. Remove the old DART conformer, toolset, superseded build/test
-  paths, candidate-only packaging, and unused dependencies. Keep the thin Node
+- Replace TypeScript entry points and release build paths with Rust together.
+  Deliver that commit and the remaining inactive-source deletion as two
+  sequential PRs below the review file limit. Remove the old DART conformer,
+  toolset, superseded build/test paths, candidate-only packaging, and unused
+  dependencies before repository completion. Keep the thin Node
   facade and independent acceptance corpus; TypeScript as an adapter is not a
   second DART implementation.
 - Update instructions, README, architecture, release docs, specs, eval docs,
@@ -171,8 +187,7 @@ owns their scheduling.
 
 ## Next action
 
-Finish Phase 3 transport/cancellation and packaged-consumer checks, wire lock,
-CLI/Node review, and documentation reconciliation; complete the parity PR
-lifecycle before starting Phase 4 artifact validation and repository cutover.
-Stop after repository completion and hand off the separate release gates
-without starting them.
+Review, validate, and merge the first runtime/artifact PR into the rewrite
+integration branch, then prepare and deliver the inactive-source deletion PR.
+Stop after repository completion and hand off separate release gates without
+starting them.

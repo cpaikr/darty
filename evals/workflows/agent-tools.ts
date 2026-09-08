@@ -1,6 +1,4 @@
-import { parseSearchCompanyCommandArgs } from "../../src/cli/commands/search-company.ts";
-import { parseSearchCompanyReportsCommandArgs } from "../../src/cli/commands/search-company-reports.ts";
-import { parseViewReportCommandArgs } from "../../src/cli/commands/view-report.ts";
+import { dartyExecutable } from "../surfaces/cli/executable.ts";
 import { truncate } from "../harness/tool-trace.ts";
 import type {
   WorkflowToolCall,
@@ -19,7 +17,6 @@ export type ParsedWorkflowInvocation =
       readonly kind: "operation";
       readonly operation: WorkflowOperation;
       readonly argv: readonly string[];
-      readonly options: Record<string, unknown>;
     };
 
 export type WorkflowCliValidation =
@@ -72,9 +69,6 @@ const formatArg = (argument: string): string =>
 const formatDartyDisplay = (argv: readonly string[]): string =>
   ["darty", ...argv].map(formatArg).join(" ");
 
-const asOptions = (value: object): Record<string, unknown> =>
-  Object.fromEntries(Object.entries(value));
-
 const validateDartyArgvShape = (argv: readonly string[]): string | undefined => {
   if (argv.length > 32) {
     return "darty argv contains too many arguments";
@@ -123,29 +117,7 @@ export const validateWorkflowCliArgv = (
     return { ok: true, parsed: { kind: "discovery", argv } };
   }
 
-  try {
-    const options =
-      commandName === "search-company"
-        ? parseSearchCompanyCommandArgs([...commandArgv]).request
-        : commandName === "search-company-reports"
-          ? parseSearchCompanyReportsCommandArgs([...commandArgv]).request
-          : parseViewReportCommandArgs([...commandArgv]).request;
-
-    return {
-      ok: true,
-      parsed: {
-        kind: "operation",
-        operation: commandName,
-        argv: commandArgv,
-        options: asOptions(options),
-      },
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      reason: `${commandName} arguments were rejected by the CLI parser: ${error instanceof Error ? error.message : String(error)}`,
-    };
-  }
+  return { ok: true, parsed: { kind: "operation", operation: commandName, argv: commandArgv } };
 };
 
 const parseToolArguments = (toolCall: WorkflowToolCall): unknown =>
@@ -256,7 +228,7 @@ const runDartyCli = async (
   }
 
   const proc = Bun.spawn({
-    cmd: [process.execPath, "run", "src/cli.ts", ...argv],
+    cmd: [dartyExecutable(repoRoot), ...argv],
     cwd: repoRoot,
     stdout: "pipe",
     stderr: "pipe",
