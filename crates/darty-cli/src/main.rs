@@ -360,13 +360,13 @@ fn parser_value_failure(error: &clap::Error) -> Option<Value> {
     if matches!(
         flag,
         "--page" | "--page-size" | "--max-bytes" | "--content-start-byte" | "--toc-depth"
-    ) && value.parse::<i64>().is_err()
+    ) && value.parse::<u32>().is_err()
     {
         return Some(failure(
             format!(
                 "error: option '{flag} <number>' argument '{value}' is invalid. Expected an integer but received \"{value}\"."
             ),
-            None,
+            Some(flag),
             "Run darty --help for options and examples.",
         ));
     }
@@ -917,6 +917,8 @@ fn limit_toc(nodes: &mut Vec<Value>, depth: u32) {
     }
 }
 
+// Keep the frozen option-specific pre-parser failures together.
+#[allow(clippy::too_many_lines)]
 fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
     let pretty = argv.iter().any(|value| value == "--pretty");
     let command = argv
@@ -999,8 +1001,13 @@ fn preparse_failure(argv: &[String]) -> Option<CliFailure> {
         }
     }
     if command == Some("view-report")
-        && let Some(rejected) = argv.windows(2).find_map(|pair| {
-            (pair[0] == "--content-start-byte" && pair[1].starts_with('-')).then_some(&pair[1])
+        && let Some(rejected) = argv.iter().enumerate().find_map(|(index, value)| {
+            let argument = if value == "--content-start-byte" {
+                argv.get(index + 1).map(String::as_str)
+            } else {
+                value.strip_prefix("--content-start-byte=")
+            }?;
+            argument.starts_with('-').then_some(argument)
         })
     {
         return Some(CliFailure::new(
