@@ -68,7 +68,7 @@ export function packNode(target, addon, directory) {
 
 function packRust(directory) {
   mkdirSync(directory, { recursive: true });
-  run("cargo", ["+1.88.0", "package", "-p", "darty", "--locked", "--allow-dirty"]);
+  run("cargo", ["+1.88.0", "package", "-p", "darty", "--locked"]);
   const file = `darty-${version}.crate`;
   copyFileSync(join(root, "target/package", file), join(directory, file));
   consumeRust(join(directory, file));

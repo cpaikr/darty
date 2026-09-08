@@ -50,7 +50,7 @@ wire authority, eval harness tests, CLI parity, and mutation sensitivity.
 Download SDK artifacts and `SHA256SUMS` from the same authenticated private
 release. Verify their SHA-256 before installation. Node requires 22.12.0 or newer
 and a matching OS/architecture; Linux requires glibc 2.28 or newer. Install the
-selected tarball with `npm install --ignore-scripts /absolute/path/to/darty-node-<version>-<target>.tgz`.
+selected tarball with `npm install --offline --ignore-scripts --no-audit --no-fund /absolute/path/to/darty-node-<version>-<target>.tgz`.
 Import `DartyClient` and `DartyError` from `@sjunepark/darty`. There is no build or
 native download during installation; unsupported targets have no fallback.
 
@@ -165,6 +165,8 @@ bun test
 bun run build
 bun run test:compat:cli
 bun run test:standalone
+bun run test:sdk
+bun run check:versions
 ```
 
 `build` compiles the production Rust CLI and Node addon with Rust 1.88.
