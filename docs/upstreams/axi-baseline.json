@@ -15,8 +15,8 @@
       "README.md",
       "docs/specs/cli-transport-v1.md",
       "evals/workflows/README.md",
-      "src/cli/presentation/search.ts",
-      "src/cli/presentation/view-report.ts"
+      "crates/darty-cli/src/operations.rs",
+      "crates/darty-cli/src/main.rs"
     ],
     "upstreamEvidence": [
       "README.md",

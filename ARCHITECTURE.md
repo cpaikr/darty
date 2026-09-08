@@ -8,16 +8,16 @@ repository topology; [VISION.md](VISION.md) owns product scope and
 ## Implementation and release status
 
 The repository implements the Rust cutover for version 0.6.1. Artifact
-validation and delivery are in progress; Rust remains unpublished. The latest
+validation passes; [ROADMAP.md](ROADMAP.md) tracks integration delivery. Rust
+remains unpublished. The latest
 published standalone release, v0.6.0, contains the earlier Bun/TypeScript CLI.
 Its availability does not certify the new Rust artifacts. Older npm releases
 remain historical; npm registry publication is retired.
 
-The TypeScript entry points, source-local toolset, tests, and npm CLI launcher
-are removed. The remaining `src/` files are inactive: runtime commands, builds,
-typechecking, and tests use the Rust implementation and thin Node facade. They
-remain only for the immediately following deletion PR, keeping both reviews
-within the file limit. Repository cutover is complete only after that deletion.
+The superseded TypeScript DART implementation, entry points, source-local
+toolset, superseded TypeScript tests, and npm CLI launcher are removed.
+TypeScript remains only in the thin Node facade and development, evaluation,
+and release tooling.
 
 ## Runtime boundaries
 

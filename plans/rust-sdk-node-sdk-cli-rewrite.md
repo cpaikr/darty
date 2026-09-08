@@ -30,17 +30,19 @@ four cross-builds, both Linux installed CLI archives, clean Linux Rust/Node
 consumers, and bundle assembly. Downloaded artifact hashes and source identity
 verify; the exact macOS artifacts also pass local Node consumption and installed
 CLI process/live checks. Bounded code review and documentation reconciliation
-are complete for the aggregate change. The first replacement commit switches
-runtime and artifact paths to Rust and removes TypeScript tests, entry points,
-and the candidate npm launcher; inactive source files remain for the second.
+are complete for the aggregate change. The runtime/artifact replacement
+[PR #29](https://github.com/cpaikr/darty/pull/29) merged as `4b70251` after
+both initial reviews, feedback fixes, and exact-head
+[CI 34188505683](https://github.com/cpaikr/darty/actions/runs/34188505683) passed.
+The fixes preserve complete eval output, normalize numeric CLI errors, reject
+dirty crate packaging, and align release instructions with certification.
 
 The user requested smaller commit-based PRs after
 [PR #28](https://github.com/cpaikr/darty/pull/28) exceeded CodeRabbit’s 150-file
-limit. Deliver two sequential PRs into the rewrite integration branch: runtime
-and artifacts (144 files), then remaining inactive source and evidence cleanup
-(fewer than 150 files). Each receives its initial reviews and CI before merge;
-prepare the second only after the first merges. Remove the temporary inactive
-source before declaring repository completion. Rust v0.6.1 remains unpublished.
+limit. The final slice removes all 142 inactive TypeScript source files and
+updates AXI evidence to the Rust CLI. Its initial reviews and exact-head CI
+remain before merge into the rewrite integration branch and repository
+completion. Rust v0.6.1 remains unpublished.
 [Architecture](../ARCHITECTURE.md) owns topology and
 [release.md](../docs/release.md) owns artifact contracts and the operator handoff.
 
@@ -187,7 +189,7 @@ owns their scheduling.
 
 ## Next action
 
-Review, validate, and merge the first runtime/artifact PR into the rewrite
-integration branch, then prepare and deliver the inactive-source deletion PR.
+Review, validate, and merge the final inactive-source deletion PR into the
+rewrite integration branch, then record repository completion.
 Stop after repository completion and hand off separate release gates without
 starting them.
