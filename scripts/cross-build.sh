@@ -8,6 +8,12 @@ case "$target" in
     image='ghcr.io/rust-cross/cargo-xwin@sha256:10fa1f350addf9c59345954f9d6eb10e353ba481c6130757a5c95d8daad37191'
     builder='xwin build'
     ;;
+  darwin-arm64)
+    # cargo-zigbuild 0.23.4 strips the -Wl prefix from the exported-symbols
+    # list operand and breaks Rust cdylib linking. Keep 0.23.3 for the addon.
+    image='ghcr.io/rust-cross/cargo-zigbuild@sha256:00737986c3858b111b515f29c476a3e5e370834bd6774aa4da0fd9afa103ba31'
+    builder='zigbuild'
+    ;;
   *)
     image='ghcr.io/rust-cross/cargo-zigbuild@sha256:9b4f6b3eb9e8f9fefb3960fe288ddba576627d66d9eff851ce7f62d2455564a5'
     builder='zigbuild'

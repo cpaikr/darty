@@ -64,3 +64,5 @@ Complete build-only Linux CI evidence and final cutover PR review/merge after lo
 
 - PR #28 is open at initial head `2196e50`. Build-only run `34181869781` passed shared Linux validation and is cross-building all targets; publication is skipped. Codex completed its initial review with no findings (PR-body +1 by the connector at 2026-09-08T03:07:10Z).
 - CodeRabbit refused its initial manual review because 284 files exceeded the 150-file limit. Added inherited path filters for only the 207 fully deleted `src/` and `candidate/` paths, leaving 80 review files including the configuration. Central automatic-review settings remain unchanged; official schema and bounded review pass. A second manual request requires an explicit exception to the one-trigger policy; it has not been sent.
+
+- Build-only run `34181869781` passed Linux x64/ARM64 and Windows x64 builds, but macOS Node linking failed because cargo-zigbuild 0.23.4 rewrites Rust’s exported-symbol-list operand. Pinned only macOS to the official 0.23.3 amd64 image digest; upstream source diagnosis and bounded review agree. Full cross-build and packaged-consumer verification remain pending.
