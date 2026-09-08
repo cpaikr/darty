@@ -24,12 +24,21 @@ operations, including the repaired viewer; the
 [provider record](../docs/research/dart-provider-qualification.md) owns evidence
 and pending human approval.
 
-Phase 4 is active: production Rust CLI/Node builds, the full CLI judge, and clean
-local artifact consumers pass. Bounded code review is complete. The TypeScript
-implementation and candidate npm launcher are removed in the unmerged atomic
-cutover. Linux cross-build CI evidence and final PR delivery remain in progress. Rust v0.6.1 is
-unpublished. [Architecture](../ARCHITECTURE.md) owns topology and
-[release.md](../docs/release.md) owns selected artifact contracts.
+Phase 4 technical validation is complete at `f38654b`: CI and build-only run
+[34183249366](https://github.com/cpaikr/darty/actions/runs/34183249366) pass all
+four cross-builds, both Linux installed CLI archives, clean Linux Rust/Node
+consumers, and bundle assembly. Downloaded artifact hashes and source identity
+verify; the exact macOS artifacts also pass local Node consumption and installed
+CLI process/live checks. Bounded code review and documentation reconciliation
+are complete. The TypeScript implementation and candidate npm launcher are
+removed in the unmerged atomic cutover.
+
+[PR #28](https://github.com/cpaikr/darty/pull/28) awaits CodeRabbit review: its
+initial request exceeded the file limit; prepared filters exclude only deleted
+trees, and a one-time retry awaits authorization. Codex completed with no
+findings. Final PR delivery remains incomplete. Rust v0.6.1 is unpublished.
+[Architecture](../ARCHITECTURE.md) owns topology and
+[release.md](../docs/release.md) owns artifact contracts and the operator handoff.
 
 ## Decisions and authority
 
@@ -170,6 +179,7 @@ owns their scheduling.
 
 ## Next action
 
-Finish Phase 4 build-only Linux CI evidence and the final sequential PR
-lifecycle. Stop after repository
-completion and hand off separate release gates without starting them.
+Complete the required CodeRabbit review after the one-time retry is authorized,
+address feedback, and finish PR #28 through the final sequential PR lifecycle.
+Stop after repository completion and hand off separate release gates without
+starting them.

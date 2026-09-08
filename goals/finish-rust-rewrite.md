@@ -34,7 +34,7 @@ Phase 4 — artifacts and atomic repository cutover.
 
 ### Next in-scope action
 
-Complete build-only Linux CI evidence and final cutover PR review/merge after local artifact checks and documentation reconciliation.
+Await authorization for one CodeRabbit retry on PR #28; then address its review, verify final checks, and merge into the rewrite integration branch. Technical artifact validation is complete; delivery remains incomplete.
 
 ### Evidence and blockers
 
@@ -62,7 +62,10 @@ Complete build-only Linux CI evidence and final cutover PR review/merge after lo
 - Local Phase 4 checks pass: 64 full CLI scenarios and mutation proof; 59 Bun harness/release/process tests; Rust workspace tests, Clippy, rustdoc, release panic containment, audit/deny; wire authority and typecheck; clean Rust crate consumer; packaged Node types, all operations, cancellation, and production-hook rejection. macOS exact CLI archive passes 36 network-free installed process scenarios and the live company→filings→TOC→section workflow. macOS native tarball passes a clean offline consumer.
 - Bounded artifact review and final cutover code review completed. Fixed addon format/architecture/type validation and documented concrete SDK installation/version contracts. Scoped documentation reconciliation completed; local links and documented commands validate. Linux build-only CI and the final sequential PR remain pending. Candidate final PR is included by Phase 4 and necessary for Delivery; no release tag or publication is authorized.
 
-- PR #28 is open at initial head `2196e50`. Build-only run `34181869781` passed shared Linux validation and is cross-building all targets; publication is skipped. Codex completed its initial review with no findings (PR-body +1 by the connector at 2026-09-08T03:07:10Z).
+- PR #28 is open at initial head `2196e50`. Initial build-only run `34181869781` passed shared Linux validation before the macOS linker failure documented below; publication was skipped. Codex completed its initial review with no findings (PR-body +1 by the connector at 2026-09-08T03:07:10Z).
 - CodeRabbit refused its initial manual review because 284 files exceeded the 150-file limit. Added inherited path filters for only the 207 fully deleted `src/` and `candidate/` paths, leaving 80 review files including the configuration. Central automatic-review settings remain unchanged; official schema and bounded review pass. A second manual request requires an explicit exception to the one-trigger policy; it has not been sent.
 
-- Build-only run `34181869781` passed Linux x64/ARM64 and Windows x64 builds, but macOS Node linking failed because cargo-zigbuild 0.23.4 rewrites Rust’s exported-symbol-list operand. Pinned only macOS to the official 0.23.3 amd64 image digest; upstream source diagnosis and bounded review agree. Full cross-build and packaged-consumer verification remain pending.
+- Build-only run `34181869781` passed Linux x64/ARM64 and Windows x64 builds, but macOS Node linking failed because cargo-zigbuild 0.23.4 rewrites Rust’s exported-symbol-list operand. Pinned only macOS to the official 0.23.3 amd64 image digest; upstream source diagnosis and bounded review agree. Subsequent cross-build and consumer results are recorded below.
+
+- Exact implementation head `f38654b` passes CI `34183234459` and build-only run `34183249366`: four cross-builds, both Linux CLI archive certifications, clean Linux Node/Rust consumers, and bundle assembly. Downloaded checksums, seven artifact hashes, and source identity verify. The exact cross-built macOS Node tarball passes a clean local consumer; the CLI archive passes 36 process scenarios and the live company→filings→TOC→section workflow. Publication was skipped.
+- PR #28 remains unmerged solely pending the required CodeRabbit review and the requested one-trigger exception. Refreshed feedback has no actionable findings or active review; Codex’s completed no-findings review is retained. No review retry, source tag, publication, or production approval was performed.

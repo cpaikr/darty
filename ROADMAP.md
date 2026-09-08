@@ -6,8 +6,9 @@
 
 All eight operations share one Rust implementation across the Rust SDK, Node
 SDK, and standalone CLI. Phase 3 is merged into the rewrite integration branch.
-Phase 4 artifact validation, atomic cutover, documentation reconciliation, and
-final PR delivery are active. Published v0.6.0 remains the TypeScript release;
+Phase 4 artifact validation and documentation reconciliation pass. The atomic
+cutover is in PR #28, awaiting the required CodeRabbit review before final
+delivery. Published v0.6.0 remains the TypeScript release;
 the Rust v0.6.1 repository cutover is unpublished. The active plan owns evidence
 gates and the next action.
 
