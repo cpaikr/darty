@@ -372,22 +372,22 @@ void [snippet, bodyPage, detailCompany, rss, codes, guide];
   process.env.DARTY_NODE_TEST_FIXTURE_ORIGIN = productionRoutingFixture.origin;
   process.env.DARTY_NODE_TEST_FIXTURE_FETCHED_AT = "2026-08-22T00:00:00.000Z";
   const productionClient = new productionSdk.DartyClient();
-  for (const [operation, input] of [
-    ["searchCompany", {}],
-    ["searchCompanyReports", {}],
-    ["viewReport", {}],
-    ["searchBody", {}],
-    ["companyDetail", {}],
-    ["companyRss", {}],
-    ["disclosureTypes", { unexpected: true }],
-    ["reportGuide", { unexpected: true }],
+  for (const [operation, input, parameter] of [
+    ["searchCompany", {}, "companyName"],
+    ["searchCompanyReports", {}, "companyCode"],
+    ["viewReport", {}, "receipt"],
+    ["searchBody", {}, "keyword"],
+    ["companyDetail", {}, "companyCode"],
+    ["companyRss", {}, "companyCode"],
+    ["disclosureTypes", { unexpected: true }, "unexpected"],
+    ["reportGuide", { unexpected: true }, "unexpected"],
   ]) {
     await assert.rejects(
       productionClient[operation](input),
       (error) =>
         error instanceof productionSdk.DartyError &&
         error.code === "invalid_request" &&
-        error.parameter === "input" &&
+        error.parameter === parameter &&
         error.retryable === false,
       `production addon ${operation} validation boundary`,
     );
@@ -646,6 +646,28 @@ void [snippet, bodyPage, detailCompany, rss, codes, guide];
   }
   assert.deepEqual(await client.companyDetail({ companyCode: " 00000001 " }), await client.companyDetail({ companyCode: "00000001" }));
   assert.deepEqual(await client.companyRss({ companyCode: " 00000001 " }), await client.companyRss({ companyCode: "00000001" }));
+  for (const [method, input, parameter] of [
+    ["companyDetail", {}, "companyCode"],
+    ["companyRss", { companyCode: null }, "companyCode"],
+    ["searchBody", { keyword: "x", startDate: "20260101", endDate: "20260331", page: "2" }, "page"],
+    ["disclosureTypes", { query: null }, "query"],
+    ["reportGuide", { unexpected: true }, "unexpected"],
+  ]) {
+    await assert.rejects(client[method](input), error => error instanceof sdk.DartyError && error.code === "invalid_request" && error.parameter === parameter && typeof error.recoveryHint === "string");
+  }
+  for (const name of [undefined, "search-body", "company-detail", "company-rss", "disclosure-types", "report-guide", "search-company", "search-company-reports", "view-report"]) {
+    const direct = run(fixtureCliArtifact, name ? [name, "--help"] : ["--help"]);
+    const alias = run(fixtureCliArtifact, name ? ["help", name] : ["help"]);
+    assert.equal(alias.stdout, direct.stdout, `help alias for ${name ?? "root"}`);
+    assert.equal(alias.stderr, "");
+  }
+  const compactUnknown = run(fixtureCliArtifact, ["missing-command"], { exitCode: 1 });
+  const prettyUnknown = run(fixtureCliArtifact, ["missing-command", "--pretty"], { exitCode: 1 });
+  assert.deepEqual(JSON.parse(prettyUnknown.stdout), JSON.parse(compactUnknown.stdout));
+  assert.ok(prettyUnknown.stdout.startsWith("{\n  "));
+  const debugUnknown = run(fixtureCliArtifact, ["--debug", "missing-command"], { exitCode: 1 });
+  assert.equal(debugUnknown.stdout, compactUnknown.stdout);
+  assert.deepEqual(JSON.parse(debugUnknown.stderr), { diagnostics: { code: "invalid_request", retryable: false } });
   const pacedClient = new sdk.DartyClient();
   const pacedAt = Date.now();
   await Promise.all([

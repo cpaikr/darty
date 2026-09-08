@@ -163,7 +163,8 @@ success or technical decision delegation for human approval or paid-use authorit
 
 ## Out of scope
 
-The immediate following milestone is Rust release signoff and publication.
+Rust release signoff and publication follow repository completion, including
+Phase 3 parity and Phase 4 artifact validation and cutover.
 XBRL, industry discovery, expanded held-out workflows, new content pagination,
 and other backlog capabilities remain outside this rewrite; [ROADMAP.md](../ROADMAP.md)
 owns their scheduling.

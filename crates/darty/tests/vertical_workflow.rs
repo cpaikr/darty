@@ -1376,6 +1376,12 @@ async fn full_parity_corpus_checks_exact_requests_and_source_outcomes() {
                 "{}",
                 case["id"]
             );
+            assert_eq!(
+                serde_json::Value::Bool(error.retryable),
+                case["expected"]["retryable"],
+                "{}",
+                case["id"]
+            );
         } else {
             let outcome = outcome.unwrap_or_else(|error| panic!("{}: {error:?}", case["id"]));
             assert_parity_result(&outcome, case);
@@ -1480,6 +1486,21 @@ fn assert_subset(actual: &serde_json::Value, expected: &serde_json::Value) {
     }
 }
 
+fn assert_omitted(
+    actual: &serde_json::Value,
+    omitted: &serde_json::Value,
+    case: &serde_json::Value,
+) {
+    for field in omitted.as_array().map(Vec::as_slice).unwrap_or_default() {
+        let key = field.as_str().unwrap();
+        assert!(
+            actual.get(key).is_none(),
+            "{}: {key} must be omitted",
+            case["id"]
+        );
+    }
+}
+
 fn assert_parity_result(outcome: &serde_json::Value, case: &serde_json::Value) {
     let expected = &case["expected"];
     let result = &outcome["result"];
@@ -1505,7 +1526,10 @@ fn assert_parity_result(outcome: &serde_json::Value, case: &serde_json::Value) {
                 }
             }
         }
-        "fetchCompanyDetail" => assert_subset(&result["company"], &expected["company"]),
+        "fetchCompanyDetail" => {
+            assert_subset(&result["company"], &expected["company"]);
+            assert_omitted(&result["company"], &expected["omittedCompanyFields"], case);
+        }
         "fetchCompanyRss" => {
             if let Some(channel) = expected.get("channel") {
                 assert_subset(&result["channel"], channel);
@@ -1516,6 +1540,7 @@ fn assert_parity_result(outcome: &serde_json::Value, case: &serde_json::Value) {
             );
             if expected.get("first").is_some() {
                 assert_subset(&result["items"][0], &expected["first"]);
+                assert_omitted(&result["items"][0], &expected["omittedItemFields"], case);
             }
         }
         _ => unreachable!(),

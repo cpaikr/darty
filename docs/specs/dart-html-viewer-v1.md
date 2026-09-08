@@ -131,6 +131,10 @@ corpus does not establish refreshed live provider qualification.
   snippet HTML, raw report title, and raw info text, plus optional
   `filing.documentNumber` (`dcmNo`); concise omits these. No full response body is
   returned by any projection.
+- `BODY-PARTIAL-HELP-1` — **Project decision.** When all rows on a source page
+  are dropped, CLI help states that no parseable rows remain, rather than
+  claiming no filings matched. This corrects the retained TypeScript helper;
+  genuine empty-result wording is unchanged.
 
 ## Company-detail fragment
 

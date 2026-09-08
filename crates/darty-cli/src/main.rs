@@ -19,7 +19,7 @@ use serde_json::{Value, json};
     disable_help_subcommand = true
 )]
 struct Cli {
-    /// Compatibility flag; it does not change JSON output or emit diagnostics.
+    /// Write bounded error classification diagnostics to stderr on failure.
     #[arg(long, global = true)]
     debug: bool,
     #[command(subcommand)]
@@ -258,12 +258,13 @@ enum OutputFormatArg {
 #[tokio::main]
 async fn main() -> ExitCode {
     let argv = std::env::args().collect::<Vec<_>>();
+    let debug = argv.iter().any(|arg| arg == "--debug");
     if let Some(command_help) = help::command_help(&argv) {
         print!("{command_help}");
         return ExitCode::SUCCESS;
     }
     if let Some(problem) = preparse_failure(&argv) {
-        write_value(&problem.value, problem.pretty);
+        write_failure(&problem.value, problem.pretty, debug);
         return ExitCode::FAILURE;
     }
     let cli = match Cli::try_parse_from(&argv) {
@@ -278,31 +279,33 @@ async fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Err(error) => {
+            let pretty = argv.iter().any(|value| value == "--pretty");
             if error.kind() == ErrorKind::InvalidSubcommand {
                 let command = argv
                     .iter()
                     .skip(1)
                     .find(|arg| !arg.starts_with('-'))
                     .map_or("", String::as_str);
-                write_value(
+                write_failure(
                     &failure(
                         format!("error: unknown command '{command}'"),
                         None,
                         "Run darty --help to list commands.",
                     ),
-                    false,
+                    pretty,
+                    debug,
                 );
                 return ExitCode::FAILURE;
             }
-            let pretty = argv.iter().any(|value| value == "--pretty");
             let rendered_error = error.to_string();
             let message = rendered_error
                 .lines()
                 .next()
                 .unwrap_or("Invalid command options.");
-            write_value(
+            write_failure(
                 &failure(message, None, "Run darty --help for options and examples."),
                 pretty,
+                debug,
             );
             return ExitCode::FAILURE;
         }
@@ -310,14 +313,28 @@ async fn main() -> ExitCode {
     match run(cli).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(problem) => {
-            write_value(&problem.value, problem.pretty);
+            write_failure(&problem.value, problem.pretty, debug);
             ExitCode::FAILURE
         }
     }
 }
 
+fn write_failure(value: &Value, pretty: bool, debug: bool) {
+    write_value(value, pretty);
+    if debug {
+        // Do not log request values, provider bodies, or unsanitized cause text.
+        eprintln!(
+            "{}",
+            json!({"diagnostics": {
+                "code": value["error"]["code"],
+                "retryable": value["error"]["retryable"]
+            }})
+        );
+    }
+}
+
 async fn run(cli: Cli) -> Result<(), CliFailure> {
-    // Keep this accepted global flag as a no-op so the frozen CLI stays stdout-only.
+    // Failure diagnostics are emitted at the process boundary in main.
     let Cli { command, debug: _ } = cli;
     let Some(command) = command else {
         print!("{}", include_str!("../resources/home.json"));
@@ -1229,10 +1246,10 @@ mod tests {
     }
 
     #[test]
-    fn debug_help_describes_the_compatibility_noop() {
+    fn debug_help_describes_bounded_failure_diagnostics() {
         let help = Cli::command().render_help().to_string();
         assert!(help.contains("--debug"));
-        assert!(help.contains("does not change JSON output or emit diagnostics"));
+        assert!(help.contains("bounded error classification diagnostics"));
     }
 
     #[test]

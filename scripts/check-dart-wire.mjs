@@ -505,7 +505,8 @@ for (const fixtureCase of manifest.cases) {
   }
 
   const expectedResult = fixtureCase.expected;
-  if (!["success", "error", "failure"].includes(expectedResult?.kind)) fail(`${fixtureCase.id} lacks a typed expectation`);
+  const allowedKinds = fixtureCase.root === parityRoot ? ["success", "failure"] : ["success", "error"];
+  if (!allowedKinds.includes(expectedResult?.kind)) fail(`${fixtureCase.id} lacks a typed expectation`);
   const allowedParser = {
     searchCompanyFragment: "company-search",
     searchCompanyReportsFragment: "company-reports",
@@ -515,7 +516,7 @@ for (const fixtureCase of manifest.cases) {
     fetchCompanyDetail: "company-detail",
     fetchCompanyRss: "company-rss",
   }[fixtureCase.operationId];
-  if (expectedResult.kind !== "failure" && expectedResult.parser !== allowedParser) fail(`${fixtureCase.id} expectation uses the wrong parser`);
+  if ((expectedResult.kind !== "failure" || expectedResult.parser !== undefined) && expectedResult.parser !== allowedParser) fail(`${fixtureCase.id} expectation uses the wrong parser`);
   if (expectedResult.kind === "error" && !["source_changed", "source_parse_failure"].includes(expectedResult.classification)) {
     fail(`${fixtureCase.id} has an invalid expected error classification`);
   }

@@ -267,6 +267,13 @@ pub fn body_help(value: &Value, first: Option<&Value>) -> Value {
         let receipt = quote_cli_value(item["references"]["viewerUrl"].as_str().unwrap_or_default());
         vec![format!("Inspect filing TOC: darty view-report --receipt {receipt}"), format!("Read a returned section: darty view-report --receipt {receipt} --section-id <toc[].id>")]
     });
+    if first.is_none()
+        && value["metadata"]["droppedItemCount"]
+            .as_u64()
+            .is_some_and(|count| count > 0)
+    {
+        "No parseable filings remained on this page. Inspect the partial-parse warning and try another page or adjust the filters.".clone_into(&mut help[0]);
+    }
     let pagination = &value["result"]["pagination"];
     if let (Some(current), Some(total)) = (
         pagination["currentPage"].as_u64(),

@@ -52,8 +52,63 @@
       }
     ],
     "help": [
+      "No parseable filings remained on this page. Inspect the partial-parse warning and try another page or adjust the filters.",
+      "Run darty search-body --help for keyword syntax and filters."
+    ]
+  },
+  "baselineValue": {
+    "result": {
+      "request": {
+        "page": 2,
+        "sortBy": "reportName",
+        "sortDirection": "asc",
+        "detail": "concise",
+        "keyword": "회사불일치",
+        "startDate": "20260101",
+        "endDate": "20260331",
+        "companyCode": "00000001",
+        "presenterName": "가람전자",
+        "reportName": "사업보고서"
+      },
+      "pagination": {
+        "currentPage": 2,
+        "totalPages": 2,
+        "totalCount": 11,
+        "returnedCount": 0
+      },
+      "items": []
+    },
+    "metadata": {
+      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "source": {
+        "system": "dart",
+        "surface": "dsab007",
+        "endpoint": "https://dart.fss.or.kr/dsab007/search.ax"
+      },
+      "sourceBehavior": {
+        "effectivePageSize": 10,
+        "effectivePagerWidth": 10,
+        "callerControlsPageSize": false,
+        "callerControlsPagerWidth": false,
+        "observationStatus": "observed"
+      },
+      "completeness": "partial",
+      "droppedItemCount": 1
+    },
+    "references": {
+      "searchUrl": "https://dart.fss.or.kr/dsab007/search.ax"
+    },
+    "warnings": [
+      {
+        "code": "partial_rows_dropped",
+        "message": "Dropped 1 search result row(s) because they could not be parsed.",
+        "droppedItemCount": 1
+      }
+    ],
+    "help": [
       "No filings matched. Widen the date range, relax filters, or try DART search syntax such as OR with |.",
       "Run darty search-body --help for keyword syntax and filters."
     ]
-  }
+  },
+  "baselineDisposition": "Project decision: correct the inherited no-match guidance when every row on a nonempty source page was dropped; preserve the baseline response separately."
 }

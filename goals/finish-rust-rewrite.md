@@ -34,7 +34,7 @@ Phase 3 — full capability parity and refreshed source evidence.
 
 ### Next in-scope action
 
-Finish the bounded integration review and deliver the validated parity PR before Phase 4 artifact validation and cutover.
+Finish PR #27 feedback validation and merge it into the rewrite integration branch before Phase 4 artifact validation and cutover.
 
 ### Evidence and blockers
 
@@ -52,4 +52,5 @@ Finish the bounded integration review and deliver the validated parity PR before
 - Packaged Node consumers pass all eight operations, public declarations, validation, pre-abort and in-flight cancellation for new network operations. Wire authority passes 7 operations, 43 rules, 37 fictional cases and 10 shared fault recipes.
 - Bounded 2026-09-08 release CLI live refresh succeeds across all six source-backed operations, including repaired four-root TOC and section content; provider record retains pending human approval. No live response bodies retained.
 - Bounded SDK, CLI/Node, and integration reviews completed. Fixed strict input handling, body error hints, and baseline/standalone judge integration findings. Scoped documentation reconciliation completed. TypeScript installed archive passes 36 network-free process scenarios; release checks and mutation proof pass.
-- PR Delivery remains next. No publication or approval records created.
+- PR [#27](https://github.com/cpaikr/darty/pull/27) targets the rewrite integration branch at initial head `93c34b6`. Linux CI passed, including Rust 1.88 and installed Linux x64 archive certification. CodeRabbit and Codex completed their initial reviews; no manual retriggers.
+- Feedback fixes preserve field-specific Node validation, implement help aliases and bounded debug diagnostics, honor pretty unknown-command failures, correct all-dropped-page guidance, and enforce declared fixture assertions. Strict stock-code parsing and observed viewer provenance are retained with source evidence. Bounded follow-up review passed; packaged-consumer validation passed, including field-specific production validation, all help aliases, pretty errors, and bounded debug diagnostics. Push, replies, and merge remain. No publication or approval records created.

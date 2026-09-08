@@ -1363,7 +1363,25 @@ mod tests {
             "../../../fixtures/dart/vertical-v1/bodies/report-shell-rebound.utf8.html"
         );
         let shell = report_shell(html).unwrap();
-        assert_eq!(shell.toc.len(), 4);
+        let manifest: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../fixtures/dart/vertical-v1/manifest.json"
+        ))
+        .unwrap();
+        let case = manifest["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["id"] == "report-shell-rebound")
+            .unwrap();
+        assert_eq!(
+            serde_json::to_value(shell.toc.len()).unwrap(),
+            case["expected"]["tocRoots"]
+        );
+        assert_eq!(
+            serde_json::to_value(shell.toc.iter().map(|node| &node.title).collect::<Vec<_>>())
+                .unwrap(),
+            case["expected"]["titles"]
+        );
         for (index, node) in shell.toc.iter().enumerate() {
             let ordinal = index + 1;
             assert_eq!(node.id, format!("section:{ordinal}"));

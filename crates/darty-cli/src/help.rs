@@ -11,12 +11,17 @@ pub const VIEW_ABOUT: &str = "Fetch a DART report document list and table of con
 pub const VIEW_AFTER: &str = "Notes:\n  - toc[].id/section ID values are valid only inside one report. Do not reuse them across years, corrections, or other receipt numbers; fetch the TOC for each report first.\n  - If content.window.hasMore is true, continue with the same `--receipt`, `--document-id`, `--section-id`, and `--output-format`, passing content.window.nextStartByte as `--content-start-byte`. This value is based on the rendered body, not DART viewer offsets.\n  - Darty does not process PDFs internally. Download PDF links directly or open them with a separate PDF processing/reading tool.";
 
 pub fn command_help(argv: &[String]) -> Option<&'static str> {
-    let arguments = argv
+    let mut arguments = argv
         .iter()
         .skip(1)
         .filter(|arg| arg.as_str() != "--debug")
         .map(String::as_str)
         .collect::<Vec<_>>();
+    match arguments.as_slice() {
+        ["help"] => arguments = vec!["--help"],
+        ["help", command] => arguments = vec![command, "--help"],
+        _ => {}
+    }
     match arguments.as_slice() {
         ["--help" | "-h"] => Some(include_str!("../resources/root-help.txt")),
         ["search-company", "--help" | "-h"] => {
