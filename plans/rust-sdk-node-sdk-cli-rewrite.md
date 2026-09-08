@@ -15,36 +15,33 @@ claim they have happened.
 
 ## Current state
 
-The published v0.6.0 CLI is Bun/TypeScript. Phase 3 completed through
-[PR #27](https://github.com/cpaikr/darty/pull/27), merged into the rewrite
-integration branch as `3c4ba7e`. All eight operations have Rust, Node, and CLI
-parity, fictional wire evidence, consumer checks, and explicit compatibility
-dispositions. Bounded live refresh on 2026-09-08 passed all six source-backed
-operations, including the repaired viewer; the
-[provider record](../docs/research/dart-provider-qualification.md) owns evidence
-and pending human approval.
+Repository rewrite complete on `codex/finish-rust-rewrite-integration` as of
+2026-09-08. All eight operations share the Rust SDK through the Rust CLI and
+asynchronous Node SDK. The superseded TypeScript DART implementation, conformer,
+toolset, and candidate npm CLI launcher are removed.
 
-Phase 4 technical validation is complete at `f38654b`: CI and build-only run
-[34183249366](https://github.com/cpaikr/darty/actions/runs/34183249366) pass all
-four cross-builds, both Linux installed CLI archives, clean Linux Rust/Node
-consumers, and bundle assembly. Downloaded artifact hashes and source identity
-verify; the exact macOS artifacts also pass local Node consumption and installed
-CLI process/live checks. Bounded code review and documentation reconciliation
-are complete for the aggregate change. The runtime/artifact replacement
-[PR #29](https://github.com/cpaikr/darty/pull/29) merged as `4b70251` after
-both initial reviews, feedback fixes, and exact-head
-[CI 34188505683](https://github.com/cpaikr/darty/actions/runs/34188505683) passed.
-The fixes preserve complete eval output, normalize numeric CLI errors, reject
-dirty crate packaging, and align release instructions with certification.
+Delivery preserved individual commits through
+[PR #27](https://github.com/cpaikr/darty/pull/27) (`3c4ba7e`, full parity),
+[PR #29](https://github.com/cpaikr/darty/pull/29) (`4b70251`, runtime/artifacts),
+and [PR #30](https://github.com/cpaikr/darty/pull/30) (`fb31a04`, inactive-source
+removal). The two final slices replaced oversized PR #28 at the user's request;
+each completed CodeRabbit and Codex review with all feedback resolved.
 
-The user requested smaller commit-based PRs after
-[PR #28](https://github.com/cpaikr/darty/pull/28) exceeded CodeRabbit’s 150-file
-limit. The final slice removes all 142 inactive TypeScript source files and
-updates AXI evidence to the Rust CLI. Its initial reviews and exact-head CI
-remain before merge into the rewrite integration branch and repository
-completion. Rust v0.6.1 remains unpublished.
+Final implementation [CI 34190295828](https://github.com/cpaikr/darty/actions/runs/34190295828)
+passes at `064f580`: Rust validation and audits, 62 harness tests, 64 CLI
+compatibility scenarios, SDK consumer/declaration checks, four cross-builds,
+both Linux installed CLI archives, clean Linux Rust/Node consumers, and bundle
+assembly. Build-only [run 34183249366](https://github.com/cpaikr/darty/actions/runs/34183249366)
+previously verified the release workflow without publication; downloaded hashes
+and source identity, exact macOS SDK consumption, and installed CLI process/live
+checks passed. The [provider record](../docs/research/dart-provider-qualification.md)
+owns the bounded 2026-09-08 evidence for all six source-backed operations.
+
+The integration branch is the completed repository delivery destination.
+Published v0.6.0 remains TypeScript; Rust v0.6.1 is unpublished. Promotion and the
+separate release gates below remain operator-owned.
 [Architecture](../ARCHITECTURE.md) owns topology and
-[release.md](../docs/release.md) owns artifact contracts and the operator handoff.
+[release.md](../docs/release.md) owns artifact contracts and the release handoff.
 
 ## Decisions and authority
 
@@ -90,7 +87,7 @@ in [release.md](../docs/release.md#targets-and-verification) remains an intentio
 override of mytech's full-platform runtime verification default. Distinguish
 cross-built targets from runtime-certified targets in artifacts and documentation.
 
-## Phase 3 — full capability and SDK parity
+## Phase 3 — full capability and SDK parity (complete)
 
 ### Repair existing evidence first
 
@@ -129,7 +126,7 @@ Phase 3 exits when all eight operations work through all three candidate surface
 with independent compatibility and consumer evidence. TypeScript entry points
 remain intact until Phase 4.
 
-## Phase 4 — artifacts and repository cutover
+## Phase 4 — artifacts and repository cutover (complete)
 
 - Implement the chosen Rust CLI and Node SDK artifact/installation contracts.
   Keep one version/source authority and private release line, checksums, immutable
@@ -189,7 +186,10 @@ owns their scheduling.
 
 ## Next action
 
-Review, validate, and merge the final inactive-source deletion PR into the
-rewrite integration branch, then record repository completion.
-Stop after repository completion and hand off separate release gates without
-starting them.
+None within this plan's repository outcome. Separate release gates remain with
+the release operator; completing this plan does not start them.
+
+The unchanged AXI baseline also reports pre-existing upstream drift from
+`46d02d3` to `9996613` (16 commits). Its independent review follows
+[the AXI drift procedure](../docs/upstreams/axi.md); this cutover only repaired
+local evidence paths.
