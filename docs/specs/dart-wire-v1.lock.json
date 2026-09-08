@@ -21,11 +21,11 @@
     },
     {
       "path": "scripts/check-dart-wire.mjs",
-      "sha256": "fed0d1646f00c162d7c177a67ad99c184546149ff7b7f36412a32ff31d8ab961"
+      "sha256": "8e87c3c439ead9fe98e2c8f34660f53be33ce1ed40dfbd396ede01f17ed3d29e"
     },
     {
-      "path": "scripts/check-dart-fixture-conformance.ts",
-      "sha256": "7345cc5332f73f29d9489e4ee0edc134ad0132d911efff28358d628721052348"
+      "path": "crates/darty/tests/vertical_workflow.rs",
+      "sha256": "8edf9df544da4c52922607bfba60321d1258f3879b93289b652655044cda32fd"
     },
     {
       "path": "fixtures/dart/parity-v1/manifest.json",

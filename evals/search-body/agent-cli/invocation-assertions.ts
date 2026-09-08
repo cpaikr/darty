@@ -65,7 +65,13 @@ const assertSearchInvocationMatchesScenario = (
     return ["darty CLI invocation was discovery/help, not search-body"];
   }
 
-  const { options } = validation.parsed;
+  let envelope: unknown;
+  try { envelope = JSON.parse(execution.stdout); }
+  catch { return ["search-body did not return JSON"]; }
+  const result = isRecord(envelope) ? envelope.result : undefined;
+  const request = isRecord(result) ? result.request : undefined;
+  if (!isRecord(request)) return ["search-body did not return a normalized request"];
+  const options = request;
 
   requireOptionValue(reasons, options, "keyword", scenario.keyword);
   requireOptionValue(reasons, options, "startDate", scenario.startDate);

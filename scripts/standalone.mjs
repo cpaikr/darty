@@ -10,12 +10,13 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
+import { sdkFiles, nodeTargets } from "./sdk-artifacts.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const targets = JSON.parse(readFileSync(join(root, "scripts/release-targets.json"), "utf8"));
 const source = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 export const version = source.version;
-const bunVersion = source.packageManager.replace(/^bun@/, "");
+const compiler = "rustc@1.88.0";
 export const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 export const archiveName = (target) => `darty-${version}-${target.id}.tar.gz`;
 const targetById = (id) => {
@@ -91,18 +92,21 @@ export function renderInstallers() {
   ]));
 }
 
-function build(id, directory) {
+function build(id, directory, prebuilt) {
   const target = targetById(id);
-  assert.equal(run("bun", ["--version"]).trim(), bunVersion, "Use the packageManager-pinned Bun compiler");
+
   mkdirSync(directory, { recursive: true });
   const stage = mkdtempSync(join(tmpdir(), "darty-compile-"));
   try {
-    const executable = join(stage, target.executable);
-    run("bun", ["build", "src/cli.ts", "--compile", `--target=${target.bunTarget}`,
-      "--minify", "--env=disable", "--no-compile-autoload-dotenv", "--no-compile-autoload-bunfig",
-      "--no-compile-autoload-tsconfig", "--no-compile-autoload-package-json", "--outfile", executable]);
+    if (!prebuilt) {
+      run("cargo", ["+1.88.0", "build", "--release", "--locked", "-p", "darty-cli", "--target", target.rustTarget], { timeout: 900_000 });
+    }
+    const executable = prebuilt ?? join(root, "target", target.rustTarget, "release", target.executable);
     const bytes = readFileSync(executable);
     verifyBinary(bytes, target);
+    for (const token of ["DARTY_FIXTURE_ORIGIN", "DARTY_NODE_TEST_FIXTURE_ORIGIN"]) {
+      assert.equal(bytes.includes(Buffer.from(token)), false, "Refusing a fixture-enabled release executable");
+    }
     const archive = archiveName(target);
     const packed = archiveFiles([
       { name: target.executable, bytes, mode: 0o755 },
@@ -110,7 +114,7 @@ function build(id, directory) {
     ]);
     writeFileSync(join(directory, archive), packed);
     writeJson(join(directory, `${target.id}.json`), {
-      target: target.id, version, sourceRevision: revision(), compiler: `bun@${bunVersion}`,
+      target: target.id, version, sourceRevision: revision(), compiler,
       archive, sha256: digest(packed), executableSha256: digest(bytes),
     });
     console.log(`Built ${archive} (${digest(packed)})`);
@@ -124,7 +128,7 @@ function readBuild(directory, target) {
   assert.equal(record.target, target.id);
   assert.equal(record.version, version);
   assert.equal(record.sourceRevision, revision(), "Archive source differs from checkout");
-  assert.equal(record.compiler, `bun@${bunVersion}`);
+  assert.equal(record.compiler, compiler);
   assert.equal(record.archive, archiveName(target));
   assert.equal(record.sha256, digest(readFileSync(join(directory, record.archive))), "Archive checksum mismatch");
   assert.match(record.executableSha256, /^[0-9a-f]{64}$/);
@@ -180,6 +184,12 @@ export function verifyBundle(directory, sourceSha = revision()) {
     assert.equal(entry.sha256, digest(readFileSync(join(directory, entry.archive))), "Release archive checksum mismatch");
     files.push(entry.archive);
   }
+  assert.deepEqual(manifest.sdks.map(entry => entry.file), sdkFiles, "SDK inventory mismatch");
+  for (const entry of manifest.sdks) {
+    assert.equal(entry.sha256, digest(readFileSync(join(directory, entry.file))), "SDK checksum mismatch");
+    assert.equal(entry.consumerVerified, entry.file.endsWith(".crate") || entry.file.includes("linux-x64-gnu"), "SDK certification coverage mismatch");
+    files.push(entry.file);
+  }
   for (const [name, content] of Object.entries(renderInstallers())) {
     assert.equal(readFileSync(join(directory, name), "utf8"), content, "Installer differs from source");
     files.push(name);
@@ -191,7 +201,7 @@ export function verifyBundle(directory, sourceSha = revision()) {
   return { manifest, files };
 }
 
-function assemble(archives, reports, directory) {
+function assemble(archives, reports, sdks, directory) {
   mkdirSync(directory, { recursive: true });
   const entries = targets.map((target) => {
     const record = readBuild(archives, target);
@@ -207,11 +217,23 @@ function assemble(archives, reports, directory) {
     copyFileSync(join(archives, record.archive), join(directory, record.archive));
     return { target: target.id, archive: record.archive, sha256: record.sha256, runtimeCertified: target.os === "linux" };
   });
+  const sdkEntries = sdkFiles.map((file, index) => {
+    const recordName = index === 0 ? "rust.json" : `node-${nodeTargets[index - 1]}.json`;
+    const record = json(join(sdks, recordName));
+    assert.equal(record.file, file);
+    assert.equal(record.version, version);
+    assert.equal(record.sourceRevision, revision());
+    assert.equal(record.sha256, digest(readFileSync(join(sdks, file))));
+    copyFileSync(join(sdks, file), join(directory, file));
+    const consumerVerified = index === 0 || nodeTargets[index - 1] === "linux-x64-gnu";
+    if (consumerVerified) assert.equal(record.consumerVerified, true, "SDK consumer certification missing");
+    return { file, sha256: record.sha256, consumerVerified };
+  });
   for (const [name, content] of Object.entries(renderInstallers())) writeFileSync(join(directory, name), content);
-  const files = [...entries.map((entry) => entry.archive), "install.sh", "install.ps1"];
+  const files = [...entries.map((entry) => entry.archive), ...sdkEntries.map(entry => entry.file), "install.sh", "install.ps1"];
   writeFileSync(join(directory, "SHA256SUMS"), files.map((name) => `${digest(readFileSync(join(directory, name)))}  ${name}\n`).join(""));
   writeJson(join(directory, "release-manifest.json"), {
-    version, tag: `v${version}`, sourceRevision: revision(), compiler: `bun@${bunVersion}`, targets: entries,
+    version, tag: `v${version}`, sourceRevision: revision(), compiler, targets: entries, sdks: sdkEntries,
   });
   verifyBundle(directory);
 }
@@ -222,9 +244,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (command === "matrix") {
       const selected = args[0] === "all" ? targets : [targetById("linux-x64-gnu")];
       console.log(JSON.stringify({ build: { include: selected.map(({ id }) => ({ id })) }, consume: { include: selected.filter((target) => target.os === "linux").map(({ id, runner }) => ({ id, runner })) } }));
-    } else if (command === "build" && args.length === 2) build(args[0], resolve(args[1]));
+    } else if (command === "build" && [2, 3].includes(args.length)) build(args[0], resolve(args[1]), args[2] && resolve(args[2]));
     else if (command === "certify" && args.length === 3) certify(args[0], resolve(args[1]), resolve(args[2]));
-    else if (command === "assemble" && args.length === 3) assemble(...args.map((arg) => resolve(arg)));
+    else if (command === "assemble" && args.length === 4) assemble(...args.map((arg) => resolve(arg)));
     else if (command === "verify" && args.length === 1) verifyBundle(resolve(args[0]));
     else if (command === "check-host") {
       const target = targets.find((item) => item.os === process.platform && item.arch === process.arch);
@@ -232,7 +254,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       const directory = resolve("release-artifact", target.id);
       build(target.id, directory);
       certify(target.id, directory, resolve("release-artifact", `${target.id}-report.json`));
-    } else throw new Error("Usage: standalone.mjs matrix [all|linux-x64] | build TARGET OUT | certify TARGET ARCHIVES REPORT | assemble ARCHIVES REPORTS OUT | verify BUNDLE | check-host");
+    } else throw new Error("Usage: standalone.mjs matrix [all|linux-x64] | build TARGET OUT [PREBUILT] | certify TARGET ARCHIVES REPORT | assemble ARCHIVES REPORTS SDKS OUT | verify BUNDLE | check-host");
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;

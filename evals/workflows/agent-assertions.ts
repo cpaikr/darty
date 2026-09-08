@@ -221,9 +221,9 @@ const buildTraceFacts = (
 
     if (parsed.operation === "search-company-reports") {
       reportSearches.push({
-        companyCode: getString(parsed.options, "companyCode"),
-        startDate: getString(parsed.options, "startDate"),
-        endDate: getString(parsed.options, "endDate"),
+        companyCode: getString(getRecord(result, "request"), "companyCode"),
+        startDate: getString(getRecord(result, "request"), "startDate"),
+        endDate: getString(getRecord(result, "request"), "endDate"),
         operationIndex,
       });
       for (const item of getArray(result, "items") ?? []) {

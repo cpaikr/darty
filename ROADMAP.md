@@ -4,11 +4,12 @@
 
 [Complete the Rust SDK, Node SDK, and CLI rewrite](plans/rust-sdk-node-sdk-cli-rewrite.md)
 
-Complete capability parity and the repository cutover to one Rust implementation
-shared by the Rust SDK, Node SDK, and CLI. The current TypeScript CLI is delivered
-through standalone GitHub Releases. All eight candidate operations are implemented;
-Phase 3 validation and PR delivery remain active, before Phase 4 artifacts and
-cutover. The active plan owns remaining work, evidence gates, and the next action.
+All eight operations share one Rust implementation across the Rust SDK, Node
+SDK, and standalone CLI. Phase 3 is merged into the rewrite integration branch.
+Phase 4 artifact validation passes. Delivery is split into two sequential PRs
+under the review file limit: Rust runtime/artifact cutover, then deletion of
+inactive TypeScript source. The active plan owns the current slice and evidence.
+Published v0.6.0 remains TypeScript; Rust v0.6.1 is unpublished.
 
 ## Plans
 

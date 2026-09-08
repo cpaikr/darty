@@ -2,7 +2,8 @@
 
 This directory contains fixed and model-assisted CLI workflow evals for
 multi-step DART research handoffs. They are live, opt-in checks, not
-deterministic CI gates.
+deterministic CI gates. They invoke the Rust CLI; repository cutover is in
+progress and the Rust release remains unpublished.
 
 ## Current Track
 
@@ -48,6 +49,11 @@ a substitute for the deterministic CLI, parser, or fixture tests, and
 live/model nondeterminism keeps this track outside required CI.
 
 ## Running
+
+Build with `bun run build` before using the default `target/release/darty`, or
+set `DARTY_CLI` to an absolute installed executable path. Rust owns semantic
+validation; traces use normalized `result.request` fields from successful output.
+These runner changes do not establish artifact certification or model-eval success.
 
 ```bash
 bun run eval:workflow:cli

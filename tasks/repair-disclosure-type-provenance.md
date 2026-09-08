@@ -17,6 +17,6 @@ presenting the link as current evidence.
 
 Locate a reachable immutable upstream source for the same code set, compare it
 with the retained table, update implementation metadata and affected contracts,
-and run the TypeScript and CLI compatibility checks. If no authoritative source
+and run the Rust SDK and CLI compatibility checks. If no authoritative source
 is recoverable, explicitly adopt the reviewed local catalog as project-owned
 data with a documented review procedure.

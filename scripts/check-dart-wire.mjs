@@ -146,7 +146,7 @@ const expectedLockPaths = [
   "fixtures/dart/vertical-v1/manifest.json",
   "fixtures/dart/parity-v1/manifest.json",
   "scripts/check-dart-wire.mjs",
-  "scripts/check-dart-fixture-conformance.ts",
+  "crates/darty/tests/vertical_workflow.rs",
 ];
 
 const fail = (message) => {
