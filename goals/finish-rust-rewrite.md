@@ -34,7 +34,7 @@ Phase 4 — artifacts and atomic repository cutover.
 
 ### Next in-scope action
 
-Deliver the Rust runtime/artifact commit as the first replacement PR, including initial CodeRabbit/Codex review and exact-head CI; merge it into the rewrite integration branch before preparing the remaining inactive-source deletion PR.
+Deliver the final inactive-source deletion PR, including initial CodeRabbit/Codex review and exact-head CI, into the rewrite integration branch; then commit terminal planning metadata there.
 
 ### Evidence and blockers
 
@@ -70,3 +70,7 @@ Deliver the Rust runtime/artifact commit as the first replacement PR, including 
 - Exact implementation head `f38654b` passes CI `34183234459` and build-only run `34183249366`: four cross-builds, both Linux CLI archive certifications, clean Linux Node/Rust consumers, and bundle assembly. Downloaded checksums, seven artifact hashes, and source identity verify. The exact cross-built macOS Node tarball passes a clean local consumer; the CLI archive passes 36 process scenarios and the live company→filings→TOC→section workflow. Publication was skipped.
 - Superseded PR #28 at `6ea86a7` passes full CI `34184415484`; Codex completed with no findings, but CodeRabbit rejected the initial oversized diff before review. Preserve that branch as the verified aggregate. The user selected smaller replacement PRs instead of a filtered retry; `.coderabbit.yaml` exclusions are omitted. No retry, source tag, publication, or production approval was performed.
 - Review partition: first commit contains the Rust runtime/artifact cutover, all retired TypeScript tests and entry points (144 files); the second removes the 142 remaining inactive source files and reconciles status/evidence references, staying below 150 files. Both land sequentially into `codex/finish-rust-rewrite-integration`; source deletion completes before goal completion.
+
+- PR #29 merged as `4b70251` after Codex completed without findings, CodeRabbit accepted five feedback fixes and withdrew optional caching, and exact-head CI `34188505683` passed. Fix commits: `429ce3c`, `a0bde95`, `4307152`. All six threads resolved. Local validation passes 62 Bun tests, 64 CLI compatibility scenarios, CLI tests/Clippy, typecheck, and clean Rust crate packaging plus external consumption.
+- Final slice removes the 142 remaining inactive TypeScript source files and replaces two AXI local-evidence paths with the Rust CLI. No runtime code changes; review and exact-head CI remain before final merge and terminal completion metadata.
+- Final-slice local checks: typecheck, 62 Bun tests, wire authority, bounded deletion review, and local evidence/link validation pass. `check:axi` reaches the upstream comparison but reports pre-existing drift (pinned `46d02d3`, current `9996613`, 16 commits); the upstream baseline and observation date are unchanged. Upstream AXI drift review remains separate from the Rust cutover.

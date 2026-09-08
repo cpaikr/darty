@@ -6,9 +6,10 @@
 
 All eight operations share one Rust implementation across the Rust SDK, Node
 SDK, and standalone CLI. Phase 3 is merged into the rewrite integration branch.
-Phase 4 artifact validation passes. Delivery is split into two sequential PRs
-under the review file limit: Rust runtime/artifact cutover, then deletion of
-inactive TypeScript source. The active plan owns the current slice and evidence.
+Phase 4 runtime/artifact cutover is merged through PR #29. Its final deletion
+slice removes the inactive TypeScript source and updates evidence references;
+review and exact-head CI remain before repository completion. The active plan
+owns the current slice and evidence.
 Published v0.6.0 remains TypeScript; Rust v0.6.1 is unpublished.
 
 ## Plans
