@@ -1138,17 +1138,26 @@ impl Reply {
                 Some("application/x-www-form-urlencoded; charset=UTF-8")
             );
             assert_eq!(form_map(&request.body), pair_map(&self.form));
-            let expected_referer = if self.path == "/dsae001/search.ax" {
-                "https://dart.fss.or.kr/dsae001/main.do"
-            } else {
-                "https://dart.fss.or.kr/dsab007/main.do?option=corp"
+            let expected_referer = match self.path {
+                "/dsae001/search.ax" => Some("https://dart.fss.or.kr/dsae001/main.do"),
+                "/dsab007/detailSearch.ax" => {
+                    Some("https://dart.fss.or.kr/dsab007/main.do?option=corp")
+                }
+                "/dsab007/search.ax" => None,
+                _ => panic!("unexpected fixture POST path"),
             };
             assert_eq!(
                 request.headers.get("referer").map(String::as_str),
-                Some(expected_referer)
+                expected_referer
             );
         }
 
+        if self.path == "/dsae001/select.ax" {
+            assert_eq!(
+                request.headers.get("referer").map(String::as_str),
+                Some("https://dart.fss.or.kr/dsae001/main.do")
+            );
+        }
         tokio::time::sleep(self.response_delay).await;
 
         if self.stall_before_headers {
@@ -1343,4 +1352,284 @@ fn reports_form(
         ("autoSearchCorp", "Y".to_owned()),
     ]);
     fields
+}
+
+static PARITY: std::sync::LazyLock<serde_json::Value> = std::sync::LazyLock::new(|| {
+    serde_json::from_str(include_str!(
+        "../../../fixtures/dart/parity-v1/manifest.json"
+    ))
+    .unwrap()
+});
+
+#[tokio::test]
+async fn full_parity_corpus_checks_exact_requests_and_source_outcomes() {
+    for case in PARITY["cases"].as_array().unwrap() {
+        let reply = parity_reply(case);
+        let fixture = FixtureServer::spawn(vec![reply]).await;
+        let client = fixture.client();
+        let outcome = execute_parity(&client, case).await;
+        if case["expected"]["kind"] == "failure" {
+            let error = outcome.unwrap_err();
+            assert_eq!(
+                serde_json::to_value(error.code).unwrap(),
+                case["expected"]["code"],
+                "{}",
+                case["id"]
+            );
+            assert_eq!(
+                serde_json::Value::Bool(error.retryable),
+                case["expected"]["retryable"],
+                "{}",
+                case["id"]
+            );
+        } else {
+            let outcome = outcome.unwrap_or_else(|error| panic!("{}: {error:?}", case["id"]));
+            assert_parity_result(&outcome, case);
+        }
+        fixture.finish().await;
+    }
+}
+
+fn parity_reply(case: &'static serde_json::Value) -> Reply {
+    let request = &case["request"];
+    let response = &case["response"];
+    let mut reply = Reply::company("", &[]);
+    reply.method = request["method"].as_str().unwrap();
+    reply.path = request["path"].as_str().unwrap();
+    reply.query = request["query"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .map(|(key, value)| (key.as_str(), value.as_str().unwrap()))
+        .collect();
+    reply.form = request["form"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .map(|(key, value)| (key.as_str(), value.as_str().unwrap().to_owned()))
+        .collect();
+    reply.content_type = Some(response["contentType"].as_str().unwrap());
+    reply.body = std::fs::read(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/dart/parity-v1")
+            .join(response["bodyPath"].as_str().unwrap()),
+    )
+    .unwrap();
+    reply
+}
+
+async fn execute_parity(
+    client: &DartyClient,
+    case: &serde_json::Value,
+) -> Result<serde_json::Value, darty::DartyError> {
+    let form = &case["request"]["form"];
+    let query = &case["request"]["query"];
+    match case["operationId"].as_str().unwrap() {
+        "searchBodyFragment" => {
+            let mut request = darty::SearchBodyRequest::new(
+                form["keyword"].as_str().unwrap(),
+                form["startDate"].as_str().unwrap(),
+                form["endDate"].as_str().unwrap(),
+            );
+            request.page = form["currentPage"].as_str().unwrap().parse().unwrap();
+            request.sort_by = if form["sort"] == "rpt_nm" {
+                darty::BodySortBy::ReportName
+            } else {
+                darty::BodySortBy::Date
+            };
+            request.sort_direction = if form["sortType"] == "asc" {
+                darty::SortDirection::Asc
+            } else {
+                darty::SortDirection::Desc
+            };
+            request.company_code = nonempty_json(&form["textCrpCik"]);
+            request.presenter_name = nonempty_json(&form["textPresenterNm"]);
+            request.report_name = nonempty_json(&form["reportName"]);
+            request.detail = ResponseDetail::Raw;
+            client
+                .search_body(request)
+                .await
+                .map(|result| serde_json::to_value(result).unwrap())
+        }
+        "fetchCompanyDetail" => client
+            .company_detail(darty::CompanyDetailRequest::new(
+                query["selectKey"].as_str().unwrap(),
+            ))
+            .await
+            .map(|result| serde_json::to_value(result).unwrap()),
+        "fetchCompanyRss" => {
+            let mut request = darty::CompanyRssRequest::new(query["crpCd"].as_str().unwrap());
+            request.detail = ResponseDetail::Raw;
+            client
+                .company_rss(request)
+                .await
+                .map(|result| serde_json::to_value(result).unwrap())
+        }
+        other => panic!("unknown fixture operation {other}"),
+    }
+}
+
+fn nonempty_json(value: &serde_json::Value) -> Option<String> {
+    value
+        .as_str()
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+}
+
+fn assert_subset(actual: &serde_json::Value, expected: &serde_json::Value) {
+    if let Some(fields) = expected.as_object() {
+        for (key, value) in fields {
+            assert_subset(&actual[key], value);
+        }
+    } else {
+        assert_eq!(actual, expected);
+    }
+}
+
+fn assert_omitted(
+    actual: &serde_json::Value,
+    omitted: &serde_json::Value,
+    case: &serde_json::Value,
+) {
+    for field in omitted.as_array().map(Vec::as_slice).unwrap_or_default() {
+        let key = field.as_str().unwrap();
+        assert!(
+            actual.get(key).is_none(),
+            "{}: {key} must be omitted",
+            case["id"]
+        );
+    }
+}
+
+fn assert_parity_result(outcome: &serde_json::Value, case: &serde_json::Value) {
+    let expected = &case["expected"];
+    let result = &outcome["result"];
+    match case["operationId"].as_str().unwrap() {
+        "searchBodyFragment" => {
+            assert_subset(&result["pagination"], &expected["pagination"]);
+            assert_eq!(
+                outcome["metadata"]["droppedItemCount"],
+                expected["droppedRows"]
+            );
+            if let Some(first) = expected["first"].as_object() {
+                let item = &result["items"][0];
+                for (key, value) in first {
+                    let actual = match key.as_str() {
+                        "companyName" => &item["company"]["name"],
+                        "companyCode" => &item["company"]["companyCode"],
+                        "snippetText" => &item["match"][key],
+                        "snippetHtml" => &item["evidence"][key],
+                        "viewerUrl" => &item["references"][key],
+                        _ => &item["filing"][key],
+                    };
+                    assert_eq!(actual, value, "{}: {key}", case["id"]);
+                }
+            }
+        }
+        "fetchCompanyDetail" => {
+            assert_subset(&result["company"], &expected["company"]);
+            assert_omitted(&result["company"], &expected["omittedCompanyFields"], case);
+        }
+        "fetchCompanyRss" => {
+            if let Some(channel) = expected.get("channel") {
+                assert_subset(&result["channel"], channel);
+            }
+            assert_eq!(
+                result["items"].as_array().unwrap().len(),
+                usize::try_from(expected["items"].as_u64().unwrap()).unwrap()
+            );
+            if expected.get("first").is_some() {
+                assert_subset(&result["items"][0], &expected["first"]);
+                assert_omitted(&result["items"][0], &expected["omittedItemFields"], case);
+            }
+        }
+        _ => unreachable!(),
+    }
+}
+
+#[tokio::test]
+async fn parity_operations_share_transport_fault_bounds_and_sanitized_errors() {
+    for id in ["body-populated", "detail-populated", "rss-populated"] {
+        let case = PARITY["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["id"] == id)
+            .unwrap();
+        for fault in ["http", "redirect", "media", "charset", "size", "idle"] {
+            let mut reply = parity_reply(case);
+            let expected_code = match fault {
+                "http" => {
+                    reply.status = 503;
+                    reply.body.clear();
+                    ErrorCode::SourceUnavailable
+                }
+                "redirect" => {
+                    reply.status = 302;
+                    reply.extra_headers.push((
+                        "Location",
+                        "https://example.invalid/private?secret=never-leak",
+                    ));
+                    ErrorCode::SourceUnavailable
+                }
+                "media" => {
+                    reply.content_type = Some("application/json");
+                    ErrorCode::SourceParseFailure
+                }
+                "charset" => {
+                    reply.content_type = Some("text/html; charset=shift_jis");
+                    ErrorCode::SourceParseFailure
+                }
+                "size" => {
+                    reply.body = vec![b' '; 8 * 1024 * 1024 + 1];
+                    ErrorCode::SourceParseFailure
+                }
+                "idle" => {
+                    reply.stall_after_body = true;
+                    ErrorCode::SourceUnavailable
+                }
+                _ => unreachable!(),
+            };
+            let fixture = FixtureServer::spawn(vec![reply]).await;
+            let client = fixture.client_with_deadlines(
+                Duration::from_millis(50),
+                Duration::from_millis(50),
+                Duration::from_secs(1),
+            );
+            let error = execute_parity(&client, case).await.unwrap_err();
+            assert_eq!(error.code, expected_code, "{id}/{fault}");
+            assert_eq!(
+                error.retryable,
+                expected_code == ErrorCode::SourceUnavailable
+            );
+            assert_eq!(
+                error.source_url,
+                Some(format!(
+                    "https://dart.fss.or.kr{}",
+                    case["request"]["path"].as_str().unwrap()
+                ))
+            );
+            let serialized = serde_json::to_string(&error).unwrap();
+            assert!(!serialized.contains("127.0.0.1"));
+            assert!(!serialized.contains("never-leak"));
+            fixture.finish().await;
+        }
+    }
+}
+
+#[tokio::test]
+async fn rss_node_limit_fails_closed_before_projection() {
+    let case = PARITY["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["id"] == "rss-populated")
+        .unwrap();
+    let mut reply = parity_reply(case);
+    reply.body = format!("<rss><channel><title>fictional</title><link>https://dart.fss.or.kr/</link>{}</channel></rss>", "<extra/>".repeat(100_001)).into_bytes();
+    let fixture = FixtureServer::spawn(vec![reply]).await;
+    let error = execute_parity(&fixture.client(), case).await.unwrap_err();
+    assert_eq!(error.code, ErrorCode::SourceParseFailure);
+    assert!(!error.retryable);
+    fixture.finish().await;
 }

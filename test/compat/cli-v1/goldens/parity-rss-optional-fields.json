@@ -1,0 +1,37 @@
+{
+  "kind": "json",
+  "exitCode": 0,
+  "jsonFormat": "compact",
+  "value": {
+    "result": {
+      "request": {
+        "companyCode": "00000003",
+        "detail": "concise"
+      },
+      "channel": {
+        "title": "가람전자 공시",
+        "link": "https://dart.fss.or.kr/"
+      },
+      "items": [
+        {
+          "title": "기타 자료",
+          "link": "https://garam.example/report",
+          "publishedAt": "Tue, 31 Mar 2026 09:00:00 +0900"
+        }
+      ]
+    },
+    "metadata": {
+      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "source": {
+        "system": "dart",
+        "surface": "companyRSS",
+        "endpoint": "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00000003"
+      },
+      "completeness": "complete",
+      "itemCount": 1
+    },
+    "references": {
+      "rssUrl": "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00000003"
+    }
+  }
+}

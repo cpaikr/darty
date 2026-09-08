@@ -3,8 +3,8 @@ info:
   title: Darty supported DART wire subset
   version: 1.0.0
   description: >-
-    Canonical HTTP authority for the four upstream calls used by the
-    search-company -> search-company-reports -> view-report vertical workflow.
+    Canonical HTTP authority for the seven upstream calls used by the six
+    source-backed Darty capabilities; the two static capabilities make no calls.
     HTML structure, decoding, and viewer replay rules are owned by
     dart-html-viewer-v1.md.
   x-darty-authority-version: dart-wire-v1
@@ -17,6 +17,67 @@ tags:
   - name: filing-search
   - name: report-viewer
 paths:
+  /dsab007/search.ax:
+    post:
+      operationId: searchBodyFragment
+      tags: [filing-search]
+      summary: Search filing body contents with fixed upstream-controlled paging
+      parameters:
+        - $ref: '#/components/parameters/UserAgent'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            x-darty-content-type: application/x-www-form-urlencoded; charset=UTF-8
+            schema:
+              $ref: '#/components/schemas/BodySearchForm'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlFragment'
+        default:
+          $ref: '#/components/responses/UnexpectedSourceResponse'
+  /dsae001/select.ax:
+    get:
+      operationId: fetchCompanyDetail
+      tags: [company-search]
+      summary: Retrieve one company overview table
+      parameters:
+        - $ref: '#/components/parameters/UserAgent'
+        - $ref: '#/components/parameters/CompanySearchReferer'
+        - name: selectKey
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CompanyCode'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlFragment'
+        default:
+          $ref: '#/components/responses/UnexpectedSourceResponse'
+  /api/companyRSS.xml:
+    get:
+      operationId: fetchCompanyRss
+      tags: [company-search]
+      summary: Retrieve one company disclosure RSS channel
+      parameters:
+        - $ref: '#/components/parameters/UserAgent'
+        - name: crpCd
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CompanyCode'
+      responses:
+        '200':
+          description: RSS XML; supported media types share the same channel grammar.
+          content:
+            application/xml:
+              schema: { type: string }
+            text/xml:
+              schema: { type: string }
+            application/rss+xml:
+              schema: { type: string }
+        default:
+          $ref: '#/components/responses/UnexpectedSourceResponse'
   /dsae001/search.ax:
     post:
       operationId: searchCompanyFragment
@@ -370,3 +431,88 @@ components:
         autoSearchCorp:
           type: string
           enum: [Y]
+    BodySearchForm:
+      type: object
+      additionalProperties: false
+      description: >-
+        Semantic date/reportName sort maps to DATE/rpt_nm. Both paging fields
+        are fixed at 10; callers cannot control effective page size. Each b_
+        mirror equals its corresponding field, including empty optional filters.
+        No free-text company-name lookup is performed.
+      x-darty-equal-fields:
+        - [textCrpCik, b_textCrpCik]
+        - [keyword, b_keyword]
+        - [textPresenterNm, b_textPresenterNm]
+        - [reportName, b_reportName]
+        - [startDate, b_startDate]
+        - [endDate, b_endDate]
+      required:
+        - currentPage
+        - maxResults
+        - maxLinks
+        - sort
+        - sortType
+        - textCrpCik
+        - lateKeyword
+        - flrCik
+        - dspTypeTab
+        - isSort
+        - isTab
+        - tocSrch
+        - b_textCrpCik
+        - b_flrCik
+        - b_keyword
+        - b_docType
+        - b_textPresenterNm
+        - b_reportName
+        - b_startDate
+        - b_endDate
+        - b_dspType
+        - b_synonym
+        - b_reSearch
+        - reportNamePopYn
+        - autoSearch
+        - option
+        - keyword
+        - textCrpNm
+        - textPresenterNm
+        - startDate
+        - endDate
+        - decadeType
+        - docType
+        - reportName
+      properties:
+        currentPage: { type: integer, minimum: 1, maximum: 100 }
+        maxResults: { type: integer, enum: [10] }
+        maxLinks: { type: integer, enum: [10] }
+        sort: { type: string, enum: [DATE, rpt_nm] }
+        sortType: { type: string, enum: [asc, desc] }
+        textCrpCik: { type: string, pattern: '^(|\d{8})$' }
+        lateKeyword: { $ref: '#/components/schemas/EmptyString' }
+        flrCik: { $ref: '#/components/schemas/EmptyString' }
+        dspTypeTab: { $ref: '#/components/schemas/EmptyString' }
+        isSort: { type: string, enum: ['false'] }
+        isTab: { type: string, enum: ['false'] }
+        tocSrch: { $ref: '#/components/schemas/EmptyString' }
+        b_textCrpCik: { type: string, pattern: '^(|\d{8})$' }
+        b_flrCik: { $ref: '#/components/schemas/EmptyString' }
+        b_keyword: { type: string, minLength: 1 }
+        b_docType: { $ref: '#/components/schemas/EmptyString' }
+        b_textPresenterNm: { type: string }
+        b_reportName: { type: string }
+        b_startDate: { type: string, pattern: '^\d{8}$' }
+        b_endDate: { type: string, pattern: '^\d{8}$' }
+        b_dspType: { $ref: '#/components/schemas/EmptyString' }
+        b_synonym: { $ref: '#/components/schemas/EmptyString' }
+        b_reSearch: { $ref: '#/components/schemas/EmptyString' }
+        reportNamePopYn: { $ref: '#/components/schemas/EmptyString' }
+        autoSearch: { type: string, enum: [N] }
+        option: { type: string, enum: [contents] }
+        keyword: { type: string, minLength: 1 }
+        textCrpNm: { $ref: '#/components/schemas/EmptyString' }
+        textPresenterNm: { type: string }
+        startDate: { type: string, pattern: '^\d{8}$' }
+        endDate: { type: string, pattern: '^\d{8}$' }
+        decadeType: { $ref: '#/components/schemas/EmptyString' }
+        docType: { $ref: '#/components/schemas/EmptyString' }
+        reportName: { type: string }

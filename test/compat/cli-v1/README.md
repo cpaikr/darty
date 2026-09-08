@@ -22,17 +22,17 @@ golden review.
   `search-company-reports` → `view-report` help and validation surface.
 - `candidate` adds independently authored fixture-backed success, agent
   projection, TOC, and section-window expectations to the vertical profile.
-- `full` also freezes the active root home, the other five operation entry
-  paths, and the two deterministic static operations. It is the guard that the
-  TypeScript comparison product remains unchanged while the candidate is built.
+- `process` covers root discovery, all operation help and validation, and static
+  results without network calls. Production standalone archives use this profile.
+- `full` adds deterministic body search, company detail, and RSS projections to
+  `process`. Rust fixture builds use the loopback seam. Source TypeScript uses
+  `--typescript-baseline`, which preloads a test-only fetch/clock shim outside
+  the product. Explicit baseline defects have separately reviewed expectations.
 
-The current source adapters use fixed DART HTTPS endpoints. The deterministic
-baseline therefore covers process transport, help, semantic validation, and
-network-free operations without adding a test-only seam to the active product.
-Fixture-backed successful searches and the four-step report workflow use the
-candidate profile and the canonical wire authority's runtime-neutral
-fake-upstream boundary. The active TypeScript product never receives that
-test-only seam.
+Neither the production TypeScript bundle nor standalone executable contains a
+fixture seam. Full source comparison and the candidate workflow profile jointly
+cover the network paths; production archive certification checks the process
+contract separately from opt-in live qualification.
 
 ## Running
 
@@ -72,7 +72,7 @@ projections omit evidence and low-value metadata while preserving identifiers,
 references, and `help[]`. `view-report` has no agent mode but provides TOC,
 section, and continuation hints.
 
-The active npm baseline is `@sjunepark/darty@0.5.0`: `darty` points to
+The frozen historical npm baseline is `@sjunepark/darty@0.5.0`: `darty` points to
 `dist/cli.js`, exports are `./toolset` and `./package.json`, and packed contents
 are `dist`, `README.md`, and `LICENSE.md`. The implementation commit recorded in
 [`baseline.json`](baseline.json) is the code identity beneath the later

@@ -1,143 +1,178 @@
-# Rust SDK, Node SDK, and CLI rewrite
+# Complete the Rust SDK, Node SDK, and CLI rewrite
 
 ## Outcome
 
-Darty has one Rust-owned implementation of all eight accepted operations,
-exposed through an idiomatic Rust SDK, an asynchronous Node SDK, and a separate
-Rust `darty` CLI. Private GitHub Releases deliver the standalone executable
-without Node/npm; the Node SDK installation projection must be specified before
-publishing it. The superseded TypeScript conformer and source-local toolset are
-removed in one atomic cutover.
+Complete the repository replacement with one Rust-owned implementation of all
+eight accepted operations, exposed through the Rust SDK, asynchronous Node SDK,
+and standalone `darty` CLI. Preserve CLI v1 behavior, replace the TypeScript
+executable in the existing private GitHub Release pipeline, and remove the
+superseded TypeScript DART implementation and source-local toolset.
+
+Repository completion means reviewed source, validated distributables, and a
+working build-only delivery path. Publishing the Rust release, paid model evals,
+and human production approval are separate release gates; this plan does not
+claim they have happened.
 
 ## Current state
 
-Phase 3 is active. The Bun/TypeScript CLI remains the eight-operation
-implementation. Its standalone release pipeline replaces npm delivery separately
-from this rewrite; the toolset remains source-local. The retained, unpublished candidate implements the
-three-operation company-to-report workflow through the Rust SDK, Rust CLI,
-async Node SDK, and a current-host npm packaging proof. See
-[ARCHITECTURE.md](../ARCHITECTURE.md) for the authoritative implementation,
-candidate, and target boundaries.
+The published v0.6.0 CLI is Bun/TypeScript and implements all eight operations.
+[Standalone delivery](standalone-cli-delivery.md) is complete. The unpublished
+candidate now implements all eight operations through Rust and Node SDKs and
+the Rust CLI; TypeScript remains runnable as the comparison baseline. The native
+Node package is a current-host proof, not a supported distribution matrix.
 
-## Durable decisions
+Phase 3 remains active pending final validation, review, and PR delivery. Viewer
+object rebinding, regex/no-TOC acceptance, and graph bounds are reconciled in the
+canonical companion and fictional fixtures. The new body/detail/RSS corpus and
+baseline-derived CLI projections cover the remaining operations; strict XML
+acceptance and the TypeScript missing-company error-wrapping defect have explicit
+contract dispositions. Bounded live refresh on 2026-09-08 exercised all six
+source-backed operations successfully through the release-built Rust CLI,
+including the previously failing viewer. The [provider record](../docs/research/dart-provider-qualification.md)
+owns results and pending human approval. Phase 4 artifact validation and atomic
+cutover have not started. [Architecture](../ARCHITECTURE.md) owns topology.
 
-- Preserve the repository, `darty` command, eight operation
-  names, and [CLI transport v1](../docs/specs/cli-transport-v1.md).
-- Make the Rust SDK the sole owner of DART request construction, transport,
-  bounds, decoding, parsing, normalization, and source failures.
-- Keep the Node-API binding limited to asynchronous runtime translation and
-  Node ergonomics and the Rust CLI as a `clap` executable over the SDK. CLI
-  installation must not depend on a Node/npm launcher.
-- Remove the source-local toolset at cutover. Pi adapters, MCP servers, and other
-  runtime-specific toolsets are not target products.
-- Treat the OpenAPI document and HTML/viewer companion as wire authority;
-  fixtures and observations are evidence.
-- Preserve the TypeScript product as the runnable comparison baseline until
-  the complete replacement passes the atomic-cutover gates.
-- Keep executing publication, creating GitHub Releases, and pushing tags or
-  branches outside this plan. Phase 4 includes the local workflow and package
-  integration needed to make the cutover releasable without performing a
-  release.
-- Keep release-administration replacement separate in
-  [standalone CLI delivery](standalone-cli-delivery.md). Phase 4 replaces the
-  compiled TypeScript executable in that release line with verified Rust artifacts.
+## Decisions and authority
 
-## Completed foundation
+- Preserve the eight operation names, read-only/reference-first behavior, and
+  [CLI v1 contract](../docs/specs/cli-transport-v1.md), including output, errors,
+  help, and exits. Do not turn this rewrite into CLI v2.
+- Rust owns requests, transport policy, bounds, decoding, parsing, normalization,
+  and source failures. The asynchronous Node-API binding and TypeScript facade
+  translate runtime concerns; the separate Rust CLI adapts the SDK to subprocess
+  use. Neither adapter owns another DART implementation.
+- Keep TypeScript runnable as the comparison baseline until full parity and
+  artifact evidence permit one reviewable cutover with a normal Git revert path.
+  Preserve independent contract tests after deleting migration-only machinery.
+- On 2026-09-08 the owner delegated remaining SDK packaging, platform details,
+  and technical repository-cutover decisions within this outcome. Resolve them
+  using evidence and record the selected contracts in their canonical documents.
+  Publication, paid model use, and human production approval remain outside this
+  delegation. Do not attribute an agent's technical review to a human approver.
+- Preserve private GitHub Releases as the artifact authority, runtime-independent
+  CLI installation, and Linux-only CI. Preserve the existing CLI target inventory;
+  select and verify the Node SDK projection without assuming the old npm launcher
+  or npm registry publication is required. CLI installation must not load Node.
+- Port and review coherent results through the fewest sequential PRs. Branch
+  pushes, review, and merges belong to that delivery lifecycle; release tags and
+  publication do not. A PR boundary is not the end of the rewrite.
 
-Phases 0–2 froze the CLI v1 contract, established the canonical vertical wire
-authority and fictional evidence corpus, proved Rust feasibility, and retained
-the first three-operation Rust/Node/CLI workflow without changing root package
-entry points. The durable results live in the
-[CLI contract](../docs/specs/cli-transport-v1.md),
-[wire authority](../docs/specs/README.md),
-[provider record](../docs/research/dart-provider-qualification.md),
-[feasibility record](../docs/research/rust-feasibility-v1.md), and
-[architecture](../ARCHITECTURE.md).
+### Preference reconciliation
 
-## Phase 3 — complete capability and SDK parity
+Reviewed `../mytech` at `9824182d0c21e084a1e8a7725f962db0d3417a2a`
+(2026-09-07). Its [rewrite guidance](../../mytech/practices/code-rewrites.md)
+and [Rust core guidance](../../mytech/architecture/external-http/rust-for-external-http-protocols.md)
+now require concrete consumer or operating benefits, not a language preference.
+The accepted Darty target shares semantics across the Rust SDK, Node SDK, and
+native CLI; there is no claimed performance win, and standalone installation is
+already achieved by TypeScript. Keep the replacement limited to that target.
 
-### Readiness dispositions
+Follow the [Node binding guidance](../../mytech/architecture/rust-cores-for-nodejs-packages.md)
+for resource lifetime, cancellation, generated declarations, and panic containment
+under the actual release panic strategy. Darty's owner-selected Linux-only policy
+in [release.md](../docs/release.md#targets-and-verification) remains an intentional
+override of mytech's full-platform runtime verification default. Distinguish
+cross-built targets from runtime-certified targets in artifacts and documentation.
 
-| Item | State | Blocks | Next action |
-|---|---|---|---|
-| Live `view-report` grammar drift for receipt `20260331000460` | requalification required | Counting `view-report` provider evidence as current | Refresh bounded evidence; update the viewer contract and fictional fixtures only if the source changed. |
-| Viewer shell conformance | unresolved TS/Rust mismatches for regex literals, explicit no-TOC initialization, and tree bounds | Claiming cross-language viewer grammar parity | Port the two canonical TS rules to Rust; decide whether Rust bounds become canonical and add equivalent TS/fixture coverage or remove the candidate-only limits. |
-| Provider approvals | no approval records | Completion of each source-backed port and final cutover qualification | Record named maintainer decisions only after reviewing an immutable evidence revision. |
-| Model-assisted workflow eval | awaiting owner authorization for credentials and external model use | Release-readiness signoff for relevant CLI/eval/prompt changes; not local porting | Run after authorization, preserving deterministic trace and citation checks as prerequisites. |
+## Phase 3 — full capability and SDK parity
 
-These are evidence or operational gates. They do not authorize publication,
-candidate promotion, relaxed source validation, or invented approval records.
+### Repair existing evidence first
 
-### Remaining operations
+Reproduce the recorded `view-report` failure for receipt `20260331000460` through
+the user-facing workflow with bounded, sanitized runtime evidence. Reconcile the
+current source grammar, contract, and fictional fixtures before choosing a fix.
+Also settle TS/Rust differences for regex literals, explicit no-TOC initialization,
+and tree bounds. Bring bounds into the canonical contract with independent
+coverage or remove unsupported candidate-only limits; do not silently loosen
+source validation to obtain parity.
 
-- `search-body`
-- `company-detail`
-- `company-rss`
-- `disclosure-types`
-- `report-guide`
+### Complete the remaining operations
 
-This is scope, not a fixed sequence. Select an operation only after reviewing
-its contract and evidence plan.
+Port `search-body`, `company-detail`, `company-rss`, `disclosure-types`, and
+`report-guide`. Select their order from dependencies and evidence readiness.
+Each operation is complete only when:
 
-### Per-operation completion
+- its [capability contract](../docs/specs/README.md), supported wire behavior,
+  and independent fixtures are reviewed before the implementation depends on them;
+- the Rust SDK, Node SDK, and CLI preserve validation, identifiers, references,
+  warnings, typed failures, recovery hints, projections, and content bounds;
+- applicable deterministic SDK, full CLI compatibility, malformed/oversized input,
+  timeout, cancellation, sanitization, and packaged-consumer checks pass; and
+- source-backed operations have refreshed bounded observations and reviewed
+  conformance evidence, with drift resolved or an explicit blocking disposition.
 
-For every port:
+For live work, use the fixed origin, pacing, attempt/time/byte limits, sanitization,
+and in-memory-only body policy in the
+[provider record](../docs/research/dart-provider-qualification.md). Static
+`disclosure-types` and `report-guide` need no live provider qualification.
+Do not invent human approval records or label pending production approval as
+completed qualification. Missing human signoff does not block technical porting;
+unresolved source behavior does block claiming parity.
 
-- contract source and domain behavior before implementation;
-- preserve validation, identifiers, references, warnings, typed failures,
-  recovery hints, agent projections, and content bounds;
-- extend SDK, CLI compatibility, malformed/oversized input, timeout,
-  cancellation, sanitization, and package-acceptance checks as applicable;
-- keep live and hosted-model checks bounded and outside credential-free CI.
+Phase 3 exits when all eight operations work through all three candidate surfaces,
+with independent compatibility and consumer evidence. TypeScript entry points
+remain intact until Phase 4.
 
-For `search-body`, `company-detail`, and `company-rss`, completion additionally
-requires refreshed bounded provider evidence, deterministic conformance, and
-an explicit maintainer approval in the canonical
-[provider record](../docs/research/dart-provider-qualification.md#maintainer-approval-records).
-The static `disclosure-types` and `report-guide` operations do not require
-provider qualification.
+## Phase 4 — artifacts and repository cutover
 
-Phase 3 exits when all eight operations are available through every candidate
-surface, pass the approved compatibility, SDK, package, and workflow checks,
-and every source-backed port has current qualification and explicit approval.
-The shipped TypeScript entry points remain unchanged at this milestone.
+- Implement the chosen Rust CLI and Node SDK artifact/installation contracts.
+  Keep one version/source authority and private release line, checksums, immutable
+  tags/assets, and explicit failure recovery. Reuse the existing release pipeline;
+  remove the obsolete candidate npm CLI launcher rather than creating two CLI
+  installation paths. Specify Rust SDK consumption and version compatibility too.
+- Cross-build the existing CLI targets on Linux. Certify exact Linux archives
+  through clean installed CLI consumers; verify macOS/Windows binary format and
+  architecture and retain their explicit lack of runtime certification. Choose
+  the Node target matrix from actual consumer needs and demonstrated evidence;
+  do not imply native-addon support from CLI cross-build success.
+- Test Rust and Node SDKs as clean external consumers, including loading, public
+  types/declaration freshness, async errors, cancellation, cleanup, and panic
+  containment under the release build strategy. Verify artifact contents,
+  dependency/license policy, version identity, and absence of secrets.
+- Exercise the full CLI judge and representative live workflows against the Rust
+  executable and installed archive. Adapt existing eval runners away from deleted
+  TypeScript entry points; preserve the separate manual hosted-model gate.
+- Verify a build-only CI candidate without a source tag, including source-bound
+  archives, checksums, installers, and clean consumers. Temporary artifacts prove
+  repository readiness, not a published release.
+- Replace TypeScript entry points and release build paths with Rust in one
+  reviewable cutover. Remove the old DART conformer, toolset, superseded build/test
+  paths, candidate-only packaging, and unused dependencies. Keep the thin Node
+  facade and independent acceptance corpus; TypeScript as an adapter is not a
+  second DART implementation.
+- Update instructions, README, architecture, release docs, specs, eval docs,
+  commands, and CI together. Distinguish the new repository implementation from
+  the previously published TypeScript release until Rust is actually published.
 
-## Phase 4 — distribution and atomic cutover
+Phase 4 exits when all named results pass applicable checks and independent
+review, one Rust implementation owns all eight operations, supported consumers
+use the validated artifacts, superseded paths are removed, and the remaining
+release gates have an explicit owner and evidence handoff. Repository completion
+must not claim release-readiness signoff or publication while those gates remain.
 
-- Requalify the complete source-backed set and record an explicit
-  provider/platform/cutover approval.
-- Select a supported Rust/Node target matrix from actual users and available
-  CI; do not infer support from the current-host artifact.
-- Test crates, SDKs, native packages, and CLI as clean external consumers.
-- Verify declarations, cancellation, executable discovery, output bytes and
-  exits, licenses, dependency policy, artifact contents, and secret hygiene.
-- Replace the standalone TypeScript binary with the Rust CLI; remove the conformer, toolset,
-  superseded tests/build paths, and unused dependencies in one reviewable
-  change with a normal local revert path.
-- Extend [standalone delivery](standalone-cli-delivery.md) with Rust artifacts
-  and the selected Node SDK projection. Preserve one GitHub Release authority,
-  checksums, Linux-only CI, and runtime-independent CLI installation.
-- Update product, architecture, release, and CI documentation to describe only
-  the implemented Rust-backed product and its supported distribution matrix.
+## Separate release gates
 
-Phase 4 exits when one Rust implementation owns all supported source behavior,
-all three target surfaces expose all eight operations, Linux platforms pass
-clean-consumer validation, non-Linux verification limits are explicit, CLI v1
-compatibility holds, and no
-superseded TypeScript/toolset surface remains.
+The release operator must obtain named maintainer production/qualification
+approval against immutable evidence in the
+[provider record](../docs/research/dart-provider-qualification.md#maintainer-approval-records),
+run authorized paid model evals under the [eval gate policy](../evals/README.md#gate-policy),
+and complete exact-source tagging, publication, and published-asset installation
+verification under [release.md](../docs/release.md). Prepare the handoff in that
+runbook at cutover, preserving all outstanding gates. Never substitute test
+success or technical decision delegation for human approval or paid-use authority.
 
 ## Out of scope
 
-- XBRL support, industry-code discovery, more held-out workflow cases, and a
-  new large-report pagination contract; see [ROADMAP.md](../ROADMAP.md).
-- CLI v2 or intentional redesign of current command behavior.
-- Executing registry publication, creating a GitHub Release, or pushing remote
-  tags or branches.
+Rust release signoff and publication follow repository completion, including
+Phase 3 parity and Phase 4 artifact validation and cutover.
+XBRL, industry discovery, expanded held-out workflows, new content pagination,
+and other backlog capabilities remain outside this rewrite; [ROADMAP.md](../ROADMAP.md)
+owns their scheduling.
 
 ## Next action
 
-Investigate the reproducible live viewer failure for receipt
-`20260331000460` and reconcile provider, contract, and fixture evidence. Once
-that disposition is reviewed, select one remaining operation and carry it
-vertically through the Rust SDK, Node SDK, CLI, compatibility judge, and
-package acceptance.
+Finish Phase 3 transport/cancellation and packaged-consumer checks, wire lock,
+CLI/Node review, and documentation reconciliation; complete the parity PR
+lifecycle before starting Phase 4 artifact validation and repository cutover.
+Stop after repository completion and hand off the separate release gates
+without starting them.

@@ -1,0 +1,65 @@
+Usage: darty view-report [options]
+
+Fetch a DART report document list and table of contents by receipt number or
+viewer URL, then return the selected body as HTML or Markdown.
+
+Options:
+  --receipt <receipt-or-url>       [required] DART receipt number or viewer URL
+  --document-id <id>               Darty document ID to fetch (documents[].id,
+                                   not DART dcmNo)
+  --section-id <id>                TOC section ID to fetch (toc[].id). It is
+                                   report-specific; do not reuse it across
+                                   reports.
+  --output-format <html|markdown>  [default: markdown] Body format in the JSON
+                                   result (html or markdown)
+  --max-bytes <number>             [default: 50000, range: 1000~1000000] Maximum
+                                   body bytes to return. Larger values can
+                                   increase output/context size.
+  --content-start-byte <number>    [default: 0] UTF-8 start byte in the rendered
+                                   body. Continue with the same outputFormat.
+  --detail <concise|detailed|raw>  [default: concise] Supplemental locator
+                                   detail level. Locators are documents/toc
+                                   identifier lists used for follow-up
+                                   retrieval. This does not change content.body
+                                   rendering or windows. For sectionId requests,
+                                   concise omits documents/toc; detailed/raw
+                                   include them.
+  --verbose                        Include locator fields (documents/toc) and
+                                   diagnostics omitted from the default CLI
+                                   output. If --detail is omitted, request
+                                   detail=raw.
+  --toc-depth <number>             Include TOC entries to the specified depth.
+                                   For section body output, this also enables
+                                   TOC inclusion.
+  --pretty                         Print human-readable indented JSON.
+  -h, --help                       Display command help.
+
+Examples:
+  # View documents and TOC by receipt number
+  darty view-report --receipt 20260331004166
+
+  # View TOC from a search-body viewerUrl
+  darty view-report --receipt 'https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260430001931&dcmNo=11360863'
+
+  # Follow search-company-reports output: inspect filing.receiptNumber, then use returned documents[].id/toc[].id
+  darty view-report --receipt <filing.receiptNumber> --document-id <documents[].id> --section-id <toc[].id>
+
+  # Read a long section in a small window
+  darty view-report --receipt 20260430001931 --section-id section:3.5 --max-bytes 2000
+
+  # Continue reading from content.window.nextStartByte in a previous result
+  darty view-report --receipt 20260430001931 --section-id section:3.5 --max-bytes 2000 --content-start-byte <content.window.nextStartByte>
+
+  # View TOC section HTML
+  darty view-report --receipt 20260331004166 --section-id section:3.6 --output-format html
+
+Cautions:
+  - toc[].id/section ID values are valid only inside one report. Do not reuse them across years, corrections, or other receipt numbers; fetch the TOC for each report first.
+  - When `--section-id` fetches body content, or when a document has no TOC, content.body is returned. Long sections can consume substantial output and agent context, so request only needed sections and increase `--max-bytes` only as needed.
+  - If content.window.hasMore is true, continue with the same `--receipt`, `--document-id`, `--section-id`, and `--output-format`, passing content.window.nextStartByte as `--content-start-byte`. This value is based on the rendered body, not DART viewer offsets.
+  - `--output-format markdown` may preserve complex DART tables as HTML table fragments. Check original structure before parsing tables with rowspan/colspan automatically.
+  - For long 감사보고서/사업보고서 files, pass a search-body viewerUrl or receiptNumber to view-report, then fetch only the needed TOC section in windows.
+  - content.isFullContent indicates whether the returned body is the full rendered body. Use content.window.hasMore to determine whether more content remains.
+  - `--detail` changes only supplemental locator fields, not content.body. Use `--detail detailed` or `--detail raw` when you also need documents/toc with section body output.
+  - Darty does not process PDFs internally. Download PDF links directly or open them with a separate PDF processing/reading tool.
+

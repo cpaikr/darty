@@ -27,6 +27,9 @@ const expectedOperations = new Map([
   ],
   ["fetchReportShell", { method: "GET", path: "/dsaf001/main.do" }],
   ["fetchReportContent", { method: "GET", path: "/report/viewer.do" }],
+  ["searchBodyFragment", { method: "POST", path: "/dsab007/search.ax" }],
+  ["fetchCompanyDetail", { method: "GET", path: "/dsae001/select.ax" }],
+  ["fetchCompanyRss", { method: "GET", path: "/api/companyRSS.xml" }],
 ]);
 const expectedCaseIds = [
   "company-populated",
@@ -39,6 +42,7 @@ const expectedCaseIds = [
   "reports-partial",
   "reports-changed",
   "report-shell-toc",
+  "report-shell-rebound",
   "report-shell-attachment",
   "report-shell-no-toc",
   "report-shell-no-selected",
@@ -140,6 +144,7 @@ const expectedLockPaths = [
   "docs/specs/dart-html-viewer-v1.md",
   "docs/research/dart-provider-qualification.md",
   "fixtures/dart/vertical-v1/manifest.json",
+  "fixtures/dart/parity-v1/manifest.json",
   "scripts/check-dart-wire.mjs",
   "scripts/check-dart-fixture-conformance.ts",
 ];
@@ -253,9 +258,9 @@ const decoderLabelFor = (charset) => {
   return undefined;
 };
 
-const resolveFixturePath = (fixturePath) => {
-  const absolute = resolve(fixtureRoot, fixturePath);
-  const fromRoot = relative(fixtureRoot, absolute);
+const resolveFixturePath = (fixturePath, root = fixtureRoot) => {
+  const absolute = resolve(root, fixturePath);
+  const fromRoot = relative(root, absolute);
   if (fromRoot.startsWith("..") || fromRoot === "") {
     fail(`fixture path escapes its root: ${fixturePath}`);
   }
@@ -299,6 +304,7 @@ if (!sameSet(actualOperations, allowedOperations)) fail("OpenAPI operation tripl
 const operationSchemas = new Map([
   ["searchCompanyFragment", "CompanySearchForm"],
   ["searchCompanyReportsFragment", "CompanyReportsSearchForm"],
+  ["searchBodyFragment", "BodySearchForm"],
 ]);
 
 for (const [operationId, expected] of expectedOperations) {
@@ -307,7 +313,7 @@ for (const [operationId, expected] of expectedOperations) {
     fail(`${expected.method} ${expected.path} must have operationId ${operationId}`);
   }
   const successResponse = resolveResponse(operation.responses?.["200"]);
-  if (successResponse?.content?.["text/html"] === undefined) {
+  if (successResponse?.content?.[operationId === "fetchCompanyRss" ? "application/xml" : "text/html"] === undefined) {
     fail(`${operationId} must declare a text/html 200 response`);
   }
   if (operation.responses?.default === undefined) {
@@ -331,7 +337,7 @@ for (const [operationId, schemaName] of operationSchemas) {
   }
   const arrayField = operationId === "searchCompanyFragment" ? "corpType" : "publicType";
   const encoding = media.encoding?.[arrayField];
-  if (encoding?.style !== "form" || encoding.explode !== true) {
+  if (operationId !== "searchBodyFragment" && (encoding?.style !== "form" || encoding.explode !== true)) {
     fail(`${operationId}.${arrayField} must use repeated exploded form fields`);
   }
   if (media.schema?.$ref !== `#/components/schemas/${schemaName}`) {
@@ -388,6 +394,12 @@ if (!Array.isArray(manifest.cases) || manifest.cases.length < 10) {
   fail("fixture manifest must contain the vertical success/empty/drift corpus");
 }
 
+const parityRoot = resolve(repoRoot, "fixtures/dart/parity-v1");
+const parityManifest = await readJson(resolve(parityRoot, "manifest.json"));
+if (parityManifest.schemaVersion !== 1 || parityManifest.authorityVersion !== "dart-wire-v1") fail("parity manifest version drifted");
+const parityIds = ["body-populated", "body-empty", "body-partial", "body-changed", "body-mixed-empty", "detail-populated", "detail-empty", "detail-partial", "detail-changed", "detail-missing-label", "rss-populated", "rss-empty", "rss-optional-fields", "rss-changed", "rss-malformed-item", "rss-invalid-xml", "rss-dtd", "body-advanced-filters", "body-company-mismatch"];
+expectedCaseIds.push(...parityIds);
+manifest.cases = [...manifest.cases, ...parityManifest.cases.map((entry) => ({ ...entry, root: parityRoot }))];
 const casesById = new Map();
 for (const fixtureCase of manifest.cases) {
   if (casesById.has(fixtureCase.id)) fail(`duplicate fixture id ${fixtureCase.id}`);
@@ -449,9 +461,9 @@ for (const fixtureCase of manifest.cases) {
   if (request.headers?.["user-agent"]?.present !== true) {
     fail(`${fixtureCase.id} must require a present user-agent`);
   }
-  const expectedHeaderNames = expected.method === "POST"
-    ? ["content-type", "referer", "user-agent"]
-    : ["user-agent"];
+  const expectedHeaderNames = ["user-agent"];
+  if (expected.method === "POST") expectedHeaderNames.push("content-type");
+  if (["searchCompanyFragment", "searchCompanyReportsFragment", "fetchCompanyDetail"].includes(fixtureCase.operationId)) expectedHeaderNames.push("referer");
   if (!sameSet(Object.keys(request.headers ?? {}), expectedHeaderNames)) {
     fail(`${fixtureCase.id} request headers drifted`);
   }
@@ -493,23 +505,29 @@ for (const fixtureCase of manifest.cases) {
   }
 
   const expectedResult = fixtureCase.expected;
-  if (!["success", "error"].includes(expectedResult?.kind)) fail(`${fixtureCase.id} lacks a typed expectation`);
+  const allowedKinds = fixtureCase.root === parityRoot ? ["success", "failure"] : ["success", "error"];
+  if (!allowedKinds.includes(expectedResult?.kind)) fail(`${fixtureCase.id} lacks a typed expectation`);
   const allowedParser = {
     searchCompanyFragment: "company-search",
     searchCompanyReportsFragment: "company-reports",
     fetchReportShell: "report-shell",
     fetchReportContent: "report-content",
+    searchBodyFragment: "body-search",
+    fetchCompanyDetail: "company-detail",
+    fetchCompanyRss: "company-rss",
   }[fixtureCase.operationId];
-  if (expectedResult.parser !== allowedParser) fail(`${fixtureCase.id} expectation uses the wrong parser`);
+  if ((expectedResult.kind !== "failure" || expectedResult.parser !== undefined) && expectedResult.parser !== allowedParser) fail(`${fixtureCase.id} expectation uses the wrong parser`);
   if (expectedResult.kind === "error" && !["source_changed", "source_parse_failure"].includes(expectedResult.classification)) {
     fail(`${fixtureCase.id} has an invalid expected error classification`);
   }
 
+  if (expectedResult.kind === "failure" && (!["not_found", "source_changed", "source_parse_failure"].includes(expectedResult.code) || expectedResult.retryable !== false)) fail(`${fixtureCase.id} has invalid failure semantics`);
   if (fixtureCase.response?.status !== 200) fail(`${fixtureCase.id} must be HTTP 200`);
-  if (!/^text\/html(?:;|$)/i.test(fixtureCase.response.contentType ?? "")) {
+  const acceptedMedia = fixtureCase.operationId === "fetchCompanyRss" ? /^application\/xml(?:;|$)/i : /^text\/html(?:;|$)/i;
+  if (!acceptedMedia.test(fixtureCase.response.contentType ?? "")) {
     fail(`${fixtureCase.id} must use text/html`);
   }
-  const bodyPath = resolveFixturePath(fixtureCase.response.bodyPath);
+  const bodyPath = resolveFixturePath(fixtureCase.response.bodyPath, fixtureCase.root);
   if ((await sha256File(bodyPath)) !== fixtureCase.response.sha256) {
     fail(`${fixtureCase.id} body hash is stale`);
   }
@@ -596,6 +614,12 @@ for (const fault of faults) {
   }
 }
 
+if (!sameSet(parityManifest.faults.map(({ id }) => id), ["parity-response-cap", "rss-node-limit"])) fail("parity fault allowlist drifted");
+for (const fault of parityManifest.faults) {
+  if (!ruleIds.has(fault.rule) || fault.classification !== "source_parse_failure" || fault.retryable !== false) fail(`${fault.id} fault semantics drifted`);
+  if (fault.id === "parity-response-cap" && (fault.recipe.bodyBytes !== 8388609 || !sameSet(fault.operationIds, ["searchBodyFragment", "fetchCompanyDetail", "fetchCompanyRss"]))) fail("parity cap recipe drifted");
+  if (fault.id === "rss-node-limit" && (fault.recipe.repeatCount !== 100001 || fault.recipe.repeat !== "<extra/>" || !sameSet(fault.operationIds, ["fetchCompanyRss"]))) fail("RSS node bound recipe drifted");
+}
 const lock = await readJson(lockPath);
 if (lock.authorityVersion !== "dart-wire-v1") fail("authority lock version drifted");
 if (!sameSet((lock.files ?? []).map(({ path }) => path), expectedLockPaths)) {

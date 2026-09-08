@@ -184,7 +184,14 @@ impl SourceTransport {
             })?
             .to_owned();
         let (media_type, charset) = parse_content_type(&content_type);
-        if !media_type.eq_ignore_ascii_case("text/html") {
+        let accepted = if request.path == "/api/companyRSS.xml" {
+            ["application/xml", "text/xml", "application/rss+xml"]
+                .iter()
+                .any(|value| media_type.eq_ignore_ascii_case(value))
+        } else {
+            media_type.eq_ignore_ascii_case("text/html")
+        };
+        if !accepted {
             return Err(DartyError::source(
                 ErrorCode::SourceParseFailure,
                 "DART returned an unsupported response media type.",

@@ -69,6 +69,21 @@ export class DartyClient {
     constructor() {
         this.#nativeClient = new native.NativeDartyClient();
     }
+    searchBody(input, options) {
+        return invoke(this.#nativeClient, "search-body", input, options);
+    }
+    companyDetail(input, options) {
+        return invoke(this.#nativeClient, "company-detail", input, options);
+    }
+    companyRss(input, options) {
+        return invoke(this.#nativeClient, "company-rss", input, options);
+    }
+    disclosureTypes(input = {}, options) {
+        return invoke(this.#nativeClient, "disclosure-types", input, options);
+    }
+    reportGuide(input = {}, options) {
+        return invoke(this.#nativeClient, "report-guide", input, options);
+    }
     searchCompany(input, options) {
         return invoke(this.#nativeClient, "search-company", input, options);
     }

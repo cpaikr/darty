@@ -247,7 +247,14 @@ fn is_ascii_digits(value: &str, min_length: usize, max_length: usize) -> bool {
         && value.bytes().all(|byte| byte.is_ascii_digit())
 }
 
-fn parse_date(value: &str, parameter: &str) -> Result<NaiveDate, DartyError> {
+pub(crate) fn parse_date(value: &str, parameter: &str) -> Result<NaiveDate, DartyError> {
+    if value.len() != 8 || !value.bytes().all(|byte| byte.is_ascii_digit()) {
+        return Err(DartyError::invalid(
+            format!("{parameter} must be a real date in YYYYMMDD format."),
+            parameter,
+            "Use a real calendar date in YYYYMMDD format.",
+        ));
+    }
     NaiveDate::parse_from_str(value, "%Y%m%d").map_err(|_| {
         DartyError::invalid(
             format!("{parameter} must be a real date in YYYYMMDD format."),
@@ -263,7 +270,7 @@ fn subtract_ten_years(end: NaiveDate) -> NaiveDate {
     })
 }
 
-fn trim_optional(value: &mut Option<String>, parameter: &str) -> Result<(), DartyError> {
+pub(crate) fn trim_optional(value: &mut Option<String>, parameter: &str) -> Result<(), DartyError> {
     if let Some(text) = value {
         *text = text.trim().to_owned();
         if text.is_empty() {

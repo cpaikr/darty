@@ -278,6 +278,334 @@
       "profiles": ["full"],
       "argv": ["report-guide"],
       "golden": "goldens/report-guide-static-success.json"
+    },
+    {
+      "id": "parity-body-default",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-default.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-body-verbose",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331",
+        "--verbose"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-verbose.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-body-agent",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331",
+        "--agent"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-agent.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-body-detailed",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331",
+        "--detail",
+        "detailed",
+        "--verbose"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-detailed.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-body-advanced-filters",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "배당",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331",
+        "--page",
+        "2",
+        "--sort-by",
+        "reportName",
+        "--sort-direction",
+        "asc",
+        "--company-code",
+        "00000001",
+        "--presenter-name",
+        "가람전자",
+        "--report-name",
+        "사업보고서"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-advanced-filters.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-body-partial",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "부분",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-partial.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-body-empty",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "없는문구",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-empty.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-body-company-mismatch",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--keyword",
+        "회사불일치",
+        "--start-date",
+        "20260101",
+        "--end-date",
+        "20260331",
+        "--page",
+        "2",
+        "--sort-by",
+        "reportName",
+        "--sort-direction",
+        "asc",
+        "--company-code",
+        "00000001",
+        "--presenter-name",
+        "가람전자",
+        "--report-name",
+        "사업보고서"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-body-company-mismatch.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-detail-populated",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-detail",
+        "--company-code",
+        "00000001"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-detail-populated.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-detail-partial",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-detail",
+        "--company-code",
+        "00000003"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-detail-partial.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-detail-not-found",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-detail",
+        "--company-code",
+        "00000002"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-detail-not-found.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-rss-concise",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-rss",
+        "--company-code",
+        "00000001"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-rss-concise.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-rss-raw",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-rss",
+        "--company-code",
+        "00000001",
+        "--detail",
+        "raw"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-rss-raw.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-rss-empty",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-rss",
+        "--company-code",
+        "00000002"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-rss-empty.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "parity-rss-optional-fields",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-rss",
+        "--company-code",
+        "00000003"
+      ],
+      "fixture": true,
+      "golden": "goldens/parity-rss-optional-fields.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "search-body-help",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "search-body",
+        "--help"
+      ],
+      "golden": "goldens/search-body-help.json"
+    },
+    {
+      "id": "company-detail-help",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-detail",
+        "--help"
+      ],
+      "golden": "goldens/company-detail-help.json"
+    },
+    {
+      "id": "company-rss-help",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "company-rss",
+        "--help"
+      ],
+      "golden": "goldens/company-rss-help.json"
+    },
+    {
+      "id": "disclosure-types-help",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "disclosure-types",
+        "--help"
+      ],
+      "golden": "goldens/disclosure-types-help.json"
+    },
+    {
+      "id": "report-guide-help",
+      "profiles": [
+        "full"
+      ],
+      "argv": [
+        "report-guide",
+        "--help"
+      ],
+      "golden": "goldens/report-guide-help.json"
     }
   ]
 }

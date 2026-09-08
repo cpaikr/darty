@@ -4,18 +4,15 @@
 
 [Complete the Rust SDK, Node SDK, and CLI rewrite](plans/rust-sdk-node-sdk-cli-rewrite.md)
 
-The TypeScript CLI supports all eight operations. Standalone GitHub Release
-delivery replaces npm separately under the plan below. The retained,
-unpublished Rust/Node/CLI candidate supports the three-operation
-company-to-report workflow. Phase 3—porting the remaining five operations—is
-active. The immediate action is to resolve current viewer-provider drift, then
-select the next operation after reviewing its contract and evidence plan. The
-TypeScript package remains the shipped product until full parity and atomic
-cutover.
+Complete capability parity and the repository cutover to one Rust implementation
+shared by the Rust SDK, Node SDK, and CLI. The current TypeScript CLI is delivered
+through standalone GitHub Releases. All eight candidate operations are implemented;
+Phase 3 validation and PR delivery remain active, before Phase 4 artifacts and
+cutover. The active plan owns remaining work, evidence gates, and the next action.
 
 ## Plans
 
-- [Replace npm delivery with standalone CLI releases](plans/standalone-cli-delivery.md)
+_None._
 
 ## Tasks
 

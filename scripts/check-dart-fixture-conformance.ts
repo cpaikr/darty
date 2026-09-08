@@ -215,7 +215,7 @@ const successProjection = (value: any, expected: Record<string, any>) => {
 let parserCases = 0;
 let serializerCases = 0;
 for (const fixtureCase of manifest.cases) {
-  const expected = fixtureCase.expected;
+  const expected = fixtureCase.baselineExpected ?? fixtureCase.expected;
   const request = resolveRequest(fixtureCase);
   if (fixtureCase.operationId === "searchCompanyFragment") {
     assertSerializedForm(

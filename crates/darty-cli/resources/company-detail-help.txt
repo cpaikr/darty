@@ -1,0 +1,15 @@
+Usage: darty company-detail [options]
+
+Fetch company details from the DART 기업개황 detail page for an 8-digit DART company
+code.
+
+Options:
+  --company-code <text>  [required] 8-digit DART company code. Example: Samsung
+                         Electronics 00126380.
+  --pretty               Print human-readable indented JSON.
+  -h, --help             Display command help.
+
+Examples:
+  # Fetch company details by DART company code.
+  darty company-detail --company-code 00126380
+

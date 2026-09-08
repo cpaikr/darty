@@ -6,8 +6,11 @@ no Node.js, npm, Bun, source checkout, or GitHub CLI. npm publication is retired
 the root `package.json` is private and remains the development dependency and
 version authority. The incomplete Rust/Node candidate is not published.
 
-[Standalone delivery status](../plans/standalone-cli-delivery.md) owns first-release
-readiness. [README installation](../README.md#설치) owns consumer instructions.
+[Standalone delivery](../plans/standalone-cli-delivery.md) records the completed
+v0.6.0 publication. [README installation](../README.md#설치) owns consumer instructions.
+The [Rust rewrite plan](../plans/rust-sdk-node-sdk-cli-rewrite.md) owns the pending
+repository cutover. Its technical completion does not authorize publication or
+satisfy the separate human production approval and paid-model eval gates.
 
 ## Targets and verification
 

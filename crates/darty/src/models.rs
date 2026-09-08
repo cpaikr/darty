@@ -162,9 +162,17 @@ pub struct SearchCompanyReportsRequest {
     pub page_size: u32,
     #[serde(default)]
     pub sort_direction: SortDirection,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "crate::models::present_string",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub presenter_name: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "crate::models::present_string",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub report_name: Option<String>,
     #[serde(default)]
     pub disclosure_types: Vec<String>,
@@ -326,9 +334,17 @@ pub enum OutputFormat {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ViewReportRequest {
     pub receipt: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "crate::models::present_string",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub document_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "crate::models::present_string",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub section_id: Option<String>,
     #[serde(default)]
     pub output_format: OutputFormat,
@@ -490,7 +506,7 @@ pub struct ViewReportResponse {
     pub warnings: Vec<Warning>,
 }
 
-const fn default_page() -> u32 {
+pub(crate) const fn default_page() -> u32 {
     1
 }
 
@@ -508,6 +524,13 @@ const fn default_max_bytes() -> u32 {
 
 fn default_all() -> String {
     "all".to_owned()
+}
+
+// Omitted request fields use serde defaults; an explicit null is invalid input.
+pub(crate) fn present_string<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<String>, D::Error> {
+    String::deserialize(deserializer).map(Some)
 }
 
 #[cfg(test)]
