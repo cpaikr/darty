@@ -8,7 +8,8 @@ repository topology; [VISION.md](VISION.md) owns product scope and
 ## Implementation and release status
 
 The repository implements the Rust cutover for version 0.6.1. Artifact
-validation and delivery are in progress; Rust remains unpublished. The latest
+validation passes; [ROADMAP.md](ROADMAP.md) tracks integration delivery. Rust
+remains unpublished. The latest
 published standalone release, v0.6.0, contains the earlier Bun/TypeScript CLI.
 Its availability does not certify the new Rust artifacts. Older npm releases
 remain historical; npm registry publication is retired.
