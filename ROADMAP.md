@@ -14,7 +14,7 @@ Published v0.6.0 remains TypeScript; Rust v0.6.1 is unpublished.
 
 ## Plans
 
-_None._
+_No additional plans queued._
 
 ## Tasks
 

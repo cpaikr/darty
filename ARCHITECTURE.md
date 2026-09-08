@@ -14,8 +14,9 @@ Its availability does not certify the new Rust artifacts. Older npm releases
 remain historical; npm registry publication is retired.
 
 The superseded TypeScript DART implementation, entry points, source-local
-toolset, tests, and npm CLI launcher are removed. TypeScript remains only in
-the thin Node facade and development, evaluation, and release tooling.
+toolset, superseded TypeScript tests, and npm CLI launcher are removed.
+TypeScript remains only in the thin Node facade and development, evaluation,
+and release tooling.
 
 ## Runtime boundaries
 
