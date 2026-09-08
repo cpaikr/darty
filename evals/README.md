@@ -1,9 +1,9 @@
 # Evals
 
-Evals measure realistic task usefulness through the shipped TypeScript CLI.
-Tests own deterministic contracts, parsers, package exports, and CLI mechanics;
-the Rust candidate is validated separately by its SDK tests, candidate CLI
-judge profile, and package acceptance.
+Evals measure realistic task usefulness through the Rust CLI subprocess.
+Repository cutover is in progress and Rust remains unpublished;
+[the rewrite plan](../plans/rust-sdk-node-sdk-cli-rewrite.md) owns delivery status.
+Tests own deterministic contracts, parsers, SDK consumers, and CLI mechanics.
 
 ## Current tracks
 
@@ -14,8 +14,10 @@ judge profile, and package acceptance.
 | Agent body search | `bun run eval:agent-cli:search-body` | Model-selected CLI arguments and invocation |
 | Agent research workflow | `bun run eval:workflow:agent` | Exact-section citation and related-filing comparison with a final-answer judge |
 
-The runners invoke the shipped `src/cli.ts` surface. The fixed tracks do not
-judge prose; the separate agent research workflow owns the explicit
+The runners default to `target/release/darty`. Set `DARTY_CLI` to the absolute
+path of an installed executable to evaluate that exact artifact. Rust owns
+argument validation; trace assertions read normalized `result.request` fields
+from successful CLI output. The fixed tracks do not judge prose; the separate agent research workflow owns the explicit
 final-answer rubric and judge rather than making answer quality an implied
 property of every runner.
 
@@ -32,7 +34,8 @@ property of every runner.
 
 ## Running
 
-Fixed evals do not require an OpenAI key:
+Build the local executable with `bun run build`, or set `DARTY_CLI` to an
+existing installed executable. Fixed evals do not require an OpenAI key:
 
 ```sh
 bun run eval:cli:search-body
@@ -62,9 +65,10 @@ opt-in manual/readiness check and is never a credential-free CI requirement.
 
 ## Gate policy
 
-Required branch CI runs the wire lock, TypeScript typecheck/tests/build, full
-CLI judge and mutation proof, and Rust checks. Candidate package acceptance
-is a local opt-in check under the [CI runner policy](../docs/release.md#ci-runner-policy).
+The deterministic gate covers the wire lock, Rust checks, tooling/Node facade
+typechecks and tests, CLI judge, mutation proof, and SDK consumer checks.
+[The release runbook](../docs/release.md) owns CI and artifact certification
+requirements; adapting these runners does not establish completed artifact checks.
 Live/model evals remain manual. Run the default-model agent eval and the
 research workflow eval before release-readiness signoff when changing CLI
 contracts, the eval harness, or answer-quality prompts. A passing workflow

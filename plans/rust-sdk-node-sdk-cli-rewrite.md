@@ -15,22 +15,21 @@ claim they have happened.
 
 ## Current state
 
-The published v0.6.0 CLI is Bun/TypeScript and implements all eight operations.
-[Standalone delivery](standalone-cli-delivery.md) is complete. The unpublished
-candidate now implements all eight operations through Rust and Node SDKs and
-the Rust CLI; TypeScript remains runnable as the comparison baseline. The native
-Node package is a current-host proof, not a supported distribution matrix.
+The published v0.6.0 CLI is Bun/TypeScript. Phase 3 completed through
+[PR #27](https://github.com/cpaikr/darty/pull/27), merged into the rewrite
+integration branch as `3c4ba7e`. All eight operations have Rust, Node, and CLI
+parity, fictional wire evidence, consumer checks, and explicit compatibility
+dispositions. Bounded live refresh on 2026-09-08 passed all six source-backed
+operations, including the repaired viewer; the
+[provider record](../docs/research/dart-provider-qualification.md) owns evidence
+and pending human approval.
 
-Phase 3 remains active pending final validation, review, and PR delivery. Viewer
-object rebinding, regex/no-TOC acceptance, and graph bounds are reconciled in the
-canonical companion and fictional fixtures. The new body/detail/RSS corpus and
-baseline-derived CLI projections cover the remaining operations; strict XML
-acceptance and the TypeScript missing-company error-wrapping defect have explicit
-contract dispositions. Bounded live refresh on 2026-09-08 exercised all six
-source-backed operations successfully through the release-built Rust CLI,
-including the previously failing viewer. The [provider record](../docs/research/dart-provider-qualification.md)
-owns results and pending human approval. Phase 4 artifact validation and atomic
-cutover have not started. [Architecture](../ARCHITECTURE.md) owns topology.
+Phase 4 is active: production Rust CLI/Node builds, the full CLI judge, and clean
+local artifact consumers pass. Bounded code review is complete. The TypeScript
+implementation and candidate npm launcher are removed in the unmerged atomic
+cutover. Linux cross-build CI evidence and final PR delivery remain in progress. Rust v0.6.1 is
+unpublished. [Architecture](../ARCHITECTURE.md) owns topology and
+[release.md](../docs/release.md) owns selected artifact contracts.
 
 ## Decisions and authority
 
@@ -171,8 +170,6 @@ owns their scheduling.
 
 ## Next action
 
-Finish Phase 3 transport/cancellation and packaged-consumer checks, wire lock,
-CLI/Node review, and documentation reconciliation; complete the parity PR
-lifecycle before starting Phase 4 artifact validation and repository cutover.
-Stop after repository completion and hand off the separate release gates
-without starting them.
+Finish Phase 4 build-only Linux CI evidence and the final sequential PR
+lifecycle. Stop after repository
+completion and hand off separate release gates without starting them.

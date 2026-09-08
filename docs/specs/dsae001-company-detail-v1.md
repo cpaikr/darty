@@ -17,7 +17,7 @@ Fetches the DART company overview detail fragment for one DART company code and 
 
 Unknown request fields are rejected.
 
-## Implemented TypeScript source behavior
+## Source behavior
 
 - `GET https://dart.fss.or.kr/dsae001/select.ax?selectKey={companyCode}`
 - Source surface: DART `dsae001`

@@ -37,7 +37,7 @@ describe("standalone release authority", () => {
   test("cross-builds from the target authority and certifies exact installed archives", () => {
     const standalone = read(".github/workflows/standalone.yml");
     expect(standalone).toContain('node scripts/standalone.mjs matrix "$TARGET_SCOPE"');
-    expect(standalone).toContain("needs: [build, consume]");
+    expect(standalone).toContain("needs: [build, consume, sdk]");
     expect(standalone).toContain("node scripts/standalone.mjs certify");
     expect(standalone).toContain("node scripts/standalone.mjs assemble");
     expect(standalone).not.toMatch(/npm install|bun run build/);

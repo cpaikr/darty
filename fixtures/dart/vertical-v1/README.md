@@ -24,9 +24,7 @@ Run:
 bun run check:dart-wire
 ```
 
-The shipped TypeScript product uses this corpus for selected parser and POST
-serializer conformance, but does not have a fixture transport seam. The
-retained Rust candidate consumes it through an injected transport for SDK,
+The Rust SDK consumes this corpus through an injected transport for SDK,
 CLI, `--agent`, and package acceptance checks. Fast injected deadline cases are
 transport-failure equivalents, not proof of production timing; Rust transport
 tests separately assert configured deadlines. Fixture-only features are not

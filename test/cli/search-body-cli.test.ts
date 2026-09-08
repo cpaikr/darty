@@ -5,7 +5,7 @@ const repoRoot = join(import.meta.dir, "..", "..");
 
 const runCli = (argv: readonly string[]) =>
   Bun.spawnSync({
-    cmd: [process.execPath, "run", "src/cli.ts", ...argv],
+    cmd: [process.env.DARTY_CLI ?? "./target/release/darty", ...argv],
     cwd: repoRoot,
     stdout: "pipe",
     stderr: "pipe",

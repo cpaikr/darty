@@ -1,6 +1,6 @@
 [package]
 name = "darty"
-description = "Read-only Rust SDK for the supported DART company-to-report workflow"
+description = "Read-only Rust SDK for DART querying and retrieval"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

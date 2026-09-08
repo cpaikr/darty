@@ -1,4 +1,4 @@
-import { parseSearchBodyCommandArgs } from "../../../src/cli/commands/search-body.ts";
+import { dartyExecutable } from "../../surfaces/cli/executable.ts";
 import { truncate } from "../../harness/tool-trace.ts";
 import type { AgentCliToolName, ToolCall, ToolExecution } from "./types.ts";
 
@@ -7,7 +7,6 @@ export type ParsedDartyCliInvocation =
   | {
       readonly kind: "search-body";
       readonly argv: readonly string[];
-      readonly options: Record<string, unknown>;
     };
 
 export type DartyCliValidation =
@@ -122,18 +121,7 @@ export const validateDartyCliArgv = (
     return { ok: true, parsed: { kind: "discovery", argv } };
   }
 
-  try {
-    const options = parseSearchBodyCommandArgs([...commandArgv]);
-    return {
-      ok: true,
-      parsed: { kind: "search-body", argv: commandArgv, options: options.request },
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      reason: `search-body arguments were rejected by the CLI parser: ${error instanceof Error ? error.message : String(error)}`,
-    };
-  }
+  return { ok: true, parsed: { kind: "search-body", argv: commandArgv } };
 };
 
 const createDartyCliEnv = (): Record<string, string> => {
@@ -191,7 +179,7 @@ const runDartyCli = async (
   }
 
   const proc = Bun.spawn({
-    cmd: [process.execPath, "run", "src/cli.ts", ...argv],
+    cmd: [dartyExecutable(repoRoot), ...argv],
     cwd: repoRoot,
     stdout: "pipe",
     stderr: "pipe",

@@ -17,19 +17,5 @@
       "recoveryHint": "If you only know a company name or 6-digit stock code, first use search-company to find the 8-digit companyCode, then call this operation again."
     }
   },
-  "baselineDisposition": "Project decision: fix the TypeScript Effect FiberFailure wrapping bug; the reviewed company-detail contract requires not_found for an empty recognized company detail table.",
-  "baselineValue": {
-    "result": null,
-    "metadata": {
-      "cliTransportVersion": "1"
-    },
-    "references": {},
-    "warnings": [],
-    "error": {
-      "code": "internal_error",
-      "message": "Unexpected internal error while fetching company details.",
-      "retryable": false,
-      "recoveryHint": "Report a Darty bug with the command input and diagnostics."
-    }
-  }
+  "baselineDisposition": "Project decision: fix the TypeScript Effect FiberFailure wrapping bug; the reviewed company-detail contract requires not_found for an empty recognized company detail table."
 }

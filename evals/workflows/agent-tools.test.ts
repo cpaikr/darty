@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -21,8 +21,10 @@ const toolCall = {
 const withFakeCli = async <T>(source: string, action: (repoRoot: string) => Promise<T>) => {
   const repoRoot = await mkdtemp(join(tmpdir(), "darty-agent-tools-"));
   try {
-    await mkdir(join(repoRoot, "src"));
-    await writeFile(join(repoRoot, "src/cli.ts"), source, "utf8");
+    await mkdir(join(repoRoot, "target/release"), { recursive: true });
+    const executable = join(repoRoot, "target/release/darty");
+    await writeFile(executable, `#!${process.execPath}\n${source}`, "utf8");
+    await chmod(executable, 0o755);
     return await action(repoRoot);
   } finally {
     await rm(repoRoot, { recursive: true, force: true });

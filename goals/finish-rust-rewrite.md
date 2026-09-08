@@ -26,15 +26,15 @@ _None._
 
 ### Completed included results
 
-_None._
+Phase 3 — full capability parity and refreshed source evidence; PR #27 merged into the integration branch as `3c4ba7e`.
 
 ### Current in-scope result
 
-Phase 3 — full capability parity and refreshed source evidence.
+Phase 4 — artifacts and atomic repository cutover.
 
 ### Next in-scope action
 
-Finish PR #27 feedback validation and merge it into the rewrite integration branch before Phase 4 artifact validation and cutover.
+Complete build-only Linux CI evidence and final cutover PR review/merge after local artifact checks and documentation reconciliation.
 
 ### Evidence and blockers
 
@@ -53,4 +53,11 @@ Finish PR #27 feedback validation and merge it into the rewrite integration bran
 - Bounded 2026-09-08 release CLI live refresh succeeds across all six source-backed operations, including repaired four-root TOC and section content; provider record retains pending human approval. No live response bodies retained.
 - Bounded SDK, CLI/Node, and integration reviews completed. Fixed strict input handling, body error hints, and baseline/standalone judge integration findings. Scoped documentation reconciliation completed. TypeScript installed archive passes 36 network-free process scenarios; release checks and mutation proof pass.
 - PR [#27](https://github.com/cpaikr/darty/pull/27) targets the rewrite integration branch at initial head `93c34b6`. Linux CI passed, including Rust 1.88 and installed Linux x64 archive certification. CodeRabbit and Codex completed their initial reviews; no manual retriggers.
-- Feedback fixes preserve field-specific Node validation, implement help aliases and bounded debug diagnostics, honor pretty unknown-command failures, correct all-dropped-page guidance, and enforce declared fixture assertions. Strict stock-code parsing and observed viewer provenance are retained with source evidence. Bounded follow-up review passed; packaged-consumer validation passed, including field-specific production validation, all help aliases, pretty errors, and bounded debug diagnostics. Push, replies, and merge remain. No publication or approval records created.
+- Feedback fixes preserve field-specific Node validation, implement help aliases and bounded debug diagnostics, honor pretty unknown-command failures, correct all-dropped-page guidance, and enforce declared fixture assertions. Strict stock-code parsing and observed viewer provenance are retained with source evidence. Bounded follow-up review passed; packaged-consumer validation passed, including field-specific production validation, all help aliases, pretty errors, and bounded debug diagnostics. Fix commit `dc4faa2` passed exact-commit CI run `34179554970`; all 13 threads are replied/resolved, and CodeRabbit accepted the fixes and withdrew both evidence-based findings. PR #27 merged as `3c4ba7e`. No publication or approval records created.
+
+- Phase 4 started on `codex/rust-artifact-cutover` from integration tip `3c4ba7e`. Existing candidate Node consumers have only demonstrated macOS ARM64; Linux CI currently tests Rust source, not packaged Node. Preserve this distinction until clean Linux consumers pass.
+
+- Phase 4 selected one private artifact line at v0.6.1: standalone Rust CLI on the existing four targets, Rust SDK crate, Node tarballs containing native addons for Linux GNU x64 and macOS ARM64. Rust 1.88, Node 22.12 minimum, GNU glibc 2.28. Linux-only CI policy retained; non-Linux cross-builds do not claim runtime certification.
+- Atomic cutover removes the TypeScript DART implementation, obsolete npm CLI launcher, migration-only conformer, and unused dependencies. Eval subprocesses now execute Rust; the wire lock binds the Rust integration conformer.
+- Local Phase 4 checks pass: 64 full CLI scenarios and mutation proof; 59 Bun harness/release/process tests; Rust workspace tests, Clippy, rustdoc, release panic containment, audit/deny; wire authority and typecheck; clean Rust crate consumer; packaged Node types, all operations, cancellation, and production-hook rejection. macOS exact CLI archive passes 36 network-free installed process scenarios and the live company→filings→TOC→section workflow. macOS native tarball passes a clean offline consumer.
+- Bounded artifact review and final cutover code review completed. Fixed addon format/architecture/type validation and documented concrete SDK installation/version contracts. Scoped documentation reconciliation completed; local links and documented commands validate. Linux build-only CI and the final sequential PR remain pending. Candidate final PR is included by Phase 4 and necessary for Delivery; no release tag or publication is authorized.

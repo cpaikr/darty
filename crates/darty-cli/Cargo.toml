@@ -1,6 +1,6 @@
 [package]
 name = "darty-cli"
-description = "Rust command-line candidate for the supported DART workflow"
+description = "Standalone command-line interface for the Darty Rust SDK"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -18,7 +18,7 @@ doc = false
 [dependencies]
 clap.workspace = true
 chrono.workspace = true
-darty = { path = "../darty", version = "0.5.0" }
+darty = { path = "../darty", version = "0.6.1" }
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

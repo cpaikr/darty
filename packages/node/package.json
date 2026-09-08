@@ -1,0 +1,24 @@
+{
+  "name": "@sjunepark/darty",
+  "version": "0.6.1",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": [
+    "LICENSE.md",
+    "index.js",
+    "index.d.ts",
+    "native.js",
+    "darty.node"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "license": "Elastic-2.0"
+}

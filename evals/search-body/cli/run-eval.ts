@@ -1,3 +1,4 @@
+import { dartyExecutable } from "../../surfaces/cli/executable.ts";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -12,7 +13,7 @@ const encoder = new TextEncoder();
 
 const runCli = (argv: readonly string[]) =>
   Bun.spawnSync({
-    cmd: [process.execPath, "run", "src/cli.ts", ...argv],
+    cmd: [dartyExecutable(repoRoot), ...argv],
     cwd: repoRoot,
     stdout: "pipe",
     stderr: "pipe",

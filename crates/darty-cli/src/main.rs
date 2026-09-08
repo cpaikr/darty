@@ -4,7 +4,10 @@ mod operations;
 use std::process::ExitCode;
 
 use chrono::{Months, NaiveDate};
-use clap::{Args, Parser, Subcommand, ValueEnum, error::ErrorKind};
+use clap::{
+    Args, Parser, Subcommand, ValueEnum,
+    error::{ContextKind, ContextValue, ErrorKind},
+};
 use darty::{
     DartyClient, DartyError, ErrorCode, OutputFormat, ResponseDetail, SearchCompanyReportsRequest,
     SearchCompanyRequest, SortDirection, ViewReportRequest, ViewReportResponse,
@@ -297,6 +300,10 @@ async fn main() -> ExitCode {
                 );
                 return ExitCode::FAILURE;
             }
+            if let Some(problem) = parser_value_failure(&error) {
+                write_failure(&problem, pretty, debug);
+                return ExitCode::FAILURE;
+            }
             let rendered_error = error.to_string();
             let message = rendered_error
                 .lines()
@@ -317,6 +324,53 @@ async fn main() -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+// Adapt structured parser failures to the existing CLI v1 contract.
+fn parser_value_failure(error: &clap::Error) -> Option<Value> {
+    if !matches!(
+        error.kind(),
+        ErrorKind::InvalidValue | ErrorKind::ValueValidation
+    ) {
+        return None;
+    }
+    let ContextValue::String(argument) = error.get(ContextKind::InvalidArg)? else {
+        return None;
+    };
+    let flag = argument.split_whitespace().next()?;
+    let parameter = match flag {
+        "--sort-by" => Some("sortBy"),
+        "--sort-direction" => Some("sortDirection"),
+        "--detail" => Some("detail"),
+        "--output-format" => Some("outputFormat"),
+        _ => None,
+    };
+    if let (Some(parameter), Some(ContextValue::Strings(values))) =
+        (parameter, error.get(ContextKind::ValidValue))
+    {
+        return Some(failure(
+            format!("Option \"{flag}\" must be one of: {}.", values.join(", ")),
+            Some(parameter),
+            "Run darty --help for options and examples.",
+        ));
+    }
+    let ContextValue::String(value) = error.get(ContextKind::InvalidValue)? else {
+        return None;
+    };
+    if matches!(
+        flag,
+        "--page" | "--page-size" | "--max-bytes" | "--content-start-byte" | "--toc-depth"
+    ) && value.parse::<i64>().is_err()
+    {
+        return Some(failure(
+            format!(
+                "error: option '{flag} <number>' argument '{value}' is invalid. Expected an integer but received \"{value}\"."
+            ),
+            None,
+            "Run darty --help for options and examples.",
+        ));
+    }
+    None
 }
 
 fn write_failure(value: &Value, pretty: bool, debug: bool) {

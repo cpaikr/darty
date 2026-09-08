@@ -46,7 +46,7 @@ Common detail codes include:
 | `J004` | 기업집단현황공시 | 공정위공시 |
 
 The complete canonical runtime catalog is
-`src/capabilities/disclosure-types/data.ts`. Its pinned
+[`crates/darty/resources/disclosure-types.json`](../../crates/darty/resources/disclosure-types.json). Its pinned
 `sjunepark/open-dart` GitHub URL is currently unavailable, so the retained
 table is local evidence rather than a reachable provenance claim. Repairing
 that implementation metadata is tracked in
