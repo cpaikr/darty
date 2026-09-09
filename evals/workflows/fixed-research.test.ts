@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, chmod, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-test("fixed comparison narrows an unrelated first page and scores two returned filings", async () => {
+test("fixed comparison narrows unrelated filings and intersects TOCs with different cover titles", async () => {
   const directory = await mkdtemp(join(tmpdir(), "darty-fixed-research-"));
   const executable = join(directory, "darty");
   try {
@@ -18,7 +18,7 @@ if(argv[0]==='search-company-reports') {
   {companyCode:'00126380',receiptNumber:'20251001000002',receiptDate:'2025-10-01',reportTitle:'분기보고서'}
  ]:[{companyCode:'00126380',receiptNumber:'20260102000003',receiptDate:'2026-01-02',reportTitle:'임원보유상황보고서'}]};
 }
-if(argv[0]==='view-report') result={receipt:{receiptNumber:option('--receipt')},document:{id:'document:body:1'},toc:[{id:'section:1',title:'I. 회사의 개요'}],...(argv.includes('--section-id')?{content:{scope:'section',section:{id:'section:1',title:'I. 회사의 개요'},body:'Fictional company overview.',window:{startByte:0,endByte:27,hasMore:false}}}:{})};
+if(argv[0]==='view-report') result={receipt:{receiptNumber:option('--receipt')},document:{id:'document:body:1'},toc:[{id:'section:1',title:option('--receipt')==='20260101000001'?'Annual cover':'Quarterly cover'},{id:'section:2',title:'I. 회사의 개요'}],...(argv.includes('--section-id')?{content:{scope:'section',section:{id:option('--section-id'),title:option('--section-id')==='section:2'?'I. 회사의 개요':'Unmatched cover'},body:'Fictional company overview.',window:{startByte:0,endByte:27,hasMore:false}}}:{})};
 console.log(JSON.stringify({result}));
 `);
     await chmod(executable, 0o755);
@@ -29,5 +29,6 @@ console.log(JSON.stringify({result}));
     expect(stdout).toContain("fixed exact-section-citation");
     expect(stdout).toContain("fixed related-filings-comparison");
     expect(stdout).toContain('"provenance":true,"membership":true');
+    expect(stdout).toContain('"sectionId":"section:2"');
   } finally { await rm(directory, { recursive: true, force: true }); }
 });

@@ -26,26 +26,33 @@ export const runFixedResearchChecks = async (repoRoot: string): Promise<void> =>
   if (companyCode === undefined) throw new Error("fixed research did not resolve the exact returned company name");
   const filings = await run(["search-company-reports", "--company-code", companyCode, "--start-date", "20250331", "--end-date", "20260331", "--disclosure-type", "A001", "--disclosure-type", "A002", "--disclosure-type", "A003", "--agent"]);
   const candidates = getArray(filings, "items")?.filter(isRecord).filter(item => /사업보고서|반기보고서|분기보고서/u.test(getString(item, "reportTitle") ?? "")).slice(0, 6) ?? [];
-  let first: { receipt: string; section: string; title: string } | undefined;
-  let second: { receipt: string; section: string; title: string } | undefined;
+  type Selection = { receipt: string; section: string; title: string };
+  const inspected: Selection[][] = [];
+  let pair: [Selection, Selection] | undefined;
   for (const filing of candidates) {
     const receipt = getString(filing, "receiptNumber");
-    if (receipt === undefined || receipt === first?.receipt) continue;
+    if (receipt === undefined || inspected.some(entries => entries[0]?.receipt === receipt)) continue;
     const result = await run(["view-report", "--receipt", receipt, "--toc-depth", "1"]);
-    const entries = getArray(result, "toc")?.filter(isRecord) ?? [];
-    const entry = entries.find(item => {
+    const entries = (getArray(result, "toc") ?? []).filter(isRecord).flatMap(item => {
+      const section = getString(item, "id");
       const title = getString(item, "title");
-      return getString(item, "id") !== undefined && title !== undefined &&
-        (first === undefined || normalizeWorkflowSectionTitle(title) === normalizeWorkflowSectionTitle(first.title));
+      return section === undefined || title === undefined ? [] : [{ receipt, section, title }];
     });
-    const section = getString(entry, "id");
-    const title = getString(entry, "title");
-    if (section === undefined || title === undefined) continue;
-    await run(["view-report", "--receipt", receipt, "--section-id", section, "--max-bytes", "2000"]);
-    if (first === undefined) first = { receipt, section, title };
-    else { second = { receipt, section, title }; break; }
+    for (const previous of inspected) {
+      for (const first of previous) {
+        const second = entries.find(entry => normalizeWorkflowSectionTitle(entry.title) === normalizeWorkflowSectionTitle(first.title));
+        if (second !== undefined) { pair = [first, second]; break; }
+      }
+      if (pair !== undefined) break;
+    }
+    if (pair !== undefined) break;
+    inspected.push(entries);
   }
-  if (first === undefined || second === undefined) throw new Error("fixed research lacked two distinct comparable sections in the first six periodic filing candidates");
+  if (pair === undefined) throw new Error("fixed research lacked two distinct comparable sections in the first six periodic filing candidates");
+  const [first, second] = pair;
+  for (const selected of pair) {
+    await run(["view-report", "--receipt", selected.receipt, "--section-id", selected.section, "--max-bytes", "2000"]);
+  }
   for (const scenario of agentWorkflowScenarios) {
     const selected = scenario.kind === "exact-section-citation" ? [first] : [first, second];
     const citations = selected.map(item => ({ receiptNumber: item.receipt, sectionId: item.section }));

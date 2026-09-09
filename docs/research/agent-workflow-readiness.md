@@ -36,6 +36,13 @@ a fictional subprocess regression covers a first page containing only unrelated
 filings. The earlier metadata remains retained; the complete batch is restarted
 under a new source identity.
 
+Batch `151cc93` also stopped before paid calls: the narrowed search returned four
+periodic filings, but the script anchored comparison to the annual report cover
+title, which differs from quarterly/semiannual covers. The diagnostic now
+intersects returned TOC titles before reading the pair. The fictional regression
+includes differing covers and a later shared section. This was a second fixed
+selection defect; both stopped batches remain separate from the model sample.
+
 ## Current disposition
 
 The CLI no longer recommends the first ambiguous company. Independent fictional
