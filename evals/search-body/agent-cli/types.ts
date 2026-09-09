@@ -13,6 +13,7 @@ export type ChatMessage = HarnessChatMessage<AgentCliToolName>;
 export type ToolExecution = HarnessToolExecution<AgentCliToolName>;
 
 export type ScenarioRunResult = {
+  readonly loop: import("../../harness/model-loop.ts").ModelLoopResult<AgentCliToolName>;
   readonly scenario: SearchBodyCliScenario;
   readonly pass: boolean;
   readonly reasons: readonly string[];

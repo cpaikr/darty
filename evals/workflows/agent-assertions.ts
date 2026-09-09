@@ -1,3 +1,4 @@
+import { modelToolView } from "../harness/tool-trace.ts";
 import type { ToolExecution } from "../harness/tool-trace.ts";
 import {
   getArray,
@@ -20,6 +21,7 @@ type ParsedWorkflowOperation = Extract<
 const samsungCompanyCode = "00126380";
 
 export type WorkflowFilingFact = {
+  readonly operationIndex?: number;
   readonly receiptNumber: string;
   readonly companyCode: string | undefined;
   readonly reportTitle: string | undefined;
@@ -27,12 +29,19 @@ export type WorkflowFilingFact = {
 };
 
 export type WorkflowTocFact = {
+  readonly documentId?: string;
   readonly receiptNumber: string;
   readonly sectionIds: readonly string[];
   readonly operationIndex: number;
 };
 
 export type WorkflowSectionCitation = {
+  readonly documentId?: string;
+  readonly contentWindow?: unknown;
+  readonly modelView?: unknown;
+  readonly references?: unknown;
+  readonly warnings?: unknown;
+  readonly limitations?: readonly string[];
   readonly receiptNumber: string;
   readonly sectionId: string;
   readonly sectionTitle: string;
@@ -114,7 +123,7 @@ const getInputArgv = (execution: ToolExecution): readonly string[] | undefined =
 
 const parseExecution = (
   execution: ToolExecution,
-): { readonly argv: readonly string[]; readonly parsed: ParsedWorkflowOperation; readonly envelope: JsonRecord } | undefined => {
+): { readonly argv: readonly string[]; readonly parsed: ParsedWorkflowOperation; readonly envelope: JsonRecord; readonly limitations: readonly string[] } | undefined => {
   const argv = getInputArgv(execution);
   if (argv === undefined || execution.exitCode !== 0) {
     return undefined;
@@ -125,12 +134,13 @@ const parseExecution = (
     return undefined;
   }
 
-  const envelope = parseJsonObject(execution.stdout);
+  const view = modelToolView(execution);
+  const envelope = parseJsonObject(view.stdout);
   if (envelope === undefined) {
     return undefined;
   }
 
-  return { argv, parsed: validation.parsed, envelope };
+  return { argv, parsed: validation.parsed, envelope, limitations: view.limitations };
 };
 
 const getAuthoritativeReceiptFromResult = (
@@ -182,7 +192,7 @@ const parseWorkflowDateKey = (
     : undefined;
 };
 
-const buildTraceFacts = (
+export const collectWorkflowFacts = (
   toolExecutions: readonly ToolExecution[],
   reasons: string[],
 ): WorkflowTraceFacts => {
@@ -198,11 +208,15 @@ const buildTraceFacts = (
   for (const [operationIndex, execution] of toolExecutions.entries()) {
     const parsedExecution = parseExecution(execution);
     if (parsedExecution === undefined) {
+      const argv = getInputArgv(execution);
+      const validation = argv === undefined ? undefined : validateWorkflowCliArgv(argv);
+      if (execution.exitCode === 0 && validation?.ok && validation.parsed.kind === "operation") reasons.push("malformed successful operation or unavailable model evidence");
       continue;
     }
 
     const { parsed, envelope } = parsedExecution;
     const result = getRecord(envelope, "result");
+    if (result === undefined) { reasons.push("successful operation missing result object"); continue; }
     addUnique(successfulOperations, parsed.operation);
 
     if (parsed.operation === "search-company") {
@@ -240,6 +254,7 @@ const buildTraceFacts = (
           continue;
         }
         filings.push({
+          operationIndex,
           receiptNumber,
           companyCode:
             getString(itemRecord, "companyCode") ??
@@ -264,15 +279,21 @@ const buildTraceFacts = (
     }
     addUnique(viewedReceipts, receiptNumber);
 
+    const documentId = getString(getRecord(result, "document"), "id");
+    if (documentId === undefined) { reasons.push("view-report missing authoritative document.id"); continue; }
     const toc = getArray(result, "toc");
     if (toc !== undefined) {
       const sectionIds = toc.flatMap((entry) => collectTocIds(entry));
       if (sectionIds.length > 0) {
-        tocs.push({ receiptNumber, sectionIds, operationIndex });
+        tocs.push({ receiptNumber, sectionIds, operationIndex, ...(documentId === undefined ? {} : { documentId }) });
       }
     }
 
     const content = getRecord(result, "content");
+    if (content === undefined) continue;
+    const scope = getString(content, "scope");
+    if (scope === "document") continue;
+    if (scope !== "section") { reasons.push("view-report content has missing or unknown scope"); continue; }
     const section = getRecord(content, "section");
     const sectionId = getString(section, "id");
     const sectionTitle = getString(section, "title");
@@ -295,7 +316,13 @@ const buildTraceFacts = (
         receiptNumber,
         sectionId,
         sectionTitle,
-        bodyExcerpt: body.slice(0, 1_200),
+        bodyExcerpt: body,
+        ...(documentId === undefined ? {} : { documentId }),
+        contentWindow: content.window,
+        modelView: content.modelView,
+        references: envelope.references,
+        warnings: envelope.warnings,
+        limitations: parsedExecution.limitations,
         operationIndex,
       });
     }
@@ -359,11 +386,12 @@ const assertCommonWorkflow = (
   } else {
     for (const reportSearch of facts.reportSearches) {
       if (
-        reportSearch.startDate !== scenario.startDate ||
-        reportSearch.endDate !== scenario.endDate
+        parseWorkflowDateKey(reportSearch.startDate, "compact") === undefined ||
+        parseWorkflowDateKey(reportSearch.endDate, "compact") === undefined ||
+        reportSearch.startDate! > reportSearch.endDate!
       ) {
         reasons.push(
-          `search-company-reports date range ${reportSearch.startDate ?? "<missing>"}–${reportSearch.endDate ?? "<missing>"} did not match required range ${scenario.startDate}–${scenario.endDate}`,
+          `search-company-reports date range ${reportSearch.startDate ?? "<missing>"}–${reportSearch.endDate ?? "<missing>"} is malformed or reversed; expected compact YYYYMMDD dates`,
         );
       }
     }
@@ -409,6 +437,7 @@ const everySectionUsesEarlierOwnToc = (facts: WorkflowTraceFacts): boolean =>
     facts.tocs.some(
       (toc) =>
         toc.receiptNumber === citation.receiptNumber &&
+        toc.documentId === citation.documentId &&
         toc.operationIndex < citation.operationIndex &&
         toc.sectionIds.includes(citation.sectionId),
     ),
@@ -465,9 +494,40 @@ const assertRelatedFilingsComparison = (
 export const evaluateWorkflowTrace = (
   scenario: AgentWorkflowScenario,
   toolExecutions: readonly ToolExecution[],
+  selected?: readonly { receiptNumber: string; sectionId: string }[],
 ): WorkflowTraceAssertion => {
   const reasons: string[] = [];
-  const facts = buildTraceFacts(toolExecutions, reasons);
+  const collected = collectWorkflowFacts(toolExecutions, reasons);
+  // Candidate results must agree with their own search, regardless of selection.
+  for (const filing of collected.filings) {
+    const search = collected.reportSearches.find(item => item.operationIndex === filing.operationIndex);
+    const date = parseWorkflowDateKey(filing.receiptDate, "iso");
+    if (!search || filing.companyCode !== search.companyCode || date === undefined ||
+        (search.startDate !== undefined && date < search.startDate) ||
+        (search.endDate !== undefined && date > search.endDate)) {
+      reasons.push(`filing ${filing.receiptNumber} contradicts its source request or lacks authoritative company/date`);
+    }
+  }
+  const sections = selected === undefined ? collected.sectionCitations : collected.sectionCitations.filter(section =>
+    selected.some(citation => citation.receiptNumber === section.receiptNumber && citation.sectionId === section.sectionId));
+  const selectedReceipts = new Set(sections.map(section => section.receiptNumber));
+  const facts = selected === undefined ? collected : {
+    ...collected, sectionCitations: sections,
+    filings: collected.filings.filter(filing => selectedReceipts.has(filing.receiptNumber)),
+    viewedReceipts: collected.viewedReceipts.filter(receipt => selectedReceipts.has(receipt)),
+  };
+  for (const section of sections) {
+    const ownTocs = collected.tocs.filter(toc => toc.receiptNumber === section.receiptNumber &&
+      toc.documentId === section.documentId && toc.operationIndex < section.operationIndex && toc.sectionIds.includes(section.sectionId));
+    if (ownTocs.some(toc => !collected.filings.some(filing => filing.receiptNumber === toc.receiptNumber &&
+        filing.operationIndex !== undefined && filing.operationIndex < toc.operationIndex))) {
+      reasons.push(`TOC ${section.receiptNumber} was not discovered in an earlier filing search`);
+    }
+    if (!collected.filings.some(filing => filing.receiptNumber === section.receiptNumber &&
+      filing.operationIndex !== undefined && filing.operationIndex < section.operationIndex)) {
+      reasons.push(`section ${section.receiptNumber} was not discovered in an earlier filing search`);
+    }
+  }
 
   if (toolExecutions.length === 0) {
     reasons.push("agent never called the structured local CLI runner");

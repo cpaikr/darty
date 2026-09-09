@@ -1,8 +1,7 @@
 # Evals
 
 Evals measure realistic task usefulness through the Rust CLI subprocess.
-Repository cutover is in progress and Rust remains unpublished;
-[the rewrite plan](../plans/rust-sdk-node-sdk-cli-rewrite.md) owns delivery status.
+Rust remains unpublished; [the roadmap](../ROADMAP.md) owns delivery status.
 Tests own deterministic contracts, parsers, SDK consumers, and CLI mechanics.
 
 ## Current tracks
@@ -19,7 +18,9 @@ path of an installed executable to evaluate that exact artifact. Rust owns
 argument validation; trace assertions read normalized `result.request` fields
 from successful CLI output. The fixed tracks do not judge prose; the separate agent research workflow owns the explicit
 final-answer rubric and judge rather than making answer quality an implied
-property of every runner.
+property of every runner. [Workflow scoring and diagnostics](workflows/README.md)
+define final-evidence selection, citation membership, bounded observed windows,
+and distinct loop/judge failure outcomes.
 
 ## Boundaries
 

@@ -9,31 +9,32 @@ invented identifiers, unsupported claims, and incomplete tasks still fail.
 
 ## Current state
 
-Scheduled, not implemented. Review baseline is `a40b82adc8ce0137ec82afc98c473b40bf94d363`.
-The Rust rewrite and the js-yaml audit fix are on main; v0.6.1 is unpublished.
-The existing workflow tests pass but omit the cases below.
+Implemented in [PR #33](https://github.com/cpaikr/darty/pull/33); final feedback
+delivery and CI are pending. Deterministic regressions
+reproduced six baseline false negatives before repair (help, Markdown emphasis,
+narrative receipts, and document fallback). The implementation now separates
+candidate integrity from selected evidence, preserves document-scoped provenance,
+shares model/judge windows, and records bounded execution and judge outcomes.
 
-Observed on 2026-09-09 with the installed candidate and `gpt-5.4-mini`:
-
-- Both original research runs used ten model responses and ended without a final
-  answer. One never viewed a report; the other selected two no-TOC documents.
-- The harness rejected `darty help`; the real CLI accepts it and `help view-report`.
-- A control adding only neutral `--help` onboarding obtained valid section
-  evidence in six model responses. Scoring rejected `section:4**` from a bold
-  Markdown citation. The answer judge did not run.
-- A direct six-call CLI control retrieved matching sections from two related
-  filings and passed the unchanged comparison trace check. These observations
-  establish harness defects and an available retrieval path, not a model success
-  rate or a completed release gate.
-
-The source paths and independent regressions below are sufficient to reproduce
-these issues in a fresh checkout; ignored live artifacts are optional diagnostics.
+The bounded independent code review found reverse-order citation misassociation
+and ignored malformed labelled identifiers. Both have focused passing
+regressions. Shared subprocess tests cover signal escalation, inherited stream
+closure, and exclusion of model credentials. Real release-built CLI help agrees
+with both wrappers across 18 allowed invocations. Typecheck, tooling tests, wire
+validation, and version agreement pass. Scoped eval documentation is reconciled.
+Codex completed its initial review without findings. CodeRabbit feedback is
+addressed with explicit invalid-response diagnostics, bounded empty-response
+recovery, precise skip/range messages, projection regressions, and preservation
+of ordinary narrative amounts. Its suggestions to discard unexpected tool calls
+and extract short allowlist branches were rejected with code evidence. The
+follow-up diff passed bounded independent review and 110 local tests.
+No hosted-model run has been performed for this slice; readiness remains unproven.
 
 ## Next action
 
-Reproduce the confirmed false negatives through the current runner and scoring
-entry points using fictional responses, then repair discovery and evidence
-scoring without changing the two user-task intents.
+Deliver this evaluation repair through its PR, complete feedback handling and
+required CI, and merge into `codex/repair-agent-workflow-integration` before
+starting the included guidance/readiness result.
 
 ## Target and ownership
 

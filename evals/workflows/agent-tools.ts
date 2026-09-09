@@ -1,5 +1,4 @@
-import { dartyExecutable } from "../surfaces/cli/executable.ts";
-import { truncate } from "../harness/tool-trace.ts";
+import { runCliProcess, type CliExecutionOptions } from "../harness/cli-process.ts";
 import type {
   WorkflowToolCall,
   WorkflowToolExecution,
@@ -23,15 +22,7 @@ export type WorkflowCliValidation =
   | { readonly ok: true; readonly parsed: ParsedWorkflowInvocation }
   | { readonly ok: false; readonly reason: string };
 
-const commandTimeoutMs = 45_000;
-const terminationGraceMs = 2_000;
-const streamGraceMs = 2_000;
-
-export type WorkflowToolExecutionOptions = {
-  readonly commandTimeoutMs?: number;
-  readonly terminationGraceMs?: number;
-  readonly streamGraceMs?: number;
-};
+export type WorkflowToolExecutionOptions = CliExecutionOptions;
 
 export const workflowAgentTools = [
   {
@@ -99,6 +90,10 @@ export const validateWorkflowCliArgv = (
     return { ok: true, parsed: { kind: "discovery", argv } };
   }
 
+  if (argv[0] === "help" && (argv.length === 1 || (argv.length === 2 && ["search-company", "search-company-reports", "view-report"].includes(argv[1]!)))) {
+    return { ok: true, parsed: { kind: "discovery", argv } };
+  }
+
   const commandName = argv[0];
   if (
     commandName !== "search-company" &&
@@ -147,59 +142,6 @@ const getStringArrayProperty = (
     : undefined;
 };
 
-const createDartyCliEnv = (): Record<string, string> => {
-  const env: Record<string, string> = {};
-
-  for (const key of [
-    "ALL_PROXY",
-    "APP_ENV",
-    "DARTY_LOG_LEVEL",
-    "HTTPS_PROXY",
-    "HTTP_PROXY",
-    "HOME",
-    "LANG",
-    "LC_ALL",
-    "NODE_ENV",
-    "NO_PROXY",
-    "PATH",
-    "SSL_CERT_FILE",
-    "TMPDIR",
-    "TMP",
-    "TEMP",
-  ]) {
-    const value = process.env[key];
-    if (value !== undefined) {
-      env[key] = value;
-    }
-  }
-
-  return env;
-};
-
-const collectStreamText = (stream: ReadableStream<Uint8Array>) => {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let text = "";
-  const result = (async () => {
-    try {
-      while (true) {
-        const chunk = await reader.read();
-        if (chunk.done) {
-          return text + decoder.decode();
-        }
-        text += decoder.decode(chunk.value, { stream: true });
-      }
-    } finally {
-      reader.releaseLock();
-    }
-  })();
-
-  return {
-    result,
-    cancel: (reason?: unknown) => reader.cancel(reason),
-  };
-};
-
 const runDartyCli = async (
   repoRoot: string,
   input: unknown,
@@ -227,79 +169,9 @@ const runDartyCli = async (
     };
   }
 
-  const proc = Bun.spawn({
-    cmd: [dartyExecutable(repoRoot), ...argv],
-    cwd: repoRoot,
-    stdout: "pipe",
-    stderr: "pipe",
-    env: createDartyCliEnv(),
-  });
+  return { toolName: "run_darty_cli", input, display: formatDartyDisplay(argv),
+    ...await runCliProcess(repoRoot, argv, options) };
 
-  const stdoutCollector = collectStreamText(proc.stdout);
-  const stderrCollector = collectStreamText(proc.stderr);
-
-  let timeout: Timer | undefined;
-  let timedOut = false;
-  const completedExitCode = await Promise.race([
-    proc.exited,
-    new Promise<number>((resolve) => {
-      timeout = setTimeout(() => {
-        timedOut = true;
-        proc.kill();
-        resolve(124);
-      }, options.commandTimeoutMs ?? commandTimeoutMs);
-    }),
-  ]);
-
-  if (timeout !== undefined) {
-    clearTimeout(timeout);
-  }
-
-  if (timedOut) {
-    const terminated = await Promise.race([
-      proc.exited.then(() => true),
-      Bun.sleep(options.terminationGraceMs ?? terminationGraceMs).then(() => false),
-    ]);
-    if (!terminated) {
-      proc.kill("SIGKILL");
-      await proc.exited;
-    }
-  }
-
-  const streamResults = Promise.all([
-    stdoutCollector.result,
-    stderrCollector.result,
-  ] as const);
-  let output: readonly [string, string];
-  if (timedOut) {
-    const boundedOutput = await Promise.race([
-      streamResults,
-      Bun.sleep(options.streamGraceMs ?? streamGraceMs).then(() => null),
-    ]);
-    if (boundedOutput === null) {
-      void stdoutCollector
-        .cancel("timed-out subprocess stdout remained open")
-        .catch(() => undefined);
-      void stderrCollector
-        .cancel("timed-out subprocess stderr remained open")
-        .catch(() => undefined);
-      output = await streamResults;
-    } else {
-      output = boundedOutput;
-    }
-  } else {
-    output = await streamResults;
-  }
-  const [stdout, stderr] = output;
-
-  return {
-    toolName: "run_darty_cli",
-    input,
-    display: formatDartyDisplay(argv),
-    exitCode: timedOut ? 124 : completedExitCode,
-    stdout: stdout.trim(),
-    stderr: truncate(stderr.trim(), 4_000),
-  };
 };
 
 export const executeWorkflowToolCall = async (

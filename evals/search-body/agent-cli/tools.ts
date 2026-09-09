@@ -1,4 +1,4 @@
-import { dartyExecutable } from "../../surfaces/cli/executable.ts";
+import { runCliProcess } from "../../harness/cli-process.ts";
 import type { AgentCliToolName, ToolCall, ToolExecution } from "./types.ts";
 
 export type ParsedDartyCliInvocation =
@@ -11,8 +11,6 @@ export type ParsedDartyCliInvocation =
 export type DartyCliValidation =
   | { readonly ok: true; readonly parsed: ParsedDartyCliInvocation }
   | { readonly ok: false; readonly reason: string };
-
-const commandTimeoutMs = 45_000;
 
 export const agentCliTools = [
   {
@@ -107,6 +105,10 @@ export const validateDartyCliArgv = (
     return { ok: true, parsed: { kind: "discovery", argv } };
   }
 
+  if (argv[0] === "help" && (argv.length === 1 || (argv.length === 2 && ["search-body"].includes(argv[1]!)))) {
+    return { ok: true, parsed: { kind: "discovery", argv } };
+  }
+
   const commandName = argv[0];
   if (commandName !== "search-body") {
     return {
@@ -121,34 +123,6 @@ export const validateDartyCliArgv = (
   }
 
   return { ok: true, parsed: { kind: "search-body", argv: commandArgv } };
-};
-
-const createDartyCliEnv = (): Record<string, string> => {
-  const env: Record<string, string> = {};
-
-  for (const key of [
-    "ALL_PROXY",
-    "APP_ENV",
-    "HTTPS_PROXY",
-    "HTTP_PROXY",
-    "HOME",
-    "LANG",
-    "LC_ALL",
-    "NODE_ENV",
-    "NO_PROXY",
-    "PATH",
-    "SSL_CERT_FILE",
-    "TMPDIR",
-    "TMP",
-    "TEMP",
-  ]) {
-    const value = process.env[key];
-    if (value !== undefined) {
-      env[key] = value;
-    }
-  }
-
-  return env;
 };
 
 const runDartyCli = async (
@@ -177,42 +151,9 @@ const runDartyCli = async (
     };
   }
 
-  const proc = Bun.spawn({
-    cmd: [dartyExecutable(repoRoot), ...argv],
-    cwd: repoRoot,
-    stdout: "pipe",
-    stderr: "pipe",
-    env: createDartyCliEnv(),
-  });
+  return { toolName: "run_darty_cli", input, display: formatDartyDisplay(argv),
+    ...await runCliProcess(repoRoot, argv) };
 
-  const stdoutPromise = new Response(proc.stdout).text();
-  const stderrPromise = new Response(proc.stderr).text();
-
-  let timeout: Timer | undefined;
-  const exitCode = await Promise.race([
-    proc.exited,
-    new Promise<number>((resolve) => {
-      timeout = setTimeout(() => {
-        proc.kill();
-        resolve(124);
-      }, commandTimeoutMs);
-    }),
-  ]);
-
-  if (timeout !== undefined) {
-    clearTimeout(timeout);
-  }
-
-  const [stdout, stderr] = await Promise.all([stdoutPromise, stderrPromise]);
-
-  return {
-    toolName: "run_darty_cli",
-    input,
-    display: formatDartyDisplay(argv),
-    exitCode,
-    stdout: stdout.trim(),
-    stderr: stderr.trim(),
-  };
 };
 
 export const executeAgentCliToolCall = async (

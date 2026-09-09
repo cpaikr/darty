@@ -138,6 +138,8 @@ export const fetchOpenAiChatCompletion = async (input: {
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 };
 
+export class ModelResponseError extends Error {}
+
 export const callOpenAi = async <ToolName extends string>(input: {
   readonly apiKey: string;
   readonly model: string;
@@ -161,38 +163,35 @@ export const callOpenAi = async <ToolName extends string>(input: {
     },
   });
 
-  const body: unknown = JSON.parse(bodyText);
+  let body: unknown;
+  try { body = JSON.parse(bodyText); }
+  catch { throw new ModelResponseError("OpenAI response was not valid JSON."); }
   if (!isRecord(body)) {
-    throw new Error("OpenAI response was not an object.");
+    throw new ModelResponseError("OpenAI response was not an object.");
   }
 
   const choices = body.choices;
   if (!Array.isArray(choices) || choices.length === 0 || !isRecord(choices[0])) {
-    throw new Error("OpenAI response did not include a choice.");
+    throw new ModelResponseError("OpenAI response did not include a choice.");
   }
 
   const message = choices[0].message;
   if (!isRecord(message)) {
-    throw new Error("OpenAI choice did not include a message.");
+    throw new ModelResponseError("OpenAI choice did not include a message.");
   }
 
   const content = typeof message.content === "string" ? message.content : "";
-  const toolCalls = Array.isArray(message.tool_calls)
-    ? message.tool_calls.filter((toolCall): toolCall is ToolCall<ToolName> => {
-        if (!isRecord(toolCall)) {
-          return false;
-        }
-        const candidateFunction = toolCall.function;
-        return (
-          typeof toolCall.id === "string" &&
-          toolCall.type === "function" &&
-          isRecord(candidateFunction) &&
-          typeof candidateFunction.name === "string" &&
-          input.toolNames.has(candidateFunction.name as ToolName) &&
-          typeof candidateFunction.arguments === "string"
-        );
-      })
-    : [];
-
+  if (message.tool_calls !== undefined && !Array.isArray(message.tool_calls)) {
+    throw new ModelResponseError("OpenAI response contained malformed tool calls.");
+  }
+  const toolCalls: ToolCall<ToolName>[] = [];
+  for (const toolCall of Array.isArray(message.tool_calls) ? message.tool_calls : []) {
+    if (!isRecord(toolCall) || typeof toolCall.id !== "string" || toolCall.type !== "function" ||
+        !isRecord(toolCall.function) || typeof toolCall.function.name !== "string" ||
+        !input.toolNames.has(toolCall.function.name as ToolName) || typeof toolCall.function.arguments !== "string") {
+      throw new ModelResponseError("OpenAI response contained a malformed or unavailable tool call.");
+    }
+    toolCalls.push(toolCall as unknown as ToolCall<ToolName>);
+  }
   return { content, toolCalls };
 };

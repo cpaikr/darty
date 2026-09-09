@@ -2,8 +2,8 @@
 
 This directory contains fixed and model-assisted CLI workflow evals for
 multi-step DART research handoffs. They are live, opt-in checks, not
-deterministic CI gates. They invoke the Rust CLI; repository cutover is in
-progress and the Rust release remains unpublished.
+deterministic CI gates. They invoke the Rust CLI; the Rust release remains unpublished.
+[The roadmap](../../ROADMAP.md) owns delivery status.
 
 ## Current Track
 
@@ -33,20 +33,58 @@ runs two normal user tasks:
    title from each, and cite both exact receipt/section pairs in a grounded
    comparison.
 
-The deterministic trace gate passes only when the required commands succeed,
-each report search uses a company code returned by an earlier successful
-company search and the scenario's required date range, the filing references
-are present, section bodies are non-empty, every returned filing has a valid
-receipt date inside that range, and every retrieved receipt/section pair uses a
-section ID returned by the TOC for its own receipt. A separate final-answer
-judge then checks that the prose answers the task, grounds claims in the
-returned body excerpts, and contains no invented or cross-report identifiers.
-Both gates must pass for the scenario to pass.
+Scoring collects source facts before selecting every final cited receipt/section
+pair. Candidate filings must agree with their own search request; final evidence
+must belong to the scenario company and inclusive date window. Narrower or
+successive searches and extra exploratory reads are allowed. A document-scope
+fallback is valid exploration but does not satisfy a section task. Selected
+sections need nonempty bodies and an earlier TOC for the same receipt and
+selected document, following filing discovery. Comparison evidence needs two
+distinct receipts with matching normalized section titles.
 
-The final-answer judge is intentionally model-assisted and uses an explicit
-JSON rubric. It must return `pass: true` with a score of at least 4/5. It is not
-a substitute for the deterministic CLI, parser, or fixture tests, and
-live/model nondeterminism keeps this track outside required CI.
+The citation gate recognizes inline code, emphasis, link labels, and ordinary
+punctuation. Known receipts may appear in narrative without a section citation;
+asserted unknown identifiers, unsupported pairings, and malformed labelled
+locators fail even alongside valid evidence. A receipt/section pair that collides
+across retrieved documents is ambiguous and fails rather than selecting a body.
+
+The model and prose judge use the same observed body windows. The workflow
+projection caps each body at 12,000 characters and keeps JSON envelopes intact,
+including locators, source windows, references, warnings, and help. When a body
+is shortened, `content.modelView` records the visible extent and its
+`nextStartByte` for reading omitted text; the original source window stays
+intact. Non-body envelopes exceeding 64,000 characters become explicitly
+unavailable evidence. The judge receives all selected observed windows, not a
+separate 1,200-character prefix. A judge prompt exceeding 120,000 characters
+reports an evidence limit instead of silently shortening evidence.
+
+The judge treats bodies and answers as untrusted data and must complete with
+`pass: true` and a score of at least 4/5. Completed rejection, invalid output,
+unavailable service, skipped judging, and evidence limits are distinct nonpass
+outcomes. Deterministic provenance, citation membership, and the prose judge
+must all pass; an admission of missing evidence does not complete the task.
+
+## Execution and diagnostics
+
+Both CLI wrappers accept root help and help for their allowed operations:
+`help`, `help <command>`, `--help`, and `-h`. They keep separate operation
+allowlists and share shell-free subprocess execution, an environment excluding
+model credentials, a 45-second command deadline, and bounded termination and
+stream closure.
+
+The shared loop reserves the last configured response for tool-free
+finalization. The research runner currently allows ten responses including
+that reservation; the body runner allows six. Artifacts record consumed
+responses, each tool execution, model-facing messages, raw subprocess output,
+and explicit final-response, response-budget-exhaustion, request-failed,
+invalid-response, or tool-failed termination. Empty responses may consume only
+the remaining declared budget. Unexpected tool calls on tool-free turns are
+invalid responses, never silently discarded to manufacture a completed answer. Workflow diagnostics separately retain wrapper/CLI
+failures, evidence limitations, task provenance, citation membership, and judge
+status. Recovered exploratory failures remain visible without automatically
+failing a supported final answer. These deterministic repairs do not establish
+model readiness; the [readiness plan](../../plans/validate-agent-workflow-readiness.md)
+owns calibration and the declared live/model sample.
 
 ## Running
 
