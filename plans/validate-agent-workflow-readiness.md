@@ -9,26 +9,17 @@ correctness from remaining model limitations for the release operator.
 
 ## Current state
 
-Active. [Trustworthy workflow evaluation](repair-workflow-evaluation.md) landed
-through PR #33 as `6582be9` with full CI and resolved feedback. Guidance, neutral onboarding, and body-free audit diagnostics are implemented
-locally with fictional CLI regressions and bounded review. Measurement remains
-pending; no new hosted-model results exist yet.
-
-At baseline `a40b82adc8ce0137ec82afc98c473b40bf94d363`, source-bound CI and the
-build-only candidate passed. Fixed live CLI workflows and all three body-agent
-scenarios passed. The repaired local OpenAI credential worked on 2026-09-09;
-credentials must be revalidated without displaying or committing them.
-
-In the baseline observations, the research model failed to finish both original tasks. An onboarding control
-completed section retrieval, but the comparison control read two sections from
-one filing. The direct CLI comparison succeeded. No SDK parsing or transport bug
-was demonstrated by these cases. The English company query returned unrelated
-DART candidates; the baseline CLI help nevertheless recommended the first candidate.
+Active: implementation and the declared sample are complete locally; final PR
+review, source-bound CI, and merge into the goal integration branch remain.
+The [readiness report](../docs/research/agent-workflow-readiness.md) records source
+`a25fc90`, all outcomes, corrected diagnostic defects, and the release hold.
+Fixed checks passed; body-agent 2/3 and research 1/6 passed. These results do not
+establish release signoff. PR #33 delivered evaluator repairs as `6582be9`.
 
 ## Next action
 
-Freeze the validated source, installed artifact, prompts, and declared protocol;
-execute the serial measurement batch and record every outcome before PR delivery.
+Deliver the guidance, declared evaluation, and evidence report through the final
+reviewed implementation PR. Preserve failed outcomes and unresolved release gates.
 
 ## CLI guidance and compatibility
 

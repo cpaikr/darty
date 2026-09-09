@@ -34,10 +34,12 @@ Ambiguous-company guidance, neutral onboarding, declared paid model evaluations,
 
 ### Next in-scope action
 
-Finish validation and freeze the reviewed neutral evaluation setup and artifact, then execute the declared serial measurement batch.
+Deliver the guidance and source-bound readiness report through the final implementation PR; then perform the terminal planning-only integration update.
 
 ### Evidence and blockers
 
 - Delivery integration branch: `codex/repair-agent-workflow-integration`, initialized from local `main` at `be9c8cf` (the supplied plans). Remote push succeeded; repository grants push/admin access. Implementation PRs land here, preserving individual commits; no promotion, release tagging, or publication is included.
 - PR #33 passed baseline reproductions, bounded independent review, scoped documentation harmonization, 110 local tests, and full source-bound CI. Codex completed without findings; all eight CodeRabbit items have accepted dispositions and resolved threads.
 - Candidate `codex/validate-agent-workflow-readiness` is included by the second named result. Its declared paid model sample is authorized by the contract's included source; operator approval, tagging, and publication remain excluded.
+
+- Current measurement: source `a25fc90`, production executable SHA-256 `109135f4f60371ba0862c91464c878806883e3e65859fb3220721bcd7e590a59`. Fixed body 3/3, original workflow, and deterministic exact/comparison paths passed. The declared model sample completed: body-agent 2/3 and research 1/6 passed; all outcomes are retained and the report preserves the release hold. Two earlier pre-model selection failures were fixed with fictional regression coverage; neither made paid calls.
