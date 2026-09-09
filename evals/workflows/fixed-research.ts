@@ -28,10 +28,14 @@ export const runFixedResearchChecks = async (repoRoot: string): Promise<void> =>
   const candidates = getArray(filings, "items")?.filter(isRecord).filter(item => /사업보고서|반기보고서|분기보고서/u.test(getString(item, "reportTitle") ?? "")).slice(0, 6) ?? [];
   type Selection = { receipt: string; section: string; title: string };
   const inspected: Selection[][] = [];
+  const inspectedReceipts = new Set<string>();
   let pair: [Selection, Selection] | undefined;
   for (const filing of candidates) {
     const receipt = getString(filing, "receiptNumber");
-    if (receipt === undefined || inspected.some(entries => entries[0]?.receipt === receipt)) continue;
+    if (receipt === undefined || inspectedReceipts.has(receipt)) continue;
+    inspectedReceipts.add(receipt);
+    // A successful no-TOC result permits another candidate. A real CLI/source
+    // failure must fail this diagnostic rather than disappear behind later success.
     const result = await run(["view-report", "--receipt", receipt, "--toc-depth", "1"]);
     const entries = (getArray(result, "toc") ?? []).filter(isRecord).flatMap(item => {
       const section = getString(item, "id");

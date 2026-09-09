@@ -34,7 +34,7 @@ Ambiguous-company guidance, neutral onboarding, declared paid model evaluations,
 
 ### Next in-scope action
 
-Deliver the guidance and source-bound readiness report through the final implementation PR; then perform the terminal planning-only integration update.
+Freeze PR #35 diagnostic feedback corrections and complete the required fresh declared batch, then finish PR delivery and the terminal planning-only integration update.
 
 ### Evidence and blockers
 
