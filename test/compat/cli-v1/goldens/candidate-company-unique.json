@@ -4,7 +4,7 @@
   "jsonFormat": "compact",
   "value": {
     "help": [
-      "Select the intended company by its returned companyName and companyCode; this result does not establish a unique candidate. Then search filings: darty search-company-reports --company-code <companyCode> --start-date YYYYMMDD --end-date YYYYMMDD --agent",
+      "If 가람전자 (00000001) is the intended company, search filings: darty search-company-reports --company-code 00000001 --start-date YYYYMMDD --end-date YYYYMMDD --agent",
       "Company-name queries follow DART's search behavior. A Korean registered name can help disambiguate; verify the returned identity. stockCode is not companyCode."
     ],
     "metadata": {
@@ -28,23 +28,16 @@
           "marketKind": "kospi",
           "marketLabel": "유가증권시장",
           "stockCode": "123456"
-        },
-        {
-          "companyCode": "00000002",
-          "companyName": "가람물류",
-          "detailEndpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000002",
-          "marketKind": "etc",
-          "marketLabel": "기타법인"
         }
       ],
       "pagination": {
         "currentPage": 1,
-        "returnedCount": 2,
-        "totalCount": 2,
+        "returnedCount": 1,
+        "totalCount": 1,
         "totalPages": 1
       },
       "request": {
-        "companyName": "가람",
+        "companyName": "고유회사",
         "page": 1,
         "pageSize": 15
       }

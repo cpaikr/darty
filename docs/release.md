@@ -69,6 +69,9 @@ chosen artifact and lockfile rather than infer SDK compatibility from CLI v1.
 
 ## Rust release handoff
 
+The [agent workflow evidence](research/agent-workflow-readiness.md) records the
+declared diagnostic sample; it does not waive any release gate below.
+
 The maintainer acting as release operator owns the remaining production decision:
 obtain a named approval in the
 [provider record](research/dart-provider-qualification.md#maintainer-approval-records),

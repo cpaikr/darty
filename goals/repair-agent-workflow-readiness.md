@@ -26,20 +26,22 @@ _None._
 
 ### Completed included results
 
-_None._
+- Trustworthy workflow evaluation delivered through [PR #33](https://github.com/cpaikr/darty/pull/33), merged as `6582be9`; implementation `feee209` and feedback `d4ab47c` retained. Full [CI 34314243238](https://github.com/cpaikr/darty/actions/runs/34314243238) passed; all review threads resolved.
 
 ### Current in-scope result
 
-Trustworthy discovery, evidence scoring, citations, bounded execution, and judging.
+Ambiguous-company guidance, neutral onboarding, declared paid model evaluations, and readiness evidence.
 
 ### Next in-scope action
 
-Deliver the evaluation repair PR into `codex/repair-agent-workflow-integration`, handle feedback, and pass required CI before starting CLI guidance/readiness.
+Finish PR #35 exact-head CI and merge, then perform the terminal planning-only integration update.
 
 ### Evidence and blockers
 
 - Delivery integration branch: `codex/repair-agent-workflow-integration`, initialized from local `main` at `be9c8cf` (the supplied plans). Remote push succeeded; repository grants push/admin access. Implementation PRs land here, preserving individual commits; no promotion, release tagging, or publication is included.
-- Candidate evaluation repair is included by the first named semantic result. Repository validation and bounded review are necessary completion work.
-- Evaluation repair implemented with baseline reproductions, bounded independent review and fixes, scoped documentation harmonization, passing local tests/typecheck/wire/version checks, and 18 real CLI help comparisons. Candidate PR is included by the first result; no model readiness or release claim is made.
+- PR #33 passed baseline reproductions, bounded independent review, scoped documentation harmonization, 110 local tests, and full source-bound CI. Codex completed without findings; all eight CodeRabbit items have accepted dispositions and resolved threads.
+- Candidate `codex/validate-agent-workflow-readiness` is included by the second named result. Its declared paid model sample is authorized by the contract's included source; operator approval, tagging, and publication remain excluded.
 
-- PR #33 (`codex/repair-workflow-evaluation`) is the first included slice. Initial Codex review completed without findings; CodeRabbit items have verified dispositions and follow-up regressions. Final push, refreshed feedback, and exact-head CI remain before merge.
+- Baseline measurement: source `a25fc90`, production executable SHA-256 `109135f4f60371ba0862c91464c878806883e3e65859fb3220721bcd7e590a59`. Fixed body 3/3, original workflow, and deterministic exact/comparison paths passed. The declared model sample completed: body-agent 2/3 and research 1/6 passed; all outcomes are retained and the report preserves the release hold. Two earlier pre-model selection failures were fixed with fictional regression coverage; neither made paid calls.
+
+- PR #35 feedback: all three threads resolved after `0a92e39`; actual source-error fail-fast behavior was verified and the contrary suggestion withdrawn. Required fresh batch completed with body 3/3 and research 2/6; baseline body 2/3 and research 1/6 retained. Both fixed batches pass. Report and release hold updated; no additional experiments remain.

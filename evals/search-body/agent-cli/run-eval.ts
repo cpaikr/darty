@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 
 import { createEvalArtifactWriter } from "../../harness/artifacts.ts";
-import { printFailedExecutions, printFinalAnswer } from "../../harness/reporter.ts";
+import { auditLoopResult } from "../../harness/audit-result.ts";
 import { runAgentCliScenario } from "./scenario-runner.ts";
 import { searchBodyCliScenarios } from "../shared/cli-scenarios.ts";
 
@@ -32,7 +32,7 @@ for (const scenario of searchBodyCliScenarios) {
   const artifactPath = await artifacts.writeScenario(scenario.id, {
     suite: "search-body-agent-cli",
     model,
-    result,
+    result: auditLoopResult(result),
   });
 
   if (result.pass) {
@@ -41,9 +41,8 @@ for (const scenario of searchBodyCliScenarios) {
   }
 
   failed += 1;
-  console.error(`✗ ${scenario.id}: ${result.reasons.join("; ")} (${artifactPath})`);
-  printFailedExecutions(result.toolExecutions);
-  printFinalAnswer(result.finalAnswer);
+  console.error(`✗ ${scenario.id}: ${JSON.stringify(auditLoopResult(result))} (${artifactPath})`);
+
 }
 
 if (failed > 0) {

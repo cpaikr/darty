@@ -9,25 +9,19 @@ correctness from remaining model limitations for the release operator.
 
 ## Current state
 
-Scheduled, not implemented. Requires the outcome of
-[trustworthy workflow evaluation](repair-workflow-evaluation.md).
-
-At baseline `a40b82adc8ce0137ec82afc98c473b40bf94d363`, source-bound CI and the
-build-only candidate passed. Fixed live CLI workflows and all three body-agent
-scenarios passed. The repaired local OpenAI credential worked on 2026-09-09;
-credentials must be revalidated without displaying or committing them.
-
-The research model failed to finish both original tasks. An onboarding control
-completed section retrieval, but the comparison control read two sections from
-one filing. The direct CLI comparison succeeded. No SDK parsing or transport bug
-was demonstrated by these cases. The English company query returned unrelated
-DART candidates; current CLI help nevertheless recommends the first candidate.
+Active: implementation, PR #35 feedback, and both required complete batches
+are finished locally. All three review threads are resolved; source-bound CI and
+merge into the goal integration branch remain. The
+[readiness report](../docs/research/agent-workflow-readiness.md) retains all results:
+baseline `a25fc90` body 2/3 and research 1/6; post-review `0a92e39` body 3/3 and
+research 2/6. Fixed checks pass in both; release readiness remains on hold.
+PR #33 delivered evaluator repairs as `6582be9`.
 
 ## Next action
 
-After evaluator repairs land, reproduce ambiguous-company guidance with
-fictional source responses, correct the hint policy, and establish neutral
-workflow onboarding and a fixed evaluation protocol before any paid run.
+Finish PR #35's exact-head CI and merge, preserving all failed model outcomes and
+unresolved release gates. Then complete goal/project planning metadata on the
+integration branch without starting excluded release work.
 
 ## CLI guidance and compatibility
 

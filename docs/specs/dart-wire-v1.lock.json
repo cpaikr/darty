@@ -17,11 +17,11 @@
     },
     {
       "path": "fixtures/dart/vertical-v1/manifest.json",
-      "sha256": "6b2eb95ca16a6a165517331c6abab1a48ce1a1efa1f484b0b2a6b51e2896ccc2"
+      "sha256": "7f2b045f23a4654bc3b4df0a76da45d112d3f65b3ce09052aecd5fb9710fd063"
     },
     {
       "path": "scripts/check-dart-wire.mjs",
-      "sha256": "8e87c3c439ead9fe98e2c8f34660f53be33ce1ed40dfbd396ede01f17ed3d29e"
+      "sha256": "30bf8ffb62ee3d39bb8b012223a5459297a28c7bf2caa71f77d7c875e33641fe"
     },
     {
       "path": "crates/darty/tests/vertical_workflow.rs",

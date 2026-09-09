@@ -429,6 +429,135 @@
         "kind": "fictional",
         "containsLiveResponseData": false
       }
+    },
+    {
+      "id": "company-unique",
+      "operationId": "searchCompanyFragment",
+      "rules": [
+        "COMPANY-TABLE-1",
+        "COMPANY-ROW-1",
+        "COMPANY-PAGE-1"
+      ],
+      "request": {
+        "matchRequestFrom": "company-populated",
+        "formOverrides": {
+          "textCrpNm": "고유회사"
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-unique.utf8.html",
+        "sha256": "2e38a17481a711049b596f16619228ac75f5a8b6d7b9c8640e1636658d007746"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-search",
+        "rows": 1,
+        "droppedRows": 0,
+        "pagination": {
+          "currentPage": 1,
+          "totalPages": 1,
+          "totalCount": 1,
+          "returnedCount": 1
+        },
+        "first": {
+          "companyCode": "00000001",
+          "companyName": "가람전자",
+          "stockCode": "123456",
+          "marketKind": "kospi"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "company-paginated",
+      "operationId": "searchCompanyFragment",
+      "rules": [
+        "COMPANY-TABLE-1",
+        "COMPANY-ROW-1",
+        "COMPANY-PAGE-1"
+      ],
+      "request": {
+        "matchRequestFrom": "company-populated",
+        "formOverrides": {
+          "textCrpNm": "다음회사"
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-paginated.utf8.html",
+        "sha256": "a406fbe0f3558ff0251a4f7884ed286a721005ec8a53652b96b28d114efa68a2"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-search",
+        "rows": 1,
+        "droppedRows": 0,
+        "pagination": {
+          "currentPage": 1,
+          "totalPages": 2,
+          "totalCount": 16,
+          "returnedCount": 1
+        },
+        "first": {
+          "companyCode": "00000001",
+          "companyName": "가람전자",
+          "stockCode": "123456",
+          "marketKind": "kospi"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
+    },
+    {
+      "id": "company-misleading-first",
+      "operationId": "searchCompanyFragment",
+      "rules": [
+        "COMPANY-TABLE-1",
+        "COMPANY-ROW-1",
+        "COMPANY-PAGE-1"
+      ],
+      "request": {
+        "matchRequestFrom": "company-populated",
+        "formOverrides": {
+          "textCrpNm": "가람물류"
+        }
+      },
+      "response": {
+        "status": 200,
+        "contentType": "text/html; charset=UTF-8",
+        "bodyPath": "bodies/company-misleading-first.utf8.html",
+        "sha256": "02aa1d81703e40d5383bc74c4ed1f44dbf3486c9b418b1a653df5bee5e8b9007"
+      },
+      "expected": {
+        "kind": "success",
+        "parser": "company-search",
+        "rows": 2,
+        "droppedRows": 0,
+        "pagination": {
+          "currentPage": 1,
+          "totalPages": 1,
+          "totalCount": 2,
+          "returnedCount": 2
+        },
+        "first": {
+          "companyCode": "00000001",
+          "companyName": "가람전자",
+          "stockCode": "123456",
+          "marketKind": "kospi"
+        }
+      },
+      "provenance": {
+        "kind": "fictional",
+        "containsLiveResponseData": false
+      }
     }
   ],
   "faults": [
