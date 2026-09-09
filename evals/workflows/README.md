@@ -16,6 +16,13 @@ deterministic CI gates. They invoke the Rust CLI; the Rust release remains unpub
 3. `view-report --toc-depth 1` opens the filing table of contents.
 4. `view-report --section-id ... --max-bytes 2000` retrieves one section window.
 
+It then runs deterministic same-report citation and two-report comparison
+checks through the research wrapper and its provenance/citation scorers. The
+script selects the exact returned Korean company name, inspects at most six
+returned periodic filings, and reads the first shared top-level section title
+from two distinct receipts. This diagnostic strategy is not model onboarding
+and does not judge prose.
+
 The eval asserts objective handoff facts: company code, receipt number, TOC
 section ID, returned section body, `content.window.hasMore`, contextual
 `help[]`, and output-size metrics for each step.
@@ -73,10 +80,23 @@ model credentials, a 45-second command deadline, and bounded termination and
 stream closure.
 
 The shared loop reserves the last configured response for tool-free
-finalization. The research runner currently allows ten responses including
-that reservation; the body runner allows six. Artifacts record consumed
-responses, each tool execution, model-facing messages, raw subprocess output,
-and explicit final-response, response-budget-exhaustion, request-failed,
+finalization. The research runner allows 18 responses including that reservation;
+the body runner allows six. The 17 research discovery/evidence responses cover
+root and three command-help reads (4), company resolution with one language
+recovery (2), filing searches (2), two TOC/section paths (4), bounded alternative
+filing recovery (3), and content continuation (2). This is a capacity rationale,
+not a forced call sequence. Neutral onboarding asks the model to inspect help,
+verify returned company identity, select distinct relevant filings, and recover
+from a no-TOC filing when sections are required. It supplies no task-specific
+identifiers or answers.
+
+The in-memory result contains model-facing messages and raw subprocess output.
+Persisted artifacts contain only public identifiers, request dates, byte windows,
+fingerprints, response/tool counts, structured diagnostic categories, gate
+results, and judge status/score. Live bodies and free-form model, judge, or
+provider text are not written to artifacts or failure logs, following the
+[provider retention policy](../../docs/research/dart-provider-qualification.md#retention).
+Artifacts distinguish explicit final-response, response-budget-exhaustion, request-failed,
 invalid-response, or tool-failed termination. Empty responses may consume only
 the remaining declared budget. Unexpected tool calls on tool-free turns are
 invalid responses, never silently discarded to manufacture a completed answer. Workflow diagnostics separately retain wrapper/CLI

@@ -17,7 +17,9 @@ import type {
   WorkflowToolName,
 } from "./agent-types.ts";
 
-const workflowSystemPrompt = `You are an assistant with access to a local darty CLI runner. Use run_darty_cli for every live DART lookup. Follow references returned by earlier calls: resolve the company code, select filing receiptNumbers from search results, fetch each report's TOC, and use only section IDs returned by that report's TOC. Do not guess identifiers, URLs, or filing facts. After the evidence is sufficient, answer the user's research request and include exact receiptNumber + sectionId citations.`;
+// 17 evidence/discovery responses plus one reserved, tool-free final response.
+export const workflowMaxResponses = 18;
+export const workflowSystemPrompt = `You are an assistant with access to a local darty CLI runner. Use run_darty_cli for every live DART lookup. Inspect root or command help before guessing unfamiliar syntax. Choose the intended company by its returned identity, and choose distinct relevant filings when comparison requires them. Follow returned references and use only section IDs returned by the same report's TOC. If a filing has no TOC and the task requires sections, select another relevant returned filing. Do not guess identifiers, URLs, or filing facts. Once evidence is sufficient, answer concisely with exact receiptNumber + sectionId citations, pairing each section with its own report.`;
 
 export const runAgentWorkflowScenario = async (input: {
   readonly scenario: AgentWorkflowScenario;
@@ -33,7 +35,7 @@ export const runAgentWorkflowScenario = async (input: {
     userPrompt: input.scenario.task,
     tools: workflowAgentTools,
     toolNames: new Set(["run_darty_cli"]),
-    maxTurns: 10,
+    maxTurns: workflowMaxResponses,
     executeToolCall: (toolCall) => executeWorkflowToolCall(input.repoRoot, toolCall),
     toToolMessageContent: toWorkflowToolMessageContent,
   });

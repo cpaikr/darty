@@ -1,3 +1,4 @@
+import { runFixedResearchChecks } from "./fixed-research.ts";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -42,20 +43,7 @@ const formatFailedStep = (
   stdout: string,
   stderr: string,
 ): string => {
-  const details = [`${name} exited with ${exitCode}.`];
-
-  if (stdout.length > 0) {
-    try {
-      details.push(`stdoutJson=${JSON.stringify(parseJsonObject(stdout))}`);
-    } catch {
-      details.push(`stdout=${stdout}`);
-    }
-  } else {
-    details.push("stdout=<empty>");
-  }
-
-  details.push(`stderr=${stderr || "<empty>"}`);
-  return details.join(" ");
+  return `${name} exited with ${exitCode}; stdoutBytes=${encoder.encode(stdout).byteLength}, stderrBytes=${encoder.encode(stderr).byteLength}.`;
 };
 
 const runStep = (name: string, argv: readonly string[]): JsonRecord => {
@@ -272,3 +260,5 @@ if (reasons.length > 0) {
 } else {
   console.log("\nWorkflow CLI eval passed.");
 }
+
+await runFixedResearchChecks(repoRoot);

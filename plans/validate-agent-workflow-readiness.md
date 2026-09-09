@@ -9,25 +9,26 @@ correctness from remaining model limitations for the release operator.
 
 ## Current state
 
-Scheduled, not implemented. Requires the outcome of
-[trustworthy workflow evaluation](repair-workflow-evaluation.md).
+Active. [Trustworthy workflow evaluation](repair-workflow-evaluation.md) landed
+through PR #33 as `6582be9` with full CI and resolved feedback. Guidance, neutral onboarding, and body-free audit diagnostics are implemented
+locally with fictional CLI regressions and bounded review. Measurement remains
+pending; no new hosted-model results exist yet.
 
 At baseline `a40b82adc8ce0137ec82afc98c473b40bf94d363`, source-bound CI and the
 build-only candidate passed. Fixed live CLI workflows and all three body-agent
 scenarios passed. The repaired local OpenAI credential worked on 2026-09-09;
 credentials must be revalidated without displaying or committing them.
 
-The research model failed to finish both original tasks. An onboarding control
+In the baseline observations, the research model failed to finish both original tasks. An onboarding control
 completed section retrieval, but the comparison control read two sections from
 one filing. The direct CLI comparison succeeded. No SDK parsing or transport bug
 was demonstrated by these cases. The English company query returned unrelated
-DART candidates; current CLI help nevertheless recommends the first candidate.
+DART candidates; the baseline CLI help nevertheless recommended the first candidate.
 
 ## Next action
 
-After evaluator repairs land, reproduce ambiguous-company guidance with
-fictional source responses, correct the hint policy, and establish neutral
-workflow onboarding and a fixed evaluation protocol before any paid run.
+Freeze the validated source, installed artifact, prompts, and declared protocol;
+execute the serial measurement batch and record every outcome before PR delivery.
 
 ## CLI guidance and compatibility
 

@@ -2,11 +2,11 @@
 
 ## Current
 
-[Make workflow evaluation trustworthy](plans/repair-workflow-evaluation.md)
+[Improve CLI guidance and establish workflow readiness evidence](plans/validate-agent-workflow-readiness.md)
 
 ## Plans
 
-1. [Improve CLI guidance and establish workflow readiness evidence](plans/validate-agent-workflow-readiness.md)
+_None._
 
 ## Tasks
 

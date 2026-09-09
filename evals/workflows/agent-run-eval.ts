@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 
 import { createEvalArtifactWriter } from "../harness/artifacts.ts";
-import { printFailedExecutions, printFinalAnswer } from "../harness/reporter.ts";
+import { auditWorkflowResult } from "../harness/audit-result.ts";
 import { agentWorkflowScenarios } from "./agent-scenarios.ts";
 import { runAgentWorkflowScenario } from "./agent-scenario-runner.ts";
 
@@ -37,7 +37,7 @@ for (const scenario of agentWorkflowScenarios) {
       suite: "workflow-agent",
       model,
       judgeModel,
-      result,
+      result: auditWorkflowResult(result),
     });
 
     if (result.pass) {
@@ -46,12 +46,11 @@ for (const scenario of agentWorkflowScenarios) {
     }
 
     failed += 1;
-    console.error(`✗ ${scenario.id}: ${result.reasons.join("; ")} (${artifactPath})`);
-    printFailedExecutions(result.toolExecutions);
-    printFinalAnswer(result.finalAnswer);
+    console.error(`✗ ${scenario.id}: ${JSON.stringify(auditWorkflowResult(result))} (${artifactPath})`);
+
   } catch (error) {
     failed += 1;
-    const message = error instanceof Error ? error.message : String(error);
+    const message = "scenario-execution-exception";
     const artifactPath = await artifacts.writeScenario(scenario.id, {
       suite: "workflow-agent",
       model,

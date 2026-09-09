@@ -46,7 +46,8 @@ bounded model loop to produce a final response. The six-response budget reserves
 its last response for tool-free finalization; artifacts retain termination and
 response/tool counts. This does not grade the final prose. Detailed stdout envelope correctness belongs to the fixed-command CLI eval. Final-answer quality is evaluated separately by the opt-in research workflow track in [`../workflows/`](../workflows/README.md).
 
-Set `OPENAI_MODEL` to select the model.
+Set `OPENAI_MODEL` to select the model (default `gpt-5.4-mini`).
+Persisted diagnostics follow the [shared retention boundary](../README.md#gate-policy).
 
 ## Scenario Shape
 

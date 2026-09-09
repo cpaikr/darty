@@ -32,6 +32,7 @@ const expectedOperations = new Map([
   ["fetchCompanyRss", { method: "GET", path: "/api/companyRSS.xml" }],
 ]);
 const expectedCaseIds = [
+  "company-unique", "company-paginated", "company-misleading-first",
   "company-populated",
   "company-empty",
   "company-partial",

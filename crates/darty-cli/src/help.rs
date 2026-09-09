@@ -1,6 +1,6 @@
 pub const COMPANY_ABOUT: &str = "Search companies through DART 기업개황 `회사별` mode and return DART 8-digit company codes plus 6-digit stock codes when present.";
 
-pub const COMPANY_AFTER: &str = "Examples:\n  # Find an 8-digit DART company code by company name.\n  darty search-company --company-name 삼성전자\n\n  # Fetch the next page for a broad company-name search.\n  darty search-company --company-name 삼성 --page 2 --page-size 20\n\nNotes:\n  - companyCode is DART's 8-digit company identifier embedded in company links such as select('00126380').\n  - stockCode is a 6-digit listed-company stock code shown only for listed companies; it is not the DART company code.";
+pub const COMPANY_AFTER: &str = "Examples:\n  # Find an 8-digit DART company code by company name.\n  darty search-company --company-name 삼성전자\n\n  # Fetch the next page for a broad company-name search.\n  darty search-company --company-name 삼성 --page 2 --page-size 20\n\nNotes:\n  - companyCode is DART's 8-digit company identifier embedded in company links such as select('00126380').\n  - stockCode is a 6-digit listed-company stock code shown only for listed companies; it is not the DART company code.\n  - Company-name queries follow DART's search behavior. A Korean registered name can help disambiguate; verify the returned companyName and companyCode before selecting a company.";
 
 pub const REPORTS_ABOUT: &str = "Return company-specific DART filings for an 8-digit DART company code. This operation does not resolve company names; use search-company first when you need companyCode lookup.";
 

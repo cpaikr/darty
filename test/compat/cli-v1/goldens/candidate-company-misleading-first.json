@@ -9,18 +9,11 @@
     ],
     "metadata": {
       "completeness": "complete",
-      "droppedItemCount": 0,
-      "fetchedAt": "2026-08-22T00:00:00.000Z",
+      "output": "agent",
       "source": {
         "endpoint": "https://dart.fss.or.kr/dsae001/search.ax",
         "surface": "dsae001",
         "system": "dart"
-      },
-      "sourceBehavior": {
-        "callerControlsPageSize": true,
-        "maxObservedPageSize": 45,
-        "observationStatus": "observed",
-        "searchMode": "company"
       }
     },
     "references": {
@@ -31,21 +24,17 @@
         {
           "companyCode": "00000001",
           "companyName": "가람전자",
+          "detailEndpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000001",
           "marketKind": "kospi",
           "marketLabel": "유가증권시장",
-          "references": {
-            "detailEndpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000001"
-          },
           "stockCode": "123456"
         },
         {
           "companyCode": "00000002",
           "companyName": "가람물류",
+          "detailEndpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000002",
           "marketKind": "etc",
-          "marketLabel": "기타법인",
-          "references": {
-            "detailEndpoint": "https://dart.fss.or.kr/dsae001/select.ax?selectKey=00000002"
-          }
+          "marketLabel": "기타법인"
         }
       ],
       "pagination": {
@@ -55,7 +44,7 @@
         "totalPages": 1
       },
       "request": {
-        "companyName": "가람",
+        "companyName": "가람물류",
         "page": 1,
         "pageSize": 15
       }

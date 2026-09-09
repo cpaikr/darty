@@ -31,12 +31,23 @@ if (readyPath === undefined) {
 
 const enabledCases = new Set([
   "company-populated",
+  "company-unique", "company-paginated", "company-misleading-first",
+  "company-empty", "company-partial",
   "reports-populated",
   "report-shell-toc",
   "report-shell-rebound",
   "report-content-utf8",
 ]);
-const cases = [...manifest.cases.filter((fixtureCase) => enabledCases.has(fixtureCase.id)).map((entry) => ({ ...entry, root: fixtureRoot })), ...parityManifest.cases.map((entry) => ({ ...entry, root: parityRoot }))];
+const resolveRequest = (entry, ancestors = []) => {
+  const request = entry.request;
+  if (request.matchRequestFrom === undefined) return request;
+  if (ancestors.includes(entry.id)) throw new Error(`Fixture request cycle: ${entry.id}`);
+  const base = manifest.cases.find(candidate => candidate.id === request.matchRequestFrom);
+  if (base === undefined) throw new Error(`Missing fixture request: ${request.matchRequestFrom}`);
+  const resolved = resolveRequest(base, [...ancestors, entry.id]);
+  return { ...resolved, form: { ...resolved.form, ...request.formOverrides }, query: { ...resolved.query, ...request.queryOverrides } };
+};
+const cases = [...manifest.cases.filter((fixtureCase) => enabledCases.has(fixtureCase.id)).map((entry) => ({ ...entry, request: resolveRequest(entry), root: fixtureRoot })), ...parityManifest.cases.map((entry) => ({ ...entry, root: parityRoot }))];
 const faults = new Map((manifest.faults ?? []).map((fault) => [fault.id, fault]));
 
 if (faultId !== undefined && !faults.has(faultId)) {
