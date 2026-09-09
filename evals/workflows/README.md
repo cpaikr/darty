@@ -18,7 +18,8 @@ deterministic CI gates. They invoke the Rust CLI; the Rust release remains unpub
 
 It then runs deterministic same-report citation and two-report comparison
 checks through the research wrapper and its provenance/citation scorers. The
-script selects the exact returned Korean company name, inspects at most six
+script selects the exact returned Korean company name, explicitly searches the
+help-documented periodic disclosure types A001/A002/A003, and inspects at most six
 returned periodic filings, and reads the first shared top-level section title
 from two distinct receipts. This diagnostic strategy is not model onboarding
 and does not judge prose.

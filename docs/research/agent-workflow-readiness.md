@@ -25,6 +25,17 @@ only audit metadata under the [provider retention boundary](dart-provider-qualif
 All outcomes count; an implementation/prompt change invalidates the mixed batch
 and requires a fresh declared batch while retaining the earlier metadata.
 
+## Pre-model diagnostic correction
+
+Batch `5139e00` stopped before any paid call: fixed body checks and the original
+four-step workflow passed, but the new deterministic comparison found no periodic
+filings on the first unfiltered page (15 of 2,599 results). This was a fixed
+selection-script defect, not a DART or model failure. The diagnostic now requests
+help-documented A001/A002/A003 disclosure types before its bounded selection;
+a fictional subprocess regression covers a first page containing only unrelated
+filings. The earlier metadata remains retained; the complete batch is restarted
+under a new source identity.
+
 ## Current disposition
 
 The CLI no longer recommends the first ambiguous company. Independent fictional

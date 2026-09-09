@@ -24,7 +24,7 @@ export const runFixedResearchChecks = async (repoRoot: string): Promise<void> =>
   const company = getArray(companies, "items")?.filter(isRecord).find(item => getString(item, "companyName") === "삼성전자");
   const companyCode = getString(company, "companyCode");
   if (companyCode === undefined) throw new Error("fixed research did not resolve the exact returned company name");
-  const filings = await run(["search-company-reports", "--company-code", companyCode, "--start-date", "20250331", "--end-date", "20260331", "--agent"]);
+  const filings = await run(["search-company-reports", "--company-code", companyCode, "--start-date", "20250331", "--end-date", "20260331", "--disclosure-type", "A001", "--disclosure-type", "A002", "--disclosure-type", "A003", "--agent"]);
   const candidates = getArray(filings, "items")?.filter(isRecord).filter(item => /사업보고서|반기보고서|분기보고서/u.test(getString(item, "reportTitle") ?? "")).slice(0, 6) ?? [];
   let first: { receipt: string; section: string; title: string } | undefined;
   let second: { receipt: string; section: string; title: string } | undefined;
