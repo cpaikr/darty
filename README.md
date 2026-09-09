@@ -50,9 +50,83 @@ Windows에서는 `darty-<version>-win32-x64.tar.gz`, `SHA256SUMS`,
 & "$env:LOCALAPPDATA\darty\bin\darty.exe" --help
 ```
 
-기본 설치 위치는 `%LOCALAPPDATA%\darty\bin`입니다. 이 폴더를 `PATH`에 추가하거나
-`-BinDirectory`로 다른 위치를 지정하세요. 조직의 PowerShell 실행 정책이 스크립트를
-제한한다면 해당 정책에 따라 스크립트를 검토·승인한 뒤 실행하세요.
+가능하면 설치 스크립트는 패키지된 데스크톱 앱에서 생성한 셸이 아닌, 별도로 실행한
+일반 PowerShell 세션에서 실행하세요. MSIX 앱은 `%LOCALAPPDATA%` 쓰기를 앱의
+private storage로 redirect할 수 있습니다. 그러면 설치 프로세스 안에서는 성공한
+것처럼 보여도 독립적인 터미널에서는 광고된 전체 경로의 파일이 보이지 않습니다.
+PowerShell installer는 이제 임시 파일의 physical handle path를 확인하고 이런 경우
+기존 실행 파일을 바꾸기 전에 광고된 경로와 physical path를 함께 표시하며 중단합니다.
+
+기본 설치 위치는 `%LOCALAPPDATA%\darty\bin`이며, 일반적인 독립 PowerShell에서는
+지원되는 위치입니다. 패키지된 실행 환경에서 이 문제가 발생하면 그 환경의 경로를
+`PATH`에 추가하지 말고, 독립적인 PowerShell에서 다시 설치하거나 redirect되지 않는
+사용자 지정 위치를 지정하세요. 이 사례에서 확인된 복구 위치는
+`%USERPROFILE%\.local\bin`입니다. 모든 Windows 환경에서 이 위치가 필수라는 뜻은
+아닙니다.
+
+```powershell
+$bin = "$env:USERPROFILE\.local\bin"
+.\install.ps1 -Archive ".\darty-<version>-win32-x64.tar.gz" -Checksums ".\SHA256SUMS" -BinDirectory $bin
+& "$bin\darty.exe" --help
+```
+
+설치, 파일 visibility, 영구 `PATH`, 현재 셸의 `PATH`는 서로 다른 단계입니다. 먼저
+실제 선택한 디렉터리의 전체 경로를 확인하세요. `Test-Path`가 여기서 `False`이면
+`PATH` 문제가 아니라 해당 프로세스에서 설치 위치가 보이지 않는 문제입니다.
+
+```powershell
+# -BinDirectory에 넘긴 실제 디렉터리로 바꾸세요.
+$DartyBin = "$env:USERPROFILE\.local\bin"
+$DartyExe = Join-Path $DartyBin "darty.exe"
+$visible = Test-Path -LiteralPath $DartyExe -PathType Leaf
+$visible
+if (-not $visible) { throw "Not visible: $DartyExe" }
+& $DartyExe --help
+```
+
+사용자 `PATH`에 선택한 디렉터리를 영구적으로 한 번만 추가하려면 다음을 실행하세요.
+기존 항목은 보존하고, 같은 디렉터리의 끝 `\`만 무시하여 중복 추가를 피합니다.
+이 명령은 profile을 수정하지 않습니다.
+
+```powershell
+# -BinDirectory에 넘긴 실제 디렉터리로 바꾸세요.
+$DartyBin = "$env:USERPROFILE\.local\bin"
+$binKey = $DartyBin.TrimEnd("\")
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+$userEntries = if ([string]::IsNullOrWhiteSpace($userPath)) { @() } else { @($userPath -split ";") }
+$alreadyPresent = $false
+foreach ($entry in $userEntries) {
+    if ($entry.Trim().TrimEnd("\") -ieq $binKey) { $alreadyPresent = $true; break }
+}
+if (-not $alreadyPresent) {
+    $separator = if ([string]::IsNullOrEmpty($userPath)) { "" } else { ";" }
+    [Environment]::SetEnvironmentVariable("Path", "$userPath$separator$DartyBin", "User")
+}
+```
+
+현재 열려 있는 PowerShell은 시작할 때 물려받은 `PATH`를 계속 사용합니다. 새 터미널을
+열거나, 재시작하지 않고 현재 셸에서만 확인하려면 아래를 별도로 실행하세요. 이후
+`Get-Command`는 명령 이름 검색을, 전체 경로 호출은 파일 visibility를 확인합니다.
+
+```powershell
+# -BinDirectory에 넘긴 실제 디렉터리로 바꾸세요.
+$DartyBin = "$env:USERPROFILE\.local\bin"
+$binKey = $DartyBin.TrimEnd("\")
+$currentPath = $env:Path
+$currentEntries = @($currentPath -split ";")
+$alreadyPresent = $false
+foreach ($entry in $currentEntries) {
+    if ($entry.Trim().TrimEnd("\") -ieq $binKey) { $alreadyPresent = $true; break }
+}
+if (-not $alreadyPresent) {
+    $env:Path = if ([string]::IsNullOrEmpty($currentPath)) { $DartyBin } else { "$DartyBin;$currentPath" }
+}
+Get-Command darty -CommandType Application
+darty --help
+```
+
+조직의 PowerShell 실행 정책이 스크립트를 제한한다면 해당 정책에 따라 스크립트를
+검토·승인한 뒤 실행하세요.
 
 업데이트도 새 릴리스의 파일들을 내려받아 같은 절차로 설치합니다. 체크섬 검증이나
 새 실행 파일 확인에 실패하면 기존 실행 파일은 교체하지 않습니다. 설치 스크립트와

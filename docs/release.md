@@ -33,6 +33,28 @@ through the release installer, verify the installed digest, run the network-free
 CLI contract with an empty PATH, and verify failed-checksum recovery. Rust needs
 no Node, npm, Bun, config autoloading, or source checkout to run.
 
+Windows installer visibility is not independently runtime-certified in CI. The
+repository keeps all automated jobs on Linux, and a PowerShell process launched
+by a packaged installer is not an external consumer for this purpose. A Windows
+release validation record must come from a separately launched normal PowerShell
+session and must show both checks below for the exact selected directory:
+
+```powershell
+$bin = 'C:\the\directory\you\selected'
+$exe = Join-Path $bin 'darty.exe'
+Test-Path -LiteralPath $exe -PathType Leaf
+& $exe --help
+Get-Command darty -CommandType Application
+darty --help
+```
+
+The first two commands establish full-path file visibility and CLI execution;
+the last two establish command-name discovery after PATH setup. Until that
+independent Windows evidence exists, the Windows manifest entry must remain
+uncertified. The installer itself probes a file handle and rejects a physical
+path redirected away from the advertised destination, but that host-local check
+does not replace independent-consumer evidence.
+
 A clean Linux Node consumer installs the downloaded native tarball offline with
 lifecycle scripts disabled. A clean external Rust consumer compiles and runs
 against the unpacked crate. Their manifest entries record consumer certification;

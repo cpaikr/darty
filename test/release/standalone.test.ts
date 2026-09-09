@@ -78,3 +78,22 @@ describe("Unix standalone installation", () => {
     }
   });
 });
+
+describe("Windows standalone installation", () => {
+  test("checks the physical destination before replacing an existing binary", () => {
+    const installer = renderInstallers()["install.ps1"]!;
+    const visibilityCheck = installer.indexOf("AssertInstallationPathIsVisible $BinDirectory");
+    const staging = installer.indexOf("$stage =");
+    expect(installer).toContain("Join-Path $env:LOCALAPPDATA 'darty\\bin'");
+    expect(installer).toContain("GetFinalPathNameByHandle");
+    expect(visibilityCheck).toBeGreaterThan(-1);
+    expect(visibilityCheck).toBeLessThan(staging);
+    expect(installer).toContain("Advertised path:");
+    expect(installer).toContain("Physical path:");
+    expect(installer).toContain("No existing installation was changed.");
+    expect(installer).toContain("-BinDirectory");
+    expect(installer).toContain("--help");
+    expect(installer).not.toContain("--version");
+    expect(installer).not.toContain("SetEnvironmentVariable");
+  });
+});
