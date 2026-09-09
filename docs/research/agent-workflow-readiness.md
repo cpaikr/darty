@@ -1,12 +1,13 @@
 # Agent workflow readiness evidence
 
-Observed on 2026-09-09: fixed CLI checks passed; default-model body invocation
-passed 2/3 and research passed 1/6. **Release readiness remains on hold.** This
-small diagnostic sample does not establish a reliability rate, provider approval,
-or operator signoff. [The readiness plan](../../plans/validate-agent-workflow-readiness.md)
+Observed on 2026-09-09: fixed CLI checks passed in both complete batches. The
+baseline passed body invocation 2/3 and research 1/6; the required post-review
+batch passed body invocation 3/3 and research 2/6. **Release readiness remains
+on hold.** These small diagnostic samples do not establish a reliability rate,
+provider approval, or operator signoff. [The readiness plan](../../plans/validate-agent-workflow-readiness.md)
 owns delivery; the [release runbook](../release.md) owns the remaining gates.
 
-## Tested source and protocol
+## Baseline source and shared protocol
 
 - Implementation: `a25fc90db2fefb05eea7774d500443239ed8a670`.
 - Production CLI: version 0.6.1, Rust 1.88.0, local macOS ARM64. Installed through
@@ -60,7 +61,8 @@ fictional release-CLI cases cover unique, ambiguous, misleading-first, empty,
 partial, and paginated results; a direct presentation regression covers unknown
 pagination in both output modes. CLI compatibility passed 69 scenarios. Rust
 workspace tests, Clippy, release build, wire/version checks, typecheck, and 112
-Bun tests passed locally. Bounded independent review and scoped documentation
+Bun tests passed locally before the baseline; the feedback regression increases
+the passing Bun suite to 113 tests. Bounded independent review and scoped documentation
 reconciliation completed before measurement.
 
 Two pre-model diagnostic batches were retained and invalidated, with zero paid
@@ -71,7 +73,7 @@ covers. Explicit periodic filters and TOC intersection fixed these script defect
 a fictional subprocess regression covers both triggers. The complete batch was
 then restarted at `a25fc90`.
 
-## Model outcomes
+## Baseline model outcomes
 
 Every loop ended with a final response. The failed populated body scenario used
 its reserved finalization response; all research attempts stopped before the
@@ -116,15 +118,64 @@ parser defect or waiving the failed gate; exact prose was intentionally not
 retained. Fictional regressions cover unpaired, malformed, Markdown, cross-report,
 and ambiguous-document citation behavior.
 
+## Required post-review batch
+
+PR #35 feedback identified that a duplicated filing with a successful empty TOC
+could be inspected twice. `0a92e39d6abdda7ca0f151b002023c9d46c5c93a` records
+receipts before inspection and makes the regression independent of the launch
+directory. Successful no-TOC recovery still proceeds; actual CLI/source errors
+remain fatal, with a fictional regression proving both boundaries. Independent
+review passed and CodeRabbit accepted the correction, withdrawing its suggestion
+to ignore actual inspection errors.
+
+The plan required a fresh complete batch after this diagnostic implementation
+change. The production executable, agent/judge models, prompts, budgets, task
+windows, and scoring were unchanged. The first complete baseline above remains
+retained; the following results do not replace its failures.
+
+- Frozen source: `0a92e39d6abdda7ca0f151b002023c9d46c5c93a`.
+- Manifest: `.tmp/evals/readiness-0a92e39/protocol.json`, SHA-256
+  `4d036a65d95542c53bf1a182d0bcf4a84198b5838091dc6e04643d1ebd724da2`.
+- Audit index: `.tmp/evals/readiness-0a92e39/outcomes.json`, preserving all nine
+  new outcomes and their hashes. Frozen eval-source and executable hashes were
+  verified after completion. No additional unreported attempts were made.
+- Fixed body 3/3, original workflow, and both deterministic research checks
+  passed with the same public locators and windows listed above.
+
+| Body scenario | Result | Responses / tools | Disposition |
+|---|---|---:|---|
+| Populated search | Pass | 5 / 4 | Successful matching invocation. |
+| Explicit no-result search | Pass | 5 / 4 | Successful matching invocation. |
+| Company-code filtered search | Pass | 3 / 2 | Successful matching invocation. |
+
+| Research repetition / task | Result | Responses / tools | Provenance / citations | Prose judge | Disposition |
+|---|---|---:|---|---|---|
+| 1 / exact citation | Fail | 7 / 6 | Pass / fail | Skipped | Final-answer citation/format failure; additional unpaired locator inferred as in baseline exact 3. |
+| 1 / comparison | Fail | 5 / 6 | Fail / fail | Skipped | Model recovery/task failure: two document-scope fallbacks, no section evidence. |
+| 2 / exact citation | Pass | 6 / 6 | Pass / pass | Completed, 5/5 | All evidence, citation, and prose gates passed. |
+| 2 / comparison | Fail | 5 / 6 | Fail / fail | Skipped | Model recovery/task failure: two document-scope fallbacks, no section evidence. |
+| 3 / exact citation | Pass | 8 / 7 | Pass / pass | Completed, 5/5 | All evidence, citation, and prose gates passed. |
+| 3 / comparison | Fail | 5 / 5 | Fail / fail | Skipped | Model recovery/task failure: two document-scope fallbacks, no section evidence. |
+
+All new loops ended with a final response before reserved finalization. Each
+exact attempt selected `20260331000460` / `section:3`, `document:body:1`, complete
+window `[0,1425)`, with the same 1,089-character body fingerprint as the baseline.
+Every comparison read only document-scope `20260319801333` and `20260318801867`.
+No model evidence-projection limit was recorded in the new batch. The diagnostic
+limit for an unpaired locator also applies to new exact 1; no prose was retained
+to distinguish its specific formatting shape.
+
 ## Release disposition
 
 No CLI/SDK source failure, model-request failure, or judge-service failure was
-observed in the research sample. The two confirmed diagnostic-script defects
-were repaired before paid measurement. The remaining observed failures concern
+observed in either research sample. The selection defects were repaired before
+the baseline; the later duplicate-inspection correction passed a fresh batch. The remaining observed failures concern
 model planning/recovery and final-answer citation requirements, with the explicit
-exact-3 diagnostic limit above. They must not be relabelled as successful research.
+unpaired-locator diagnostic limit above. They must not be relabelled as successful research.
 
-The default-model and research gates remain unresolved for the release operator.
+The research gate remains unresolved for the release operator. The body track
+passed the current batch, but its earlier failed outcome remains part of this
+evidence.
 This work supplies truthful measurements and the specified guidance repair; it
 neither guarantees stochastic model success nor authorizes release tagging,
 publication, or provider signoff. Broader recovery scenarios remain in the task

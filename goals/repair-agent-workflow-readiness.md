@@ -34,7 +34,7 @@ Ambiguous-company guidance, neutral onboarding, declared paid model evaluations,
 
 ### Next in-scope action
 
-Freeze PR #35 diagnostic feedback corrections and complete the required fresh declared batch, then finish PR delivery and the terminal planning-only integration update.
+Finish PR #35 exact-head CI and merge, then perform the terminal planning-only integration update.
 
 ### Evidence and blockers
 
@@ -42,4 +42,6 @@ Freeze PR #35 diagnostic feedback corrections and complete the required fresh de
 - PR #33 passed baseline reproductions, bounded independent review, scoped documentation harmonization, 110 local tests, and full source-bound CI. Codex completed without findings; all eight CodeRabbit items have accepted dispositions and resolved threads.
 - Candidate `codex/validate-agent-workflow-readiness` is included by the second named result. Its declared paid model sample is authorized by the contract's included source; operator approval, tagging, and publication remain excluded.
 
-- Current measurement: source `a25fc90`, production executable SHA-256 `109135f4f60371ba0862c91464c878806883e3e65859fb3220721bcd7e590a59`. Fixed body 3/3, original workflow, and deterministic exact/comparison paths passed. The declared model sample completed: body-agent 2/3 and research 1/6 passed; all outcomes are retained and the report preserves the release hold. Two earlier pre-model selection failures were fixed with fictional regression coverage; neither made paid calls.
+- Baseline measurement: source `a25fc90`, production executable SHA-256 `109135f4f60371ba0862c91464c878806883e3e65859fb3220721bcd7e590a59`. Fixed body 3/3, original workflow, and deterministic exact/comparison paths passed. The declared model sample completed: body-agent 2/3 and research 1/6 passed; all outcomes are retained and the report preserves the release hold. Two earlier pre-model selection failures were fixed with fictional regression coverage; neither made paid calls.
+
+- PR #35 feedback: all three threads resolved after `0a92e39`; actual source-error fail-fast behavior was verified and the contrary suggestion withdrawn. Required fresh batch completed with body 3/3 and research 2/6; baseline body 2/3 and research 1/6 retained. Both fixed batches pass. Report and release hold updated; no additional experiments remain.

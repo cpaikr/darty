@@ -9,20 +9,19 @@ correctness from remaining model limitations for the release operator.
 
 ## Current state
 
-Active: PR #35 review found a duplicate empty-TOC inspection in the fixed
-diagnostic and a working-directory-dependent test. Both are corrected with
-regressions; actual source failures intentionally still fail the diagnostic.
-A fresh complete declared batch is required after this diagnostic change, then
-source-bound CI and merge into the goal integration branch remain.
-The [readiness report](../docs/research/agent-workflow-readiness.md) records source
-`a25fc90`, all outcomes, corrected diagnostic defects, and the release hold.
-Fixed checks passed; body-agent 2/3 and research 1/6 passed. These results do not
-establish release signoff. PR #33 delivered evaluator repairs as `6582be9`.
+Active: implementation, PR #35 feedback, and both required complete batches
+are finished locally. All three review threads are resolved; source-bound CI and
+merge into the goal integration branch remain. The
+[readiness report](../docs/research/agent-workflow-readiness.md) retains all results:
+baseline `a25fc90` body 2/3 and research 1/6; post-review `0a92e39` body 3/3 and
+research 2/6. Fixed checks pass in both; release readiness remains on hold.
+PR #33 delivered evaluator repairs as `6582be9`.
 
 ## Next action
 
-Freeze the feedback correction, run the required fresh serial batch while
-preserving the baseline, and finish PR #35 feedback, CI, and merge.
+Finish PR #35's exact-head CI and merge, preserving all failed model outcomes and
+unresolved release gates. Then complete goal/project planning metadata on the
+integration branch without starting excluded release work.
 
 ## CLI guidance and compatibility
 
