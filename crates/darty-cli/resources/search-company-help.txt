@@ -28,3 +28,4 @@ Search tips:
   - companyCode is DART's 8-digit company identifier embedded in company links such as select('00126380').
   - stockCode is a 6-digit listed-company stock code shown only for listed companies; it is not the DART company code.
 
+  - Company-name queries follow DART's search behavior. A Korean registered name can help disambiguate; verify the returned companyName and companyCode before selecting a company.

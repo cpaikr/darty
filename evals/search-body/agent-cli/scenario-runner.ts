@@ -25,10 +25,12 @@ Use run_darty_cli when the user's request requires live DART data. Do not guess 
     toToolMessageContent: toTruncatedToolMessageContent,
   });
 
-  const reasons = evaluateAgentCliInvocation(input.scenario, loop.toolExecutions);
+  const reasons = [...evaluateAgentCliInvocation(input.scenario, loop.toolExecutions),
+    ...(loop.termination === "final-response" ? [] : [`model loop ${loop.termination}: ${loop.error ?? "no final answer"}`])];
 
   return {
     scenario: input.scenario,
+    loop,
     pass: reasons.length === 0,
     reasons,
     finalAnswer: loop.finalAnswer,

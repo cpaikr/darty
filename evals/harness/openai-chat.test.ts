@@ -85,3 +85,12 @@ describe("OpenAI eval transport resilience", () => {
     expect(observedSignal?.aborted).toBe(true);
   });
 });
+
+test("tool-free responses cannot silently discard unexpected tool calls", async () => {
+  const { callOpenAi, ModelResponseError } = await import("./openai-chat.ts");
+  globalThis.fetch = (async (_input: string | URL | Request, _init?: RequestInit) => new Response(JSON.stringify({ choices: [{ message: {
+    content: '{"pass":true,"score":5,"reasons":[]}',
+    tool_calls: [{ id: "unexpected", type: "function", function: { name: "run_darty_cli", arguments: "{}" } }],
+  } }] }))) as typeof fetch;
+  await expect(callOpenAi({ apiKey: "fake", model: "fake", messages: [], tools: [], toolNames: new Set<string>() })).rejects.toBeInstanceOf(ModelResponseError);
+});

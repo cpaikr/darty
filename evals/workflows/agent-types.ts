@@ -12,6 +12,15 @@ export type WorkflowChatMessage = ChatMessage<WorkflowToolName>;
 export type WorkflowToolExecution = ToolExecution<WorkflowToolName>;
 
 export type AgentWorkflowScenarioRunResult = {
+  readonly diagnostics: {
+    readonly executionFailures: readonly { operationIndex: number; category: string; exitCode: number }[];
+    readonly evidenceLimitations: readonly { operationIndex: number; reason: string }[];
+    readonly loopOutcome: string;
+    readonly taskProvenance: { pass: boolean; reasons: readonly string[] };
+    readonly citationMembership: import("./final-answer-judge.ts").FinalAnswerCitationAssertion;
+    readonly judging: import("./final-answer-judge.ts").FinalAnswerJudgeResult["status"];
+  };
+  readonly loop: import("../harness/model-loop.ts").ModelLoopResult<WorkflowToolName>;
   readonly scenario: AgentWorkflowScenario;
   readonly pass: boolean;
   readonly reasons: readonly string[];

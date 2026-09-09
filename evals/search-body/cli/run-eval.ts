@@ -40,7 +40,7 @@ for (const scenario of searchBodyCliScenarios) {
   if (result.exitCode !== 0) {
     failed += 1;
     console.error(`✗ ${scenario.id}: CLI exited with ${result.exitCode}`);
-    console.error(stderr || "<empty stderr>");
+    console.error(`stderrBytes=${encoder.encode(stderr).byteLength}`);
     continue;
   }
 
@@ -62,7 +62,7 @@ for (const scenario of searchBodyCliScenarios) {
     console.error(`✗ ${scenario.id}: ${assertion.reasons.join("; ")}`);
   } catch (error) {
     failed += 1;
-    console.error(`✗ ${scenario.id}: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`✗ ${scenario.id}: invalid CLI envelope`);
   }
 }
 

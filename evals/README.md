@@ -1,8 +1,7 @@
 # Evals
 
 Evals measure realistic task usefulness through the Rust CLI subprocess.
-Repository cutover is in progress and Rust remains unpublished;
-[the rewrite plan](../plans/rust-sdk-node-sdk-cli-rewrite.md) owns delivery status.
+Rust remains unpublished; [the roadmap](../ROADMAP.md) owns delivery status.
 Tests own deterministic contracts, parsers, SDK consumers, and CLI mechanics.
 
 ## Current tracks
@@ -10,7 +9,7 @@ Tests own deterministic contracts, parsers, SDK consumers, and CLI mechanics.
 | Track | Command | Boundary |
 |---|---|---|
 | Fixed body search | `bun run eval:cli:search-body` | Live stdout envelope and filing references |
-| Fixed report workflow | `bun run eval:workflow:cli` | Company → filings → TOC → section handoff |
+| Fixed report workflow | `bun run eval:workflow:cli` | Company → filings → TOC → section, plus deterministic citation/comparison checks |
 | Agent body search | `bun run eval:agent-cli:search-body` | Model-selected CLI arguments and invocation |
 | Agent research workflow | `bun run eval:workflow:agent` | Exact-section citation and related-filing comparison with a final-answer judge |
 
@@ -19,7 +18,9 @@ path of an installed executable to evaluate that exact artifact. Rust owns
 argument validation; trace assertions read normalized `result.request` fields
 from successful CLI output. The fixed tracks do not judge prose; the separate agent research workflow owns the explicit
 final-answer rubric and judge rather than making answer quality an implied
-property of every runner.
+property of every runner. [Workflow scoring and diagnostics](workflows/README.md)
+define final-evidence selection, citation membership, bounded observed windows,
+and distinct loop/judge failure outcomes.
 
 ## Boundaries
 
@@ -76,5 +77,10 @@ scenario requires both deterministic trace criteria and the final-answer
 judge; inspect the ignored artifact before treating a pass as release evidence.
 
 Model-in-the-loop runs write ignored JSON artifacts under
-`.tmp/evals/<suite>/<timestamp>/`. Use them to diagnose trace and assertion
-failures without treating them as durable documentation.
+`.tmp/evals/<suite>/<timestamp>/`. They retain public locators, request dates,
+content windows, output fingerprints, response/tool counts, structured failure
+categories, deterministic gate results, and judge status/score. Source bodies,
+model transcripts, free-form failures, and judge prose stay in memory under the
+[provider retention policy](../docs/research/dart-provider-qualification.md#retention).
+The [readiness evidence](../docs/research/agent-workflow-readiness.md) owns the
+declared diagnostic sample and its release implications.

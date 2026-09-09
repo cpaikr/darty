@@ -738,6 +738,61 @@
         "--help"
       ],
       "golden": "goldens/report-guide-help.json"
+    },
+    {
+      "id": "candidate-company-unique",
+      "argv": [
+        "search-company",
+        "--company-name",
+        "고유회사",
+        "--agent"
+      ],
+      "golden": "goldens/candidate-company-unique.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "candidate-company-paginated",
+      "argv": [
+        "search-company",
+        "--company-name",
+        "다음회사",
+        "--agent"
+      ],
+      "golden": "goldens/candidate-company-paginated.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "candidate-company-misleading-first",
+      "argv": [
+        "search-company",
+        "--company-name",
+        "가람물류",
+        "--agent"
+      ],
+      "golden": "goldens/candidate-company-misleading-first.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "candidate-company-partial",
+      "argv": [
+        "search-company",
+        "--company-name",
+        "부분회사",
+        "--agent"
+      ],
+      "golden": "goldens/candidate-company-partial.json",
+      "requiresFixture": true
+    },
+    {
+      "id": "candidate-company-empty",
+      "argv": [
+        "search-company",
+        "--company-name",
+        "빈회사",
+        "--agent"
+      ],
+      "golden": "goldens/candidate-company-empty.json",
+      "requiresFixture": true
     }
   ]
 }

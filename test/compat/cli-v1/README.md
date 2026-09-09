@@ -26,8 +26,9 @@ golden review.
   fixture seam.
 
 Production archive checks combine the network-free process contract with
-separately authorized live workflows. Repository cutover and artifact checks
-remain in progress; the Rust CLI is not yet published.
+separately authorized live workflows. Repository cutover is complete; the
+[release runbook](../../../docs/release.md) owns remaining certification, signoff,
+and publication gates. The Rust CLI is not yet published.
 
 ## Running
 
@@ -74,6 +75,12 @@ The frozen historical npm baseline is `@sjunepark/darty@0.5.0`: `darty` points t
 are `dist`, `README.md`, and `LICENSE.md`. The implementation commit recorded in
 [`baseline.json`](baseline.json) is the code identity beneath the later
 planning and judge commits.
+
+Company guidance has hand-reviewed fictional cases for unique, ambiguous,
+misleading-first, empty, partial, and paginated results. A concrete company
+handoff is conditional on identity and requires complete singleton pagination;
+other nonempty results require selecting a returned name/code. Candidate order,
+identifiers, SDK semantics, and zero-result recovery are unchanged.
 
 ## Four-step acceptance workflow
 

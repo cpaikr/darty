@@ -799,10 +799,7 @@ fn present_search<T: Serialize>(
     }
     value["help"] = match (kind, first.as_ref()) {
         (SearchKind::Body, _) => operations::body_help(&value, first.as_ref()),
-        (SearchKind::Company, Some(item)) => json!([format!(
-            "Search filings: darty search-company-reports --company-code {} --start-date YYYYMMDD --end-date YYYYMMDD --agent",
-            item["companyCode"].as_str().unwrap_or_default()
-        )]),
+        (SearchKind::Company, Some(item)) => company_search_help(&value, item),
         (SearchKind::Reports, Some(item)) => {
             let receipt = item["filing"]["receiptNumber"].as_str().unwrap_or_default();
             json!([
@@ -820,6 +817,33 @@ fn present_search<T: Serialize>(
         }
     };
     value
+}
+
+fn company_search_help(value: &Value, item: &Value) -> Value {
+    let pagination = &value["result"]["pagination"];
+    // One visible row is not unique when rows were dropped or other pages exist.
+    let unique = value["metadata"]["completeness"] == "complete"
+        && value["result"]["items"]
+            .as_array()
+            .is_some_and(|items| items.len() == 1)
+        && pagination["currentPage"] == 1
+        && pagination["totalPages"] == 1
+        && pagination["totalCount"] == 1
+        && pagination["returnedCount"] == 1;
+    let next_step = if unique {
+        format!(
+            "If {} ({}) is the intended company, search filings: darty search-company-reports --company-code {} --start-date YYYYMMDD --end-date YYYYMMDD --agent",
+            item["companyName"].as_str().unwrap_or_default(),
+            item["companyCode"].as_str().unwrap_or_default(),
+            item["companyCode"].as_str().unwrap_or_default()
+        )
+    } else {
+        "Select the intended company by its returned companyName and companyCode; this result does not establish a unique candidate. Then search filings: darty search-company-reports --company-code <companyCode> --start-date YYYYMMDD --end-date YYYYMMDD --agent".to_owned()
+    };
+    json!([
+        next_step,
+        "Company-name queries follow DART's search behavior. A Korean registered name can help disambiguate; verify the returned identity. stockCode is not companyCode."
+    ])
 }
 
 fn company_agent_item(item: &Value) -> Value {
@@ -1281,7 +1305,43 @@ mod tests {
 
     use clap::{CommandFactory, Parser};
 
-    use super::{Cli, CliFailure, DetailArg, VIEW_CLI_PARAMETERS, detail, preparse_failure};
+    use super::{
+        Cli, CliFailure, DetailArg, SearchKind, VIEW_CLI_PARAMETERS, detail, preparse_failure,
+        present_search,
+    };
+    use serde_json::json;
+
+    #[test]
+    fn company_hint_requires_known_complete_pagination_in_all_presentations() {
+        let response = json!({
+            "result": {"items": [{"companyName": "가람전자", "companyCode": "00000001"}],
+                "pagination": {"currentPage": 1, "totalPages": 1, "totalCount": 1, "returnedCount": 1}},
+            "metadata": {"completeness": "complete"}
+        });
+        for agent in [false, true] {
+            for field in ["currentPage", "totalPages", "totalCount", "returnedCount"] {
+                let mut incomplete = response.clone();
+                incomplete["result"]["pagination"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove(field);
+                let output = present_search(incomplete, false, agent, SearchKind::Company);
+                assert!(
+                    output["help"][0]
+                        .as_str()
+                        .unwrap()
+                        .contains("<companyCode>")
+                );
+            }
+            let output = present_search(response.clone(), false, agent, SearchKind::Company);
+            assert!(
+                output["help"][0]
+                    .as_str()
+                    .unwrap()
+                    .starts_with("If 가람전자 (00000001)")
+            );
+        }
+    }
 
     #[test]
     fn debug_is_a_preserved_global_option() {
