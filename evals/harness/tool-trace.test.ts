@@ -21,3 +21,17 @@ test("oversized non-body evidence is explicitly unavailable", () => {
   expect(JSON.parse(view.stdout).evidenceUnavailable).toBe(true);
   expect(view.limitations.join(" ")).toContain("evidence unavailable");
 });
+
+test("astral boundary preserves whole characters and exact continuation bytes", () => {
+  const raw = execution({ result: { content: { body: "한".repeat(11_999) + "😀", window: { startByte: 50 } } } });
+  const body = JSON.parse(modelToolView(raw).stdout).result.content;
+  expect(body.body).toHaveLength(11_999);
+  expect(body.body.endsWith("한")).toBe(true);
+  expect(body.modelView.nextStartByte).toBe(50 + 11_999 * 3);
+});
+test("non-JSON help and failed diagnostics pass through unchanged", () => {
+  for (const stdout of ["Usage: darty --help", "Source temporarily unavailable"]) {
+    const raw = { ...execution({}), stdout };
+    expect(modelToolView(raw)).toEqual({ stdout, limitations: [] });
+  }
+});

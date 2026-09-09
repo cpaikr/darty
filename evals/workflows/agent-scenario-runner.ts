@@ -53,7 +53,9 @@ export const runAgentWorkflowScenario = async (input: {
           finalAnswer: loop.finalAnswer,
         })
       : skippedFinalAnswerJudge(
-          trace.pass
+          loop.termination !== "final-response"
+            ? `final-answer judge skipped because model loop ended with ${loop.termination}`
+            : trace.pass
             ? "final-answer judge skipped because deterministic citation membership criteria failed"
             : "final-answer judge skipped because deterministic workflow trace criteria failed",
         );

@@ -76,8 +76,10 @@ The shared loop reserves the last configured response for tool-free
 finalization. The research runner currently allows ten responses including
 that reservation; the body runner allows six. Artifacts record consumed
 responses, each tool execution, model-facing messages, raw subprocess output,
-and explicit final-response, response-budget-exhaustion, request-failed, or
-tool-failed termination. Workflow diagnostics separately retain wrapper/CLI
+and explicit final-response, response-budget-exhaustion, request-failed,
+invalid-response, or tool-failed termination. Empty responses may consume only
+the remaining declared budget. Unexpected tool calls on tool-free turns are
+invalid responses, never silently discarded to manufacture a completed answer. Workflow diagnostics separately retain wrapper/CLI
 failures, evidence limitations, task provenance, citation membership, and judge
 status. Recovered exploratory failures remain visible without automatically
 failing a supported final answer. These deterministic repairs do not establish

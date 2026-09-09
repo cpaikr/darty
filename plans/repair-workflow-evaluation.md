@@ -9,7 +9,8 @@ invented identifiers, unsupported claims, and incomplete tasks still fail.
 
 ## Current state
 
-Implemented locally; PR delivery and CI are pending. Deterministic regressions
+Implemented in [PR #33](https://github.com/cpaikr/darty/pull/33); final feedback
+delivery and CI are pending. Deterministic regressions
 reproduced six baseline false negatives before repair (help, Markdown emphasis,
 narrative receipts, and document fallback). The implementation now separates
 candidate integrity from selected evidence, preserves document-scoped provenance,
@@ -21,6 +22,12 @@ regressions. Shared subprocess tests cover signal escalation, inherited stream
 closure, and exclusion of model credentials. Real release-built CLI help agrees
 with both wrappers across 18 allowed invocations. Typecheck, tooling tests, wire
 validation, and version agreement pass. Scoped eval documentation is reconciled.
+Codex completed its initial review without findings. CodeRabbit feedback is
+addressed with explicit invalid-response diagnostics, bounded empty-response
+recovery, precise skip/range messages, projection regressions, and preservation
+of ordinary narrative amounts. Its suggestions to discard unexpected tool calls
+and extract short allowlist branches were rejected with code evidence. The
+follow-up diff passed bounded independent review and 110 local tests.
 No hosted-model run has been performed for this slice; readiness remains unproven.
 
 ## Next action

@@ -40,6 +40,6 @@ Deliver the evaluation repair PR into `codex/repair-agent-workflow-integration`,
 
 - Delivery integration branch: `codex/repair-agent-workflow-integration`, initialized from local `main` at `be9c8cf` (the supplied plans). Remote push succeeded; repository grants push/admin access. Implementation PRs land here, preserving individual commits; no promotion, release tagging, or publication is included.
 - Candidate evaluation repair is included by the first named semantic result. Repository validation and bounded review are necessary completion work.
-
-
 - Evaluation repair implemented with baseline reproductions, bounded independent review and fixes, scoped documentation harmonization, passing local tests/typecheck/wire/version checks, and 18 real CLI help comparisons. Candidate PR is included by the first result; no model readiness or release claim is made.
+
+- PR #33 (`codex/repair-workflow-evaluation`) is the first included slice. Initial Codex review completed without findings; CodeRabbit items have verified dispositions and follow-up regressions. Final push, refreshed feedback, and exact-head CI remain before merge.

@@ -1,8 +1,8 @@
-import { callOpenAi } from "./openai-chat.ts";
+import { callOpenAi, ModelResponseError } from "./openai-chat.ts";
 import type { ChatMessage, ToolCall, ToolExecution } from "./tool-trace.ts";
 
 export type ModelLoopResult<ToolName extends string> = {
-  readonly termination: "final-response" | "response-budget-exhaustion" | "request-failed" | "tool-failed";
+  readonly termination: "final-response" | "response-budget-exhaustion" | "request-failed" | "invalid-response" | "tool-failed";
   readonly responseCount: number;
   readonly toolCallCount: number;
   readonly error?: string;
@@ -33,9 +33,10 @@ export const runModelToolLoop = async <ToolName extends string>(input: {
     throw new Error("maxTurns must include at least one tool response and one finalization response");
   }
   let responseCount = 0;
+  let toolCallCount = 0;
   let finalized = false;
   const finish = (termination: ModelLoopResult<ToolName>["termination"], finalAnswer = "", error?: string): ModelLoopResult<ToolName> => ({
-    termination, finalAnswer, responseCount, toolCallCount: toolExecutions.length,
+    termination, finalAnswer, responseCount, toolCallCount,
     finalized, ...(error === undefined ? {} : { error }), toolExecutions, messages,
   });
   const safeError = (error: unknown): string =>
@@ -53,15 +54,22 @@ export const runModelToolLoop = async <ToolName extends string>(input: {
       });
       responseCount += 1;
     } catch (error) {
+      if (error instanceof ModelResponseError) {
+        responseCount += 1;
+        return finish("invalid-response", "", safeError(error));
+      }
       return finish("request-failed", "", safeError(error));
     }
     if (response.toolCalls.length === 0) {
       messages.push({ role: "assistant", content: response.content });
-      return finish(response.content.trim() ? "final-response" : "response-budget-exhaustion", response.content);
+      if (response.content.trim()) return finish("final-response", response.content);
+      if (finalized) return finish("response-budget-exhaustion");
+      continue;
     }
     if (finalized) return finish("response-budget-exhaustion");
     messages.push({ role: "assistant", content: response.content || null, tool_calls: response.toolCalls });
     for (const toolCall of response.toolCalls) {
+      toolCallCount += 1;
       try {
         const execution = await input.executeToolCall(toolCall);
         toolExecutions.push(execution);

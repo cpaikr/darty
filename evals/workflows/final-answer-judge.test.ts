@@ -282,3 +282,18 @@ for (const extra of ["receiptNumber=202603310000011", "receiptNumber=20260331", 
     }).pass).toBe(false);
   });
 }
+
+test("unlabelled nonreceipt amounts are narrative while labelled invalid IDs still fail", () => {
+  const answer = "Revenue was 12345678901234 won. Evidence (20260331000001, section:1).";
+  expect(validateFinalAnswerCitations({ scenario: exactScenario, facts, finalAnswer: answer }).pass).toBe(true);
+  expect(validateFinalAnswerCitations({ scenario: exactScenario, facts, finalAnswer: answer + " receiptNumber=12345678901234" }).pass).toBe(false);
+});
+test("unexpected tool calls from a tool-free judge are invalid output, never a pass", async () => {
+  const { judgeFinalAnswer } = await import("./final-answer-judge.ts");
+  const { ModelResponseError } = await import("../harness/openai-chat.ts");
+  const result = await judgeFinalAnswer({ apiKey: "fake", model: "fake", scenario: exactScenario, facts, finalAnswer: "Evidence",
+    request: async () => { throw new ModelResponseError("unavailable tool call"); },
+  });
+  expect(result.status).toBe("invalid-output");
+  expect(result.pass).toBe(false);
+});

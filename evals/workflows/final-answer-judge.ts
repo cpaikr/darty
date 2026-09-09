@@ -1,4 +1,4 @@
-import { callOpenAi } from "../harness/openai-chat.ts";
+import { callOpenAi, ModelResponseError } from "../harness/openai-chat.ts";
 import type { AgentWorkflowScenario } from "./agent-scenarios.ts";
 import {
   summarizeWorkflowFacts,
@@ -45,7 +45,7 @@ type CitationToken =
       readonly end: number;
     };
 
-const receiptPattern = /(?<![\p{L}\p{N}_])\d{14}(?![\p{L}\p{N}_])/gu;
+const receiptPattern = /(?<![\p{L}\p{N}_])20\d{12}(?![\p{L}\p{N}_])/gu;
 const sectionPattern = /\bsection:[^\s,;)}\]]+/giu;
 const maxCitationPairDistance = 160;
 
@@ -327,8 +327,9 @@ export const judgeFinalAnswer = async (input: {
 
   return parseJudgeJson(response.content);
   } catch (error) {
-    return { status: "unavailable", pass: false, score: null, raw: "", reasons: [
-      `final-answer judge unavailable: ${(error instanceof Error ? error.message : String(error)).replaceAll(input.apiKey, "<redacted>")}`,
+    const status = error instanceof ModelResponseError ? "invalid-output" : "unavailable";
+    return { status, pass: false, score: null, raw: "", reasons: [
+      `final-answer judge ${status}: ${(error instanceof Error ? error.message : String(error)).replaceAll(input.apiKey, "<redacted>")}`,
     ] };
   }
 };

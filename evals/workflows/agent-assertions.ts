@@ -123,7 +123,7 @@ const getInputArgv = (execution: ToolExecution): readonly string[] | undefined =
 
 const parseExecution = (
   execution: ToolExecution,
-): { readonly argv: readonly string[]; readonly parsed: ParsedWorkflowOperation; readonly envelope: JsonRecord } | undefined => {
+): { readonly argv: readonly string[]; readonly parsed: ParsedWorkflowOperation; readonly envelope: JsonRecord; readonly limitations: readonly string[] } | undefined => {
   const argv = getInputArgv(execution);
   if (argv === undefined || execution.exitCode !== 0) {
     return undefined;
@@ -134,12 +134,13 @@ const parseExecution = (
     return undefined;
   }
 
-  const envelope = parseJsonObject(modelToolView(execution).stdout);
+  const view = modelToolView(execution);
+  const envelope = parseJsonObject(view.stdout);
   if (envelope === undefined) {
     return undefined;
   }
 
-  return { argv, parsed: validation.parsed, envelope };
+  return { argv, parsed: validation.parsed, envelope, limitations: view.limitations };
 };
 
 const getAuthoritativeReceiptFromResult = (
@@ -321,7 +322,7 @@ export const collectWorkflowFacts = (
         modelView: content.modelView,
         references: envelope.references,
         warnings: envelope.warnings,
-        limitations: modelToolView(execution).limitations,
+        limitations: parsedExecution.limitations,
         operationIndex,
       });
     }
@@ -390,7 +391,7 @@ const assertCommonWorkflow = (
         reportSearch.startDate! > reportSearch.endDate!
       ) {
         reasons.push(
-          `search-company-reports date range ${reportSearch.startDate ?? "<missing>"}–${reportSearch.endDate ?? "<missing>"} did not match required range ${scenario.startDate}–${scenario.endDate}`,
+          `search-company-reports date range ${reportSearch.startDate ?? "<missing>"}–${reportSearch.endDate ?? "<missing>"} is malformed or reversed; expected compact YYYYMMDD dates`,
         );
       }
     }

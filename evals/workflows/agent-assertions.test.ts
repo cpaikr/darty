@@ -429,3 +429,10 @@ test("document-only and empty section content cannot satisfy a section task", ()
 test("malformed successful JSON remains a source failure", () => {
   expect(evaluateWorkflowTrace(exactScenario, [{ ...company, stdout: "{invalid" }], []).pass).toBe(false);
 });
+
+test("invalid search date diagnostics describe malformed or reversed dates", () => {
+  const invalid = changeEnvelope(reports, envelope => { envelope.result.request.startDate = "20269999"; });
+  const result = evaluateWorkflowTrace(exactScenario, [company, invalid]);
+  expect(result.reasons.join(" ")).toContain("malformed or reversed");
+  expect(result.reasons.join(" ")).not.toContain("did not match required range");
+});
