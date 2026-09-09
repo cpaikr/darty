@@ -2,7 +2,7 @@
 
 ## Current
 
-[Improve CLI guidance and establish workflow readiness evidence](plans/validate-agent-workflow-readiness.md)
+_None._
 
 ## Plans
 

@@ -42,5 +42,5 @@ This repair establishes deterministic evaluator behavior, not model readiness.
 
 ## Next action
 
-None for this completed result. The active goal separately includes
-[CLI guidance and readiness measurement](validate-agent-workflow-readiness.md).
+None. The accompanying [CLI guidance and readiness measurement](validate-agent-workflow-readiness.md)
+result is also complete on the goal integration branch.

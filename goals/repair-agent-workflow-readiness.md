@@ -1,6 +1,6 @@
 # Goal: Repair agent workflow readiness
 
-Status: active
+Status: complete
 Planning scope: ROADMAP.md
 
 ## Original contract
@@ -26,22 +26,19 @@ _None._
 
 ### Completed included results
 
-- Trustworthy workflow evaluation delivered through [PR #33](https://github.com/cpaikr/darty/pull/33), merged as `6582be9`; implementation `feee209` and feedback `d4ab47c` retained. Full [CI 34314243238](https://github.com/cpaikr/darty/actions/runs/34314243238) passed; all review threads resolved.
+- Trustworthy discovery, evidence scoring, citations, bounded execution, and judging: [PR #33](https://github.com/cpaikr/darty/pull/33), merged as `6582be9`. Full [CI 34314243238](https://github.com/cpaikr/darty/actions/runs/34314243238) passed; all eight review threads resolved.
+- Ambiguous-company guidance, neutral onboarding, declared model evaluations, and readiness evidence: [PR #35](https://github.com/cpaikr/darty/pull/35), merged as `25c5089`. Final source `3b49aaa` passed all ten [CI jobs](https://github.com/cpaikr/darty/actions/runs/34318918453); all three review threads resolved. Independent implementation, feedback, and evidence reviews passed.
 
 ### Current in-scope result
 
-Ambiguous-company guidance, neutral onboarding, declared paid model evaluations, and readiness evidence.
+None — all included results delivered.
 
 ### Next in-scope action
 
-Finish PR #35 exact-head CI and merge, then perform the terminal planning-only integration update.
+None — goal complete.
 
-### Evidence and blockers
+### Completion evidence and boundary
 
-- Delivery integration branch: `codex/repair-agent-workflow-integration`, initialized from local `main` at `be9c8cf` (the supplied plans). Remote push succeeded; repository grants push/admin access. Implementation PRs land here, preserving individual commits; no promotion, release tagging, or publication is included.
-- PR #33 passed baseline reproductions, bounded independent review, scoped documentation harmonization, 110 local tests, and full source-bound CI. Codex completed without findings; all eight CodeRabbit items have accepted dispositions and resolved threads.
-- Candidate `codex/validate-agent-workflow-readiness` is included by the second named result. Its declared paid model sample is authorized by the contract's included source; operator approval, tagging, and publication remain excluded.
-
-- Baseline measurement: source `a25fc90`, production executable SHA-256 `109135f4f60371ba0862c91464c878806883e3e65859fb3220721bcd7e590a59`. Fixed body 3/3, original workflow, and deterministic exact/comparison paths passed. The declared model sample completed: body-agent 2/3 and research 1/6 passed; all outcomes are retained and the report preserves the release hold. Two earlier pre-model selection failures were fixed with fictional regression coverage; neither made paid calls.
-
-- PR #35 feedback: all three threads resolved after `0a92e39`; actual source-error fail-fast behavior was verified and the contrary suggestion withdrawn. Required fresh batch completed with body 3/3 and research 2/6; baseline body 2/3 and research 1/6 retained. Both fixed batches pass. Report and release hold updated; no additional experiments remain.
+- Both PRs merged into `codex/repair-agent-workflow-integration`, initialized from local `main` at `be9c8cf`, preserving individual commits. This terminal commit contains only goal and project-planning metadata.
+- The [readiness report](../docs/research/agent-workflow-readiness.md) retains both complete declared batches: baseline body 2/3 and research 1/6; post-review body 3/3 and research 2/6. Fixed checks passed in both. All outcomes and the citation diagnostic limitation are preserved; no confirmed in-scope implementation defect remains.
+- Research readiness remains on hold. Main promotion, operator/provider signoff, release tagging, publication, and further experiments were not performed. No remaining goal blocker or human PR-feedback decision exists.
