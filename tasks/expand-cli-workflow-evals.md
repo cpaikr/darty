@@ -14,4 +14,7 @@ are not required for rewrite parity.
 
 ## Next action
 
-Reassess and schedule the held-out scenario set after the Rust rewrite cutover.
+Reassess the held-out scenario set after the scheduled
+[workflow readiness work](../plans/validate-agent-workflow-readiness.md)
+produces a trustworthy baseline. The current repair work does not schedule this
+scenario expansion.

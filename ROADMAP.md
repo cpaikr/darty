@@ -6,7 +6,8 @@ _None._
 
 ## Plans
 
-_No additional plans queued._
+1. [Make workflow evaluation trustworthy](plans/repair-workflow-evaluation.md)
+2. [Improve CLI guidance and establish workflow readiness evidence](plans/validate-agent-workflow-readiness.md)
 
 ## Tasks
 
