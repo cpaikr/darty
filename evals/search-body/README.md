@@ -1,8 +1,8 @@
 # Contents Search Evals
 
 These evals cover Rust `search-body` through fixed CLI commands and model-backed
-CLI tool use. Repository cutover is in progress and Rust remains unpublished;
-[the active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md) owns delivery status.
+CLI tool use. Rust remains unpublished;
+[the roadmap](../../ROADMAP.md) owns delivery status.
 
 ## Goal
 
@@ -41,7 +41,10 @@ This track validates the invocation boundary:
 - at least one `search-body` invocation uses valid CLI argument shape;
 - the command arguments match the scenario request, including keyword, date range, and company-code filter when requested.
 
-It only requires the matching structured CLI invocation to exit successfully. Detailed stdout envelope correctness belongs to the fixed-command CLI eval. Final-answer quality is evaluated separately by the opt-in research workflow track in [`../workflows/`](../workflows/README.md).
+It requires a matching structured CLI invocation to exit successfully and the
+bounded model loop to produce a final response. The six-response budget reserves
+its last response for tool-free finalization; artifacts retain termination and
+response/tool counts. This does not grade the final prose. Detailed stdout envelope correctness belongs to the fixed-command CLI eval. Final-answer quality is evaluated separately by the opt-in research workflow track in [`../workflows/`](../workflows/README.md).
 
 Set `OPENAI_MODEL` to select the model.
 

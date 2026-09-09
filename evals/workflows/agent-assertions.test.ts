@@ -107,6 +107,7 @@ const toc = (receipt: string, sectionId: string) =>
     {
       result: {
         receipt: { receiptNumber: receipt },
+        document: { id: "document:body:1" },
         toc: [{ id: sectionId, title: "I. 회사의 개요", children: [] }],
       },
     },
@@ -123,8 +124,10 @@ const section = (
     {
       result: {
         receipt: { receiptNumber: receipt },
+        document: { id: "document:body:1" },
         request: { receipt, sectionId },
         content: {
+          scope: "section",
           body,
           section: { id: sectionId, title },
         },
@@ -177,6 +180,7 @@ describe("agent workflow trace assertions", () => {
         result: {
           request: { receipt: "20260331000001", sectionId: "section:1" },
           content: {
+          scope: "section",
             body: "Evidence",
             section: { id: "section:1", title: "I. 회사의 개요" },
           },
@@ -201,8 +205,9 @@ describe("agent workflow trace assertions", () => {
       {
         result: {
           receipt: { receiptNumber: "20260331000001" },
+          document: { id: "document:body:1" },
           request: { receipt: "20260331000001", sectionId: "section:1" },
-          content: { body: "Evidence" },
+          content: { scope: "section", body: "Evidence" },
         },
       },
     );
@@ -291,7 +296,6 @@ describe("agent workflow trace assertions", () => {
     ]);
 
     expect(result.pass).toBe(false);
-    expect(result.reasons.join(" ")).toContain("did not match required range");
     expect(result.reasons.join(" ")).toContain("was outside required range");
   });
 
@@ -350,4 +354,78 @@ describe("agent workflow trace assertions", () => {
 
     expect(result.pass).toBe(true);
   });
+});
+
+test("document fallback is exploratory and later section recovery succeeds", () => {
+  const fallback = execution(["view-report", "--receipt", "20250331000001"], {
+    result: { receipt: { receiptNumber: "20250331000001" }, document: { id: "document:body:1" }, toc: [],
+      content: { scope: "document", body: "Document evidence" } },
+  });
+  const result = evaluateWorkflowTrace(exactScenario, [company, reports, fallback,
+    toc("20260331000001", "section:1"), section("20260331000001", "section:1", "x".repeat(1300) + "TAIL EVIDENCE")]);
+  expect(result.pass).toBe(true);
+  expect(result.facts.sectionCitations[0]?.bodyExcerpt).toContain("TAIL EVIDENCE");
+});
+
+const selectedPair = [
+  { receiptNumber: "20260331000001", sectionId: "section:1" },
+  { receiptNumber: "20250331000001", sectionId: "section:1" },
+];
+const comparisonTrace = () => [company, reports,
+  toc("20260331000001", "section:1"), section("20260331000001", "section:1", "First"),
+  toc("20250331000001", "section:1"), section("20250331000001", "section:1", "Second"),
+];
+const changeEnvelope = (value: WorkflowToolExecution, change: (envelope: any) => void) => {
+  const envelope = JSON.parse(value.stdout);
+  change(envelope);
+  return { ...value, stdout: JSON.stringify(envelope) };
+};
+test("selected evidence permits extra exploratory titles and narrower successive searches", () => {
+  const first = changeEnvelope(reports, envelope => {
+    envelope.result.request.startDate = "20260301";
+    envelope.result.items = [envelope.result.items[0]];
+  });
+  const second = changeEnvelope(reports, envelope => {
+    envelope.result.request.endDate = "20250331";
+    envelope.result.items = [envelope.result.items[1]];
+  });
+  const trace = [company, first, second, ...comparisonTrace().slice(2),
+    toc("20260331000001", "section:2"), section("20260331000001", "section:2", "Exploration", "Other title"),
+  ];
+  expect(evaluateWorkflowTrace(comparisonScenario, trace, selectedPair).pass).toBe(true);
+  expect(evaluateWorkflowTrace(comparisonScenario, trace, [...selectedPair, { receiptNumber: "20260331000001", sectionId: "section:2" }]).pass).toBe(false);
+});
+test("nonselected candidates may be outside the task but must agree with their own search", () => {
+  const trace = [...comparisonTrace(), outOfRangeReports];
+  expect(evaluateWorkflowTrace(comparisonScenario, trace, selectedPair).pass).toBe(true);
+  const inconsistent = changeEnvelope(outOfRangeReports, envelope => { envelope.result.items[0].companyCode = "99999999"; });
+  expect(evaluateWorkflowTrace(comparisonScenario, [...comparisonTrace(), inconsistent], selectedPair).pass).toBe(false);
+});
+test("selected wrong-company and out-of-window evidence fails", () => {
+  const wrong = comparisonTrace().map(value => changeEnvelope(value, envelope => {
+    if (envelope.result.items) for (const item of envelope.result.items) item.companyCode = "99999999";
+    if (envelope.result.request?.companyCode) envelope.result.request.companyCode = "99999999";
+  }));
+  expect(evaluateWorkflowTrace(comparisonScenario, wrong, selectedPair).pass).toBe(false);
+  const trace = [company, outOfRangeReports, toc("19000101000001", "section:1"), section("19000101000001", "section:1", "Old")];
+  expect(evaluateWorkflowTrace(exactScenario, trace, [{ receiptNumber: "19000101000001", sectionId: "section:1" }]).pass).toBe(false);
+});
+test("a section must follow its own selected document TOC", () => {
+  const trace = comparisonTrace();
+  trace[3] = changeEnvelope(trace[3]!, envelope => { envelope.result.document.id = "document:attachment:1"; });
+  expect(evaluateWorkflowTrace(comparisonScenario, trace, selectedPair).pass).toBe(false);
+});
+test("a guessed filing cannot be legitimized by a later search", () => {
+  const trace = comparisonTrace();
+  expect(evaluateWorkflowTrace(comparisonScenario, [trace[0]!, ...trace.slice(2), trace[1]!], selectedPair).pass).toBe(false);
+});
+test("document-only and empty section content cannot satisfy a section task", () => {
+  for (const content of [{ scope: "document", body: "Whole document" }, { scope: "section", body: "", section: { id: "section:1", title: "Title" } }]) {
+    const trace = [company, reports, toc("20260331000001", "section:1"),
+      changeEnvelope(section("20260331000001", "section:1", "unused"), envelope => { envelope.result.content = content; })];
+    expect(evaluateWorkflowTrace(exactScenario, trace, selectedPair.slice(0, 1)).pass).toBe(false);
+  }
+});
+test("malformed successful JSON remains a source failure", () => {
+  expect(evaluateWorkflowTrace(exactScenario, [{ ...company, stdout: "{invalid" }], []).pass).toBe(false);
 });

@@ -177,22 +177,17 @@ export const callOpenAi = async <ToolName extends string>(input: {
   }
 
   const content = typeof message.content === "string" ? message.content : "";
-  const toolCalls = Array.isArray(message.tool_calls)
-    ? message.tool_calls.filter((toolCall): toolCall is ToolCall<ToolName> => {
-        if (!isRecord(toolCall)) {
-          return false;
-        }
-        const candidateFunction = toolCall.function;
-        return (
-          typeof toolCall.id === "string" &&
-          toolCall.type === "function" &&
-          isRecord(candidateFunction) &&
-          typeof candidateFunction.name === "string" &&
-          input.toolNames.has(candidateFunction.name as ToolName) &&
-          typeof candidateFunction.arguments === "string"
-        );
-      })
-    : [];
-
+  if (message.tool_calls !== undefined && !Array.isArray(message.tool_calls)) {
+    throw new Error("OpenAI response contained malformed tool calls.");
+  }
+  const toolCalls: ToolCall<ToolName>[] = [];
+  for (const toolCall of Array.isArray(message.tool_calls) ? message.tool_calls : []) {
+    if (!isRecord(toolCall) || typeof toolCall.id !== "string" || toolCall.type !== "function" ||
+        !isRecord(toolCall.function) || typeof toolCall.function.name !== "string" ||
+        !input.toolNames.has(toolCall.function.name as ToolName) || typeof toolCall.function.arguments !== "string") {
+      throw new Error("OpenAI response contained a malformed or unavailable tool call.");
+    }
+    toolCalls.push(toolCall as unknown as ToolCall<ToolName>);
+  }
   return { content, toolCalls };
 };

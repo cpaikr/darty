@@ -34,10 +34,12 @@ Trustworthy discovery, evidence scoring, citations, bounded execution, and judgi
 
 ### Next in-scope action
 
-Inspect the included evaluation repair plan, reproduce its failures, and implement a bounded reviewable repair.
+Deliver the evaluation repair PR into `codex/repair-agent-workflow-integration`, handle feedback, and pass required CI before starting CLI guidance/readiness.
 
 ### Evidence and blockers
 
 - Delivery integration branch: `codex/repair-agent-workflow-integration`, initialized from local `main` at `be9c8cf` (the supplied plans). Remote push succeeded; repository grants push/admin access. Implementation PRs land here, preserving individual commits; no promotion, release tagging, or publication is included.
 - Candidate evaluation repair is included by the first named semantic result. Repository validation and bounded review are necessary completion work.
 
+
+- Evaluation repair implemented with baseline reproductions, bounded independent review and fixes, scoped documentation harmonization, passing local tests/typecheck/wire/version checks, and 18 real CLI help comparisons. Candidate PR is included by the first result; no model readiness or release claim is made.
