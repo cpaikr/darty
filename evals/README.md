@@ -6,6 +6,10 @@ Tests own deterministic contracts, parsers, SDK consumers, and CLI mechanics.
 
 ## Current tracks
 
+The separate [consumer skill evaluation](skill/evaluation.md) records offline
+decision and activation-policy trials for the repository-owned skill. It does
+not certify live DART retrieval or release installation.
+
 | Track | Command | Boundary |
 |---|---|---|
 | Fixed body search | `bun run eval:cli:search-body` | Live stdout envelope and filing references |

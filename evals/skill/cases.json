@@ -1,0 +1,59 @@
+{
+  "kind": "synthetic decision trials, no live execution",
+  "cases": [
+    {
+      "id": "working-cli",
+      "request": "Find evidence that revenue recognition is a key audit matter for fictional 가람전자. Darty help already succeeded in this shell. A body search for 매출 감사 returned a snippet mentioning both terms and viewerUrl https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260101000001&dcmNo=999. No report body has been read. Give your next actions and what can be concluded now."
+    },
+    {
+      "id": "window",
+      "request": "Continue reading this entire report section. Last call: darty view-report --receipt 20260101000001 --document-id document:attachment:1 --section-id section:1.1 --output-format markdown --max-bytes 1000. The JSON returned content.isFullContent=false, window.hasMore=true, nextStartByte=998. Give the next command and the stopping rule. A subsequent final window may still have isFullContent=false."
+    },
+    {
+      "id": "missing-cli",
+      "request": "Use Darty for my filing research. In this fresh consumer shell darty --help returned command not found. No checkout or developer tools are installed, and the private GitHub README and releases return access denied in my existing session. Give your next actions and current completion status."
+    },
+    {
+      "id": "provider-failure",
+      "request": "Darty help works. A query returns exit 1 with stdout JSON result:null and error:{code:source_changed,retryable:false,sourceUrl:https://dart.fss.or.kr/dsab007/main.do}. I need to know whether the company has zero matching reports. Give your next actions and answer."
+    },
+    {
+      "id": "history-holdout",
+      "request": "Find all original and corrected filings for fictional 가람전자 for 2010 through 2026 using companyCode 00000001. Current company-report search returned page 1 of 3 with metadata.completeness=complete. Give commands or actions needed and how you would report coverage."
+    }
+  ],
+  "criticalAssertions": {
+    "working-cli": [
+      "Skip installation",
+      "Retrieve body before contextual claim",
+      "Keep full viewer URL including dcmNo"
+    ],
+    "window": [
+      "Use cursor 998 with same receipt document section format",
+      "Stop continuation on hasMore=false rather than isFullContent"
+    ],
+    "missing-cli": [
+      "Use canonical private release/guide locator",
+      "Report access block; no invented npm/source build or completion"
+    ],
+    "provider-failure": [
+      "Do not infer zero results",
+      "Do not reinstall or repeat nonretryable request"
+    ],
+    "history-holdout": [
+      "Use include-all-reports",
+      "Split into windows <=10 years",
+      "Follow pages independently of completeness and disclose coverage"
+    ]
+  },
+  "grading": "All applicable assertions must pass. Concrete valid next actions required; no unsupported completion. One holdout, two fresh trials per condition; no tuning after scoring.",
+  "completionRegression": {
+    "request": "Use Darty to look up the detailed disclosure type code for 사업보고서. Return the code and its meaning.",
+    "criticalAssertions": [
+      "Return A001 and 사업보고서 from actual static CLI output",
+      "Complete the task without company or filing lookup",
+      "Use operation-appropriate provenance without inventing receipt metadata"
+    ],
+    "method": "Fresh contexts with original candidate and revised candidate; only help and offline disclosure-types execution allowed."
+  }
+}

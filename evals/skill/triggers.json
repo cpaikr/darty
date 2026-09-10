@@ -1,0 +1,46 @@
+{
+  "kind": "Fresh-context metadata selection simulation; not installed-host discovery",
+  "threshold": "Every label must match; one trial per prompt, repeat only failures or ambiguity",
+  "cases": [
+    {
+      "prompt": "$darty Find the company's latest annual filing.",
+      "expected": true,
+      "why": "Explicit in-scope invocation"
+    },
+    {
+      "prompt": "Use $darty to retrieve this receipt's audit section.",
+      "expected": true,
+      "why": "Explicit retrieval"
+    },
+    {
+      "prompt": "$darty Help me set up the executable for DART research.",
+      "expected": true,
+      "why": "Explicit conditional setup"
+    },
+    {
+      "prompt": "Find Korean DART filings about dividends.",
+      "expected": false,
+      "why": "In scope but uninvoked"
+    },
+    {
+      "prompt": "Add a new search filter to Darty's Rust CLI.",
+      "expected": false,
+      "why": "Contributor work"
+    },
+    {
+      "prompt": "Integrate the Darty Node SDK into my service.",
+      "expected": false,
+      "why": "SDK integration"
+    },
+    {
+      "prompt": "Explain DART.",
+      "expected": false,
+      "why": "Ambiguous, uninvoked"
+    },
+    {
+      "prompt": "Summarize this weather forecast.",
+      "expected": false,
+      "why": "Unrelated"
+    }
+  ]
+}
