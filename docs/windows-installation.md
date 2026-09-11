@@ -71,8 +71,7 @@ if (-not $alreadyPresent) {
 
 An already open PowerShell session keeps its inherited `PATH`. Open a new
 terminal from a process with the updated environment, restarting the terminal
-app if necessary, then run `Get-Command darty -CommandType Application` and
-`darty --help`.
+app if necessary, then [verify command resolution](#verify-command-resolution).
 
 ## Use the current PowerShell session
 
@@ -91,9 +90,27 @@ foreach ($entry in $currentEntries) {
 if (-not $alreadyPresent) {
     $env:Path = if ([string]::IsNullOrEmpty($currentPath)) { $DartyBin } else { "$DartyBin;$currentPath" }
 }
-Get-Command darty -CommandType Application
+```
+
+Then [verify command resolution](#verify-command-resolution) in this session.
+
+## Verify command resolution
+
+Set `$DartyBin` to the verified installation directory again in the terminal
+being tested. Check the command PowerShell would actually run before invoking
+it: another executable earlier in `PATH`, an alias, or a function can shadow
+the installed file.
+
+```powershell
+$DartyBin = "$env:USERPROFILE\.local\bin"
+$DartyExe = [IO.Path]::GetFullPath((Join-Path $DartyBin "darty.exe"))
+$DartyCommand = Get-Command darty -ErrorAction Stop
+if ($DartyCommand.CommandType -ne "Application" -or $DartyCommand.Path -ine $DartyExe) {
+    throw "darty does not resolve to $DartyExe. Run Get-Command darty -All to inspect conflicting commands."
+}
 darty --help
 ```
 
-`Get-Command` verifies command-name lookup. Calling the executable by its full
-path verifies filesystem visibility independently of `PATH`.
+Resolve any conflicting command or `PATH` entry and repeat this check. Calling
+the executable by its full path verifies filesystem visibility independently
+of command-name lookup.

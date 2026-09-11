@@ -177,9 +177,9 @@ Failures:
 | `source_parse_failure` | no | response HTML or decoded source model could not be parsed |
 | `internal_error` | no | unexpected provider or implementation failure |
 
-Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date, page, page-size, and DART code filters. Shape-valid but unknown `disclosureTypes` values such as `A999` are invalid requests; callers should recover by using `darty disclosure-types --query <query>`.
+Typed failures may include optional `recoveryHint` with a concise next action for common recoverable invalid inputs, such as resolving an 8-digit `companyCode` with `search-company` or correcting date, page, page-size, and DART code filters. Shape-valid but unknown `disclosureTypes` values such as `A999` are invalid requests; callers should recover by using `darty disclosure-types --query QUERY`, replacing `QUERY` with the desired search term.
 
-For caller-facing DART filter code examples and labels, see [`dart-filter-codes.md`](dart-filter-codes.md). For detailed disclosure-type discovery, use `darty disclosure-types --query <query>`.
+For caller-facing DART filter code examples and labels, see [`dart-filter-codes.md`](dart-filter-codes.md). For detailed disclosure-type discovery, use `darty disclosure-types --query QUERY`.
 
 ## 6. Source and Wire Ownership
 

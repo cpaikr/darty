@@ -49,8 +49,10 @@ Get-Command darty -CommandType Application
 darty --help
 ```
 
-The first two commands establish full-path file visibility and CLI execution;
-the last two establish command-name discovery after PATH setup. Until that
+The first two commands establish full-path file visibility and CLI execution.
+For command-name discovery, also
+[verify that `darty` resolves to the selected executable](windows-installation.md#verify-command-resolution);
+the last two commands alone could find an older installation. Until that
 independent Windows evidence exists, the Windows manifest entry must remain
 uncertified. The installer itself probes a file handle and rejects a physical
 path redirected away from the advertised destination, but that host-local check
