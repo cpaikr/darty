@@ -6,9 +6,34 @@ on:
 permissions:
   contents: read
 
+# A commit has one required status; serialize runs that report on the same SHA.
+concurrency:
+  group: ci-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
+  status_pending:
+    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    permissions:
+      statuses: write
+    steps:
+      - name: Mark exact-source CI pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
+        run: |
+          gh api --silent --method POST "repos/$GH_REPO/statuses/$SOURCE_SHA" \
+            -f context=ci/validated-source -f state=pending \
+            -f description='CI validation and artifact checks are running.' \
+            -f target_url="$RUN_URL"
+
   validate:
     if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
+    needs: status_pending
     uses: ./.github/workflows/validate.yml
     with:
       source_sha: ${{ github.sha }}
@@ -20,3 +45,33 @@ jobs:
     with:
       source_sha: ${{ github.sha }}
       all_targets: true
+
+  status_complete:
+    if: always() && github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
+    needs: [status_pending, validate, standalone]
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    permissions:
+      statuses: write
+    steps:
+      - name: Report exact-source CI result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
+          RUN_CANCELLED: ${{ cancelled() }}
+          PENDING_RESULT: ${{ needs.status_pending.result }}
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+          STANDALONE_RESULT: ${{ needs.standalone.result }}
+        run: |
+          if [ "$RUN_CANCELLED" = false ] && [ "$PENDING_RESULT" = success ] && [ "$VALIDATE_RESULT" = success ] && [ "$STANDALONE_RESULT" = success ]; then
+            state=success
+          else
+            state=failure
+          fi
+          gh api --silent --method POST "repos/$GH_REPO/statuses/$SOURCE_SHA" \
+            -f context=ci/validated-source -f state="$state" \
+            -f description='CI validation and artifact checks completed.' \
+            -f target_url="$RUN_URL"
+          test "$state" = success

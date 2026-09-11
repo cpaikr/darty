@@ -81,6 +81,21 @@ rerun actor to be `sjunepark`. Pushes, pull requests, tags, and schedules do not
 authorize a run. All outside contributors require workflow
 approval in the repository's fork policy, including returning contributors.
 
+The CI workflow reports the `ci/validated-source` commit status on its exact
+source SHA. It marks the status pending before validation and reports success
+only when repository validation and all standalone build/certification jobs
+succeed. A failed, cancelled, or skipped prerequisite cannot produce success;
+an interrupted reporter can leave the status pending. Runs for the same SHA
+are serialized. Only the reporting jobs receive `statuses: write`; they use
+the workflow's GitHub token and do not check out or execute repository code.
+
+Branch protection should require `ci/validated-source` from the GitHub Actions
+App. This explicit status is needed because the observed manual workflow checks
+were absent from GitHub's merge-status summary even after a successful run.
+The status links to the real run; it is not a manually asserted substitute for
+validation. For a fresh complete measurement, dispatch the whole workflow;
+partial reruns retain GitHub's successful prerequisite results for the same SHA.
+
 For an explicitly authorized run, `sjunepark` enables Actions, dispatches the
 selected workflow and branch, waits for completion, and disables Actions again:
 

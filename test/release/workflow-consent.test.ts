@@ -25,6 +25,9 @@ describe("maintainer-controlled Actions", () => {
       // including reusable-workflow jobs, must independently check consent.
       for (const [id, job] of Object.entries(workflow.jobs)) {
         let condition = maintainerConsent;
+        if (name === "ci.yml" && id === "status_complete") {
+          condition = "always() && " + condition;
+        }
         if (name === "release.yml" && id === "github_release") {
           condition += " && needs.metadata.outputs.source_tag != ''";
         }
