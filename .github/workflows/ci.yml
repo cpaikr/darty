@@ -53,14 +53,19 @@ jobs:
     timeout-minutes: 5
     permissions:
       statuses: write
+    env:
+      RUN_CANCELLED: 'false'
     steps:
+      - name: Record cancellation
+        if: cancelled()
+        run: echo 'RUN_CANCELLED=true' >> "$GITHUB_ENV"
       - name: Report exact-source CI result
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           SOURCE_SHA: ${{ github.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}
-          RUN_CANCELLED: ${{ cancelled() }}
           PENDING_RESULT: ${{ needs.status_pending.result }}
           VALIDATE_RESULT: ${{ needs.validate.result }}
           STANDALONE_RESULT: ${{ needs.standalone.result }}

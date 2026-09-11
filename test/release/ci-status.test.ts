@@ -8,7 +8,8 @@ type Job = {
   needs?: string | string[];
   permissions?: Record<string, string>;
   "timeout-minutes"?: number;
-  steps?: { env: Record<string, string>; run: string }[];
+  env?: Record<string, string>;
+  steps?: { name: string; if?: string; env?: Record<string, string>; run: string }[];
 };
 const workflow = Bun.YAML.parse(readFileSync(resolve(import.meta.dir, "../../.github/workflows/ci.yml"), "utf8")) as {
   permissions: Record<string, string>;
@@ -21,8 +22,9 @@ afterAll(() => rmSync(directory, { recursive: true, force: true }));
 
 function reportingStep(id: string) {
   const job = workflow.jobs[id];
-  if (!job || job.steps?.length !== 1 || !job.steps[0]) throw new Error(`Missing reporting step: ${id}`);
-  return job.steps[0];
+  const step = job?.steps?.find(step => step.env?.SOURCE_SHA);
+  if (!step?.env) throw new Error(`Missing reporting step: ${id}`);
+  return { ...step, env: step.env };
 }
 
 function run(id: string, overrides: Record<string, string> = {}) {
@@ -58,8 +60,13 @@ describe("manual CI commit status", () => {
         expect(job.permissions?.statuses).toBeUndefined();
       }
     }
+    expect(workflow.jobs.status_complete?.env).toEqual({ RUN_CANCELLED: "false" });
+    expect(workflow.jobs.status_complete?.steps?.[0]).toEqual({
+      name: "Record cancellation", if: "cancelled()",
+      run: `echo 'RUN_CANCELLED=true' >> "$GITHUB_ENV"`,
+    });
+    expect(reportingStep("status_complete").if).toBe("always()");
     expect(reportingStep("status_complete").env).toMatchObject({
-      RUN_CANCELLED: "${{ cancelled() }}",
       PENDING_RESULT: "${{ needs.status_pending.result }}",
       VALIDATE_RESULT: "${{ needs.validate.result }}",
       STANDALONE_RESULT: "${{ needs.standalone.result }}",
