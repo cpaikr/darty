@@ -1,9 +1,6 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:
@@ -21,6 +18,7 @@ concurrency:
 
 jobs:
   metadata:
+    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       source_tag: ${{ steps.source.outputs.source_tag }}
@@ -37,28 +35,18 @@ jobs:
         id: source
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
           DISPATCH_TAG: ${{ inputs.tag }}
-          EVENT_REF: ${{ github.ref }}
           CANDIDATE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
-          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -z "$DISPATCH_TAG" ]; then
+          if [ -z "$DISPATCH_TAG" ]; then
             echo "source_tag=" >> "$GITHUB_OUTPUT"
             echo "source_sha=$CANDIDATE_SHA" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            SOURCE_TAG="$DISPATCH_TAG"
-          else
-            if [[ "$EVENT_REF" != refs/tags/* ]]; then
-              echo "Release runs must be triggered by a tag ref, got $EVENT_REF." >&2
-              exit 1
-            fi
-            SOURCE_TAG="${EVENT_REF#refs/tags/}"
-          fi
+          SOURCE_TAG="$DISPATCH_TAG"
 
           if [[ ! "$SOURCE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "Source tag $SOURCE_TAG is not a stable vx.y.z tag." >&2
@@ -105,8 +93,8 @@ jobs:
           SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
         run: |
           CI_RUN_ID="$(
-            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${SOURCE_SHA}&event=push&per_page=100" \
-              --jq ".workflow_runs[] | select(.head_sha == \"${SOURCE_SHA}\" and .head_branch == \"main\" and .conclusion == \"success\") | .id" |
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${SOURCE_SHA}&event=workflow_dispatch&per_page=100" \
+              --jq ".workflow_runs[] | select(.head_sha == \"${SOURCE_SHA}\" and .head_branch == \"main\" and .actor.login == \"sjunepark\" and .triggering_actor.login == \"sjunepark\" and .conclusion == \"success\") | .id" |
               head -n 1
           )"
 
@@ -133,12 +121,14 @@ jobs:
           echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
   validation:
+    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
     needs: metadata
     uses: ./.github/workflows/validate.yml
     with:
       source_sha: ${{ needs.metadata.outputs.source_sha }}
 
   standalone:
+    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
     needs: [metadata, validation]
     uses: ./.github/workflows/standalone.yml
     with:
@@ -146,7 +136,7 @@ jobs:
       all_targets: true
 
   github_release:
-    if: needs.metadata.outputs.source_tag != ''
+    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && needs.metadata.outputs.source_tag != ''
     runs-on: blacksmith-2vcpu-ubuntu-2404
     needs:
       - metadata

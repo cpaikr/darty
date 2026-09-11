@@ -1,7 +1,7 @@
 # Evals
 
 Evals measure realistic task usefulness through the Rust CLI subprocess.
-Rust remains unpublished; [the roadmap](../ROADMAP.md) owns delivery status.
+[The release runbook](../docs/release.md) owns artifact availability and validation.
 Tests own deterministic contracts, parsers, SDK consumers, and CLI mechanics.
 
 ## Current tracks

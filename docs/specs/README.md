@@ -28,8 +28,7 @@ contracts. [ARCHITECTURE.md](../../ARCHITECTURE.md) owns implementation status,
   grammar that OpenAPI cannot express.
 
 The Rust implementation owns that authority, with historical TypeScript
-baseline differences recorded in the companion. Repository cutover and artifact
-validation remain in progress; Rust is unpublished. The deterministic lock couples canonical documents,
+baseline differences recorded in the companion. The deterministic lock couples canonical documents,
 provider qualification, scripts, and fictional fixture evidence.
 
 Run after changing any locked input:

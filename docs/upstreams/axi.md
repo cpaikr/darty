@@ -46,9 +46,9 @@ Run the local check with:
 bun run check:axi
 ```
 
-The scheduled GitHub Actions workflow runs the same check every Monday. If AXI's
-`main` branch has advanced past `axi-baseline.json`, the workflow fails and
-prints a review report with commit and file changes.
+If AXI's `main` branch has advanced past `axi-baseline.json`, the local check
+fails and prints a review report with commit and file changes. There is no
+AXI upstream CI workflow.
 
 When drift is reported:
 

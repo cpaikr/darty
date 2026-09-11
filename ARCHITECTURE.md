@@ -7,12 +7,11 @@ repository topology; [VISION.md](VISION.md) owns product scope and
 
 ## Implementation and release status
 
-The repository implements the Rust cutover for version 0.6.1. Artifact
-validation passes; [ROADMAP.md](ROADMAP.md) tracks integration delivery. Rust
-remains unpublished. The latest
-published standalone release, v0.6.0, contains the earlier Bun/TypeScript CLI.
-Its availability does not certify the new Rust artifacts. Older npm releases
-remain historical; npm registry publication is retired.
+The Rust CLI and both SDKs are published in
+[v0.6.1](https://github.com/cpaikr/darty/releases/tag/v0.6.1).
+[ROADMAP.md](ROADMAP.md) tracks subsequent work. The earlier v0.6.0 standalone
+release contains the Bun/TypeScript CLI. Older npm releases remain historical;
+npm registry publication is retired.
 
 The superseded TypeScript DART implementation, entry points, source-local
 toolset, superseded TypeScript tests, and npm CLI launcher are removed.
@@ -60,13 +59,13 @@ not competing contracts.
 
 ## Artifact boundary
 
-[Private GitHub Releases](https://github.com/cpaikr/darty/releases) remain the
+[Public GitHub Releases](https://github.com/cpaikr/darty/releases) are the
 artifact authority. [`scripts/standalone.mjs`](scripts/standalone.mjs) and the
 [CLI target inventory](scripts/release-targets.json) build and certify native
 archives, checksums, and installers. CLI installation loads no Node runtime.
 
 [`scripts/sdk-artifacts.mjs`](scripts/sdk-artifacts.mjs) packages the Rust SDK
-as a `.crate` and the Node SDK as platform-specific private tarballs for Linux
+as a `.crate` and the Node SDK as platform-specific tarballs for Linux
 GNU x64 and Darwin ARM64. Each Node tarball includes its native addon; there
 is no CLI launcher, install script, or optional platform-package dependency.
 [`package.json`](package.json) is the version authority, checked against Cargo

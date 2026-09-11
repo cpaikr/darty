@@ -5,8 +5,8 @@ target/
 .tmp/
 .DS_Store
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.schema
 
 # sjskills.toml owns project skill selection; these are local generated state.
 /.agents/skills/

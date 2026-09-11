@@ -4,15 +4,15 @@
 
 Darty는 DART 공개 웹 화면을 읽기 전용으로 사용합니다. 공식 OpenDART API가 아니며, DART 웹 동작이 바뀌면 결과나 파서가 영향을 받을 수 있습니다.
 
-현재 저장소는 여덟 작업을 Rust SDK, Node SDK, CLI가 공유하도록 전환 중입니다.
-Rust v0.6.1은 아직 배포되지 않았습니다. 현재 내려받을 수 있는 v0.6.0 CLI는
-기존 Bun/TypeScript 구현이며, 아래 설치 절차는 해당 배포 아티팩트에 적용됩니다.
-검증과 배포 진행 상태는 [로드맵](ROADMAP.md)에서 확인하세요.
+여덟 작업을 Rust SDK, Node SDK, CLI가 같은 Rust 구현으로 제공합니다.
+현재 배포 버전은 [v0.6.1](https://github.com/cpaikr/darty/releases/tag/v0.6.1)이며,
+v0.6.0 CLI는 이전 Bun/TypeScript 구현입니다.
+향후 작업은 [로드맵](ROADMAP.md)에서 확인하세요.
 
 ## 설치
 
-배포 경로는 [비공개 GitHub Releases](https://github.com/cpaikr/darty/releases)입니다.
-저장소 접근 권한으로 로그인한 뒤 버전별 실행 파일 압축본, `SHA256SUMS`,
+배포 경로는 [공개 GitHub Releases](https://github.com/cpaikr/darty/releases)입니다.
+로그인 없이 버전별 실행 파일 압축본, `SHA256SUMS`,
 운영체제에 맞는 설치 스크립트를 내려받으세요. Node.js, npm, Bun, 소스 빌드,
 GitHub CLI는 필요하지 않습니다.
 
@@ -130,7 +130,7 @@ darty --help
 
 업데이트도 새 릴리스의 파일들을 내려받아 같은 절차로 설치합니다. 체크섬 검증이나
 새 실행 파일 확인에 실패하면 기존 실행 파일은 교체하지 않습니다. 설치 스크립트와
-체크섬은 반드시 같은 인증된 릴리스에서 받으세요.
+체크섬은 반드시 이 저장소의 같은 릴리스에서 받으세요.
 
 ## CLI
 
@@ -185,10 +185,10 @@ CLI 사용을 안내하는 소비자용 소스 패키지는 [`skill/darty`](skil
 [`packages/node`](packages/node/)에 있습니다. 두 SDK와 CLI가 같은 Rust 구현을
 사용합니다. Node SDK는 Node.js 22.12.0 이상이 필요합니다.
 
-예정된 SDK 배포는 비공개 GitHub Release의 `.crate`와 플랫폼별 Node `.tgz`입니다.
+SDK는 GitHub Release의 `.crate`와 플랫폼별 Node `.tgz`로 배포합니다.
 Node 대상은 Linux GNU x64와 macOS Apple Silicon이며, tarball 안에 네이티브
 애드온을 포함합니다. npm 레지스트리 배포나 CLI 런처는 제공하지 않습니다.
-SDK 아티팩트 검증은 진행 중이며 설치·버전 계약은 [배포 문서](docs/release.md)가
+설치·버전 계약과 플랫폼별 검증 범위는 [배포 문서](docs/release.md)가
 관리합니다. CLI 설치에는 Node SDK가 필요하지 않습니다.
 
 로컬 개발 환경에서는 의존성을 설치하고 Rust 실행 파일을 빌드합니다.

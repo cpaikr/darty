@@ -52,13 +52,13 @@ argument parsing, help, validation presentation, stdout, stderr, and exit
 behavior while reusing the SDK instead of becoming a second DART
 implementation.
 
-Private GitHub Releases own the versioned standalone CLI archives, checksums,
+Public GitHub Releases own the versioned standalone CLI archives, checksums,
 and installation path. CLI installation requires no Node.js, npm, source
 checkout, or language toolchain. All release builds and automated checks run on
 Linux; non-Linux binaries are cross-built with their runtime verification limits
-made explicit. Distribution of the Node SDK is separate from CLI installation
-and must be specified before SDK publication; npm registry delivery is not an
-accepted requirement.
+made explicit. Distribution of the Node SDK is separate from CLI installation;
+the [release runbook](docs/release.md) owns SDK artifacts and installation.
+npm registry delivery is not an accepted requirement.
 
 Pi adapters, MCP servers, runtime-specific toolsets, and a
 `@sjunepark/darty/toolset` compatibility surface are not target products.

@@ -1,8 +1,8 @@
 # Contents Search Evals
 
 These evals cover Rust `search-body` through fixed CLI commands and model-backed
-CLI tool use. Rust remains unpublished;
-[the roadmap](../../ROADMAP.md) owns delivery status.
+CLI tool use. [The release runbook](../../docs/release.md) owns artifact
+availability and validation.
 
 ## Goal
 

@@ -21,7 +21,7 @@ describe("standalone release authority", () => {
   });
   test("publishes the complete certified bundle only for a real source tag", () => {
     const finalJob = workflow.slice(workflow.indexOf("  github_release:"));
-    expect(finalJob).toContain("if: needs.metadata.outputs.source_tag != ''");
+    expect(finalJob).toContain("&& needs.metadata.outputs.source_tag != ''");
     expect(finalJob).toContain("      - standalone");
     expect(finalJob).toContain("      contents: write");
     expect(finalJob).toContain("name: darty-release");
@@ -32,7 +32,9 @@ describe("standalone release authority", () => {
   test("keeps stable tags and exact main CI authority", () => {
     expect(workflow).toContain('if [[ ! "$SOURCE_TAG" =~ ^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$ ]]');
     expect(workflow).toContain("Require successful CI for exact source commit");
-    expect(workflow).toContain("event=push");
+    expect(workflow).toContain("event=workflow_dispatch");
+    expect(workflow).toContain('.actor.login == \\"sjunepark\\"');
+    expect(workflow).toContain('.triggering_actor.login == \\"sjunepark\\"');
   });
   test("cross-builds from the target authority and certifies exact installed archives", () => {
     const standalone = read(".github/workflows/standalone.yml");

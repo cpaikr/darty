@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   validate:
+    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 45
     steps:

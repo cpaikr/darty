@@ -2,8 +2,8 @@
 
 This directory contains fixed and model-assisted CLI workflow evals for
 multi-step DART research handoffs. They are live, opt-in checks, not
-deterministic CI gates. They invoke the Rust CLI; the Rust release remains unpublished.
-[The roadmap](../../ROADMAP.md) owns delivery status.
+deterministic CI gates. They invoke the Rust CLI;
+[the release runbook](../../docs/release.md) owns artifact availability and validation.
 
 ## Current Track
 
