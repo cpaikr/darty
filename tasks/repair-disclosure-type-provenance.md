@@ -1,6 +1,6 @@
 # Repair disclosure-type provenance
 
-## Outcome
+## Intended outcome
 
 `disclosure-types` returns reachable, immutable provenance for its retained
 DART detail-code catalog.

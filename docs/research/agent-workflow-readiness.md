@@ -2,10 +2,13 @@
 
 Observed on 2026-09-09: fixed CLI checks passed in both complete batches. The
 baseline passed body invocation 2/3 and research 1/6; the required post-review
-batch passed body invocation 3/3 and research 2/6. **Release readiness remains
-on hold.** These small diagnostic samples do not establish a reliability rate,
-provider approval, or operator signoff. [The readiness plan](../../plans/validate-agent-workflow-readiness.md)
-owns delivery; the [release runbook](../release.md) owns the remaining gates.
+batch passed body invocation 3/3 and research 2/6. **The measured research gate
+remained unresolved.** These small diagnostic
+samples do not establish a reliability rate, provider approval, or operator
+signoff. This dated evidence does not determine whether an artifact was later
+published: [README.md](../../README.md) records release availability,
+[ROADMAP.md](../../ROADMAP.md) owns current delivery, and the
+[release runbook](../release.md) owns remaining gates.
 
 ## Baseline source and shared protocol
 

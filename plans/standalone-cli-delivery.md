@@ -1,8 +1,12 @@
 # Standalone CLI release delivery
 
 Status: delivered in [v0.6.0](https://github.com/cpaikr/darty/releases/tag/v0.6.0).
+This historical record describes the Bun/TypeScript standalone release. Rust
+v0.6.1 subsequently replaced it, and distribution is now public. The
+[README](../README.md) records current availability; the
+[release runbook](../docs/release.md) owns release operations.
 
-## Accepted scope
+## Original accepted scope
 
 Replace npm registry delivery with private GitHub Releases containing standalone
 CLI archives and SHA-256 checksums. Installation requires no Node.js, npm, Bun,
@@ -15,7 +19,7 @@ exact Linux archives through the installed CLI boundary; record macOS/Windows
 as cross-built without CI runtime certification. Preserve source tags and assets;
 resume only matching partial drafts and never overwrite published artifacts.
 
-## Current state
+## Completion evidence
 
 - Reconciled the intended distribution and Linux-only job policy with the owner.
 - Confirmed the current CLI has no runtime source-file or child-runtime dependency.
@@ -36,7 +40,8 @@ resume only matching partial drafts and never overwrite published artifacts.
 [Release run](https://github.com/cpaikr/darty/actions/runs/34106935042) published
 v0.6.0 from `8bac7c9741c3253d11a95e448dfed97f95c30074` after exact-source CI
 passed. All four archives, both installers, checksums, and the manifest were
-verified after publication. GitHub reports v0.6.0 as the latest stable release.
+verified after publication. GitHub reported v0.6.0 as the latest stable release
+at that time.
 
 ## Next action
 

@@ -1,6 +1,6 @@
 # Make DART industry codes discoverable
 
-## Outcome
+## Intended outcome
 
 Users can discover valid `search-company-reports --industry-code` values
 without already knowing DART codes such as `612`.
@@ -12,4 +12,4 @@ improvement is outside rewrite parity and remains intentionally unscheduled.
 
 ## Next action
 
-Investigate the authoritative DART code source after the Rust rewrite cutover.
+Investigate the authoritative DART code source when this task is scheduled.

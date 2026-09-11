@@ -3,6 +3,12 @@
 Status: complete
 Planning scope: ROADMAP.md
 
+Historical completed goal. The contract and evidence below describe delivery
+to the integration branch; promotion and publication occurred later. The
+[readiness report](../docs/research/agent-workflow-readiness.md) owns the bounded
+model findings, and [the release runbook](../docs/release.md) owns current
+approvals and distribution. Original contract paths are historical scope evidence.
+
 ## Original contract
 
 Goal contract

@@ -1,5 +1,10 @@
 # Improve CLI guidance and establish workflow readiness evidence
 
+Status: complete. This record describes the PR #35 delivery and declared
+readiness measurement. Subsequent promotion and publication are separate events;
+[README](../README.md) records release availability, and
+[the release runbook](../docs/release.md) owns approvals.
+
 ## Outcome
 
 The repaired evaluations measure the current CLI under a declared, repeatable
@@ -7,7 +12,7 @@ agent setup. Company guidance avoids unsupported identity selection, and a
 source-bound report distinguishes product correctness from remaining model
 limitations for the release operator.
 
-## Current state
+## Delivered state
 
 Complete on the goal integration branch through
 [PR #35](https://github.com/cpaikr/darty/pull/35), merged as `25c5089` after
@@ -29,9 +34,9 @@ The completed measurement does not establish model reliability or release approv
 
 - Fictional release-CLI cases and reviewed golden deltas cover unique, ambiguous,
   misleading-first, empty, partial, and paginated company results; direct tests
-  cover unknown pagination. CLI compatibility passed 69 scenarios.
+  cover unknown pagination. CLI compatibility passed.
 - Local Rust workspace tests, Clippy, release build, typecheck, wire/version
-  checks, and 113 Bun tests passed. Diagnostic defects were reproduced and fixed
+  checks, and Bun tests passed. Diagnostic defects were reproduced and fixed
   with regressions; fresh measurement followed the final implementation change.
 - Bounded independent implementation, feedback, and evidence reviews and scoped
   documentation reconciliation passed. Codex completed without findings; all
@@ -45,7 +50,8 @@ The completed measurement does not establish model reliability or release approv
 ## Next action and release boundary
 
 None for this completed result. Research readiness remains on hold under the
-[release handoff](../docs/release.md#rust-release-handoff). Main promotion,
-operator/provider signoff, release tagging, publication, and further model
-experiments were not started. Goal completion promises the specified repair and
-trustworthy evidence, not guaranteed stochastic model success.
+[readiness report](../docs/research/agent-workflow-readiness.md#release-disposition).
+Main promotion, operator/provider signoff, release tagging, publication, and
+further model experiments were outside this completed delivery. Goal completion
+promises the specified repair and trustworthy evidence, not guaranteed
+stochastic model success.

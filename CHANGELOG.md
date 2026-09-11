@@ -1,5 +1,10 @@
 # Changelog
 
+Generated release history through `v0.5.0`. Statements below describe their
+release-time behavior. Later release summaries live in
+[GitHub Releases](https://github.com/cpaikr/darty/releases); see
+[README.md](README.md) for current installation and availability.
+
 ## [0.5.0](https://github.com/sjunepark/darty/compare/v0.4.0...v0.5.0) (2026-06-22)
 
 
@@ -174,6 +179,3 @@
 
 * clarify DART filter code inputs ([dc685ae](https://github.com/sjunepark/darty/commit/dc685ae915f00f492541b8694001e026bec4f635))
 * **evals:** preserve native tool assertion output ([582d110](https://github.com/sjunepark/darty/commit/582d11058d6211e4e34d5d7fdf31c0fe2a47b9cb))
-
-This file is retained as generated release history through `v0.5.0`. Later
-release summaries live in GitHub Releases.

@@ -32,8 +32,8 @@ Aligned areas:
 
 Intentional differences:
 
-- Darty's CLI Transport v1 uses a JSON envelope on stdout; AXI currently
-  prefers TOON.
+- Darty's CLI Transport v1 uses a JSON envelope on stdout; AXI at the pinned
+  baseline prefers TOON.
 - Darty has no AXI session hook installer.
 - Darty keeps human help and `report-guide` output outside the normal JSON
   command-result envelope.

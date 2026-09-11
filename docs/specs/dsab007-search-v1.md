@@ -26,8 +26,8 @@ company lookup.
 
 Low-level fields such as `option`, `currentPage`, `sort`, `sortType`,
 `textCrpCik`, duplicated `b_*` fields, and fixed paging values are internal.
-`toDsab007ContentsReplayInput()` is the boundary between semantic input and
-source replay.
+The Rust SDK maps semantic input to these replay fields; callers do not
+construct them.
 
 ## Result
 
@@ -73,6 +73,5 @@ upstream-controlled. Source observations and Korean UI mappings live in
 public contract. `view-report` owns TOC/document retrieval and every raw viewer
 locator.
 
-Implementation status and port sequencing live in
-[ARCHITECTURE.md](../../ARCHITECTURE.md) and the
-[active plan](../../plans/rust-sdk-node-sdk-cli-rewrite.md).
+Implementation boundaries live in [ARCHITECTURE.md](../../ARCHITECTURE.md);
+[ROADMAP.md](../../ROADMAP.md) owns subsequent delivery.

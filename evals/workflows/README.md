@@ -105,8 +105,8 @@ invalid responses, never silently discarded to manufacture a completed answer. W
 failures, evidence limitations, task provenance, citation membership, and judge
 status. Recovered exploratory failures remain visible without automatically
 failing a supported final answer. These deterministic repairs do not establish
-model readiness; the [readiness plan](../../plans/validate-agent-workflow-readiness.md)
-owns calibration and the declared live/model sample.
+model readiness; the [readiness report](../../docs/research/agent-workflow-readiness.md)
+owns the declared live/model sample and its limitations.
 
 ## Running
 

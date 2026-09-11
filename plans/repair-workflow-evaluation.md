@@ -1,5 +1,9 @@
 # Make workflow evaluation trustworthy
 
+Status: complete. This record describes the evaluator repair delivered in PR #33.
+[Workflow documentation](../evals/workflows/README.md) owns current evaluator
+behavior; [the roadmap](../ROADMAP.md) owns any further work.
+
 ## Outcome
 
 The existing section-citation and related-filings evaluations faithfully expose
@@ -7,7 +11,7 @@ CLI behavior and judge supported final evidence. Valid discovery, exploration,
 document fallback, and citation formatting cannot produce false product failures;
 invented identifiers, unsupported claims, and incomplete tasks still fail.
 
-## Current state
+## Delivered state
 
 Complete on the goal integration branch through
 [PR #33](https://github.com/cpaikr/darty/pull/33), merged as `6582be9`.
@@ -31,7 +35,7 @@ This repair establishes deterministic evaluator behavior, not model readiness.
 - Reproduced six original false negatives before repair. Independent regression
   pairs cover discovery, final-evidence selection, provenance/order, Markdown and
   malformed citations, document recovery, windows, finalization, and judging.
-- Local typecheck and 110 tests pass, plus wire/version checks and 18 real CLI
+- Local typecheck and the harness tests passed, plus wire/version checks and real CLI
   help/wrapper comparisons. Documentation links and roadmap invariants pass.
 - Bounded independent implementation and feedback reviews completed. Both initial
   hosted code reviews completed; all CodeRabbit findings have accepted dispositions

@@ -37,7 +37,7 @@ This is worth standardizing because DART work is repetitive, citation-sensitive,
 
 ## Product Shape
 
-The accepted rewrite target has three public surfaces over one Rust-owned DART
+The accepted product design has three public surfaces over one Rust-owned DART
 implementation:
 
 - a Rust SDK;
@@ -82,10 +82,10 @@ The product should eventually support a narrow set of agent-facing capabilities:
 - `source-explicit`: state whether a result came from DART search HTML, viewer HTML, RSS, or a fallback
 - `dart-shaped first`: keep low-level DART search details explicit before adding higher-level wrappers
 - `one conformer`: keep DART wire behavior in the Rust SDK and expose it through the Node SDK and separate Rust CLI without a second protocol implementation
-- `CLI-stable`: preserve the discoverable CLI v1 subprocess contract across the rewrite
+- `CLI-stable`: preserve the discoverable CLI v1 subprocess contract as the implementation evolves
 - `SDK-idiomatic`: let Rust and Node callers use language-appropriate APIs while sharing operation semantics, identifiers, references, and failures
 - `standalone installation`: keep CLI delivery independent of Node/npm and share
-  one versioned GitHub Release authority across any future SDK projection
+  one versioned GitHub Release authority across the CLI and SDKs
 - `public-read first`: v1 should target read-only access
 
 ## v1 Boundaries
@@ -107,13 +107,18 @@ The product should eventually support a narrow set of agent-facing capabilities:
 
 ## Expected Output Shape
 
-Operations should converge on a shared envelope with:
+The design calls for shared response concepts, adapted to each public surface:
 
 - `result`: operation payload
 - `metadata`: source, timing, version, completeness notes
 - `references`: company code, filing number, document number, section pointer, source URL
 - `warnings`: partial matches, parsing uncertainty, source drift, auth gaps
 - `error`: typed failure with retry or fallback hints
+
+These are semantic goals, not a literal schema shared by every operation.
+[Capability specifications](docs/specs/README.md) and the
+[CLI transport contract](docs/specs/cli-transport-v1.md) define actual response
+shapes; Rust and Node callers use typed errors.
 
 ## Success Criteria
 

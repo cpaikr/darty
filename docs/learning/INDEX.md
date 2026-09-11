@@ -6,10 +6,9 @@ product, implementation, contract, or delivery truth.
 ## Start Here
 
 1. [`README.md`](../../README.md) — what users can install and run today.
-2. [`VISION.md`](../../VISION.md) — the selected Rust SDK, Node SDK, and CLI
-   destination.
+2. [`VISION.md`](../../VISION.md) — product scope, principles, and selected future capabilities.
 3. [`ARCHITECTURE.md`](../../ARCHITECTURE.md) — Rust ownership, adapters, and the repository/publication boundary.
-4. [`ROADMAP.md`](../../ROADMAP.md) — current delivery phase and backlog.
+4. [`ROADMAP.md`](../../ROADMAP.md) — current work and backlog.
 
 ## Follow The Work
 

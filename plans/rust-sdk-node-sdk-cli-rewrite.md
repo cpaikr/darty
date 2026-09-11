@@ -1,195 +1,76 @@
-# Complete the Rust SDK, Node SDK, and CLI rewrite
+# Rust SDK, Node SDK, and CLI rewrite
 
-## Outcome
+Status: repository outcome complete on 2026-09-08. This is a completed delivery
+record, not an active plan. Rust artifacts were subsequently published in
+[v0.6.1](https://github.com/cpaikr/darty/releases/tag/v0.6.1) on 2026-09-09.
+[Architecture](../ARCHITECTURE.md) owns current implementation,
+[the release runbook](../docs/release.md) owns current distribution and approvals,
+and [the roadmap](../ROADMAP.md) owns remaining work.
 
-Complete the repository replacement with one Rust-owned implementation of all
-eight accepted operations, exposed through the Rust SDK, asynchronous Node SDK,
-and standalone `darty` CLI. Preserve CLI v1 behavior, replace the TypeScript
-executable in the existing private GitHub Release pipeline, and remove the
-superseded TypeScript DART implementation and source-local toolset.
+## Delivered outcome
 
-Repository completion means reviewed source, validated distributables, and a
-working build-only delivery path. Publishing the Rust release, paid model evals,
-and human production approval are separate release gates; this plan does not
-claim they have happened.
+One Rust SDK implements all eight accepted read-only DART operations. The
+asynchronous Node SDK and standalone CLI adapt that implementation, preserving
+[CLI v1](../docs/specs/cli-transport-v1.md). The superseded TypeScript DART
+implementation, conformer, source-local toolset, and candidate npm CLI launcher
+were removed. TypeScript remains in the Node facade and development tooling.
 
-## Current state
+Delivery to `codex/finish-rust-rewrite-integration` preserved individual commits:
 
-Repository rewrite complete on `codex/finish-rust-rewrite-integration` as of
-2026-09-08. All eight operations share the Rust SDK through the Rust CLI and
-asynchronous Node SDK. The superseded TypeScript DART implementation, conformer,
-toolset, and candidate npm CLI launcher are removed.
+- [PR #27](https://github.com/cpaikr/darty/pull/27), merged as `3c4ba7e`, completed
+  capability parity and refreshed source evidence.
+- [PR #29](https://github.com/cpaikr/darty/pull/29), merged as `4b70251`, delivered
+  runtime cutover and validated SDK/CLI artifacts.
+- [PR #30](https://github.com/cpaikr/darty/pull/30), merged as `fb31a04`, removed
+  the remaining inactive source.
 
-Delivery preserved individual commits through
-[PR #27](https://github.com/cpaikr/darty/pull/27) (`3c4ba7e`, full parity),
-[PR #29](https://github.com/cpaikr/darty/pull/29) (`4b70251`, runtime/artifacts),
-and [PR #30](https://github.com/cpaikr/darty/pull/30) (`fb31a04`, inactive-source
-removal). The two final slices replaced oversized PR #28 at the user's request;
-each completed CodeRabbit and Codex review with all feedback resolved.
+The last two slices replaced oversized PR #28 at the owner's request. Each
+completed CodeRabbit and Codex review with actionable feedback resolved. The
+[original goal](../goals/finish-rust-rewrite.md) preserves the contract and
+review-partition amendment.
 
-Final implementation [CI 34190295828](https://github.com/cpaikr/darty/actions/runs/34190295828)
-passes at `064f580`: Rust validation and audits, 62 harness tests, 64 CLI
-compatibility scenarios, SDK consumer/declaration checks, four cross-builds,
-both Linux installed CLI archives, clean Linux Rust/Node consumers, and bundle
-assembly. Build-only [run 34183249366](https://github.com/cpaikr/darty/actions/runs/34183249366)
-previously verified the release workflow without publication; downloaded hashes
-and source identity, exact macOS SDK consumption, and installed CLI process/live
-checks passed. The [provider record](../docs/research/dart-provider-qualification.md)
-owns the bounded 2026-09-08 evidence for all six source-backed operations.
+## Decisions retained
 
-The integration branch is the completed repository delivery destination.
-Published v0.6.0 remains TypeScript; Rust v0.6.1 is unpublished. Promotion and the
-separate release gates below remain operator-owned.
-[Architecture](../ARCHITECTURE.md) owns topology and
-[release.md](../docs/release.md) owns artifact contracts and the release handoff.
+- Shared semantics across Rust, Node, and the native CLI justified the rewrite;
+  no performance gain was claimed, and TypeScript already supported standalone
+  installation. The work remained within the accepted product surfaces.
+- Rust owns DART transport, bounds, decoding, parsing, normalization, and source
+  failures. Neither adapter introduces another protocol implementation.
+- Independent wire fixtures and CLI expectations remained the oracle. Source
+  drift, viewer grammar, regex literals, no-TOC initialization, and tree bounds
+  were reconciled with the contract before parity was claimed.
+- TypeScript remained runnable through parity validation. The authorized review
+  split allowed inactive source for one intermediate PR, followed immediately by
+  deletion; it did not establish a second supported runtime path.
+- CLI installation remained independent of Node. SDK packaging used one version
+  and source authority without requiring an npm launcher or registry publication.
+- Linux-only CI was an explicit project decision. Cross-built macOS/Windows
+  binaries and the macOS addon did not inherit Linux runtime certification.
+- Technical packaging and repository-cutover decisions were delegated on
+  2026-09-08. Human production approval, paid model use, tags, and publication
+  were excluded from that delegation and from this repository outcome.
 
-## Decisions and authority
+## Completion evidence
 
-- Preserve the eight operation names, read-only/reference-first behavior, and
-  [CLI v1 contract](../docs/specs/cli-transport-v1.md), including output, errors,
-  help, and exits. Do not turn this rewrite into CLI v2.
-- Rust owns requests, transport policy, bounds, decoding, parsing, normalization,
-  and source failures. The asynchronous Node-API binding and TypeScript facade
-  translate runtime concerns; the separate Rust CLI adapts the SDK to subprocess
-  use. Neither adapter owns another DART implementation.
-- Keep TypeScript runnable as the comparison baseline until full parity and
-  artifact evidence permit the runtime cutover with a normal Git revert path.
-  The user-authorized review split retains inactive source only until the
-  immediately following deletion PR; no second runtime path remains.
-  Preserve independent contract tests after deleting migration-only machinery.
-- On 2026-09-08 the owner delegated remaining SDK packaging, platform details,
-  and technical repository-cutover decisions within this outcome. Resolve them
-  using evidence and record the selected contracts in their canonical documents.
-  Publication, paid model use, and human production approval remain outside this
-  delegation. Do not attribute an agent's technical review to a human approver.
-- Preserve private GitHub Releases as the artifact authority, runtime-independent
-  CLI installation, and Linux-only CI. Preserve the existing CLI target inventory;
-  select and verify the Node SDK projection without assuming the old npm launcher
-  or npm registry publication is required. CLI installation must not load Node.
-- Port and review coherent results through the fewest sequential PRs. Branch
-  pushes, review, and merges belong to that delivery lifecycle; release tags and
-  publication do not. A PR boundary is not the end of the rewrite.
+[CI 34190295828](https://github.com/cpaikr/darty/actions/runs/34190295828) passed
+for implementation `064f580`: Rust validation and audits, harness and CLI
+compatibility tests, SDK consumers and declarations, cross-builds, installed Linux
+CLI archives, clean Linux Rust/Node consumers, and bundle assembly.
+[Build-only run 34183249366](https://github.com/cpaikr/darty/actions/runs/34183249366)
+validated the release workflow without publication. Downloaded hashes and source
+identity, local exact macOS SDK consumption, and installed CLI process/live checks
+also passed. The [provider record](../docs/research/dart-provider-qualification.md)
+retains the bounded 2026-09-08 evidence for source-backed operations.
 
-### Preference reconciliation
+At repository completion, v0.6.0 was the published TypeScript release and Rust
+v0.6.1 was unpublished. Subsequent publication is a separate event; it does not
+retroactively establish model reliability or human provider approval.
+[Release approvals](../docs/release.md#release-approvals) own those distinctions.
 
-Reviewed `../mytech` at `9824182d0c21e084a1e8a7725f962db0d3417a2a`
-(2026-09-07). Its [rewrite guidance](../../mytech/practices/code-rewrites.md)
-and [Rust core guidance](../../mytech/architecture/external-http/rust-for-external-http-protocols.md)
-now require concrete consumer or operating benefits, not a language preference.
-The accepted Darty target shares semantics across the Rust SDK, Node SDK, and
-native CLI; there is no claimed performance win, and standalone installation is
-already achieved by TypeScript. Keep the replacement limited to that target.
+## Remaining boundary
 
-Follow the [Node binding guidance](../../mytech/architecture/rust-cores-for-nodejs-packages.md)
-for resource lifetime, cancellation, generated declarations, and panic containment
-under the actual release panic strategy. Darty's owner-selected Linux-only policy
-in [release.md](../docs/release.md#targets-and-verification) remains an intentional
-override of mytech's full-platform runtime verification default. Distinguish
-cross-built targets from runtime-certified targets in artifacts and documentation.
-
-## Phase 3 — full capability and SDK parity (complete)
-
-### Repair existing evidence first
-
-Reproduce the recorded `view-report` failure for receipt `20260331000460` through
-the user-facing workflow with bounded, sanitized runtime evidence. Reconcile the
-current source grammar, contract, and fictional fixtures before choosing a fix.
-Also settle TS/Rust differences for regex literals, explicit no-TOC initialization,
-and tree bounds. Bring bounds into the canonical contract with independent
-coverage or remove unsupported candidate-only limits; do not silently loosen
-source validation to obtain parity.
-
-### Complete the remaining operations
-
-Port `search-body`, `company-detail`, `company-rss`, `disclosure-types`, and
-`report-guide`. Select their order from dependencies and evidence readiness.
-Each operation is complete only when:
-
-- its [capability contract](../docs/specs/README.md), supported wire behavior,
-  and independent fixtures are reviewed before the implementation depends on them;
-- the Rust SDK, Node SDK, and CLI preserve validation, identifiers, references,
-  warnings, typed failures, recovery hints, projections, and content bounds;
-- applicable deterministic SDK, full CLI compatibility, malformed/oversized input,
-  timeout, cancellation, sanitization, and packaged-consumer checks pass; and
-- source-backed operations have refreshed bounded observations and reviewed
-  conformance evidence, with drift resolved or an explicit blocking disposition.
-
-For live work, use the fixed origin, pacing, attempt/time/byte limits, sanitization,
-and in-memory-only body policy in the
-[provider record](../docs/research/dart-provider-qualification.md). Static
-`disclosure-types` and `report-guide` need no live provider qualification.
-Do not invent human approval records or label pending production approval as
-completed qualification. Missing human signoff does not block technical porting;
-unresolved source behavior does block claiming parity.
-
-Phase 3 exits when all eight operations work through all three candidate surfaces,
-with independent compatibility and consumer evidence. TypeScript entry points
-remain intact until Phase 4.
-
-## Phase 4 — artifacts and repository cutover (complete)
-
-- Implement the chosen Rust CLI and Node SDK artifact/installation contracts.
-  Keep one version/source authority and private release line, checksums, immutable
-  tags/assets, and explicit failure recovery. Reuse the existing release pipeline;
-  remove the obsolete candidate npm CLI launcher rather than creating two CLI
-  installation paths. Specify Rust SDK consumption and version compatibility too.
-- Cross-build the existing CLI targets on Linux. Certify exact Linux archives
-  through clean installed CLI consumers; verify macOS/Windows binary format and
-  architecture and retain their explicit lack of runtime certification. Choose
-  the Node target matrix from actual consumer needs and demonstrated evidence;
-  do not imply native-addon support from CLI cross-build success.
-- Test Rust and Node SDKs as clean external consumers, including loading, public
-  types/declaration freshness, async errors, cancellation, cleanup, and panic
-  containment under the release build strategy. Verify artifact contents,
-  dependency/license policy, version identity, and absence of secrets.
-- Exercise the full CLI judge and representative live workflows against the Rust
-  executable and installed archive. Adapt existing eval runners away from deleted
-  TypeScript entry points; preserve the separate manual hosted-model gate.
-- Verify a build-only CI candidate without a source tag, including source-bound
-  archives, checksums, installers, and clean consumers. Temporary artifacts prove
-  repository readiness, not a published release.
-- Replace TypeScript entry points and release build paths with Rust together.
-  Deliver that commit and the remaining inactive-source deletion as two
-  sequential PRs below the review file limit. Remove the old DART conformer,
-  toolset, superseded build/test paths, candidate-only packaging, and unused
-  dependencies before repository completion. Keep the thin Node
-  facade and independent acceptance corpus; TypeScript as an adapter is not a
-  second DART implementation.
-- Update instructions, README, architecture, release docs, specs, eval docs,
-  commands, and CI together. Distinguish the new repository implementation from
-  the previously published TypeScript release until Rust is actually published.
-
-Phase 4 exits when all named results pass applicable checks and independent
-review, one Rust implementation owns all eight operations, supported consumers
-use the validated artifacts, superseded paths are removed, and the remaining
-release gates have an explicit owner and evidence handoff. Repository completion
-must not claim release-readiness signoff or publication while those gates remain.
-
-## Separate release gates
-
-The release operator must obtain named maintainer production/qualification
-approval against immutable evidence in the
-[provider record](../docs/research/dart-provider-qualification.md#maintainer-approval-records),
-run authorized paid model evals under the [eval gate policy](../evals/README.md#gate-policy),
-and complete exact-source tagging, publication, and published-asset installation
-verification under [release.md](../docs/release.md). Prepare the handoff in that
-runbook at cutover, preserving all outstanding gates. Never substitute test
-success or technical decision delegation for human approval or paid-use authority.
-
-## Out of scope
-
-Rust release signoff and publication follow repository completion, including
-Phase 3 parity and Phase 4 artifact validation and cutover.
-XBRL, industry discovery, expanded held-out workflows, new content pagination,
-and other backlog capabilities remain outside this rewrite; [ROADMAP.md](../ROADMAP.md)
-owns their scheduling.
-
-## Next action
-
-None within this plan's repository outcome. Separate release gates remain with
-the release operator; completing this plan does not start them.
-
-The unchanged AXI baseline also reports pre-existing upstream drift from
-`46d02d3` to `9996613` (16 commits). Its independent review follows
-[the AXI drift procedure](../docs/upstreams/axi.md); this cutover only repaired
-local evidence paths.
+No rewrite action remains. XBRL, industry discovery, held-out workflow expansion,
+and broader content pagination remain separate [backlog tasks](../ROADMAP.md).
+The cutover repaired AXI local-evidence paths without changing its upstream
+baseline; independent drift review belongs to the
+[AXI procedure](../docs/upstreams/axi.md).

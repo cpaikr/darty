@@ -102,8 +102,9 @@ the representative default workflow, including advanced filters or repeated
 structure, npm native-package layout, Markdown conversion, HTML sanitization,
 public content windows, production observability, broad live-DART resilience,
 performance targets, an MSRV, or support beyond the single host. None is a
-claim of this discarded experiment. The active plan and candidate tests own
-their current disposition. Canonical requirements now live in the
+claim of this discarded experiment. [ARCHITECTURE.md](../../ARCHITECTURE.md),
+[ROADMAP.md](../../ROADMAP.md), and the Rust tests own the present implementation
+and delivery account. Canonical requirements now live in the
 [wire authority](../specs/README.md),
-[fictional corpus](../../fixtures/dart/vertical-v1/README.md), and retained
-candidate tests rather than this historical handoff.
+[fictional corpus](../../fixtures/dart/vertical-v1/README.md), and the Rust
+conformance tests rather than this historical handoff.

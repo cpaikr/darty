@@ -1,6 +1,6 @@
 # Install or recover the executable
 
-Read the canonical [Darty installation guide](https://github.com/cpaikr/darty/blob/main/README.md#설치)
+Read the canonical [Darty installation guide](https://github.com/cpaikr/darty/blob/main/README.md#installation)
 for prerequisites, platform selection, public release downloads,
 checksum verification, installation, PATH, and upgrades. Follow its branch for
 the user's operating system and chosen destination. Installation facts live

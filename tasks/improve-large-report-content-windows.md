@@ -1,6 +1,6 @@
 # Improve large report content windows
 
-## Outcome
+## Intended outcome
 
 Very large sections and TOC-less reports have a stable semantic continuation
 contract without exposing DART viewer replay parameters.
@@ -14,4 +14,4 @@ remains intentionally unscheduled.
 ## Next action
 
 Evaluate real large-report cases and choose between a stable cursor and an
-explicit content window after the Rust rewrite cutover.
+explicit content window when this task is scheduled.
