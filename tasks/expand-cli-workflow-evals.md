@@ -1,6 +1,6 @@
 # Expand held-out CLI workflow evals
 
-## Outcome
+## Intended outcome
 
 CLI workflow evaluation covers ambiguous company matches, amended reports,
 stale section recovery, and truncated-section continuation after the baseline
@@ -14,7 +14,7 @@ are not required for rewrite parity.
 
 ## Next action
 
-Reassess the held-out scenario set after the scheduled
-[workflow readiness work](../plans/validate-agent-workflow-readiness.md)
-produces a trustworthy baseline. The current repair work does not schedule this
-scenario expansion.
+Reassess the held-out scenario set using the completed
+[readiness measurement](../docs/research/agent-workflow-readiness.md). Evaluator
+repairs and fictional company-guidance tests do not establish live held-out
+coverage or model reliability. This scenario expansion remains unscheduled.

@@ -79,10 +79,11 @@ Returned document and section IDs are opaque echo-only locators. The current
 implementation renders positional values such as `document:body:1`,
 `document:attachment:1`, and `section:1.2`; callers must not synthesize them.
 
-The semantic contract accepts DART viewer URLs. The TypeScript baseline also
-accepts any absolute URL containing a 14-digit `rcpNo`; this is a preserved
-compatibility quirk, not permission for rewrite implementations to broaden the
-documented URL contract further.
+The Rust implementation accepts the bare receipt number or an HTTPS DART
+`/dsaf001/main.do` URL with one 14-digit `rcpNo` and, optionally, one numeric
+`dcmNo`; other query fields are rejected. The historical TypeScript baseline
+also accepted unrelated absolute URLs containing `rcpNo`. That permissive
+behavior is not part of the supported URL contract.
 
 ## Source and Wire Ownership
 

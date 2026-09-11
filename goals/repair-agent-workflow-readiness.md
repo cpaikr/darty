@@ -3,6 +3,12 @@
 Status: complete
 Planning scope: ROADMAP.md
 
+Historical completed goal. The contract and evidence below describe delivery
+to the integration branch; promotion and publication occurred later. The
+[readiness report](../docs/research/agent-workflow-readiness.md) owns the bounded
+model findings, and [the release runbook](../docs/release.md) owns current
+approvals and distribution. Original contract paths are historical scope evidence.
+
 ## Original contract
 
 Goal contract
@@ -41,4 +47,4 @@ None — goal complete.
 
 - Both PRs merged into `codex/repair-agent-workflow-integration`, initialized from local `main` at `be9c8cf`, preserving individual commits. This terminal commit contains only goal and project-planning metadata.
 - The [readiness report](../docs/research/agent-workflow-readiness.md) retains both complete declared batches: baseline body 2/3 and research 1/6; post-review body 3/3 and research 2/6. Fixed checks passed in both. All outcomes and the citation diagnostic limitation are preserved; no confirmed in-scope implementation defect remains.
-- Research readiness remains on hold. Main promotion, operator/provider signoff, release tagging, publication, and further experiments were not performed. No remaining goal blocker or human PR-feedback decision exists.
+- At delivery, research readiness remained on hold. Main promotion, operator/provider signoff, release tagging, publication, and further experiments were not performed at delivery. No remaining goal blocker or human PR-feedback decision existed.

@@ -3,6 +3,12 @@
 Status: complete
 Planning scope: ROADMAP.md
 
+Historical completed goal for the TypeScript/npm release workflow. The
+contract and evidence below are preserved at that delivery boundary; references
+to removed files are historical scope evidence. The
+[release runbook](../docs/release.md) owns the current Rust/GitHub Release
+workflow, which superseded npm publication and the original automatic CI policy.
+
 ## Original contract
 
 Goal contract

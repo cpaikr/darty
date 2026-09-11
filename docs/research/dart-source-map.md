@@ -14,7 +14,7 @@ Method:
 - replayed viewer-shell and report-content GET requests
 
 This document records non-normative source evidence and provenance for the DART
-site. It is never the supported wire authority. The vertical HTTP subset is
+site. It is never the supported wire authority. The supported HTTP subset is
 canonical in [`dart-wire-v1.openapi.yaml`](../specs/dart-wire-v1.openapi.yaml),
 and decoding plus HTML/viewer grammar is canonical in
 [`dart-html-viewer-v1.md`](../specs/dart-html-viewer-v1.md). Exact replay lists
@@ -53,9 +53,9 @@ Current project decision:
   Company overview search fragment endpoint used by the `회사별` search tab.
 - `/dsae001/select.ax`
   Company overview detail fragment endpoint. The observed UI submits
-  `selectKey={companyCode}` by POST. The shipped TypeScript adapter currently
-  performs a GET with the same query parameter; that is implemented behavior,
-  not an observed UI transport claim.
+  `selectKey={companyCode}` by POST. The supported adapter uses GET with the same query
+  parameter, as defined by `fetchCompanyDetail` in the wire contract; that is
+  implementation behavior, not an observed UI transport claim.
 - `/api/companyRSS.xml`
   Company-specific disclosure RSS endpoint. It accepts `crpCd={companyCode}`.
 - `/dsae001/selectPopup.ax`
@@ -158,7 +158,7 @@ The visible page title is `공시통합검색`. The main selector presents these
 - `본문내용`
 - `고급검색` in the header search selector; the main selector observed for this page exposed the first five modes
 
-The active TypeScript product implements `option=contents` as `search-body` and
+The supported Rust implementation implements `option=contents` as `search-body` and
 `option=corp` through `/dsab007/detailSearch.ax` as
 `search-company-reports`. Report-name, TOC-name, all, and advanced modes remain
 observed UI rather than implemented capabilities.
@@ -387,7 +387,7 @@ Company code finding:
 - The company search result row does include the 8-digit DART company code in the company link's `select(...)` argument.
 - Example for 삼성전자: link `javascript:select('00126380');`, stock code `005930`.
 - The observed UI company detail request uses the same code as `selectKey` for
-  `POST /dsae001/select.ax`. The shipped TypeScript adapter's GET replay is
+  `POST /dsae001/select.ax`. The supported adapter’s GET replay is
   documented separately in the capability spec.
 - The selected company detail fragment includes fields such as `회사이름`, `영문명`, `공시회사명`, `종목코드`, `대표자명`, `법인구분`, `법인등록번호`, `사업자등록번호`, `주소`, `홈페이지`, `전화번호`, `팩스번호`, `업종명`, `설립일`, and `결산월`.
 
@@ -412,20 +412,20 @@ Observed in the report viewer source:
 - `https://dart.fss.or.kr/api/companyRSS.xml?crpCd={companyCode}`
 
 `companyRSS` has a separate [capability contract](../specs/company-rss-v1.md)
-but remains outside the canonical vertical wire subset. `todayRSS` is only an
-observed adjacent surface.
+and is covered by `fetchCompanyRss` in the wire authority. `todayRSS` remains
+an observed adjacent surface without a supported operation.
 
 ## Current Contract Implications
 
-- The canonical vertical wire subset contains four upstream calls serving
-  three public operations; adjacent routes in this research map are not
-  implicitly supported.
+- The [wire authority](../specs/README.md) defines the supported upstream
+  calls; adjacent routes in this research map are not implicitly supported.
 - Public IDs prefer filing and company identifiers that survive UI changes.
 - Opaque viewer offsets and lengths remain internal.
 - Search and retrieval remain separate operations.
 - XBRL remains an explicit future extension rather than an assumed dependency.
-- Product direction and rewrite architecture are owned by `VISION.md` and the
-  active plan, not this research record.
+- [VISION.md](../../VISION.md) owns product direction,
+  [ARCHITECTURE.md](../../ARCHITECTURE.md) owns implementation boundaries, and
+  [ROADMAP.md](../../ROADMAP.md) owns delivery.
 
 Future product investigations are tracked as
 [large-report content windows](../../tasks/improve-large-report-content-windows.md)

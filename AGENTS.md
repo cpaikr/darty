@@ -42,7 +42,8 @@ not add placeholder build, lint, or format commands.
 
 ## Document Ownership
 
-- CLI installation and usage: `README.md`
+- CLI installation and usage: `README.md`; Windows recovery and PATH setup:
+  `docs/windows-installation.md`
 - Product scope, target surfaces, and non-goals: `VISION.md`
 - Repository topology and implementation status: `ARCHITECTURE.md`
 - Active order and backlog: `ROADMAP.md`, `plans/`, and `tasks/`

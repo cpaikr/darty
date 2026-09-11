@@ -3,6 +3,13 @@
 Status: complete
 Planning scope: ROADMAP.md
 
+Historical completed goal. The contract and execution evidence below describe
+the 2026-09-08 delivery boundary. Rust v0.6.1 was subsequently published;
+[the rewrite record](../plans/rust-sdk-node-sdk-cli-rewrite.md) distinguishes
+that later event, and [the release runbook](../docs/release.md) owns current
+approvals and distribution. References to removed files or original local paths
+inside the contract are retained as historical scope evidence.
+
 ## Original contract
 
 Goal contract
@@ -44,6 +51,6 @@ None — goal complete.
 - Final implementation `064f580` passes [CI 34190295828](https://github.com/cpaikr/darty/actions/runs/34190295828): workspace validation/audits, 62 harness tests, 64 CLI compatibility scenarios, SDK consumers and declarations, four cross-builds, both Linux CLI archive certifications, and source-bound SDK/bundle assembly. Earlier [build-only run 34183249366](https://github.com/cpaikr/darty/actions/runs/34183249366) validates the explicit release workflow without tags or publication. Local exact macOS artifacts passed Node consumption, 36 installed CLI process scenarios, and the live company→filings→TOC→section workflow.
 - Feedback fixes preserve field-specific Node errors, CLI numeric option attribution and content-offset syntax, complete eval JSON, and clean crate provenance. Independent bounded code reviews and scoped documentation reconciliation pass.
 - [Provider evidence](../docs/research/dart-provider-qualification.md) records the bounded 2026-09-08 refresh for all six source-backed operations, including the repaired viewer object-identity grammar. Static disclosure types and report guide are covered independently. Human production approval remains pending.
-- [Release handoff](../docs/release.md#rust-release-handoff) assigns separate production signoff, paid-model evals, source tags, and publication to the release operator. Published v0.6.0 remains TypeScript; Rust v0.6.1 is unpublished. Promotion to main was not part of this delivery.
+- [Release handoff](../docs/release.md#release-approvals) assigns separate production signoff, paid-model evals, source tags, and publication to the release operator. Published v0.6.0 remains TypeScript; Rust v0.6.1 is unpublished. Promotion to main was not part of this delivery.
 - AXI local-evidence paths now point to Rust. The unchanged upstream baseline reports pre-existing drift (`46d02d3`→`9996613`, 16 commits), recorded for separate review; it is not a cutover regression or an unfinished included result.
 - No in-scope blocker remains. The roadmap's Current entry is empty; completing this goal does not start excluded release or backlog work.

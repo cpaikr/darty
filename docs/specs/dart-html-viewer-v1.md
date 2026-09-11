@@ -1,7 +1,7 @@
 # DART HTML and Viewer Companion v1
 
-Status: canonical upstream companion contract for the retained Rust candidate
-and accepted target's `dart-wire-v1` subset.
+Status: canonical upstream companion contract for the Rust implementation’s
+`dart-wire-v1` subset.
 
 This document owns the language-neutral response-decoding, HTML-fragment, and
 viewer-shell rules that OpenAPI cannot express. The HTTP methods, routes,
@@ -133,7 +133,7 @@ corpus does not establish refreshed live provider qualification.
   returned by any projection.
 - `BODY-PARTIAL-HELP-1` — **Project decision.** When all rows on a source page
   are dropped, CLI help states that no parseable rows remain, rather than
-  claiming no filings matched. This corrects the retained TypeScript helper;
+  claiming no filings matched. This corrects the historical TypeScript helper;
   genuine empty-result wording is unchanged.
 
 ## Company-detail fragment
@@ -146,9 +146,9 @@ These rules consume `fetchCompanyDetail`.
   and style content. Missing table or `회사이름` label is `source_changed`;
   a present but empty company-name value is `not_found`.
 - `DETAIL-NOT-FOUND-1` — **Project decision.** A recognized empty company detail
-  table produces typed `not_found`. The TypeScript source parser also returns
-  not-found, but its Effect promise bridge wraps the error and the capability
-  reports `internal_error`. The Rust candidate fixes that propagation bug; the
+  table produces typed `not_found`. The historical TypeScript source parser returned
+  not-found, but its Effect promise bridge wrapped the error and the capability
+  reported `internal_error`. Rust corrects that propagation bug; the
   CLI golden records this explicit baseline divergence.
 - `DETAIL-FIELDS-1` — **Retained baseline behavior.** The capability spec owns
   the optional field set. Empty optional fields are omitted. Homepage prefers
@@ -187,7 +187,7 @@ These rules consume `fetchCompanyRss`.
   accept unnamespaced `date`/`creator`. The selected Rust parser is `roxmltree`
   with DTD support disabled. The TypeScript baseline used permissive XML
   recovery and lexical `dc:` matching; this stricter bounded source acceptance
-  is an explicit candidate safety decision, not observed cross-language parity.
+  is an explicit Rust safety decision, not observed cross-language parity.
 
 ## Report shell and viewer replay
 
@@ -251,7 +251,7 @@ by `fetchReportContent`.
 - `VIEWER-CONTENT-1` — **Project decision.** Viewer content is decoded before
   sanitization. HTML sanitization, Markdown conversion, public content windows,
   and opaque public document/section IDs are capability behavior, not wire
-  grammar, and are tested in the retained candidate.
+  grammar, and are tested in the Rust implementation.
 
 ## Evidence and conformance
 

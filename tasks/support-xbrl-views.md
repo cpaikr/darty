@@ -1,6 +1,6 @@
 # Support XBRL views
 
-## Outcome
+## Intended outcome
 
 Darty can retrieve evidence-backed XBRL views through stable, source-explicit
 contracts.
@@ -13,4 +13,4 @@ implementation. It remains intentionally unscheduled.
 ## Next action
 
 Qualify DART's XBRL sources and decide the first stable capability boundary
-after the Rust rewrite cutover.
+when this task is scheduled.

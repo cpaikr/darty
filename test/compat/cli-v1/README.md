@@ -7,7 +7,7 @@ stderr without importing product code.
 
 Help expectations compare the exact long-option set plus hand-authored,
 whitespace-normalized semantic fragments. This preserves descriptions,
-defaults, examples, and cautions without coupling a later Clap implementation
+defaults, examples, and cautions without coupling the Rust Clap implementation
 to historical Commander's line wrapping.
 
 The checked-in expectations were authored from
@@ -27,8 +27,8 @@ golden review.
 
 Production archive checks combine the network-free process contract with
 separately authorized live workflows. Repository cutover is complete; the
-[release runbook](../../../docs/release.md) owns remaining certification, signoff,
-and publication gates. The Rust CLI is not yet published.
+[README](../../../README.md) records artifact availability, and the
+[release runbook](../../../docs/release.md) owns certification and release approvals.
 
 ## Running
 

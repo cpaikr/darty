@@ -11,7 +11,7 @@
 
 This capability implements only the `회사별` slice of DART `기업개황`.
 
-It should:
+It does:
 
 - search companies by company name through canonical OpenAPI operation
   `searchCompanyFragment`
@@ -19,11 +19,11 @@ It should:
 - expose the 8-digit DART company code from each result row
 - include the 6-digit stock code when DART displays one
 
-It should not yet:
+It does not:
 
 - implement `업종별` search
 - search by business registration number or corporate registration number
-- fetch and normalize the full company detail table from `/dsae001/select.ax`
+- fetch company details; the separate `company-detail` operation owns that lookup
 - expose market filters until the public contract is intentionally expanded
 
 ## 3. Observed Korean UI Slice
@@ -124,8 +124,8 @@ adjacent routes remain non-normative in the
 [`DART source map`](../research/dart-source-map.md).
 
 Implemented reference behavior constructs an absolute
-`/dsae001/select.ax?selectKey={companyCode}` `detailEndpoint`. It is a locator,
-not a fetch contract in `dart-wire-v1`, and the search operation does not fetch
-or normalize that table. Use the separate `company-detail` command for
-supported detail retrieval and normalization; `company-rss` remains responsible
-for company RSS.
+`/dsae001/select.ax?selectKey={companyCode}` `detailEndpoint`. The search
+operation returns this locator without fetching or normalizing the table.
+The separate `fetchCompanyDetail` wire operation owns its GET replay. Use
+`company-detail` for supported detail retrieval and normalization;
+`company-rss` remains responsible for company RSS.

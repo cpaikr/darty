@@ -1,16 +1,16 @@
 # Release
 
 The repository publishes the Rust standalone CLI, Rust SDK crate, and native Node
-SDK tarballs through public GitHub Releases. The latest published release is
-[v0.6.1](https://github.com/cpaikr/darty/releases/tag/v0.6.1), released September 9,
-2026. v0.6.0 contains the historical TypeScript CLI. The root private
-`package.json` owns the version, synchronized with every Cargo package and
-`packages/node/package.json`. Public npm and crates.io publication are not used.
+SDK tarballs through public GitHub Releases. [README](../README.md) records
+release availability and CLI installation; v0.6.0 contains the historical
+TypeScript CLI. The root private `package.json` owns the version, synchronized
+with every Cargo package and `packages/node/package.json`. Public npm and
+crates.io publication are not used.
 
-[README](../README.md) owns consumer instructions. The
-[Rust rewrite plan](../plans/rust-sdk-node-sdk-cli-rewrite.md) owns repository
-completion. Release signoff, human production approval, and paid-model evals
-remain separate gates; technical completion does not authorize publication.
+This runbook owns artifact certification, SDK installation, and release
+operations. [ROADMAP](../ROADMAP.md) owns delivery status and routes to active
+plans. Release signoff, human production approval, and paid-model evals remain
+separate gates; technical completion does not authorize publication.
 
 ## Targets and verification
 
@@ -49,12 +49,16 @@ Get-Command darty -CommandType Application
 darty --help
 ```
 
-The first two commands establish full-path file visibility and CLI execution;
-the last two establish command-name discovery after PATH setup. Until that
+The first two commands establish full-path file visibility and CLI execution.
+For command-name discovery, also
+[verify that `darty` resolves to the selected executable](windows-installation.md#verify-command-resolution);
+the last two commands alone could find an older installation. Until that
 independent Windows evidence exists, the Windows manifest entry must remain
 uncertified. The installer itself probes a file handle and rejects a physical
 path redirected away from the advertised destination, but that host-local check
-does not replace independent-consumer evidence.
+does not replace independent-consumer evidence. See
+[Windows installation recovery](windows-installation.md) for redirected paths
+and PATH setup.
 
 A clean Linux Node consumer installs the downloaded native tarball offline with
 lifecycle scripts disabled. A clean external Rust consumer compiles and runs
@@ -70,11 +74,27 @@ wire authority, eval harness tests, CLI parity, and mutation sensitivity.
 
 ## Maintainer-controlled Actions
 
-GitHub Actions is disabled at the repository level. CI and Release have only
-manual dispatch triggers. Every job, including reusable jobs, requires both the
-original actor and the rerun actor to be `sjunepark`. Pushes, pull requests, tags,
-and schedules do not authorize a run. All outside contributors require workflow
+The repository-level Actions setting was verified disabled on September 11,
+2026. The checked-in CI and Release workflows have only manual dispatch triggers.
+Every job, including reusable jobs, requires both the original actor and the
+rerun actor to be `sjunepark`. Pushes, pull requests, tags, and schedules do not
+authorize a run. All outside contributors require workflow
 approval in the repository's fork policy, including returning contributors.
+
+The CI workflow reports the `ci/validated-source` commit status on its exact
+source SHA. It marks the status pending before validation and reports success
+only when repository validation and all standalone build/certification jobs
+succeed. A failed, cancelled, or skipped prerequisite cannot produce success;
+an interrupted reporter can leave the status pending. Runs for the same SHA
+are serialized. Only the reporting jobs receive `statuses: write`; they use
+the workflow's GitHub token and do not check out or execute repository code.
+
+Branch protection should require `ci/validated-source` from the GitHub Actions
+App. This explicit status is needed because the observed manual workflow checks
+were absent from GitHub's merge-status summary even after a successful run.
+The status links to the real run; it is not a manually asserted substitute for
+validation. For a fresh complete measurement, dispatch the whole workflow;
+partial reruns retain GitHub's successful prerequisite results for the same SHA.
 
 For an explicitly authorized run, `sjunepark` enables Actions, dispatches the
 selected workflow and branch, waits for completion, and disables Actions again:
@@ -121,9 +141,9 @@ The crate is not fetched from crates.io.
 
 CLI and both SDK artifacts share one source/version. CLI compatibility is owned
 by [CLI v1](specs/cli-transport-v1.md); SDK compatibility is defined by the public
-Rust types and packaged Node declarations. Before 1.0, compatible fixes advance
-patch and public-contract breaks advance minor. Consumers should retain their
-chosen artifact and lockfile rather than infer SDK compatibility from CLI v1.
+Rust types and packaged Node declarations. The version policy is defined
+[below](#version-preparation-and-authority). Consumers should retain their chosen
+artifact and lockfile rather than infer SDK compatibility from CLI v1.
 
 ## Release approvals
 
@@ -143,9 +163,8 @@ temporary evidence until that operator completes the release procedure below.
 An operator owns the reviewed version change and source tag; CI owns archive
 certification and GitHub publication. For the pre-1.0 line, compatible features
 and fixes advance patch, and public-contract breaks advance minor. Assess the
-actual contract rather than commit prefixes. Retiring npm/toolset distribution
-requires a new minor version for the first standalone release. Historical npm
-versions and GitHub releases remain untouched.
+actual contract rather than commit prefixes. Historical npm versions and GitHub
+releases remain untouched.
 
 `package.json` owns `x.y.z`; its source tag is `vx.y.z`. A tag must identify an
 exact `main` commit with successful maintainer-dispatched `CI` evidence. Do not
@@ -203,11 +222,11 @@ permissions, and npm lifecycle hooks are not part of this pipeline. The reposito
 and release downloads are public. Publishing still requires maintainer consent
 and repository write access. Do not place credentials in URLs or installers.
 
-GitHub immutable releases are currently disabled. The pipeline never replaces
-existing assets or tags and refuses to alter a published release. Administrators
-can still mutate records outside it; immutability is enforced by the publisher,
-not claimed as a repository setting. The publisher requires exact-source CI
-evidence regardless of branch-protection settings.
+GitHub immutable releases were verified disabled on September 11, 2026. The
+pipeline never replaces existing assets or tags and refuses to alter a published
+release. Administrators can still mutate records outside it; immutability is enforced by the publisher,
+not claimed as a repository setting. The Release workflow requires exact-source
+CI evidence regardless of branch-protection settings.
 
 The release operator owns failures and recovery:
 

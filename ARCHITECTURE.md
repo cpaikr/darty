@@ -5,13 +5,11 @@ by a Rust SDK, asynchronous Node SDK, and standalone CLI. This document owns
 repository topology; [VISION.md](VISION.md) owns product scope and
 [ROADMAP.md](ROADMAP.md) owns delivery state.
 
-## Implementation and release status
+## Implementation boundary
 
-The Rust CLI and both SDKs are published in
-[v0.6.1](https://github.com/cpaikr/darty/releases/tag/v0.6.1).
-[ROADMAP.md](ROADMAP.md) tracks subsequent work. The earlier v0.6.0 standalone
-release contains the Bun/TypeScript CLI. Older npm releases remain historical;
-npm registry publication is retired.
+[README.md](README.md) records published release availability and installation.
+The current implementation uses Rust for every DART operation; npm registry
+publication is retired.
 
 The superseded TypeScript DART implementation, entry points, source-local
 toolset, superseded TypeScript tests, and npm CLI launcher are removed.
@@ -40,6 +38,21 @@ The HTTP authority is [dart-wire-v1](docs/specs/dart-wire-v1.openapi.yaml).
 Its [HTML/XML/viewer companion](docs/specs/dart-html-viewer-v1.md) owns source
 grammar. Fictional fixtures and dated provider observations supply evidence,
 not competing contracts.
+
+## Retrieval flow
+
+A typical research workflow resolves a company with `search-company`, discovers
+filings with `search-company-reports`, and calls `view-report` for a filing's
+documents and table of contents. A follow-up call uses the returned document or
+section identifier to retrieve a bounded content window. Identifiers belong to
+that filing; callers must not invent or reuse them across reports.
+
+Each network operation enters the SDK through a typed request. The SDK validates
+it, constructs a DART request, applies the shared transport policy, and parses
+the response into domain data and references. The CLI then projects that result
+into its process envelope; the Node facade resolves a Promise or exposes a typed
+error. Transport or parser failures retain their source classification through
+both adapters. Static disclosure types and the report guide require no request.
 
 ## Code and validation map
 

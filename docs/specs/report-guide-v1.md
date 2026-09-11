@@ -22,4 +22,6 @@ source guide and its source caveat. The Rust SDK embeds the English rendering
 from [`report-guide.json`](../../crates/darty/resources/report-guide.json).
 Its `guidePath` retains the repository authoring source for provenance; the
 standalone executable does not read that Markdown file at runtime or require
-it as a separate asset. Public content and frozen provenance remain unchanged.
+it as a separate asset. The embedded content and provenance have their own
+frozen acceptance expectations; editing the authoring document alone does not
+update the runtime guide.

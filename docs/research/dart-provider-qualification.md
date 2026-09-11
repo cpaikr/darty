@@ -7,7 +7,7 @@ Owner: Darty maintainers.
 Last reviewed: 2026-09-08.
 
 This record evaluates whether the DART website is operationally suitable for
-bounded, read-only use by the candidate. It is not protocol authority, a public
+bounded, read-only use by the Rust implementation. It is not protocol authority, a public
 capability contract, legal approval, release authorization, an SLA, or a claim
 that DART endorses this client. HTTP rules live in the
 [`dart-wire-v1` OpenAPI](../specs/dart-wire-v1.openapi.yaml); HTML/viewer rules
@@ -18,7 +18,7 @@ Evidence labels in this document are `documented`, `observed`, `inferred`,
 
 ## Qualification decision
 
-| Candidate operation | State | Evidence | Unknowns | Recheck trigger |
+| Operation | State | Evidence | Unknowns | Recheck trigger |
 |---|---|---|---|---|
 | `search-company` | conditional technical evidence | **Observed, 2026-09-08:** release-built Rust CLI search for `삼성전자` returned six rows. | Official availability, rate limits, and geographic policy. | Access failure, redirect, parser drift, or DART policy notice. |
 | `search-company-reports` | conditional technical evidence | **Observed, 2026-09-08:** company `00126380`, dates `20260330`–`20260331`, returned four rows. | Stability of every accepted filter and official service policy. | Access or grammar failure, misleading empty result, or DART policy notice. |
@@ -27,7 +27,7 @@ Evidence labels in this document are `documented`, `observed`, `inferred`,
 | `company-detail` | conditional technical evidence | **Observed, 2026-09-08:** company `00126380` returned a successful normalized detail result. | Coverage of optional fields across companies and official availability. | Missing required table/name grammar or DART policy notice. |
 | `company-rss` | conditional technical evidence | **Observed, 2026-09-08:** company `00126380` returned a valid empty channel with zero items. | Current populated-item behavior was not observed in this refresh; fictional fixtures cover item parsing. | Invalid channel/item grammar, media-type drift, or DART policy notice. |
 
-Conditional technical evidence supports continued bounded candidate validation;
+Conditional technical evidence supports continued bounded validation;
 it does not grant production approval. Deterministic conformance and repository
 review remain required. The viewer's source discrepancy has a technical
 resolution, but its separate maintainer requalification gate remains open.
@@ -106,7 +106,7 @@ records:
 
 - **Observed:** the five 2026-08-22 probes required no login, session cookie,
   credential, or browser automation and did not redirect.
-- **Project decision:** the candidate sends only public read requests, a
+- **Project decision:** the Rust SDK sends only public read requests, a
   non-empty identifying user agent, and the endpoint-specific referers in the
   canonical OpenAPI contract. It does not attempt to bypass access controls.
 - **Unknown:** whether DART applies network, geographic, user-agent, or volume
@@ -124,11 +124,11 @@ records:
 
 ## Retries, timeout, and cancellation
 
-The candidate performs one attempt and no automatic retry. Public
+The Rust SDK performs one attempt and no automatic retry. Public
 `retryable=true` means a caller may make a new, paced request; it never means an
 unbounded internal loop.
 
-| Condition | Candidate classification | Automatic retry |
+| Condition | Classification | Automatic retry |
 |---|---|---:|
 | connect failure, timeout, cancellation, or connection reset | sanitized transport outcome; source failures are retryable, cancellation remains surface-owned | no |
 | HTTP 429 | retryable `source_unavailable`; retain only sanitized status and bounded `Retry-After` metadata if present | no |
@@ -178,7 +178,7 @@ project does not have, redirects outside the approved origin, changes required
 grammar, ordinary seeded responses exceed safety bounds, or publishes a policy
 incompatible with this use.
 
-Withdrawal means disabling or withholding the affected candidate operation;
+Withdrawal means disabling or withholding the affected operation;
 it does not authorize fallback scraping, browser automation, credential use,
 or a new provider. Requalification requires refreshed source evidence, updated
 canonical contracts and fictional fixtures, deterministic conformance, a
