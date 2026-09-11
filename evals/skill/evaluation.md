@@ -1,5 +1,8 @@
 # Darty consumer skill evaluation
 
+Historical baseline; the [automatic-invocation revision](invocation-2026-09-11.md)
+supersedes its activation policy.
+
 Evaluated 2026-09-10. Scope: the explicit-invocation CLI consumer package in
 [`skill/darty`](../../skill/darty/SKILL.md), separate from maintainer skills,
 SDK integration, installation registration, and release publication.

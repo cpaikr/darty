@@ -1,6 +1,6 @@
 ---
 name: darty
-description: "Search Korean DART disclosures and retrieve verifiable company, filing, and report-section evidence with the Darty CLI. Explicit invocation only. Use for CLI consumer tasks; excludes SDK integration and Darty development."
+description: "Search Korean DART disclosures and retrieve verifiable company, filing, and report-section evidence with the Darty CLI. Use when a request needs DART company lookup, disclosure search, filing lists, or report-section retrieval, including DART filing or viewer URLs. Excludes SDK integration, Darty development, and general accounting or investment questions that do not require DART evidence."
 ---
 
 # Darty
