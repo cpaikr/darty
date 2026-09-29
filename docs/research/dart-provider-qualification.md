@@ -114,9 +114,22 @@ records:
 
 ## Pacing
 
-- **Project decision:** one in-flight DART request per SDK client and at least
-  250 milliseconds between request starts. Multi-step workflows remain
-  sequential.
+- **Project decision:** default 500 milliseconds of cooldown before each request,
+  shared across Rust SDK, Node SDK, and CLI processes using the same local state
+  directory. An OS file lock is held through each response; process exit or
+  cancellation releases it. Multi-step workflows remain sequential.
+- **Project decision:** the persisted record stores an interval; each caller waits
+  under the lock for the larger of its own and the recorded interval, including
+  on the first request. The longer interval remains recorded during the wait in
+  case of cancellation, then the caller records its own interval before sending.
+  This conservative response-to-next-request cooldown avoids clock dependence and
+  bursts after slow setup or a killed process. State errors fail closed. Pacing
+  waits precede HTTP deadlines.
+  Configuration and state locations are documented in [README](../../README.md#request-pacing).
+- **Boundary:** coordination is local to a shared state directory, not a public
+  IP across hosts. Fixture clients use isolated in-process pacing unless
+  `DARTY_STATE_DIR` is explicitly set for cross-process tests. An explicit zero
+  interval bypasses pacing.
 - **Project decision:** no burst pool or background crawling is qualified.
 - **Unknown:** DART does not provide an official limit in the evidence held by
   this repository. The local policy is conservative and is not presented as an

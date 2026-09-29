@@ -6,8 +6,9 @@ system, and [VISION](VISION.md) defines the accepted target.
 
 ## Current
 
-No implementation initiative is active. The Rust rewrite and workflow evaluation
-repair are complete. The [readiness evidence](docs/research/agent-workflow-readiness.md)
+Cross-process request pacing is in validation and review; its
+[progress record](tasks/issue-37-request-pacing.md) owns remaining delivery gates.
+The Rust rewrite and workflow evaluation repair are complete. The [readiness evidence](docs/research/agent-workflow-readiness.md)
 remains a bounded diagnostic result, not a claim of reliable autonomous research;
 [release approvals](docs/release.md#release-approvals) remain separate gates.
 

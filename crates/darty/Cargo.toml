@@ -16,6 +16,7 @@ chrono.workspace = true
 encoding_rs.workspace = true
 ego-tree.workspace = true
 futures-util.workspace = true
+fs4.workspace = true
 regex.workspace = true
 reqwest.workspace = true
 scraper.workspace = true

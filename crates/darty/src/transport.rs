@@ -11,6 +11,7 @@ use reqwest::{
 use tokio::{sync::Mutex, time::Instant};
 use url::Url;
 
+use crate::pacing::Pacing;
 use crate::{DartyError, ErrorCode};
 
 const DART_ORIGIN: &str = "https://dart.fss.or.kr";
@@ -19,7 +20,6 @@ const USER_AGENT_VALUE: &str = concat!(
     env!("CARGO_PKG_VERSION"),
     " (+https://github.com/cpaikr/darty)"
 );
-const REQUEST_START_INTERVAL: Duration = Duration::from_millis(250);
 const MAX_RETRY_AFTER_SECONDS: u64 = 86_400;
 const MAX_RETRY_AFTER_VALUE_LENGTH: usize = 128;
 
@@ -45,6 +45,7 @@ pub(crate) struct SourceTransport {
     client: Client,
     request_origin: Url,
     request_gate: Arc<Mutex<Instant>>,
+    pacing: Pacing,
 }
 
 #[derive(Debug, Clone)]
@@ -109,6 +110,7 @@ impl SourceTransport {
                 recovery_hint: None,
             })?;
         Ok(Self {
+            pacing: Pacing::from_env(request_origin.as_str() != "https://dart.fss.or.kr/")?,
             client,
             request_origin,
             request_gate: Arc::new(Mutex::new(Instant::now())),
@@ -117,9 +119,13 @@ impl SourceTransport {
 
     pub(crate) async fn execute(&self, request: SourceRequest) -> Result<SourceText, DartyError> {
         let mut request_permit = self.request_gate.lock().await;
-        tokio::time::sleep_until(*request_permit).await;
-        *request_permit = Instant::now() + REQUEST_START_INTERVAL;
+        let shared_permit = self.pacing.acquire().await?;
+        if shared_permit.is_none() {
+            tokio::time::sleep_until(*request_permit).await;
+        }
+        *request_permit = Instant::now() + self.pacing.interval;
         let result = self.execute_serialized(request).await;
+        drop(shared_permit);
         drop(request_permit);
         result
     }

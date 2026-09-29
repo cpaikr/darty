@@ -3,6 +3,7 @@ mod error;
 mod extra_models;
 mod extra_parsers;
 mod models;
+mod pacing;
 mod parsers;
 mod render;
 mod static_operations;
