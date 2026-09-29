@@ -229,3 +229,30 @@ fn unusable_state_directory_fails_closed() {
     assert!(String::from_utf8_lossy(&output.stdout).contains("internal_error"));
     assert!(fixture.arrivals.try_recv().is_err());
 }
+
+#[test]
+fn bundled_operations_need_no_pacing_environment() {
+    for operation in ["report-guide", "disclosure-types"] {
+        for invalid_interval in [None, Some("invalid")] {
+            let mut command = Command::new(env!("CARGO_BIN_EXE_darty"));
+            command
+                .arg(operation)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
+            for name in [
+                "DARTY_FIXTURE_ORIGIN",
+                "DARTY_STATE_DIR",
+                "DARTY_REQUEST_INTERVAL_MS",
+                "LOCALAPPDATA",
+                "XDG_STATE_HOME",
+                "HOME",
+            ] {
+                command.env_remove(name);
+            }
+            if let Some(value) = invalid_interval {
+                command.env("DARTY_REQUEST_INTERVAL_MS", value);
+            }
+            success(command.spawn().unwrap());
+        }
+    }
+}

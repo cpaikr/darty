@@ -45,7 +45,7 @@ pub(crate) struct SourceTransport {
     client: Client,
     request_origin: Url,
     request_gate: Arc<Mutex<Instant>>,
-    pacing: Pacing,
+    pacing: Option<Pacing>,
 }
 
 #[derive(Debug, Clone)]
@@ -84,7 +84,14 @@ impl SourceTransport {
                 "Use the candidate fixture server on localhost.",
             ));
         }
-        Self::new_with_deadlines(origin, deadlines)
+        let mut transport = Self::new_with_deadlines(origin, deadlines)?;
+        transport.pacing = Some(Pacing::isolated_fixture());
+        Ok(transport)
+    }
+
+    #[cfg(feature = "fixture-origin")]
+    pub(crate) fn use_environment_pacing(&mut self) {
+        self.pacing = None;
     }
 
     fn new(request_origin: Url) -> Result<Self, DartyError> {
@@ -110,7 +117,7 @@ impl SourceTransport {
                 recovery_hint: None,
             })?;
         Ok(Self {
-            pacing: Pacing::from_env(request_origin.as_str() != "https://dart.fss.or.kr/")?,
+            pacing: None,
             client,
             request_origin,
             request_gate: Arc::new(Mutex::new(Instant::now())),
@@ -119,11 +126,16 @@ impl SourceTransport {
 
     pub(crate) async fn execute(&self, request: SourceRequest) -> Result<SourceText, DartyError> {
         let mut request_permit = self.request_gate.lock().await;
-        let shared_permit = self.pacing.acquire().await?;
+        // Local-only operations must not require a state directory or valid pacing settings.
+        let pacing = match &self.pacing {
+            Some(pacing) => pacing.clone(),
+            None => Pacing::from_env(self.request_origin.as_str() != "https://dart.fss.or.kr/")?,
+        };
+        let shared_permit = pacing.acquire().await?;
         if shared_permit.is_none() {
             tokio::time::sleep_until(*request_permit).await;
         }
-        *request_permit = Instant::now() + self.pacing.interval;
+        *request_permit = Instant::now() + pacing.interval;
         let result = self.execute_serialized(request).await;
         drop(shared_permit);
         drop(request_permit);

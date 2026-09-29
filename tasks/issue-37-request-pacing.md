@@ -9,11 +9,15 @@
   does not prove rate limiting. OS file locks release on cancellation/process death.
 - Review correction: use a cooldown under the OS lock instead of timestamps;
   expired admissions could otherwise burst after slow setup or task scheduling.
-- Local validation: all 90 Rust tests, workspace Clippy, formatting, TypeScript
+- Local validation: all 91 Rust tests, workspace Clippy, formatting, TypeScript
   typecheck, version agreement, and 14 CLI subprocess checks pass on Windows.
   Four-process request gaps after the fix were approximately 517–522 ms.
 - Review: independent code review finding corrected and verified; scoped
   documentation reconciliation complete.
+- PR #38 feedback: deferred pacing environment resolution to network execution
+  so bundled operations remain local; isolated ordinary fixture constructors
+  from inherited environment settings. Both reproduced, fixed, independently
+  reviewed, and covered by passing normal/inherited-environment test runs.
 - Limits: Windows CRLF checkout changes fixture hashes (confirmed byte-for-byte
   after CRLF normalization); broad Bun tests include Unix-only assumptions.
   Linux CI must validate those checks and Rust 1.88 compatibility.

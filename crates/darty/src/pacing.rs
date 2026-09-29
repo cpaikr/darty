@@ -25,6 +25,14 @@ enum Attempt {
 }
 
 impl Pacing {
+    #[cfg(feature = "fixture-origin")]
+    pub(crate) fn isolated_fixture() -> Self {
+        Self {
+            interval: Duration::from_millis(DEFAULT_INTERVAL_MS),
+            path: None,
+        }
+    }
+
     pub(crate) fn from_env(fixture: bool) -> Result<Self, DartyError> {
         let interval = match std::env::var("DARTY_REQUEST_INTERVAL_MS") {
             Ok(value) => parse_interval(&value)?,

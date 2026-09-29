@@ -128,6 +128,8 @@ Shared state defaults to `%LOCALAPPDATA%\darty` on Windows and
 participating processes must use the same directory. Do not delete or replace
 `request-pacing-v1.lock` while any Darty process is running. Unusable or damaged
 state fails before a request is sent, with a recovery hint.
+Bundled `report-guide` and `disclosure-types` operations do not require pacing
+configuration or state.
 
 Pacing does not coordinate separate machines or users with different state
 directories, and does not guarantee that DART will permit a request. No official

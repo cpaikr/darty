@@ -127,9 +127,11 @@ records:
   waits precede HTTP deadlines.
   Configuration and state locations are documented in [README](../../README.md#request-pacing).
 - **Boundary:** coordination is local to a shared state directory, not a public
-  IP across hosts. Fixture clients use isolated in-process pacing unless
-  `DARTY_STATE_DIR` is explicitly set for cross-process tests. An explicit zero
-  interval bypasses pacing.
+  IP across hosts. Ordinary fixture constructors ignore the environment and use
+  isolated in-process pacing. The CLI's fixture seam explicitly selects environment
+  pacing; cross-process tests then supply `DARTY_STATE_DIR`. An explicit zero
+  interval bypasses environment pacing. Configuration is read only for network
+  operations; bundled operations need no pacing state.
 - **Project decision:** no burst pool or background crawling is qualified.
 - **Unknown:** DART does not provide an official limit in the evidence held by
   this repository. The local policy is conservative and is not presented as an
