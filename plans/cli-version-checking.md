@@ -1,6 +1,6 @@
 # CLI version checking
 
-Status: planned; not started.
+Status: implemented; awaiting review and release.
 
 Adopt the mytech
 [CLI version checking practice](https://github.com/sjunepark/mytech/blob/c9e82a8/practices/cli-version-checking.md)
@@ -25,7 +25,7 @@ Owner-approved on 2026-09-30.
   comparison and freshness even when no update exists. Both are new CLI v1
   surface.
 - **On by default.** Checks run without configuration and contact
-  `api.github.com` and the release asset host in addition to DART.
+  `github.com` and the release asset host in addition to DART.
   `DARTY_NO_UPDATE_CHECK=1` skips all inspection, fetching, and cache work.
 
 ## Scope boundaries
@@ -46,19 +46,27 @@ Owner-approved on 2026-09-30.
 
 ## Release evidence
 
-- **Source.** List releases for `cpaikr/darty` through the unauthenticated
-  GitHub REST API, one bounded page. Select the highest stable version by
-  semantic-version ordering among non-draft, non-prerelease releases whose tag
-  is `v<semver>`. Other tags are ignored.
+- **Source.** Download `release-manifest.json` through GitHub's documented
+  latest-release asset link,
+  `https://github.com/cpaikr/darty/releases/latest/download/release-manifest.json`.
+  It is served by `github.com` and the release asset host, not the REST API,
+  so the unauthenticated API limit (60 requests per hour per IP, shared by
+  everything behind that address) does not apply. GitHub's latest release is
+  never a draft or prerelease; the manifest must name a plain `v<version>` tag.
+  A 404 means no published release provides a manifest (`no_stable_release`).
+  Owner-approved on 2026-09-30, replacing the earlier release-list selection:
+  "latest" is GitHub's Latest marker, which matches the highest version while
+  releases are not published for older lines.
 - **Comparison.** Compare against the embedded `CARGO_PKG_VERSION`. Distinguish
   `newer`, `equal`, `ahead`, `no_stable_release`, and `uncomparable` (the
   running version does not parse as a plain release version). Equality does not
   prove source freshness; a local `dev` build reports `equal`.
-- **Distribution.** Before reporting an update as installable, fetch that
-  release's `release-manifest.json` and require an entry for the running target
-  (from `scripts/release-targets.json`) whose archive, plus `SHA256SUMS` and the
-  platform installer, appear in the release assets. Otherwise report
-  `incomplete_distribution` for that release; do not fall back to an older one.
+- **Distribution.** Before reporting an update as installable, require a
+  manifest entry for the running target (from `scripts/release-targets.json`).
+  Otherwise report `incomplete_distribution` for that release; do not fall back
+  to an older one. Release completion uploads and verifies every asset on a
+  draft before publishing, so a published manifest implies its archives,
+  `SHA256SUMS`, and installers exist.
   Surface the manifest's `runtimeCertified` value without treating `false` as
   incomplete. Installation still verifies archive bytes.
 - **Freshness.** Report `fresh`, `stale` (refresh failed; prior evidence kept
@@ -76,12 +84,11 @@ Owner-approved on 2026-09-30.
   every check, so replacing the executable takes effect immediately.
 - Refresh when evidence is older than 24 hours; after a failed refresh, wait 1
   hour before retrying. DART calls dominate invocation latency, and agents may
-  run the CLI many times per hour, so a daily interval keeps GitHub's
-  unauthenticated limit (60 requests per hour per IP) out of reach on shared CI
-  addresses.
-- One foreground refresh budget of 1.5 seconds covers connection, both requests,
-  and the cache write; it may extend process completion by at most that much.
-  Cap the release list at 1 MiB and the manifest at 64 KiB.
+  run the CLI many times per hour, so a daily interval keeps release traffic
+  negligible even when many processes share one address.
+- One foreground refresh budget of 1.5 seconds covers the connection and the
+  manifest request; it may extend process completion by at most that much.
+  Cap the manifest at 64 KiB.
 - Write the cache by atomic replace; concurrent processes may refresh
   redundantly but never read a partial file. Unreadable or corrupt cache is
   treated as absent and reported as an inspection problem, never a command
@@ -124,7 +131,28 @@ Release tagging and publication remain separate gates under
   fixture mode.
 - Repository-required Rust tests, Clippy, typecheck, and version checks.
 
+## Implementation decisions
+
+- `crates/darty-cli/src/release_check.rs` owns evidence, cache, and reports;
+  `crates/darty-cli/tests/release_check.rs` covers the subprocess behavior with
+  `DARTY_FIXTURE_RELEASE_ORIGIN`, which production packaging rejects.
+- `DARTY_NO_UPDATE_CHECK` (any non-empty value except `0`) also disables
+  `darty version --check`, which then reports the opt-out as a problem.
+- Each refresh first records the attempt as the last failure. Incidental checks
+  refresh only when that write succeeds, so an unresolvable, unreadable, or
+  unwritable cache cannot turn every invocation into GitHub requests; the
+  explicit check still refreshes.
+- The 1.5 second budget bounds the network refresh; the local cache write
+  follows it. JSON success paths exit once stdout is flushed, so an abandoned
+  blocking DNS lookup cannot delay process exit.
+- Observed on 2026-09-30 from Windows: a release-build explicit refresh against
+  the real latest-release link took about 0.35 s after the first launch.
+- Each invocation emits at most one advisory, preferring uncomparable identity,
+  then an update or incomplete distribution (labelled stale when applicable),
+  then stale or unavailable evidence, then cache problems.
+- The root-help compat golden now expects `--version` and `version`.
+
 ## Next action
 
-Implement the release evidence and cache module in `crates/darty-cli` with unit
-tests, then wire the `version` command and incidental advisories.
+Review and merge the implementation PR to `dev`; publication follows the
+release runbook.

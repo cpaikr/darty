@@ -6,7 +6,8 @@ system, and [VISION](VISION.md) defines the accepted target.
 
 ## Current
 
-[CLI version checking](plans/cli-version-checking.md) is planned and next.
+[CLI version checking](plans/cli-version-checking.md) is implemented and
+awaits review and release.
 Cross-process request pacing shipped in v0.6.2; its
 [progress record](tasks/issue-37-request-pacing.md) preserves the evidence.
 The Rust rewrite and workflow evaluation repair are complete. The [readiness evidence](docs/research/agent-workflow-readiness.md)

@@ -19,6 +19,7 @@ doc = false
 clap.workspace = true
 chrono.workspace = true
 darty = { path = "../darty", version = "0.6.2" }
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

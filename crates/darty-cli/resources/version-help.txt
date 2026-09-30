@@ -1,0 +1,26 @@
+Usage: darty version [options]
+
+Report the running darty version and release target as JSON. With --check,
+compare it with the latest stable GitHub release and report evidence freshness.
+
+Options:
+  --check     Compare with the latest stable release, even when no update exists.
+  --pretty    Print human-readable indented JSON.
+  -h, --help  Display command help.
+
+Examples:
+  # Print the embedded version and release target without network access.
+  darty version
+
+  # Compare with the latest stable release.
+  darty version --check
+
+Notes:
+  - `darty --version` prints `darty <version>` as plain text without network access.
+  - --check contacts github.com and GitHub's release asset host, caches the
+    evidence for 24 hours, and retries a failed refresh after 1 hour.
+  - Release evidence problems are part of the report and still exit 0.
+  - DARTY_NO_UPDATE_CHECK=1 disables all release checks; DARTY_CACHE_DIR sets an
+    absolute cache directory.
+  - darty never installs updates. Download the release files and repeat the
+    README installation procedure.

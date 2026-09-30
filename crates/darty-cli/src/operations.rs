@@ -1,6 +1,6 @@
 use super::{
-    CliFailure, DetailArg, SearchKind, SortDirectionArg, copy_field, detail, failure,
-    present_search, quote_cli_value, write_value,
+    CliFailure, DetailArg, Output, SearchKind, SortDirectionArg, copy_field, detail, failure,
+    present_search, quote_cli_value,
 };
 use clap::{Args, ValueEnum};
 use darty::{
@@ -95,7 +95,10 @@ fn company_code(value: Option<String>, pretty: bool) -> Result<String, CliFailur
     Ok(value)
 }
 
-pub async fn run_detail(client: &DartyClient, args: CompanyDetailArgs) -> Result<(), CliFailure> {
+pub async fn run_detail(
+    client: &DartyClient,
+    args: CompanyDetailArgs,
+) -> Result<Output, CliFailure> {
     let request = CompanyDetailRequest::new(company_code(
         args.company_code.map(|value| value.trim().to_owned()),
         args.pretty,
@@ -104,13 +107,12 @@ pub async fn run_detail(client: &DartyClient, args: CompanyDetailArgs) -> Result
         .company_detail(request)
         .await
         .map_err(|error| CliFailure::sdk(&error, args.pretty, &[], &[]))?;
-    write_value(
-        &serde_json::to_value(result).expect("SDK response serializes"),
+    Ok(Output::network(
+        serde_json::to_value(result).expect("SDK response serializes"),
         args.pretty,
-    );
-    Ok(())
+    ))
 }
-pub async fn run_rss(client: &DartyClient, args: CompanyRssArgs) -> Result<(), CliFailure> {
+pub async fn run_rss(client: &DartyClient, args: CompanyRssArgs) -> Result<Output, CliFailure> {
     let mut request = CompanyRssRequest::new(company_code(
         args.company_code.map(|value| value.trim().to_owned()),
         args.pretty,
@@ -120,13 +122,12 @@ pub async fn run_rss(client: &DartyClient, args: CompanyRssArgs) -> Result<(), C
         .company_rss(request)
         .await
         .map_err(|error| CliFailure::sdk(&error, args.pretty, &[], &[]))?;
-    write_value(
-        &serde_json::to_value(result).expect("SDK response serializes"),
+    Ok(Output::network(
+        serde_json::to_value(result).expect("SDK response serializes"),
         args.pretty,
-    );
-    Ok(())
+    ))
 }
-pub fn run_types(client: &DartyClient, args: DisclosureTypesArgs) -> Result<(), CliFailure> {
+pub fn run_types(client: &DartyClient, args: DisclosureTypesArgs) -> Result<Output, CliFailure> {
     let request = DisclosureTypesRequest {
         category: args.category.map(|value| value.to_uppercase()),
         query: args.query,
@@ -139,11 +140,11 @@ pub fn run_types(client: &DartyClient, args: DisclosureTypesArgs) -> Result<(), 
             &[],
         )
     })?;
-    write_value(
-        &serde_json::to_value(result).expect("SDK response serializes"),
+    // Bundled data stays local and unchecked.
+    Ok(Output::local(
+        serde_json::to_value(result).expect("SDK response serializes"),
         args.pretty,
-    );
-    Ok(())
+    ))
 }
 
 fn body_required(
@@ -165,7 +166,7 @@ fn body_required(
     })
 }
 
-pub async fn run_body(client: &DartyClient, args: SearchBodyArgs) -> Result<(), CliFailure> {
+pub async fn run_body(client: &DartyClient, args: SearchBodyArgs) -> Result<Output, CliFailure> {
     let keyword = body_required(
         args.keyword,
         "--keyword",
@@ -239,11 +240,10 @@ pub async fn run_body(client: &DartyClient, args: SearchBodyArgs) -> Result<(), 
             &[("startDate", &start_date), ("endDate", &end_date)],
         )
     })?;
-    write_value(
-        &present_search(response, args.verbose, args.agent, SearchKind::Body),
+    Ok(Output::network(
+        present_search(response, args.verbose, args.agent, SearchKind::Body),
         args.pretty,
-    );
-    Ok(())
+    ))
 }
 
 pub fn body_agent_item(item: &Value) -> Value {

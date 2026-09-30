@@ -42,6 +42,7 @@ pub fn command_help(argv: &[String]) -> Option<&'static str> {
         ["report-guide", "--help" | "-h"] => {
             Some(include_str!("../resources/report-guide-help.txt"))
         }
+        ["version", "--help" | "-h"] => Some(include_str!("../resources/version-help.txt")),
         _ => None,
     }
 }

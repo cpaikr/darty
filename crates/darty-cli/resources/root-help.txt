@@ -6,6 +6,7 @@ Options:
   --debug                           Write execution diagnostics to stderr when
                                     available.
   -h, --help                        Display help.
+  --version                         Print the version and exit.
 
 Commands:
   company-detail [options]          Fetch DART 기업개황 company details.
@@ -20,6 +21,8 @@ Commands:
                                     company code.
   view-report [options]             Fetch a DART report table of contents or
                                     body content.
+  version [options]                 Report the version; --check compares it with
+                                    the latest stable release.
   help [command]                    Display help for a command.
 
 Common agent flow:
@@ -33,6 +36,8 @@ Output:
   - Commands print a JSON response object to stdout on success and failure; failures exit non-zero.
   - Use --pretty for indented JSON.
   - Help and report-guide print human-readable text.
+  - After successful DART network commands, JSON may include advisories[] such as a
+    cached release-update notice. Set DARTY_NO_UPDATE_CHECK=1 to disable release checks.
 
 Cautions:
   - This tool replays read-only DART web requests observed during browser interaction.

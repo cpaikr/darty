@@ -104,7 +104,7 @@ function build(id, directory, prebuilt) {
     const executable = prebuilt ?? join(root, "target", target.rustTarget, "release", target.executable);
     const bytes = readFileSync(executable);
     verifyBinary(bytes, target);
-    for (const token of ["DARTY_FIXTURE_ORIGIN", "DARTY_NODE_TEST_FIXTURE_ORIGIN"]) {
+    for (const token of ["DARTY_FIXTURE_ORIGIN", "DARTY_FIXTURE_RELEASE_ORIGIN", "DARTY_NODE_TEST_FIXTURE_ORIGIN"]) {
       assert.equal(bytes.includes(Buffer.from(token)), false, "Refusing a fixture-enabled release executable");
     }
     const archive = archiveName(target);
