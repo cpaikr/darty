@@ -18,7 +18,7 @@ doc = false
 [dependencies]
 clap.workspace = true
 chrono.workspace = true
-darty = { path = "../darty", version = "0.6.1" }
+darty = { path = "../darty", version = "0.6.2" }
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
