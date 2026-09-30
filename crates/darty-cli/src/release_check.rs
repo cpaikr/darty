@@ -357,8 +357,21 @@ async fn refresh(
             record.evidence = Some(evidence);
             record.last_failure_at = None;
         }
-        // The attempt already recorded `now` as the last failure.
-        Err(problem) => problems.push(problem),
+        Err(problem) => {
+            problems.push(problem);
+            // A concurrent process may have saved fresh evidence since this one
+            // loaded the cache; keep it rather than overwrite it with a failure.
+            if let Some(directory) = directory
+                && let Ok(current) = load(directory)
+                && current.evidence.as_ref().is_some_and(|evidence| {
+                    within(evidence.observed_at, now, REFRESH_INTERVAL_SECONDS)
+                })
+            {
+                *record = current;
+                return;
+            }
+            // Otherwise the attempt already recorded `now` as the last failure.
+        }
     }
     if let Some(directory) = directory
         && let Err(problem) = save(directory, record)
@@ -473,15 +486,30 @@ impl ReleaseCheck {
                     TARGET.unwrap_or("platform")
                 ),
             ),
-            _ if self.freshness == Freshness::Stale => ("update_check_stale", stale_note.trim_start().to_owned()),
+            // Evidence problems carry the cause and next step, such as setting DARTY_CACHE_DIR.
+            _ if self.freshness == Freshness::Stale => (
+                "update_check_stale",
+                self.with_problems(stale_note.trim_start()),
+            ),
             _ if self.freshness == Freshness::Unavailable => (
                 "update_check_unavailable",
-                "No usable release evidence is available; darty cannot tell whether a newer release exists.".to_owned(),
+                self.with_problems(
+                    "No usable release evidence is available; darty cannot tell whether a newer release exists.",
+                ),
             ),
             _ if !self.problems.is_empty() => ("update_check_problem", self.problems.join(" ")),
             _ => return None,
         };
         Some(json!({"code": code, "message": message, "check": self}))
+    }
+}
+
+impl ReleaseCheck {
+    fn with_problems(&self, message: &str) -> String {
+        std::iter::once(message)
+            .chain(self.problems.iter().map(String::as_str))
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 
@@ -896,6 +924,8 @@ mod tests {
             evidence: Some(evidence("2026-09-30T00:00:00Z", Some("1.2.3"))),
             last_failure_at: Some(time("2026-09-30T01:00:00Z")),
         };
+        // A refresh saves its attempt first, then replaces it with evidence.
+        save(&directory, &CacheRecord::default()).unwrap();
         save(&directory, &record).unwrap();
         assert_eq!(load(&directory), Ok(record));
         std::fs::write(directory.join(CACHE_FILE), b"{\"evidence\":").unwrap();
@@ -936,6 +966,62 @@ mod tests {
         assert_eq!(check.freshness, Freshness::Unavailable);
         assert_eq!(check.problems.len(), 1, "{:?}", check.problems);
         assert!(check.last_refresh_failed_at.is_none());
+    }
+
+    #[test]
+    fn evidence_advisories_carry_the_actionable_cause() {
+        let check = report(
+            None,
+            time("2026-09-30T12:00:00Z"),
+            vec!["No user cache directory is available; set DARTY_CACHE_DIR.".to_owned()],
+        );
+        let advisory = check.advisory().unwrap();
+        assert_eq!(advisory["code"], "update_check_unavailable");
+        assert!(
+            advisory["message"]
+                .as_str()
+                .unwrap()
+                .ends_with("set DARTY_CACHE_DIR.")
+        );
+    }
+
+    #[tokio::test]
+    async fn failed_refresh_keeps_fresh_evidence_saved_concurrently() {
+        let directory = temporary_directory("concurrent");
+        let now = Utc::now().trunc_subsecs(0);
+        let fresh = CacheRecord {
+            target: TARGET.map(str::to_owned),
+            evidence: Some(Evidence {
+                observed_at: now,
+                latest: None,
+            }),
+            last_failure_at: None,
+        };
+        save(&directory, &fresh).unwrap();
+        // This process loaded the cache before the other one saved evidence.
+        let mut attempt = CacheRecord {
+            target: TARGET.map(str::to_owned),
+            evidence: None,
+            last_failure_at: Some(now),
+        };
+        let settings = Settings {
+            disabled: None,
+            manifest_url: "http://127.0.0.1:9/unreachable".to_owned(),
+            cache_directory: Ok(directory.clone()),
+        };
+        let mut problems = Vec::new();
+        refresh(
+            &settings,
+            Some(&directory),
+            &mut attempt,
+            &mut problems,
+            now,
+        )
+        .await;
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert_eq!(attempt, fresh);
+        assert_eq!(load(&directory), Ok(fresh));
+        std::fs::remove_dir_all(&directory).unwrap();
     }
 
     #[tokio::test]
