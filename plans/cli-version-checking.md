@@ -1,0 +1,130 @@
+# CLI version checking
+
+Status: planned; not started.
+
+Adopt the mytech
+[CLI version checking practice](https://github.com/sjunepark/mytech/blob/c9e82a8/practices/cli-version-checking.md)
+for the standalone `darty` CLI: cached, advisory release comparison after
+successful network operations, an explicit version report, and no
+self-installation. The practice owns the general rules; this plan records the
+darty-specific decisions and delivery.
+
+## Accepted decisions
+
+Owner-approved on 2026-09-30.
+
+- **Envelope advisory, empty stderr.** Incidental notices go in a new optional
+  top-level `advisories` array in the single JSON envelope, separate from
+  `result` and from `warnings`, which describe the capability result. The key is
+  omitted when there is nothing to report, so opted-out, fixture, and fresh-equal
+  output stays byte-identical to today. stderr remains empty by default.
+  The addition is backward compatible, so `cliTransportVersion` stays `"1"`.
+- **Command surface.** `darty --version` prints `darty <version>` locally and
+  exits `0`. `darty version` prints a local JSON envelope with the embedded
+  version and release target; `darty version --check` adds the release
+  comparison and freshness even when no update exists. Both are new CLI v1
+  surface.
+- **On by default.** Checks run without configuration and contact
+  `api.github.com` and the release asset host in addition to DART.
+  `DARTY_NO_UPDATE_CHECK=1` skips all inspection, fetching, and cache work.
+
+## Scope boundaries
+
+- CLI only. The check lives in `crates/darty-cli`; the `darty` SDK crate and
+  the Node SDK never contact GitHub.
+- Incidental checks run only after a successful network capability operation
+  (`search-body`, `company-detail`, `company-rss`, `search-company`,
+  `search-company-reports`, `view-report`). Help, bare `darty`, `--version`,
+  bundled `disclosure-types` and `report-guide`, invalid invocations, failures,
+  and cancellation stay local and unchecked, matching the request-pacing rule
+  that bundled operations remain local.
+- Fixture-origin execution never contacts GitHub. A fixture-only release origin
+  override (alongside `DARTY_FIXTURE_ORIGIN`) serves test release data.
+- No installation, download of archives, or other mutation. Notices link the
+  exact release page and point to the README update procedure (`install.sh` /
+  `install.ps1`).
+
+## Release evidence
+
+- **Source.** List releases for `cpaikr/darty` through the unauthenticated
+  GitHub REST API, one bounded page. Select the highest stable version by
+  semantic-version ordering among non-draft, non-prerelease releases whose tag
+  is `v<semver>`. Other tags are ignored.
+- **Comparison.** Compare against the embedded `CARGO_PKG_VERSION`. Distinguish
+  `newer`, `equal`, `ahead`, `no_stable_release`, and `uncomparable` (the
+  running version does not parse as a plain release version). Equality does not
+  prove source freshness; a local `dev` build reports `equal`.
+- **Distribution.** Before reporting an update as installable, fetch that
+  release's `release-manifest.json` and require an entry for the running target
+  (from `scripts/release-targets.json`) whose archive, plus `SHA256SUMS` and the
+  platform installer, appear in the release assets. Otherwise report
+  `incomplete_distribution` for that release; do not fall back to an older one.
+  Surface the manifest's `runtimeCertified` value without treating `false` as
+  incomplete. Installation still verifies archive bytes.
+- **Freshness.** Report `fresh`, `stale` (refresh failed; prior evidence kept
+  with its observation time and age), or `unavailable` (no usable evidence).
+  Never claim the CLI is current without usable evidence.
+
+## Cache and refresh budget
+
+- Cache file under a disposable user cache directory, separate from the pacing
+  state directory and installation: `%LOCALAPPDATA%\darty\cache` on Windows,
+  `$XDG_CACHE_HOME/darty` or `~/.cache/darty` on Linux, and
+  `~/Library/Caches/darty` on macOS. `DARTY_CACHE_DIR` overrides it with an
+  absolute path. The cache holds release evidence, observation time, and the
+  last failed attempt; the comparison is recomputed from the running version on
+  every check, so replacing the executable takes effect immediately.
+- Refresh when evidence is older than 24 hours; after a failed refresh, wait 1
+  hour before retrying. DART calls dominate invocation latency, and agents may
+  run the CLI many times per hour, so a daily interval keeps GitHub's
+  unauthenticated limit (60 requests per hour per IP) out of reach on shared CI
+  addresses.
+- One foreground refresh budget of 1.5 seconds covers connection, both requests,
+  and the cache write; it may extend process completion by at most that much.
+  Cap the release list at 1 MiB and the manifest at 64 KiB.
+- Write the cache by atomic replace; concurrent processes may refresh
+  redundantly but never read a partial file. Unreadable or corrupt cache is
+  treated as absent and reported as an inspection problem, never a command
+  failure.
+
+## Output
+
+- Incidental advisories are omitted for fresh `equal`, `ahead`, and
+  `no_stable_release` results. Updates, incomplete distribution, stale or
+  unavailable evidence, uncomparable identity, and cache problems produce one
+  advisory entry, also under `--agent`. An advisory never changes the exit code
+  or the primary result.
+- `darty version --check` always reports current version, target, latest stable
+  version, comparison, freshness, observation time and age, distribution status,
+  and the release URL when known. An evidence problem is part of the report and
+  exits `0`.
+
+## Delivery
+
+One reviewable PR to `dev` containing the implementation, tests, and contract
+updates:
+
+- `docs/specs/cli-transport-v1.md`: `advisories`, `darty --version`, `darty version`.
+- `README.md`: update checks, network destinations, cache location, opt-out.
+- `ARCHITECTURE.md`: CLI ownership of release checks.
+- `skill/darty/SKILL.md`, which says `--version` is outside the v1 contract.
+
+Release tagging and publication remain separate gates under
+[the release runbook](../docs/release.md).
+
+## Validation
+
+- Unit tests for version ordering, stable selection, target and asset
+  completeness, freshness states, retry cooldown, cache corruption, and opt-out.
+- CLI subprocess tests against a local fixture release server: update notice
+  present, quiet when equal, stale label after a failed refresh, budget
+  exhaustion stays advisory, primary JSON unchanged apart from `advisories`,
+  stderr empty, and no check after failures, help, or bundled operations.
+- Existing CLI compatibility checks pass unchanged with checks opted out or in
+  fixture mode.
+- Repository-required Rust tests, Clippy, typecheck, and version checks.
+
+## Next action
+
+Implement the release evidence and cache module in `crates/darty-cli` with unit
+tests, then wire the `version` command and incidental advisories.
