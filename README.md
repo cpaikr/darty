@@ -9,7 +9,7 @@ Darty reads DART's public web surfaces. It does not use the official OpenDART AP
 and changes to DART's website can affect results or parsers.
 
 The published Rust release is
-[v0.6.1](https://github.com/cpaikr/darty/releases/tag/v0.6.1). The earlier v0.6.0
+[v0.6.2](https://github.com/cpaikr/darty/releases/tag/v0.6.2). The earlier v0.6.0
 CLI used Bun/TypeScript. See the [roadmap](ROADMAP.md) for subsequent work.
 
 ## Installation
@@ -129,8 +129,8 @@ and help output remain human-readable text. See the
 ## Request pacing
 
 The source implementation defaults to a 500 ms minimum request interval across
-CLI and SDK processes using the same local state directory. This change is not
-included in the published v0.6.1 release.
+CLI and SDK processes using the same local state directory. Pacing ships from
+v0.6.2.
 
 Each request waits before sending while holding a shared lock, including the
 first request; the lock stays held until the response completes. This deliberate
