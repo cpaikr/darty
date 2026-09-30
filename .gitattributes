@@ -1,0 +1,4 @@
+# Store and check out text as LF on every platform, independent of each
+# contributor's core.autocrlf. Release installers, embedded CLI help, and
+# fixtures are byte-sensitive; Git's binary detection leaves binaries untouched.
+* text=auto eol=lf
