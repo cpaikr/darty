@@ -77,6 +77,17 @@ impl DartyClient {
 
     #[cfg(feature = "fixture-origin")]
     #[doc(hidden)]
+    pub fn for_fixture_origin_with_environment_pacing(
+        origin: Url,
+        fetched_at: impl Into<String>,
+    ) -> Result<Self, DartyError> {
+        let mut client = Self::for_fixture_origin(origin, fetched_at)?;
+        client.transport.use_environment_pacing();
+        Ok(client)
+    }
+
+    #[cfg(feature = "fixture-origin")]
+    #[doc(hidden)]
     pub fn for_fixture_origin_with_deadlines(
         origin: Url,
         fetched_at: impl Into<String>,

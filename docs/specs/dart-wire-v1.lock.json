@@ -13,7 +13,7 @@
     },
     {
       "path": "docs/research/dart-provider-qualification.md",
-      "sha256": "98dd2a2b6d9d6b34d17b09c96ad2a626a009a15c8e0cae90cc506d4d6199dd30"
+      "sha256": "9fc012ddda7c79ce6d210f2836ad67fa871c24b8423f70db3cbea9d4e49a5a24"
     },
     {
       "path": "fixtures/dart/vertical-v1/manifest.json",
@@ -25,7 +25,7 @@
     },
     {
       "path": "crates/darty/tests/vertical_workflow.rs",
-      "sha256": "8edf9df544da4c52922607bfba60321d1258f3879b93289b652655044cda32fd"
+      "sha256": "9d1fc03c3d7f31286a70a5159da3f2a22d7221ee4fbf11df433cbc329ba91161"
     },
     {
       "path": "fixtures/dart/parity-v1/manifest.json",

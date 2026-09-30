@@ -74,12 +74,14 @@ wire authority, eval harness tests, CLI parity, and mutation sensitivity.
 
 ## Maintainer-controlled Actions
 
-The repository-level Actions setting was verified disabled on September 11,
-2026. The checked-in CI and Release workflows have only manual dispatch triggers.
-Every job, including reusable jobs, requires both the original actor and the
-rerun actor to be `sjunepark`. Pushes, pull requests, tags, and schedules do not
-authorize a run. All outside contributors require workflow
-approval in the repository's fork policy, including returning contributors.
+Repository Actions stay enabled, but every job, including reusable jobs,
+requires both the original actor and the rerun actor to be `sjunepark`. CI runs
+automatically for pull requests authored by `sjunepark` from a branch of this
+repository, and otherwise only by manual dispatch. Other authors' pull requests,
+tags, and schedules do not authorize a run; their CI jobs are skipped. Release
+has only a manual dispatch trigger. All outside contributors also require
+workflow approval in the repository's fork policy, including returning
+contributors.
 
 The CI workflow reports the `ci/validated-source` commit status on its exact
 source SHA. It marks the status pending before validation and reports success
@@ -96,27 +98,20 @@ The status links to the real run; it is not a manually asserted substitute for
 validation. For a fresh complete measurement, dispatch the whole workflow;
 partial reruns retain GitHub's successful prerequisite results for the same SHA.
 
-For an explicitly authorized run, `sjunepark` enables Actions, dispatches the
-selected workflow and branch, waits for completion, and disables Actions again:
+Pull request runs validate and report on the PR head SHA. To run CI manually,
+dispatch it for the selected branch:
 
 ```sh
-gh api --method PUT repos/cpaikr/darty/actions/permissions -F enabled=true
 gh workflow run ci.yml --repo cpaikr/darty --ref main
 ```
 
-Inspect the dispatched run in Actions. After it completes, disable Actions:
-
-```sh
-gh api --method PUT repos/cpaikr/darty/actions/permissions -F enabled=false
-```
-
-Review the exact selected branch and its workflow files before dispatch. Older
-branches and tags can retain automatic triggers; avoid pushing them while Actions
-is enabled. A fork contribution must first be reviewed and placed on a repository
-branch before manually dispatching CI for that branch. Release evidence requires
-CI dispatched on `main` for the exact source SHA. Enabling Actions, dispatching,
-and rerunning workflows require explicit maintainer authorization; ordinary
-implementation work does not authorize them.
+Older branches and tags can retain automatic triggers from before this policy;
+review their workflow files before pushing them. A fork contribution must first
+be reviewed and placed on a repository branch, then dispatched manually or
+re-opened as a maintainer-authored pull request. Release evidence requires CI
+dispatched on `main` for the exact source SHA. Dispatching and rerunning
+workflows outside a maintainer pull request require explicit maintainer
+authorization; ordinary implementation work does not authorize them.
 
 GitHub secret scanning and push protection guard the public repository separately
 from Actions. `.env` and `.env.*` are ignored; only the checked-in `.env.schema`

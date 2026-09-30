@@ -1294,7 +1294,7 @@ fn client() -> Result<DartyClient, DartyError> {
             source_url: None,
             recovery_hint: None,
         })?;
-        return DartyClient::for_fixture_origin(origin, fetched_at);
+        return DartyClient::for_fixture_origin_with_environment_pacing(origin, fetched_at);
     }
     DartyClient::new()
 }

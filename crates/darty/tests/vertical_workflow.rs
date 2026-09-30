@@ -711,7 +711,7 @@ async fn client_serializes_in_flight_requests() {
 }
 
 #[tokio::test]
-async fn client_spaces_fast_request_starts_by_at_least_250_milliseconds() {
+async fn client_spaces_fast_request_starts_by_at_least_500_milliseconds() {
     let fixture = FixtureServer::spawn(vec![
         Reply::company("가람", COMPANY_BODY),
         Reply::company("가람", COMPANY_BODY),
@@ -728,7 +728,7 @@ async fn client_spaces_fast_request_starts_by_at_least_250_milliseconds() {
     first.unwrap();
     second.unwrap();
     let times = arrivals.lock().unwrap().clone();
-    assert!(times[1].duration_since(times[0]) >= Duration::from_millis(240));
+    assert!(times[1].duration_since(times[0]) >= Duration::from_millis(475));
     fixture.finish().await;
 }
 
