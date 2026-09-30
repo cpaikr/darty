@@ -107,6 +107,34 @@ and help output remain human-readable text. See the
 | `report-guide` | Print a Markdown guide to finding information in DART reports. |
 | `view-report` | Retrieve a report's table of contents or body content. |
 
+## Request pacing
+
+The source implementation defaults to a 500 ms minimum request interval across
+CLI and SDK processes using the same local state directory. This change is not
+included in the published v0.6.1 release.
+
+Each request waits before sending while holding a shared lock, including the
+first request; the lock stays held until the response completes. This deliberate
+cooldown also protects requests following a cancelled or killed process.
+
+Set `DARTY_REQUEST_INTERVAL_MS` to an integer from `0` through `60000` to change
+the interval (milliseconds). Use `0` only for controlled fixture/test runs; it
+disables pacing and shared-state access. With differing nonzero settings, the
+gap respects the larger interval of the preceding and current request.
+
+Shared state defaults to `%LOCALAPPDATA%\darty` on Windows and
+`$XDG_STATE_HOME/darty` (or `$HOME/.local/state/darty`) on macOS/Linux.
+`DARTY_STATE_DIR` overrides this with an absolute local directory path. All
+participating processes must use the same directory. Do not delete or replace
+`request-pacing-v1.lock` while any Darty process is running. Unusable or damaged
+state fails before a request is sent, with a recovery hint.
+Bundled `report-guide` and `disclosure-types` operations do not require pacing
+configuration or state.
+
+Pacing does not coordinate separate machines or users with different state
+directories, and does not guarantee that DART will permit a request. No official
+DART rate limit is established. See the [provider policy](docs/research/dart-provider-qualification.md#pacing).
+
 ## Agent skill
 
 The consumer skill source is in [`skill/darty`](skill/darty/SKILL.md). It guides

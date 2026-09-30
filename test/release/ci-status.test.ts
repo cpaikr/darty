@@ -14,8 +14,10 @@ type Job = {
 const workflow = Bun.YAML.parse(readFileSync(resolve(import.meta.dir, "../../.github/workflows/ci.yml"), "utf8")) as {
   permissions: Record<string, string>;
   concurrency: Record<string, unknown>;
-  jobs: Record<string, Job>;
+  jobs: Record<string, Job & { with?: Record<string, unknown> }>;
 };
+// Pull request runs report on the PR head, not GitHub's synthetic merge commit.
+const sourceSha = "${{ github.event.pull_request.head.sha || github.sha }}";
 const directory = mkdtempSync(join(tmpdir(), "darty-ci-status-"));
 writeFileSync(join(directory, "gh"), '#!/bin/sh\nprintf "%s\\n" "$@"\nexit "${FAKE_GH_EXIT:-0}"\n', { mode: 0o755 });
 afterAll(() => rmSync(directory, { recursive: true, force: true }));
@@ -42,10 +44,12 @@ function run(id: string, overrides: Record<string, string> = {}) {
   return { status: result.status, args: result.stdout.trim().split("\n") };
 }
 
-describe("manual CI commit status", () => {
+describe("CI commit status", () => {
   test("isolates status-write permission and binds results to the full exact-source workflow", () => {
     expect(workflow.permissions).toEqual({ contents: "read" });
-    expect(workflow.concurrency).toEqual({ group: "ci-${{ github.sha }}", "cancel-in-progress": false });
+    expect(workflow.concurrency).toEqual({ group: `ci-${sourceSha}`, "cancel-in-progress": false });
+    expect(workflow.jobs.validate?.with?.source_sha).toBe(sourceSha);
+    expect(workflow.jobs.standalone?.with?.source_sha).toBe(sourceSha);
     expect(workflow.jobs.validate?.needs).toBe("status_pending");
     expect(workflow.jobs.status_complete?.needs).toEqual(["status_pending", "validate", "standalone"]);
     for (const [id, job] of Object.entries(workflow.jobs)) {
@@ -53,7 +57,7 @@ describe("manual CI commit status", () => {
         expect(job.permissions).toEqual({ statuses: "write" });
         expect(job["timeout-minutes"]).toBe(5);
         const step = reportingStep(id);
-        expect(step.env.SOURCE_SHA).toBe("${{ github.sha }}");
+        expect(step.env.SOURCE_SHA).toBe(sourceSha);
         expect(step.env.GH_TOKEN).toBe("${{ github.token }}");
         expect(step.env.RUN_URL).toContain("${{ github.run_attempt }}");
       } else {

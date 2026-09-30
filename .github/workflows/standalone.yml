@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   targets:
-    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
+    if: github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'sjunepark' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       build: ${{ steps.matrix.outputs.build }}
@@ -34,7 +34,7 @@ jobs:
           node -e 'const fs = require("fs"); const matrix = JSON.parse(fs.readFileSync(process.argv[1])); for (const [key, value] of Object.entries(matrix)) fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${JSON.stringify(value)}\n`);' "$RUNNER_TEMP/matrix.json"
 
   build:
-    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
+    if: github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'sjunepark' && github.event.pull_request.head.repo.full_name == github.repository))
     name: Cross-build / ${{ matrix.id }}
     needs: targets
     runs-on: blacksmith-2vcpu-ubuntu-2404
@@ -78,7 +78,7 @@ jobs:
           retention-days: 14
 
   consume:
-    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
+    if: github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'sjunepark' && github.event.pull_request.head.repo.full_name == github.repository))
     name: Certify / ${{ matrix.id }}
     needs: [targets, build]
     runs-on: ${{ matrix.runner }}
@@ -108,7 +108,7 @@ jobs:
           retention-days: 14
 
   sdk:
-    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'
+    if: github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'sjunepark' && github.event.pull_request.head.repo.full_name == github.repository))
     needs: build
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 30
@@ -137,7 +137,7 @@ jobs:
           retention-days: 14
 
   bundle:
-    if: github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && inputs.all_targets
+    if: github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'sjunepark' && github.event.pull_request.head.repo.full_name == github.repository)) && inputs.all_targets
     needs: [build, consume, sdk]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
