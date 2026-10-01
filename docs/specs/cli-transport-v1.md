@@ -26,6 +26,50 @@ Help, home, and `report-guide` success paths are exceptions:
   stdout and exits `0`; failures still use the JSON failure envelope
 - a command invoked with no required options attempts to run the capability,
   prints a JSON `invalid_request` failure envelope, and exits `1`
+- `darty --version` prints `darty <version>` and a newline to stdout and exits
+  `0` without network access
+
+## Version Command
+
+`darty version` prints a local JSON success envelope with
+`metadata.output: "version"` and `result` fields `name`, `version` (the
+embedded release version), and `target` (the release target id, or `null` for
+a build outside the release target inventory). It exits `0`.
+
+`darty version --check` adds `result.releaseCheck`, a release report that is
+present even when no update exists:
+
+- `currentVersion` and `target`
+- `comparison`: `newer`, `equal`, `ahead`, `no_stable_release`,
+  `uncomparable`, or `null` without usable evidence
+- `latestVersion`, `releaseUrl`, `distribution` (`complete` or
+  `incomplete_distribution`), and `runtimeCertified`, or `null` when unknown
+- `freshness`: `fresh`, `stale`, or `unavailable`; `observedAt`, `ageSeconds`,
+  and `lastRefreshFailedAt` when known
+- `problems`: evidence, cache, or opt-out explanations
+
+Evidence problems are part of the report and still exit `0`. Equality does not
+prove source freshness or executable integrity.
+
+## Advisories
+
+After a successful network capability operation (`search-body`,
+`company-detail`, `company-rss`, `search-company`, `search-company-reports`,
+`view-report`), the success envelope may include a top-level `advisories`
+array. It holds incidental notices unrelated to the capability result, which
+`warnings` describes. Each entry has a stable `code`, a human-readable
+`message`, and a `check` object shaped like `releaseCheck`. Codes are
+`update_available`, `update_incomplete_distribution`, `version_uncomparable`,
+`update_check_stale`, `update_check_unavailable`, and `update_check_problem`;
+at most one entry is emitted per invocation.
+
+The key is omitted when there is nothing to report, including fresh `equal`,
+`ahead`, and `no_stable_release` results and opted-out execution. Advisories
+never change the exit code, `result`, or other envelope fields, and stderr stays
+empty. Help, home, `--version`, `version`, `disclosure-types`, `report-guide`,
+and failures never carry advisories. The addition is backward compatible, so
+`cliTransportVersion` stays `"1"`. The [README](../../README.md) owns network
+destinations, cache location, refresh timing, and the opt-out.
 
 ## Success Envelope
 
@@ -47,6 +91,8 @@ Common shape:
   "help": []
 }
 ```
+
+An optional top-level `advisories` array may follow; see [Advisories](#advisories).
 
 ## Failure Envelope
 

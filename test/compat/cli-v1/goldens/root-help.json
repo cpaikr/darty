@@ -11,6 +11,7 @@
     "search-company [options]",
     "search-company-reports [options]",
     "view-report [options]",
+    "version [options]",
     "Common agent flow:",
     "Commands print a JSON response object to stdout on success and failure",
     "does not use DART's official OpenDART API"
@@ -26,6 +27,8 @@
     "search-company [options] Find 8-digit DART company codes through DART 기업개황 회사별 search.",
     "search-company-reports [options] Search company-specific DART filings by DART company code.",
     "view-report [options] Fetch a DART report table of contents or body content.",
+    "version [options] Report the version; --check compares it with the latest stable release.",
+    "--version Print the version and exit.",
     "1. Find a company code: darty search-company --company-name 삼성전자",
     "2. Search filings: darty search-company-reports --company-code 00126380 --start-date YYYYMMDD --end-date YYYYMMDD",
     "3. Inspect a filing: darty view-report --receipt <filing.receiptNumber-or-viewerUrl>",
@@ -38,7 +41,7 @@
     "It does not use DART's official OpenDART API.",
     "It does not guarantee accuracy. You are responsible for how you use the information, and this tool provides no warranty."
   ],
-  "longOptions": ["--debug", "--help"],
+  "longOptions": ["--debug", "--help", "--version"],
   "forbiddenFragments": [
     "contents-search [options]",
     "report-view [options]"

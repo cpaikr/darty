@@ -9,7 +9,7 @@ Darty reads DART's public web surfaces. It does not use the official OpenDART AP
 and changes to DART's website can affect results or parsers.
 
 The published Rust release is
-[v0.6.1](https://github.com/cpaikr/darty/releases/tag/v0.6.1). The earlier v0.6.0
+[v0.6.2](https://github.com/cpaikr/darty/releases/tag/v0.6.2). The earlier v0.6.0
 CLI used Bun/TypeScript. See the [roadmap](ROADMAP.md) for subsequent work.
 
 ## Installation
@@ -67,7 +67,26 @@ verification, an alternative destination, and persistent or current-session
 
 ### Updates
 
-Download the files from a newer release and repeat the installation procedure.
+Release checks and `--version` are implemented in source and not yet included
+in a published release.
+
+`darty --version` prints the installed version. `darty version --check`
+compares it with the latest stable release and reports whether that release has
+a complete download for your platform and how fresh the evidence is.
+
+After successful DART network commands, the CLI also checks for a newer stable
+release and, when there is something to report, adds one entry to the JSON
+`advisories` array; the command result and exit status do not change. Release
+checks contact `github.com` and GitHub's release asset host in addition to
+DART, cache the evidence for 24 hours, and retry a failed refresh after 1 hour.
+A refresh may add up to 1.5 seconds to a command. The cache is disposable and
+lives in `%LOCALAPPDATA%\darty\cache` on Windows, `~/Library/Caches/darty` on
+macOS, and `$XDG_CACHE_HOME/darty` or `~/.cache/darty` on Linux; set
+`DARTY_CACHE_DIR` to an absolute path to override it. Set
+`DARTY_NO_UPDATE_CHECK=1` to disable all release checks. Darty never installs
+updates itself.
+
+To update, download the files from a newer release and repeat the installation procedure.
 The installer leaves the existing executable in place if checksum verification
 or the new executable's startup check fails. Always use an archive, installer,
 and checksums from the same release in this repository.
@@ -110,8 +129,8 @@ and help output remain human-readable text. See the
 ## Request pacing
 
 The source implementation defaults to a 500 ms minimum request interval across
-CLI and SDK processes using the same local state directory. This change is not
-included in the published v0.6.1 release.
+CLI and SDK processes using the same local state directory. Pacing ships from
+v0.6.2.
 
 Each request waits before sending while holding a shared lock, including the
 first request; the lock stays held until the response completes. This deliberate

@@ -344,6 +344,7 @@ dependencies = [
  "chrono",
  "clap",
  "darty",
+ "reqwest",
  "serde",
  "serde_json",
  "tokio",

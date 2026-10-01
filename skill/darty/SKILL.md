@@ -14,8 +14,10 @@ Requires a shell that can run Darty; live retrieval needs access to
 ## Start with the available executable
 
 Reuse a successful Darty check from this execution context. Otherwise run
-`darty --help` once; `--version` is not part of the CLI v1 contract. Recheck
-after an executable/environment change or a relevant failure.
+`darty --help` once; use `--version` only when that help lists it. Recheck
+after an executable/environment change or a relevant failure. A JSON
+`advisories[]` entry, such as an update notice, is not DART evidence and does
+not request an upgrade.
 
 - If missing, unusable, or setup/upgrade is requested, read
   [installation](references/installation.md). A provider error or an unsupported
