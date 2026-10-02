@@ -16,7 +16,9 @@ The installer checks a temporary file's physical handle path before replacing
 an existing executable. If the physical and advertised paths differ, it stops
 and reports both paths. Do not add an invisible or redirected path to `PATH`.
 Run the installer from an independent PowerShell session, or choose a directory
-that is not redirected.
+that is not redirected. To confirm visibility without opening another terminal,
+run [`scripts/verify-windows-install.ps1`](../scripts/verify-windows-install.ps1)
+with `-BinDirectory`; it checks from a process outside the calling app.
 
 The default `%LOCALAPPDATA%\darty\bin` is suitable in a normal independent
 PowerShell session. `%USERPROFILE%\.local\bin` was verified as a recovery
