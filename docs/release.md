@@ -194,8 +194,9 @@ history through `v0.5.0`; GitHub generated notes own subsequent release summarie
    gh workflow run release.yml --repo cpaikr/darty --ref main -f tag="$SOURCE_TAG"
    ```
 
-   Tag creation does not trigger publication. Keep Actions enabled only for the
-   authorized workflow runs and disable it after completion.
+   Tag creation does not trigger publication. Actions stay enabled under the
+   [maintainer-controlled policy](#maintainer-controlled-actions); do not
+   disable them after the run.
 
 The **Release** workflow requires manual dispatch. Leave `tag` empty for a
 candidate run of the selected branch: it builds, certifies, and uploads temporary
