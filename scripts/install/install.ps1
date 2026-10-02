@@ -98,9 +98,13 @@ $expected = $matches[0].Substring(0, 64)
 if ((Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) {
     throw 'Archive checksum mismatch; existing installation was not changed.'
 }
-$entries = @(& tar -tzf $Archive)
+# Use the Windows-provided tar: another tar earlier in PATH, such as Git's,
+# can misread drive-letter paths.
+$tar = Join-Path $env:SystemRoot 'System32\tar.exe'
+if (-not (Test-Path -LiteralPath $tar -PathType Leaf)) { throw "This installer requires the Windows-provided tar at $tar." }
+$entries = @(& $tar -tzf $Archive)
 if ($LASTEXITCODE -ne 0 -or ($entries -join "`n") -ne "darty.exe`nLICENSE.md") { throw 'Unexpected archive contents.' }
-$types = @(& tar -tvzf $Archive)
+$types = @(& $tar -tvzf $Archive)
 if ($LASTEXITCODE -ne 0 -or @($types | Where-Object { -not $_.StartsWith('-') }).Count -ne 0) { throw 'Archive must contain only regular files.' }
 $null = New-Item -ItemType Directory -Path $BinDirectory -Force
 $BinDirectory = (Resolve-Path -LiteralPath $BinDirectory).Path
@@ -108,14 +112,16 @@ AssertInstallationPathIsVisible $BinDirectory
 $stage = Join-Path $BinDirectory ('.darty-install-' + [Guid]::NewGuid().ToString('N'))
 $null = New-Item -ItemType Directory -Path $stage
 try {
-    & tar -xzf $Archive -C $stage
+    & $tar -xzf $Archive -C $stage
     if ($LASTEXITCODE -ne 0) { throw 'Archive extraction failed.' }
     $candidate = Join-Path $stage 'darty.exe'
     & $candidate --help | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Candidate CLI failed; existing installation was not changed.' }
     $destination = Join-Path $BinDirectory 'darty.exe'
     if (Test-Path -LiteralPath $destination) {
-        [IO.File]::Replace($candidate, $destination, $null)
+        # PowerShell converts $null to an empty string for .NET string
+        # parameters, which File.Replace rejects as a backup path.
+        [IO.File]::Replace($candidate, $destination, [NullString]::Value)
     } else {
         [IO.File]::Move($candidate, $destination)
     }

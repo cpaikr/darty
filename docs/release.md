@@ -34,31 +34,48 @@ through the release installer, verify the installed digest, run the network-free
 CLI contract with an empty PATH, and verify failed-checksum recovery. Rust needs
 no Node, npm, Bun, config autoloading, or source checkout to run.
 
-Windows installer visibility is not independently runtime-certified in CI. The
-repository keeps all automated jobs on Linux, and a PowerShell process launched
-by a packaged installer is not an external consumer for this purpose. A Windows
-release validation record must come from a separately launched normal PowerShell
-session and must show both checks below for the exact selected directory:
+Windows installer visibility is not runtime-certified in CI. The repository
+keeps all automated jobs on Linux, and a process descended from a packaged
+(MSIX) app is not an external consumer: it can see redirected files that no
+other program can. A Windows release validation record must come from a process
+outside any packaged app's process tree and must show, for the exact selected
+directory, that the file is visible, runs by full path, and is what `darty`
+resolves to from the persisted `PATH`.
+
+[`scripts/verify-windows-install.ps1`](../scripts/verify-windows-install.ps1)
+produces that record unattended. It relaunches itself through the Windows
+management service, so the checking process is a child of `WmiPrvSE.exe` and
+not of the caller; it records its own process ancestry and fails if any
+ancestor is a packaged app. An agent or a person can run it from any shell:
 
 ```powershell
-$bin = 'C:\the\directory\you\selected'
-$exe = Join-Path $bin 'darty.exe'
-Test-Path -LiteralPath $exe -PathType Leaf
-& $exe --help
-Get-Command darty -CommandType Application
-darty --help
+.\scripts\verify-windows-install.ps1 -BinDirectory 'C:\the\directory\you\selected' -ExpectedVersion '0.6.3'
 ```
 
-The first two commands establish full-path file visibility and CLI execution.
-For command-name discovery, also
-[verify that `darty` resolves to the selected executable](windows-installation.md#verify-command-resolution);
-the last two commands alone could find an older installation. Until that
-independent Windows evidence exists, the Windows manifest entry must remain
-uncertified. The installer itself probes a file handle and rejects a physical
-path redirected away from the advertised destination, but that host-local check
-does not replace independent-consumer evidence. See
-[Windows installation recovery](windows-installation.md) for redirected paths
-and PATH setup.
+Replace the directory and version with the installation being validated.
+
+A manually opened PowerShell session running the equivalent checks in
+[Windows installation recovery](windows-installation.md#verify-the-file-before-changing-path)
+remains acceptable evidence. The installer itself probes a file handle and
+rejects a physical path redirected away from the advertised destination, but
+that host-local check does not replace independent-consumer evidence.
+
+The manifest's `runtimeCertified` flag records CI runtime certification at
+build time, so the Windows entry stays `false`: host validation happens after
+publication and cannot change a published manifest. Record it here instead.
+
+### Windows validation records
+
+- **v0.6.3, 2026-10-02, Windows 11 (10.0.26200) x64.** Installed with the
+  released `install.ps1` into `%USERPROFILE%\.local\bin` from a shell descended
+  from a packaged desktop app. `verify-windows-install.ps1` passed under
+  PowerShell 7.6.6 and Windows PowerShell 5.1 with ancestry
+  `WmiPrvSE.exe <- svchost.exe <- services.exe <- wininit.exe`. The installed
+  executable's SHA-256,
+  `26bd8f8beedc1407d2415d28df76bc2b7bf54b35f39f3754c0b8adc84288bf3d`, matches
+  `darty.exe` in the release archive, whose digest matches `SHA256SUMS`.
+  Limitation: the released installer could not replace the previously installed
+  executable (see the README update note); the old file was renamed first.
 
 A clean Linux Node consumer installs the downloaded native tarball offline with
 lifecycle scripts disabled. A clean external Rust consumer compiles and runs

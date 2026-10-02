@@ -32,7 +32,7 @@ describe("release bundle authority", () => {
 });
 
 describe("Unix standalone installation", () => {
-  test("installs and upgrades exact bytes; failed checksum and candidate leave the old binary intact", () => {
+  test.skipIf(process.platform === "win32")("installs and upgrades exact bytes; failed checksum and candidate leave the old binary intact", () => {
     const directory = mkdtempSync(join(tmpdir(), "darty-installer-test-"));
     try {
       const target = targets.find((item) => item.os === process.platform && item.arch === process.arch)!;
@@ -95,5 +95,56 @@ describe("Windows standalone installation", () => {
     expect(installer).toContain("--help");
     expect(installer).not.toContain("--version");
     expect(installer).not.toContain("SetEnvironmentVariable");
+    // $null becomes "" for a .NET string parameter and File.Replace rejects it,
+    // which broke every upgrade over an existing executable through v0.6.3.
+    expect(installer).toContain("[IO.File]::Replace($candidate, $destination, [NullString]::Value)");
+    expect(installer).not.toMatch(/Replace\([^)]*\$null\)/);
   });
+
+  // CI runs only on Linux, so this exercises the real installer on Windows hosts.
+  test.skipIf(process.platform !== "win32")("installs, then upgrades over an existing executable", () => {
+    const directory = mkdtempSync(join(tmpdir(), "darty-installer-test-"));
+    try {
+      const target = targets.find((item) => item.os === "win32")!;
+      const archive = join(directory, archiveName(target));
+      const sums = join(directory, "SHA256SUMS");
+      const installer = join(directory, "install.ps1");
+      const bin = join(directory, "bin with spaces");
+      writeFileSync(installer, renderInstallers()["install.ps1"]!);
+      // Any small executable that accepts --help stands in for the CLI.
+      const tool = readFileSync(join(process.env.SystemRoot!, "System32", "tar.exe"));
+      const makeArchive = (executable: Buffer) => {
+        const packed = archiveFiles([
+          { name: "darty.exe", bytes: executable, mode: 0o755 },
+          { name: "LICENSE.md", bytes: Buffer.from("license\n"), mode: 0o644 },
+        ]);
+        writeFileSync(archive, packed);
+        writeFileSync(sums, `${digest(packed)}  ${archiveName(target)}\n`);
+      };
+      const install = () => spawnSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", installer,
+        "-Archive", archive, "-Checksums", sums, "-BinDirectory", bin], { encoding: "utf8" });
+      const installed = () => readFileSync(join(bin, "darty.exe"));
+
+      makeArchive(tool);
+      const first = install();
+      expect(first.stderr).toBe("");
+      expect(first.status).toBe(0);
+      expect(installed().equals(tool)).toBe(true);
+
+      // Trailing bytes change the digest without affecting execution.
+      const upgraded = Buffer.concat([tool, Buffer.from("darty-upgrade")]);
+      makeArchive(upgraded);
+      const second = install();
+      expect(second.stderr).toBe("");
+      expect(second.status).toBe(0);
+      expect(installed().equals(upgraded)).toBe(true);
+      expect(readdirSync(bin)).toEqual(["darty.exe"]);
+
+      writeFileSync(sums, `${"0".repeat(64)}  ${archiveName(target)}\n`);
+      expect(install().status).not.toBe(0);
+      expect(installed().equals(upgraded)).toBe(true);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }, 120_000);
 });
