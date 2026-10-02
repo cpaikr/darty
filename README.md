@@ -84,31 +84,33 @@ On Windows, in PowerShell:
 
 ```powershell
 $base = "https://github.com/cpaikr/darty/releases/latest/download"
-$version = (Invoke-RestMethod "$base/release-manifest.json").version
+$bin = "$env:LOCALAPPDATA\darty\bin"
+$version = (Invoke-RestMethod "$base/release-manifest.json" -UseBasicParsing).version
 $archive = "darty-$version-win32-x64.tar.gz"
-foreach ($name in $archive, "SHA256SUMS", "install.ps1") { Invoke-WebRequest "$base/$name" -OutFile $name }
-.\install.ps1 -Archive ".\$archive" -Checksums ".\SHA256SUMS"
+foreach ($name in $archive, "SHA256SUMS", "install.ps1") { Invoke-WebRequest "$base/$name" -OutFile $name -UseBasicParsing }
+.\install.ps1 -Archive ".\$archive" -Checksums ".\SHA256SUMS" -BinDirectory $bin
 ```
 
 Run these in an empty working directory. The installer still verifies the
 checksum, so files from two different releases cannot be combined. To update an
-existing installation outside the default directory, pass that directory as the
-third `install.sh` argument or as `-BinDirectory`.
+existing installation elsewhere, pass its directory as the third `install.sh`
+argument, or set `$bin` to it on Windows.
 
 On Windows, a shell started by a packaged desktop app, including an agent's
 shell, may not see the same files as other programs. The installer refuses a
-redirected destination, and
-[`scripts/verify-windows-install.ps1`](scripts/verify-windows-install.ps1)
+redirected destination and does not change `PATH`. After a first installation,
+[add `$bin` to the user `PATH`](docs/windows-installation.md#add-the-directory-to-the-user-path).
+Then [`scripts/verify-windows-install.ps1`](scripts/verify-windows-install.ps1)
 confirms the result from a process outside the calling app. Without a checkout,
 download the script first:
 
 ```powershell
-Invoke-WebRequest "https://raw.githubusercontent.com/cpaikr/darty/main/scripts/verify-windows-install.ps1" -OutFile verify-windows-install.ps1
-.\verify-windows-install.ps1 -BinDirectory "$env:LOCALAPPDATA\darty\bin" -ExpectedVersion $version
+Invoke-WebRequest "https://raw.githubusercontent.com/cpaikr/darty/main/scripts/verify-windows-install.ps1" -OutFile verify-windows-install.ps1 -UseBasicParsing
+.\verify-windows-install.ps1 -BinDirectory $bin -ExpectedVersion $version
 ```
 
 It exits nonzero unless an independent process can see and run the executable
-and `darty` resolves to it from the persisted `PATH`.
+and `darty` resolves to it from the persisted user and machine `PATH`.
 
 ### Updates
 

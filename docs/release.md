@@ -49,8 +49,10 @@ not of the caller; it records its own process ancestry and fails if any
 ancestor is a packaged app. An agent or a person can run it from any shell:
 
 ```powershell
-.\scripts\verify-windows-install.ps1 -BinDirectory 'C:\the\directory\you\selected' -ExpectedVersion <version>
+.\scripts\verify-windows-install.ps1 -BinDirectory 'C:\the\directory\you\selected' -ExpectedVersion '0.6.3'
 ```
+
+Replace the directory and version with the installation being validated.
 
 A manually opened PowerShell session running the equivalent checks in
 [Windows installation recovery](windows-installation.md#verify-the-file-before-changing-path)

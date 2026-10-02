@@ -15,9 +15,15 @@ $ErrorActionPreference = 'Stop'
 if (-not $Out) {
     # The user profile root is not subject to AppData redirection.
     $Out = Join-Path $env:USERPROFILE ('.darty-verify-' + [Guid]::NewGuid().ToString('N') + '.txt')
-    $shell = (Get-Process -Id $PID).Path
-    $command = '"{0}" -NoProfile -ExecutionPolicy Bypass -File "{1}" -BinDirectory "{2}" -ExpectedVersion "{3}" -Out "{4}"' -f `
-        $shell, $PSCommandPath, $BinDirectory, $ExpectedVersion, $Out
+    # The inbox Windows PowerShell host is never a packaged app, unlike the
+    # caller's own host when PowerShell came from the Microsoft Store.
+    $shell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    if (-not (Test-Path -LiteralPath $shell -PathType Leaf)) { throw "Windows PowerShell was not found at $shell." }
+    # Windows argument parsing reads a backslash before a closing quote as an
+    # escaped quote, so double any trailing backslashes (for example 'D:\').
+    $quoted = @($shell, $PSCommandPath, $BinDirectory, $ExpectedVersion, $Out) |
+        ForEach-Object { '"' + ($_ -replace '(\\+)$', '$1$1') + '"' }
+    $command = '{0} -NoProfile -ExecutionPolicy Bypass -File {1} -BinDirectory {2} -ExpectedVersion {3} -Out {4}' -f $quoted
     $created = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $command }
     if ($created.ReturnValue -ne 0) { throw "Could not start an independent process (Win32_Process.Create returned $($created.ReturnValue))." }
     try {
