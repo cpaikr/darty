@@ -67,8 +67,7 @@ verification, an alternative destination, and persistent or current-session
 
 ### Updates
 
-Release checks and `--version` are implemented in source and not yet included
-in a published release.
+Release checks and `--version` ship from v0.6.3.
 
 `darty --version` prints the installed version. `darty version --check`
 compares it with the latest stable release and reports whether that release has

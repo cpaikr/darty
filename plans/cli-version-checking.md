@@ -1,6 +1,6 @@
 # CLI version checking
 
-Status: implemented; awaiting review and release.
+Status: implemented and merged ([#40](https://github.com/cpaikr/darty/pull/40)); prepared for release in v0.6.3.
 
 Adopt the mytech
 [CLI version checking practice](https://github.com/sjunepark/mytech/blob/c9e82a8/practices/cli-version-checking.md)
@@ -154,5 +154,5 @@ Release tagging and publication remain separate gates under
 
 ## Next action
 
-Review and merge the implementation PR to `dev`; publication follows the
-release runbook.
+Publish v0.6.3 under the release runbook, then record it as the published
+release in the README.
