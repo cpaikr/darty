@@ -68,8 +68,9 @@ publication and cannot change a published manifest. Record it here instead.
 
 - **v0.6.3, 2026-10-02, Windows 11 (10.0.26200) x64.** Installed with the
   released `install.ps1` into `%USERPROFILE%\.local\bin` from a shell descended
-  from a packaged desktop app. `verify-windows-install.ps1` passed under
-  PowerShell 7.6.6 and Windows PowerShell 5.1 with ancestry
+  from a packaged desktop app.
+  `verify-windows-install.ps1 -BinDirectory "$env:USERPROFILE\.local\bin" -ExpectedVersion 0.6.3`
+  passed under PowerShell 7.6.6 and Windows PowerShell 5.1 with ancestry
   `WmiPrvSE.exe <- svchost.exe <- services.exe <- wininit.exe`. The installed
   executable's SHA-256,
   `26bd8f8beedc1407d2415d28df76bc2b7bf54b35f39f3754c0b8adc84288bf3d`, matches
@@ -77,10 +78,12 @@ publication and cannot change a published manifest. Record it here instead.
   Limitation: the released installer could not replace the previously installed
   executable (see the README update note); the old file was renamed first.
 - **v0.6.4, 2026-10-02, Windows 11 (10.0.26200) x64.** The installed v0.6.3
-  reported `update_available` for v0.6.4. The README unattended recipe then
-  upgraded `%USERPROFILE%\.local\bin` in place with the released `install.ps1`,
-  from a shell descended from a packaged desktop app and with no manual step.
-  `verify-windows-install.ps1 -ExpectedVersion 0.6.4` passed with ancestry
+  reported comparison `newer` for v0.6.4 through `darty version --check`. The
+  README unattended recipe then upgraded `%USERPROFILE%\.local\bin` in place
+  with the released `install.ps1`, from a shell descended from a packaged
+  desktop app and with no manual step.
+  `verify-windows-install.ps1 -BinDirectory "$env:USERPROFILE\.local\bin" -ExpectedVersion 0.6.4`
+  reported that directory's `darty.exe` as visible and passed with ancestry
   `powershell.exe <- WmiPrvSE.exe <- svchost.exe <- services.exe`. The installed
   executable's SHA-256,
   `e7884ccbc1def1ca5ee0951852e8a1434addacbb6a8c5312a6e27e06f1f5afbb`, matches
