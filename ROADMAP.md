@@ -6,17 +6,14 @@ system, and [VISION](VISION.md) defines the accepted target.
 
 ## Current
 
-[CLI version checking](plans/cli-version-checking.md) is implemented and
-prepared for release in v0.6.3.
+[CLI version checking](plans/cli-version-checking.md) shipped in v0.6.3.
+The Windows installer upgrade fix and unattended installation guidance are
+prepared for release in v0.6.4.
 Cross-process request pacing shipped in v0.6.2; its
 [progress record](tasks/issue-37-request-pacing.md) preserves the evidence.
 The Rust rewrite and workflow evaluation repair are complete. The [readiness evidence](docs/research/agent-workflow-readiness.md)
 remains a bounded diagnostic result, not a claim of reliable autonomous research;
 [release approvals](docs/release.md#release-approvals) remain separate gates.
-
-## Plans
-
-- [CLI version checking](plans/cli-version-checking.md)
 
 ## Tasks
 
@@ -36,3 +33,4 @@ set current release status or authorize another run.
 - [Release automation transition](plans/retire-release-please.md)
 - [Workflow evaluation repair](plans/repair-workflow-evaluation.md)
 - [CLI guidance and readiness measurement](plans/validate-agent-workflow-readiness.md)
+- [CLI version checking](plans/cli-version-checking.md)

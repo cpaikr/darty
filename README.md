@@ -9,7 +9,7 @@ Darty reads DART's public web surfaces. It does not use the official OpenDART AP
 and changes to DART's website can affect results or parsers.
 
 The published Rust release is
-[v0.6.2](https://github.com/cpaikr/darty/releases/tag/v0.6.2). The earlier v0.6.0
+[v0.6.3](https://github.com/cpaikr/darty/releases/tag/v0.6.3). The earlier v0.6.0
 CLI used Bun/TypeScript. See the [roadmap](ROADMAP.md) for subsequent work.
 
 ## Installation
@@ -65,6 +65,53 @@ by packaged desktop apps can redirect writes to private storage. See
 verification, an alternative destination, and persistent or current-session
 `PATH` setup. Follow your organization's script review and execution policy.
 
+### Unattended installation
+
+Agents and scripts can install or update without a browser, login, or GitHub
+CLI. GitHub's latest-release links serve the current release's files, and the
+release manifest names its version. On macOS and Linux, set `target` from the
+table above:
+
+```sh
+base=https://github.com/cpaikr/darty/releases/latest/download
+target=linux-x64-gnu
+version=$(curl -fsSL "$base/release-manifest.json" | sed -n 's/^ *"version": "\(.*\)",$/\1/p')
+for name in "darty-$version-$target.tar.gz" SHA256SUMS install.sh; do curl -fsSLO "$base/$name"; done
+sh install.sh "darty-$version-$target.tar.gz" SHA256SUMS
+```
+
+On Windows, in PowerShell:
+
+```powershell
+$base = "https://github.com/cpaikr/darty/releases/latest/download"
+$bin = "$env:LOCALAPPDATA\darty\bin"
+$version = (Invoke-RestMethod "$base/release-manifest.json" -UseBasicParsing).version
+$archive = "darty-$version-win32-x64.tar.gz"
+foreach ($name in $archive, "SHA256SUMS", "install.ps1") { Invoke-WebRequest "$base/$name" -OutFile $name -UseBasicParsing }
+.\install.ps1 -Archive ".\$archive" -Checksums ".\SHA256SUMS" -BinDirectory $bin
+```
+
+Run these in an empty working directory. The installer still verifies the
+checksum, so files from two different releases cannot be combined. To update an
+existing installation elsewhere, pass its directory as the third `install.sh`
+argument, or set `$bin` to it on Windows.
+
+On Windows, a shell started by a packaged desktop app, including an agent's
+shell, may not see the same files as other programs. The installer refuses a
+redirected destination and does not change `PATH`. After a first installation,
+[add `$bin` to the user `PATH`](docs/windows-installation.md#add-the-directory-to-the-user-path).
+Then [`scripts/verify-windows-install.ps1`](scripts/verify-windows-install.ps1)
+confirms the result from a process outside the calling app. Without a checkout,
+download the script first:
+
+```powershell
+Invoke-WebRequest "https://raw.githubusercontent.com/cpaikr/darty/main/scripts/verify-windows-install.ps1" -OutFile verify-windows-install.ps1 -UseBasicParsing
+.\verify-windows-install.ps1 -BinDirectory $bin -ExpectedVersion $version
+```
+
+It exits nonzero unless an independent process can see and run the executable
+and `darty` resolves to it from the persisted user and machine `PATH`.
+
 ### Updates
 
 Release checks and `--version` ship from v0.6.3.
@@ -89,6 +136,11 @@ To update, download the files from a newer release and repeat the installation p
 The installer leaves the existing executable in place if checksum verification
 or the new executable's startup check fails. Always use an archive, installer,
 and checksums from the same release in this repository.
+
+The Windows installers in v0.6.1 through v0.6.3 fail with a path error when
+`darty.exe` already exists in the destination. To update to one of those
+releases, rename the existing `darty.exe` first; the installer then installs
+normally. Later releases replace the existing executable directly.
 
 ## CLI
 
