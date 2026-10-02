@@ -1,5 +1,6 @@
 mod help;
 mod operations;
+mod release_check;
 
 use std::process::ExitCode;
 
@@ -66,6 +67,47 @@ enum Command {
         verbatim_doc_comment
     )]
     ViewReport(ViewReportArgs),
+    Version(VersionArgs),
+}
+
+#[derive(Debug, Args)]
+struct VersionArgs {
+    /// Compare with the latest stable GitHub release and report evidence freshness.
+    #[arg(long)]
+    check: bool,
+    /// Print human-readable indented JSON.
+    #[arg(long)]
+    pretty: bool,
+}
+
+/// A successful command's stdout.
+enum Output {
+    /// Human-readable text printed exactly.
+    Text(String),
+    /// One JSON envelope. `check_release` marks a successful DART network
+    /// operation, the only kind of result that carries release advisories.
+    Envelope {
+        value: Value,
+        pretty: bool,
+        check_release: bool,
+    },
+}
+
+impl Output {
+    const fn network(value: Value, pretty: bool) -> Self {
+        Self::Envelope {
+            value,
+            pretty,
+            check_release: true,
+        }
+    }
+    const fn local(value: Value, pretty: bool) -> Self {
+        Self::Envelope {
+            value,
+            pretty,
+            check_release: false,
+        }
+    }
 }
 
 #[derive(Debug, Args)]
@@ -262,6 +304,10 @@ enum OutputFormatArg {
 async fn main() -> ExitCode {
     let argv = std::env::args().collect::<Vec<_>>();
     let debug = argv.iter().any(|arg| arg == "--debug");
+    if is_version_flag(&argv) {
+        println!("darty {}", release_check::CURRENT_VERSION);
+        return ExitCode::SUCCESS;
+    }
     if let Some(command_help) = help::command_help(&argv) {
         print!("{command_help}");
         return ExitCode::SUCCESS;
@@ -318,12 +364,39 @@ async fn main() -> ExitCode {
         }
     };
     match run(cli).await {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(Output::Text(text)) => {
+            print!("{text}");
+            ExitCode::SUCCESS
+        }
+        Ok(Output::Envelope {
+            mut value,
+            pretty,
+            check_release,
+        }) => {
+            // Advisories never change the primary result or the exit code.
+            if check_release && let Some(advisory) = release_check::incidental_advisory().await {
+                value["advisories"] = json!([advisory]);
+            }
+            write_value(&value, pretty);
+            // A timed-out release refresh can leave a blocking DNS lookup behind;
+            // dropping the runtime would wait for it, so exit once output is flushed.
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+            std::process::exit(0)
+        }
         Err(problem) => {
             write_failure(&problem.value, problem.pretty, debug);
             ExitCode::FAILURE
         }
     }
+}
+
+fn is_version_flag(argv: &[String]) -> bool {
+    let arguments = argv
+        .iter()
+        .skip(1)
+        .filter(|arg| arg.as_str() != "--debug")
+        .collect::<Vec<_>>();
+    matches!(arguments.as_slice(), [flag] if flag.as_str() == "--version")
 }
 
 // Adapt structured parser failures to the existing CLI v1 contract.
@@ -387,12 +460,17 @@ fn write_failure(value: &Value, pretty: bool, debug: bool) {
     }
 }
 
-async fn run(cli: Cli) -> Result<(), CliFailure> {
+async fn run(cli: Cli) -> Result<Output, CliFailure> {
     // Failure diagnostics are emitted at the process boundary in main.
     let Cli { command, debug: _ } = cli;
-    let Some(command) = command else {
-        print!("{}", include_str!("../resources/home.json"));
-        return Ok(());
+    let command = match command {
+        None => {
+            return Ok(Output::Text(
+                include_str!("../resources/home.json").to_owned(),
+            ));
+        }
+        Some(Command::Version(args)) => return Ok(run_version(args).await),
+        Some(command) => command,
     };
     let client = client().map_err(|error| CliFailure::sdk(&error, false, &[], &[]))?;
     match command {
@@ -400,23 +478,47 @@ async fn run(cli: Cli) -> Result<(), CliFailure> {
         Command::CompanyDetail(args) => operations::run_detail(&client, args).await,
         Command::CompanyRss(args) => operations::run_rss(&client, args).await,
         Command::DisclosureTypes(args) => operations::run_types(&client, args),
-        Command::ReportGuide => {
-            println!(
-                "{}",
-                client
-                    .report_guide(darty::ReportGuideRequest {})
-                    .result
-                    .content_markdown
-            );
-            Ok(())
-        }
+        Command::ReportGuide => Ok(Output::Text(format!(
+            "{}\n",
+            client
+                .report_guide(darty::ReportGuideRequest {})
+                .result
+                .content_markdown
+        ))),
         Command::SearchCompany(args) => run_company(&client, args).await,
         Command::SearchCompanyReports(args) => run_reports(&client, args).await,
         Command::ViewReport(args) => run_view(&client, args).await,
+        Command::Version(_) => unreachable!("version runs without a DART client"),
     }
 }
 
-async fn run_company(client: &DartyClient, args: SearchCompanyArgs) -> Result<(), CliFailure> {
+async fn run_version(args: VersionArgs) -> Output {
+    let mut result = json!({
+        "name": "darty",
+        "version": release_check::CURRENT_VERSION,
+        "target": release_check::TARGET,
+    });
+    let mut value = json!({
+        "result": null,
+        "metadata": {"cliTransportVersion": "1", "output": "version"},
+        "references": {},
+        "warnings": [],
+    });
+    if args.check {
+        let check = release_check::explicit_check().await;
+        if let Some(help) = check.update_help() {
+            value["help"] = json!([help]);
+        }
+        result["releaseCheck"] = serde_json::to_value(check).expect("release check serializes");
+    } else {
+        value["help"] =
+            json!(["Run darty version --check to compare with the latest stable release."]);
+    }
+    value["result"] = result;
+    Output::local(value, args.pretty)
+}
+
+async fn run_company(client: &DartyClient, args: SearchCompanyArgs) -> Result<Output, CliFailure> {
     let Some(company_name) = args.company_name else {
         return Err(CliFailure::new(
             failure(
@@ -455,14 +557,13 @@ async fn run_company(client: &DartyClient, args: SearchCompanyArgs) -> Result<()
         .await
         .map_err(|error| CliFailure::sdk(&error, args.pretty, COMPANY_CLI_PARAMETERS, &[]))?;
     let value = present_search(response, args.verbose, args.agent, SearchKind::Company);
-    write_value(&value, args.pretty);
-    Ok(())
+    Ok(Output::network(value, args.pretty))
 }
 
 async fn run_reports(
     client: &DartyClient,
     args: SearchCompanyReportsArgs,
-) -> Result<(), CliFailure> {
+) -> Result<Output, CliFailure> {
     let Some(company_code) = args.company_code else {
         return Err(CliFailure::new(
             failure(
@@ -543,11 +644,10 @@ async fn run_reports(
             )
         })?;
     let value = present_search(response, args.verbose, args.agent, SearchKind::Reports);
-    write_value(&value, args.pretty);
-    Ok(())
+    Ok(Output::network(value, args.pretty))
 }
 
-async fn run_view(client: &DartyClient, args: ViewReportArgs) -> Result<(), CliFailure> {
+async fn run_view(client: &DartyClient, args: ViewReportArgs) -> Result<Output, CliFailure> {
     let Some(receipt) = args.receipt else {
         return Err(CliFailure::new(
             failure(
@@ -599,8 +699,7 @@ async fn run_view(client: &DartyClient, args: ViewReportArgs) -> Result<(), CliF
         limit_toc(toc, depth);
     }
     value["help"] = json!(help);
-    write_value(&value, args.pretty);
-    Ok(())
+    Ok(Output::network(value, args.pretty))
 }
 
 fn required(
