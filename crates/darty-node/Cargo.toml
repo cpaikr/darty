@@ -18,7 +18,7 @@ default = []
 test-fixture = ["darty/fixture-origin", "dep:url"]
 
 [dependencies]
-darty = { path = "../darty", version = "0.6.3" }
+darty = { path = "../darty", version = "0.6.4" }
 futures-util.workspace = true
 napi.workspace = true
 napi-derive.workspace = true
