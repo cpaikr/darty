@@ -8,7 +8,7 @@
   operations, `crates/darty-cli` exposes the CLI, and `crates/darty-node` plus
   `packages/node` expose the async Node SDK. The superseded TypeScript DART source, conformer,
   source-local toolset, and candidate npm launcher are removed.
-- Rust v0.6.2 is published; `ROADMAP.md` owns subsequent delivery status.
+- Rust v0.6.3 is published; `ROADMAP.md` owns subsequent delivery status.
   The v0.6.0 standalone CLI is historical Bun/TypeScript. Treat repository docs,
   code, tests, and configuration as truth; implementation is not publication.
 
