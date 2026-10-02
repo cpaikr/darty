@@ -7,8 +7,8 @@ system, and [VISION](VISION.md) defines the accepted target.
 ## Current
 
 [CLI version checking](plans/cli-version-checking.md) shipped in v0.6.3.
-The Windows installer upgrade fix and unattended installation guidance are
-prepared for release in v0.6.4.
+The Windows installer upgrade fix and unattended installation guidance shipped
+in v0.6.4.
 Cross-process request pacing shipped in v0.6.2; its
 [progress record](tasks/issue-37-request-pacing.md) preserves the evidence.
 The Rust rewrite and workflow evaluation repair are complete. The [readiness evidence](docs/research/agent-workflow-readiness.md)

@@ -9,7 +9,7 @@ Darty reads DART's public web surfaces. It does not use the official OpenDART AP
 and changes to DART's website can affect results or parsers.
 
 The published Rust release is
-[v0.6.3](https://github.com/cpaikr/darty/releases/tag/v0.6.3). The earlier v0.6.0
+[v0.6.4](https://github.com/cpaikr/darty/releases/tag/v0.6.4). The earlier v0.6.0
 CLI used Bun/TypeScript. See the [roadmap](ROADMAP.md) for subsequent work.
 
 ## Installation
@@ -140,7 +140,7 @@ and checksums from the same release in this repository.
 The Windows installers in v0.6.1 through v0.6.3 fail with a path error when
 `darty.exe` already exists in the destination. To update to one of those
 releases, rename the existing `darty.exe` first; the installer then installs
-normally. Later releases replace the existing executable directly.
+normally. Releases from v0.6.4 replace the existing executable directly.
 
 ## CLI
 

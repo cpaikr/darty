@@ -76,6 +76,15 @@ publication and cannot change a published manifest. Record it here instead.
   `darty.exe` in the release archive, whose digest matches `SHA256SUMS`.
   Limitation: the released installer could not replace the previously installed
   executable (see the README update note); the old file was renamed first.
+- **v0.6.4, 2026-10-02, Windows 11 (10.0.26200) x64.** The installed v0.6.3
+  reported `update_available` for v0.6.4. The README unattended recipe then
+  upgraded `%USERPROFILE%\.localin` in place with the released `install.ps1`,
+  from a shell descended from a packaged desktop app and with no manual step.
+  `verify-windows-install.ps1 -ExpectedVersion 0.6.4` passed with ancestry
+  `powershell.exe <- WmiPrvSE.exe <- svchost.exe <- services.exe`. The installed
+  executable's SHA-256,
+  `e7884ccbc1def1ca5ee0951852e8a1434addacbb6a8c5312a6e27e06f1f5afbb`, matches
+  `darty.exe` in the release archive, whose digest matches `SHA256SUMS`.
 
 A clean Linux Node consumer installs the downloaded native tarball offline with
 lifecycle scripts disabled. A clean external Rust consumer compiles and runs
