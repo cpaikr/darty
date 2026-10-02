@@ -13,6 +13,9 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if (-not $Out) {
+    # The independent process does not share this shell's working directory,
+    # so resolve a relative directory here.
+    $BinDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($BinDirectory)
     # The user profile root is not subject to AppData redirection.
     $Out = Join-Path $env:USERPROFILE ('.darty-verify-' + [Guid]::NewGuid().ToString('N') + '.txt')
     # The inbox Windows PowerShell host is never a packaged app, unlike the
