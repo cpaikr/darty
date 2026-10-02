@@ -78,7 +78,7 @@ publication and cannot change a published manifest. Record it here instead.
   executable (see the README update note); the old file was renamed first.
 - **v0.6.4, 2026-10-02, Windows 11 (10.0.26200) x64.** The installed v0.6.3
   reported `update_available` for v0.6.4. The README unattended recipe then
-  upgraded `%USERPROFILE%\.localbin` in place with the released `install.ps1`,
+  upgraded `%USERPROFILE%\.local\bin` in place with the released `install.ps1`,
   from a shell descended from a packaged desktop app and with no manual step.
   `verify-windows-install.ps1 -ExpectedVersion 0.6.4` passed with ancestry
   `powershell.exe <- WmiPrvSE.exe <- svchost.exe <- services.exe`. The installed
