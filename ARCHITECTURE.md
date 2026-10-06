@@ -30,10 +30,12 @@ byte limits, decoding, source parsing, identifiers, projections, and typed
 failures. Static disclosure types and report guide are embedded SDK resources.
 
 The CLI adapts SDK results to the CLI v1 process contract: arguments, help,
-JSON/text output, diagnostics, and exits. The CLI alone owns advisory release
-checks: after a successful network operation it compares its embedded version
-with cached GitHub release evidence and may add an `advisories` entry; it never
-installs anything. The SDK and Node facade never contact GitHub. The Node binding translates async
+JSON/text output, diagnostics, and exits. The CLI alone owns release checks
+and upgrades. After a successful network operation it compares its embedded
+version with cached GitHub release evidence and may add an `advisories` entry,
+which never installs anything. Only the explicit `darty upgrade` command
+replaces an executable, and only one that matches the receipt the release
+installers write beside it. The SDK and Node facade never contact GitHub. The Node binding translates async
 calls, cancellation, cleanup, and panic containment; the facade supplies public
 TypeScript types and Promise ergonomics. Neither adapter parses DART itself.
 

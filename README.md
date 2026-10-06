@@ -114,7 +114,8 @@ and `darty` resolves to it from the persisted user and machine `PATH`.
 
 ### Updates
 
-Release checks and `--version` ship from v0.6.3.
+Release checks and `--version` ship from v0.6.3. `darty upgrade` and
+installation receipts ship in the first release after v0.6.4.
 
 `darty --version` prints the installed version. `darty version --check`
 compares it with the latest stable release and reports whether that release has
@@ -129,10 +130,39 @@ A refresh may add up to 1.5 seconds to a command. The cache is disposable and
 lives in `%LOCALAPPDATA%\darty\cache` on Windows, `~/Library/Caches/darty` on
 macOS, and `$XDG_CACHE_HOME/darty` or `~/.cache/darty` on Linux; set
 `DARTY_CACHE_DIR` to an absolute path to override it. Set
-`DARTY_NO_UPDATE_CHECK=1` to disable all release checks. Darty never installs
-updates itself.
+`DARTY_NO_UPDATE_CHECK=1` to disable all release checks. Release checks never
+install anything.
 
-To update, download the files from a newer release and repeat the installation procedure.
+The installers write `.darty-receipt.json` beside the executable, recording its
+version, target, path, release, and SHA-256 digest. Keep it there; it lets the
+CLI upgrade that exact installation:
+
+```sh
+darty upgrade --check
+darty upgrade
+```
+
+`upgrade --check` reports whether a newer stable release exists, and whether
+it has an archive for this platform, without downloading release assets. `upgrade` downloads this platform's archive from the
+latest release, verifies it against the release manifest and `SHA256SUMS`,
+requires the archive to hold only the executable and license, and requires the
+new executable to report the release version. It then replaces the executable
+followed by its receipt. If a step fails, the previous installation is restored,
+or the JSON error's `recoveryHint` names the remaining step. Both commands print
+JSON; in a terminal they also write progress stages to stderr. Upgrades contact
+`github.com` and GitHub's release asset host; `DARTY_NO_UPDATE_CHECK` does not
+disable an explicit upgrade. One upgrade runs per installation at a time,
+holding `.darty-upgrade.lock` beside the executable. On Windows the replaced
+executable remains as `.darty-old-<pid>.exe` until a later upgrade removes it,
+and an upgrade from a shell whose writes are redirected to private storage is
+refused like the installer's. If a Windows upgrade is killed mid-replacement
+and `darty.exe` is missing, rename that `.darty-old-<pid>.exe` back to
+`darty.exe` or reinstall.
+
+An executable without a matching receipt, including every installation made
+before receipts existed, is left unchanged: `darty upgrade` reports
+`unmanaged_installation`. Update it once by downloading the files from a newer
+release and repeating the installation procedure, which writes the receipt.
 The installer leaves the existing executable in place if checksum verification
 or the new executable's startup check fails. Always use an archive, installer,
 and checksums from the same release in this repository.
