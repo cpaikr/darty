@@ -464,11 +464,7 @@ async fn run(cli: Cli) -> Result<Output, CliFailure> {
     // Failure diagnostics are emitted at the process boundary in main.
     let Cli { command, debug: _ } = cli;
     let command = match command {
-        None => {
-            return Ok(Output::Text(
-                include_str!("../resources/home.json").to_owned(),
-            ));
-        }
+        None => return Ok(Output::Text(help::ROOT_HELP.to_owned())),
         Some(Command::Version(args)) => return Ok(run_version(args).await),
         Some(command) => command,
     };

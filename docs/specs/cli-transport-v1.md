@@ -17,11 +17,12 @@ For command executions that run or attempt to run a capability:
 - stderr is empty by default
 - `--pretty` pretty-prints both success and failure JSON
 
-Help, home, and `report-guide` success paths are exceptions:
+Help and `report-guide` success paths are exceptions:
 
 - `darty --help` and `darty <command> --help` print human-readable help to stdout
   and exit `0`
-- bare `darty` prints a compact JSON home envelope to stdout and exits `0`
+- bare `darty` prints the same root help as `darty --help`, byte for byte, and
+  exits `0`; there is no separate home view to drift from it
 - successful `darty report-guide` execution prints human-readable Markdown to
   stdout and exits `0`; failures still use the JSON failure envelope
 - a command invoked with no required options attempts to run the capability,
@@ -66,7 +67,7 @@ at most one entry is emitted per invocation.
 The key is omitted when there is nothing to report, including fresh `equal`,
 `ahead`, and `no_stable_release` results and opted-out execution. Advisories
 never change the exit code, `result`, or other envelope fields, and stderr stays
-empty. Help, home, `--version`, `version`, `disclosure-types`, `report-guide`,
+empty. Help, `--version`, `version`, `disclosure-types`, `report-guide`,
 and failures never carry advisories. The addition is backward compatible, so
 `cliTransportVersion` stays `"1"`. The [README](../../README.md) owns network
 destinations, cache location, refresh timing, and the opt-out.

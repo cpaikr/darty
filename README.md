@@ -153,7 +153,8 @@ Korean search terms and DART labels are retained in examples because they refer
 to source content. `배당` means dividends.
 
 CLI help is the reference for commands, options, input constraints, and output
-behavior:
+behavior. Running `darty` with no arguments prints the same root help as
+`darty --help`. For one command:
 
 ```bash
 darty <command> --help
