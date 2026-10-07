@@ -397,7 +397,10 @@ async fn main() -> ExitCode {
         }
         Err(problem) => {
             write_failure(&problem.value, problem.pretty, debug);
-            ExitCode::FAILURE
+            // A timed-out upgrade download can also leave a blocking DNS lookup
+            // behind, so exit as the success path does.
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+            std::process::exit(1)
         }
     }
 }
