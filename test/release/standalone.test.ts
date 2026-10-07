@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { archiveFiles, archiveName, digest, renderInstallers, targets, version, verifyBundle } from "../../scripts/standalone.mjs";
 import { createBundle, sourceSha } from "./bundle-fixture.ts";
 
@@ -38,7 +38,8 @@ function expectReceipt(bin: string, target: (typeof targets)[number], executable
     manager: "standalone",
     version,
     target: target.id,
-    executable: join(realpathSync(bin), target.executable),
+    // On Linux CI, Bun's realpathSync reported ENOENT for this existing backslash path.
+    executable: join(realpathSync(dirname(bin)), basename(bin), target.executable),
     releaseRepository: "cpaikr/darty",
     releaseTag: `v${version}`,
     assetName: archiveName(target),
