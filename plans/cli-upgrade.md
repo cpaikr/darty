@@ -49,8 +49,9 @@ keeps the darty-specific decisions.
   `DARTY_NO_UPDATE_CHECK` disables only incidental and `version --check`
   release checks, not an explicit upgrade.
 - **Concurrency and interruption.** A real upgrade holds an exclusive lock on
-  `.darty-upgrade.lock` beside the executable from inspection to publication; a
-  second upgrade fails fast and retryably. Ctrl-C has no special handling. An
+  `.darty-upgrade.lock` beside the executable through publication. It inspects
+  the receipt before locking, so an unmanaged installation gains no lock file,
+  and again under the lock. A second upgrade fails fast and retryably. Ctrl-C has no special handling. An
   interruption leaves the previous installation, a receipt mismatch that one
   reinstall repairs, or on Windows a missing `darty.exe` recoverable from
   `.darty-old-<pid>.exe` or by reinstalling. The next upgrade removes leftover

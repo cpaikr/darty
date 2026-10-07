@@ -354,11 +354,16 @@ fn installations_without_a_matching_receipt_are_not_managed() {
             .unwrap()
             .contains("README")
     );
+    // An unmanaged installation is left exactly as it was, without a lock file.
+    assert_eq!(fixture.entries(), [EXECUTABLE]);
 
     // A receipt for another version describes a different executable.
     fixture.install(Some("0.0.2"));
     let mismatched = envelope(&fixture.upgrade(&["--check"], Some(OLDER)));
     assert_eq!(mismatched["error"]["code"], "upgrade_receipt_mismatch");
+    let mismatched = envelope(&fixture.upgrade(&[], Some(OLDER)));
+    assert_eq!(mismatched["error"]["code"], "upgrade_receipt_mismatch");
+    assert_eq!(fixture.entries(), [RECEIPT, EXECUTABLE]);
     assert!(fixture.requests.lock().unwrap().is_empty());
 }
 

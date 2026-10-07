@@ -63,13 +63,17 @@ async fn upgrade(check: bool, progress: &mut Progress) -> Result<Outcome, Upgrad
     let executable = std::env::current_exe()
         .and_then(fs::canonicalize)
         .map_err(|_| unmanaged())?;
-    // Only a real upgrade changes files; hold the lock from inspection to publication.
+    // Reject an unmanaged installation before creating any file beside it.
+    let mut installation = Installation::at(executable.clone(), running, target)?;
+    // Only a real upgrade changes files. It holds the lock through publication
+    // and inspects again under it, since another upgrade may have finished.
     let _lock = if check {
         None
     } else {
-        Some(lock_installation(&executable)?)
+        let lock = lock_installation(&executable)?;
+        installation = Installation::at(executable, running, target)?;
+        Some(lock)
     };
-    let installation = Installation::at(executable, running, target)?;
     progress.stage(format_args!("Checking for the latest darty release..."));
     let client = release_check::http_client().map_err(source_unavailable)?;
     let release = latest_release(&client, &origin, target).await?;
