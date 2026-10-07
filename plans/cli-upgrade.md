@@ -1,6 +1,6 @@
 # CLI upgrade
 
-Status: merged ([#45](https://github.com/cpaikr/darty/pull/45)); prepared for release in v0.7.0.
+Status: merged ([#45](https://github.com/cpaikr/darty/pull/45)); released in v0.7.0 on 2026-10-07.
 
 Adopt the upgrade-ownership part of the mytech
 [standalone CLI distribution practice](https://github.com/sjunepark/mytech/blob/main/practices/standalone-cli-distribution.md#upgrade-ownership)
@@ -87,6 +87,7 @@ keeps the darty-specific decisions.
 
 ## Next action
 
-Review and merge, then release under the [release runbook](../docs/release.md).
-After publication, upgrade a receipt-managed installation of the previous
-release with `darty upgrade` on Windows and record the result.
+After the next release is published, run `darty upgrade` on the receipt-managed
+Windows v0.7.0 installation recorded in the
+[release runbook](../docs/release.md#windows-validation-records) and record the
+result there.

@@ -9,7 +9,7 @@ Darty reads DART's public web surfaces. It does not use the official OpenDART AP
 and changes to DART's website can affect results or parsers.
 
 The published Rust release is
-[v0.6.4](https://github.com/cpaikr/darty/releases/tag/v0.6.4). The earlier v0.6.0
+[v0.7.0](https://github.com/cpaikr/darty/releases/tag/v0.7.0). The earlier v0.6.0
 CLI used Bun/TypeScript. See the [roadmap](ROADMAP.md) for subsequent work.
 
 ## Installation
@@ -115,7 +115,7 @@ and `darty` resolves to it from the persisted user and machine `PATH`.
 ### Updates
 
 Release checks and `--version` ship from v0.6.3. `darty upgrade` and
-installation receipts ship in the first release after v0.6.4.
+installation receipts ship from v0.7.0.
 
 `darty --version` prints the installed version. `darty version --check`
 compares it with the latest stable release and reports whether that release has
