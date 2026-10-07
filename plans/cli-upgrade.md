@@ -1,6 +1,6 @@
 # CLI upgrade
 
-Status: implemented on `feat/cli-upgrade`; unreleased.
+Status: merged ([#45](https://github.com/cpaikr/darty/pull/45)); prepared for release in v0.7.0.
 
 Adopt the upgrade-ownership part of the mytech
 [standalone CLI distribution practice](https://github.com/sjunepark/mytech/blob/main/practices/standalone-cli-distribution.md#upgrade-ownership)
