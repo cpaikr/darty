@@ -14,8 +14,11 @@ do not invent an npm installation command or substitute a source build.
 When the user has authorized installation or updates, do the work yourself:
 the guide's unattended installation commands need no browser, login, or manual
 download. Apply installation changes within the user's existing authorization. An
-update notice alone is not an upgrade request. Keep the archive, checksums,
-and installer from the same release in this repository and use its verification
+update notice alone is not an upgrade request. When the installed help lists
+`upgrade`, run `darty upgrade` for an authorized update; if it reports
+`unmanaged_installation`, use the guide's installation procedure once, which
+lets later updates use `darty upgrade`. Keep the archive, checksums, and
+installer from the same release in this repository and use its verification
 procedure before installing.
 
 Verify `darty --help` first through the actual executable's full path, then by

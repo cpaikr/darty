@@ -17,11 +17,12 @@ For command executions that run or attempt to run a capability:
 - stderr is empty by default
 - `--pretty` pretty-prints both success and failure JSON
 
-Help, home, and `report-guide` success paths are exceptions:
+Help and `report-guide` success paths are exceptions:
 
 - `darty --help` and `darty <command> --help` print human-readable help to stdout
   and exit `0`
-- bare `darty` prints a compact JSON home envelope to stdout and exits `0`
+- bare `darty` prints the same root help as `darty --help`, byte for byte, and
+  exits `0`; there is no separate home view to drift from it
 - successful `darty report-guide` execution prints human-readable Markdown to
   stdout and exits `0`; failures still use the JSON failure envelope
 - a command invoked with no required options attempts to run the capability,
@@ -51,6 +52,30 @@ present even when no update exists:
 Evidence problems are part of the report and still exit `0`. Equality does not
 prove source freshness or executable integrity.
 
+## Upgrade Command
+
+`darty upgrade [--check] [--pretty]` manages only a standalone installation
+whose executable matches the adjacent `.darty-receipt.json` written by the
+release installers. It prints one JSON envelope with
+`metadata.output: "upgrade"`, exits `0` on success and `1` on failure, and
+never carries advisories.
+
+Success `result` fields are `name`, `runningVersion` (the executable that ran
+the command), `latestVersion`, `installedVersion` (the version at the
+executable path afterwards), `updateAvailable`, `updated`, `distribution` (`complete` or
+`incomplete_distribution` for this target), `target`, `releaseUrl`, and
+`executable` (the receipt's path). `--check` and an up-to-date installation
+download no release assets and change nothing; `--check` reports an incomplete
+release as success. When an update is available but not installed, `help`
+names `darty upgrade` or says the release lacks this target's archive.
+
+Failure `error.code` values are `unmanaged_installation`,
+`upgrade_receipt_mismatch`, `upgrade_unsupported`,
+`upgrade_source_unavailable` (retryable), `upgrade_release_invalid`,
+`upgrade_verification_failed`, `upgrade_failed` (the installation is unchanged
+or was restored), and `upgrade_recovery_required`, whose `recoveryHint` names
+the remaining recovery step.
+
 ## Advisories
 
 After a successful network capability operation (`search-body`,
@@ -66,8 +91,8 @@ at most one entry is emitted per invocation.
 The key is omitted when there is nothing to report, including fresh `equal`,
 `ahead`, and `no_stable_release` results and opted-out execution. Advisories
 never change the exit code, `result`, or other envelope fields, and stderr stays
-empty. Help, home, `--version`, `version`, `disclosure-types`, `report-guide`,
-and failures never carry advisories. The addition is backward compatible, so
+empty. Help, `--version`, `version`, `disclosure-types`, `report-guide`,
+`upgrade`, and failures never carry advisories. The addition is backward compatible, so
 `cliTransportVersion` stays `"1"`. The [README](../../README.md) owns network
 destinations, cache location, refresh timing, and the opt-out.
 
@@ -132,7 +157,9 @@ Failure `error` fields:
 ## Stderr
 
 Do not parse stderr as part of the normal result contract. It is empty by
-default. With the global `--debug` option, the Rust CLI writes a bounded JSON
+default. `darty upgrade` writes human progress stages to stderr only when
+stderr is an interactive terminal, so pipes, CI, and agents still see an empty
+stderr. With the global `--debug` option, the Rust CLI writes a bounded JSON
 diagnostic containing only the failure `code` and `retryable` classification.
 `--verbose` controls result presentation; it does not enable stderr logging.
 The Rust CLI does not read `DARTY_LOG_LEVEL`. CLI stdout remains the single

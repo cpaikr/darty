@@ -1,0 +1,29 @@
+Usage: darty upgrade [options]
+
+Replace this standalone installation with the latest stable GitHub release.
+The executable must sit beside the .darty-receipt.json receipt that the release
+installers write.
+
+Options:
+  --check     Report whether a newer release is available without installing it.
+  --pretty    Print human-readable indented JSON.
+  -h, --help  Display command help.
+
+Examples:
+  # Report the latest stable release without changing the installation.
+  darty upgrade --check
+
+  # Download, verify, and install the latest stable release.
+  darty upgrade
+
+Notes:
+  - Upgrades contact github.com and GitHub's release asset host. The archive must
+    match the release manifest and SHA256SUMS, contain only the executable and
+    license, and the new executable must report the release version.
+  - The executable is replaced before its receipt. On failure the previous
+    installation is restored, or the error names the remaining recovery step.
+  - On Windows the replaced executable is set aside while it runs; a later
+    upgrade removes it.
+  - In a terminal, stages are written to stderr; otherwise stderr stays empty.
+  - Installations without a receipt are not changed. Reinstall with the release
+    installer from the README to create one.

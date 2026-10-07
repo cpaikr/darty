@@ -118,12 +118,36 @@ try {
     & $candidate --help | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Candidate CLI failed; existing installation was not changed.' }
     $destination = Join-Path $BinDirectory 'darty.exe'
+    # The receipt lets `darty upgrade` manage exactly this executable.
+    $receipt = [ordered]@{
+        schemaVersion = 1
+        manager = 'standalone'
+        version = '@@VERSION@@'
+        target = '@@WINDOWS_TARGET@@'
+        executable = $destination
+        releaseRepository = 'cpaikr/darty'
+        releaseTag = 'v@@VERSION@@'
+        assetName = $archiveName
+        sha256 = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    $stagedReceipt = Join-Path $stage 'receipt.json'
+    [IO.File]::WriteAllText($stagedReceipt, ($receipt | ConvertTo-Json -Compress) + "`n", (New-Object Text.UTF8Encoding($false)))
     if (Test-Path -LiteralPath $destination) {
         # PowerShell converts $null to an empty string for .NET string
         # parameters, which File.Replace rejects as a backup path.
         [IO.File]::Replace($candidate, $destination, [NullString]::Value)
     } else {
         [IO.File]::Move($candidate, $destination)
+    }
+    $receiptPath = Join-Path $BinDirectory '.darty-receipt.json'
+    try {
+        if (Test-Path -LiteralPath $receiptPath) {
+            [IO.File]::Replace($stagedReceipt, $receiptPath, [NullString]::Value)
+        } else {
+            [IO.File]::Move($stagedReceipt, $receiptPath)
+        }
+    } catch {
+        throw "darty @@VERSION@@ was installed, but its upgrade receipt could not be written; rerun the installer. $($_.Exception.Message)"
     }
     Write-Output "Installed darty @@VERSION@@ to $destination"
     Write-Output "Next, verify from an independent terminal: & `"$destination`" --help"

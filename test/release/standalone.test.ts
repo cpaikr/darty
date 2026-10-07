@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { archiveFiles, archiveName, digest, renderInstallers, targets, verifyBundle } from "../../scripts/standalone.mjs";
+import { basename, dirname, join } from "node:path";
+import { archiveFiles, archiveName, digest, renderInstallers, targets, version, verifyBundle } from "../../scripts/standalone.mjs";
 import { createBundle, sourceSha } from "./bundle-fixture.ts";
 
 describe("release bundle authority", () => {
@@ -31,6 +31,22 @@ describe("release bundle authority", () => {
   });
 });
 
+/** The receipt `darty upgrade` requires beside an installed executable. */
+function expectReceipt(bin: string, target: (typeof targets)[number], executable: Buffer) {
+  expect(JSON.parse(readFileSync(join(bin, ".darty-receipt.json"), "utf8"))).toEqual({
+    schemaVersion: 1,
+    manager: "standalone",
+    version,
+    target: target.id,
+    // On Linux CI, Bun's realpathSync reported ENOENT for this existing backslash path.
+    executable: join(realpathSync(dirname(bin)), basename(bin), target.executable),
+    releaseRepository: "cpaikr/darty",
+    releaseTag: `v${version}`,
+    assetName: archiveName(target),
+    sha256: digest(executable),
+  });
+}
+
 describe("Unix standalone installation", () => {
   test.skipIf(process.platform === "win32")("installs and upgrades exact bytes; failed checksum and candidate leave the old binary intact", () => {
     const directory = mkdtempSync(join(tmpdir(), "darty-installer-test-"));
@@ -40,7 +56,9 @@ describe("Unix standalone installation", () => {
       const archive = join(directory, archiveName(target));
       const sums = join(directory, "SHA256SUMS");
       const installer = join(directory, "install.sh");
-      const bin = join(directory, "bin with spaces");
+      // The receipt must carry JSON-escaped paths; GNU sha256sum also escapes its
+      // output for a file name containing a backslash.
+      const bin = join(directory, 'bin with "quotes" and \\ backslash');
       mkdirSync(bin);
       writeFileSync(installer, renderInstallers()["install.sh"]!);
       writeFileSync(join(bin, "darty"), "previous executable");
@@ -64,6 +82,7 @@ describe("Unix standalone installation", () => {
       writeFileSync(sums, `${"0".repeat(64)}  ${archiveName(target)}\n`);
       expect(install().stderr).toContain("checksum mismatch");
       expect(readFileSync(join(bin, "darty"), "utf8")).toBe("previous executable");
+      expect(readdirSync(bin)).toEqual(["darty"]);
       makeArchive(cli);
       const installed = install();
       expect(installed.status).toBe(0);
@@ -72,7 +91,8 @@ describe("Unix standalone installation", () => {
       makeArchive(upgraded);
       expect(install().status).toBe(0);
       expect(readFileSync(join(bin, "darty"), "utf8")).toBe(upgraded);
-      expect(readdirSync(bin)).toEqual(["darty"]);
+      expectReceipt(bin, target, Buffer.from(upgraded));
+      expect(readdirSync(bin).sort()).toEqual([".darty-receipt.json", "darty"]);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
@@ -130,6 +150,7 @@ describe("Windows standalone installation", () => {
       expect(first.stderr).toBe("");
       expect(first.status).toBe(0);
       expect(installed().equals(tool)).toBe(true);
+      expectReceipt(bin, target, tool);
 
       // Trailing bytes change the digest without affecting execution.
       const upgraded = Buffer.concat([tool, Buffer.from("darty-upgrade")]);
@@ -138,11 +159,13 @@ describe("Windows standalone installation", () => {
       expect(second.stderr).toBe("");
       expect(second.status).toBe(0);
       expect(installed().equals(upgraded)).toBe(true);
-      expect(readdirSync(bin)).toEqual(["darty.exe"]);
+      expectReceipt(bin, target, upgraded);
+      expect(readdirSync(bin).sort()).toEqual([".darty-receipt.json", "darty.exe"]);
 
       writeFileSync(sums, `${"0".repeat(64)}  ${archiveName(target)}\n`);
       expect(install().status).not.toBe(0);
       expect(installed().equals(upgraded)).toBe(true);
+      expectReceipt(bin, target, upgraded);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }

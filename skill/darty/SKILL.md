@@ -47,8 +47,8 @@ actual section before asserting what a report says.
 Capture exit status and stdout separately from stderr. Capability commands
 return one JSON envelope on success (exit 0) and failure (exit 1); inspect
 `result`, `metadata`, `references`, `warnings`, and any `error` or `help`.
-Help and successful `report-guide` are text. Bare `darty` returns JSON home
-information. Use `--agent` only on commands whose help supports it.
+Help, bare `darty` (identical to `darty --help`), and successful
+`report-guide` are text. Use `--agent` only on commands whose help supports it.
 
 On failure, retain the error code, source URL, retryability, and recovery hint.
 Correct invalid input using command help. For stale report IDs, refresh that

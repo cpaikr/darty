@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "scenarios": [
     {
-      "id": "home",
+      "id": "bare-root-help",
       "argv": [],
-      "golden": "goldens/home.json"
+      "golden": "goldens/root-help.json"
     },
     {
       "id": "root-help",

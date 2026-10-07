@@ -23,6 +23,8 @@ Commands:
                                     body content.
   version [options]                 Report the version; --check compares it with
                                     the latest stable release.
+  upgrade [options]                 Install the latest release over this
+                                    installation; --check only reports it.
   help [command]                    Display help for a command.
 
 Common agent flow:

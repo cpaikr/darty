@@ -30,8 +30,11 @@ Only Linux CLI archives receive CI runtime certification; macOS and Windows
 manifest entries explicitly set `runtimeCertified: false`.
 
 Linux consumers download the exact CLI archive, verify its checksum, install it
-through the release installer, verify the installed digest, run the network-free
-CLI contract with an empty PATH, and verify failed-checksum recovery. Rust needs
+through the release installer, verify the installed digest and the upgrade
+receipt the installer writes beside it, run the network-free CLI contract with
+an empty PATH, and verify that failed-checksum recovery leaves the executable
+and receipt unchanged. Receipt-managed `darty upgrade` replacement is tested
+against a local fixture release; CI exercises it on Linux only. Rust needs
 no Node, npm, Bun, config autoloading, or source checkout to run.
 
 Windows installer visibility is not runtime-certified in CI. The repository

@@ -12,6 +12,7 @@
     "search-company-reports [options]",
     "view-report [options]",
     "version [options]",
+    "upgrade [options]",
     "Common agent flow:",
     "Commands print a JSON response object to stdout on success and failure",
     "does not use DART's official OpenDART API"
@@ -28,6 +29,7 @@
     "search-company-reports [options] Search company-specific DART filings by DART company code.",
     "view-report [options] Fetch a DART report table of contents or body content.",
     "version [options] Report the version; --check compares it with the latest stable release.",
+    "upgrade [options] Install the latest release over this installation; --check only reports it.",
     "--version Print the version and exit.",
     "1. Find a company code: darty search-company --company-name 삼성전자",
     "2. Search filings: darty search-company-reports --company-code 00126380 --start-date YYYYMMDD --end-date YYYYMMDD",

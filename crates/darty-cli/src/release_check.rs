@@ -1,7 +1,7 @@
 //! Cached, advisory comparison of the running CLI with published GitHub releases.
 //!
-//! The check never installs anything and never changes command success. Release
-//! evidence is cached; the comparison is recomputed from the running version on
+//! The check never installs anything and never changes command success; the
+//! explicit `darty upgrade` command owns installation. Release evidence is cached; the comparison is recomputed from the running version on
 //! every check so a replaced executable is compared correctly immediately.
 
 use std::{
@@ -49,32 +49,35 @@ pub const INSTALLER: &str = if cfg!(windows) {
 };
 
 const RELEASE_ORIGIN: &str = "https://github.com";
+/// The repository path that owns releases, relative to the release origin.
+pub const RELEASE_PATH: &str = "/cpaikr/darty/releases";
 // GitHub's documented latest-release asset link. It is served through
 // github.com and the release asset host, not the REST API, so the
 // unauthenticated API limit (60 requests/hour/IP) does not apply. "Latest" is
 // GitHub's latest stable release: drafts and prereleases are never latest.
-const LATEST_MANIFEST_PATH: &str = "/cpaikr/darty/releases/latest/download/release-manifest.json";
-const RELEASE_PAGE_PREFIX: &str = "https://github.com/cpaikr/darty/releases/tag/";
+pub const LATEST_MANIFEST_PATH: &str =
+    "/cpaikr/darty/releases/latest/download/release-manifest.json";
+pub const RELEASE_PAGE_PREFIX: &str = "https://github.com/cpaikr/darty/releases/tag/";
 const CACHE_FILE: &str = "release-check-v1.json";
 // Agents may run the CLI many times per hour; a daily interval keeps release
 // traffic negligible even when many processes share one address.
 const REFRESH_INTERVAL_SECONDS: i64 = 24 * 60 * 60;
 const RETRY_COOLDOWN_SECONDS: i64 = 60 * 60;
 const REFRESH_BUDGET: Duration = Duration::from_millis(1_500);
-const MAX_MANIFEST_BYTES: usize = 64 << 10;
+pub const MAX_MANIFEST_BYTES: usize = 64 << 10;
 
 /// A plain `MAJOR.MINOR.PATCH` release version. Prerelease and build
 /// identities are deliberately unrepresentable: they are not stable releases.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
-struct Version {
+pub struct Version {
     major: u64,
     minor: u64,
     patch: u64,
 }
 
 impl Version {
-    fn parse(text: &str) -> Option<Self> {
+    pub fn parse(text: &str) -> Option<Self> {
         let mut parts = text.split('.');
         let mut component = || {
             parts
@@ -228,7 +231,7 @@ impl Settings {
 }
 
 /// The GitHub release origin, or why this execution must not contact it.
-fn release_origin() -> Result<String, &'static str> {
+pub fn release_origin() -> Result<String, &'static str> {
     // Fixture-origin execution never contacts GitHub; tests supply releases explicitly.
     #[cfg(feature = "fixture-origin")]
     if let Ok(origin) = std::env::var("DARTY_FIXTURE_RELEASE_ORIGIN") {
@@ -442,7 +445,7 @@ impl ReleaseCheck {
             && self.distribution == Some(Distribution::Complete))
         .then(|| {
             format!(
-                "Download the {} archive, SHA256SUMS, and {INSTALLER} from {}, then repeat the README installation procedure.",
+                "Run darty upgrade to install it. Without an installation receipt, download the {} archive, SHA256SUMS, and {INSTALLER} from {} and repeat the README installation procedure.",
                 TARGET.unwrap_or("platform"),
                 self.release_url.as_deref().unwrap_or_default()
             )
@@ -521,47 +524,75 @@ fn describe_age(seconds: i64) -> String {
     }
 }
 
-async fn fetch_evidence(manifest_url: &str, now: DateTime<Utc>) -> Result<Evidence, String> {
-    let client = reqwest::Client::builder()
+pub fn http_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
         .user_agent(concat!("darty/", env!("CARGO_PKG_VERSION")))
+        // Never follow a redirect off TLS; only fixture origins are plain HTTP.
+        .https_only(cfg!(not(feature = "fixture-origin")))
         .build()
-        .map_err(|_| "Failed to initialize the release HTTP client.".to_owned())?;
-    let too_large = || format!("The release manifest exceeds {MAX_MANIFEST_BYTES} bytes.");
-    // Redirects lead from github.com to the release asset host.
+        .map_err(|_| "Failed to initialize the release HTTP client.".to_owned())
+}
+
+/// GET a release resource of at most `limit` bytes; `None` when GitHub answers 404.
+///
+/// Redirects lead from github.com to the release asset host.
+pub async fn fetch_bounded(
+    client: &reqwest::Client,
+    url: &str,
+    limit: usize,
+    label: &str,
+) -> Result<Option<Vec<u8>>, String> {
+    let too_large = || format!("The {label} exceeds {limit} bytes.");
     let mut response = client
-        .get(manifest_url)
+        .get(url)
         .send()
         .await
-        .map_err(|_| "The release manifest request failed.".to_owned())?;
-    // GitHub answers 404 when no published release provides a manifest.
+        .map_err(|_| format!("The {label} request failed."))?;
     if response.status() == reqwest::StatusCode::NOT_FOUND {
-        return Ok(Evidence {
-            observed_at: now,
-            latest: None,
-        });
+        return Ok(None);
     }
     if !response.status().is_success() {
         return Err(format!(
-            "The release manifest request returned HTTP {}.",
+            "The {label} request returned HTTP {}.",
             response.status().as_u16()
         ));
     }
-    if response.content_length().is_some_and(|length| {
-        usize::try_from(length).map_or(true, |length| length > MAX_MANIFEST_BYTES)
-    }) {
+    if response
+        .content_length()
+        .is_some_and(|length| usize::try_from(length).map_or(true, |length| length > limit))
+    {
         return Err(too_large());
     }
     let mut body = Vec::new();
     while let Some(chunk) = response
         .chunk()
         .await
-        .map_err(|_| "The release manifest response was interrupted.".to_owned())?
+        .map_err(|_| format!("The {label} response was interrupted."))?
     {
-        if body.len() + chunk.len() > MAX_MANIFEST_BYTES {
+        if body.len() + chunk.len() > limit {
             return Err(too_large());
         }
         body.extend_from_slice(&chunk);
     }
+    Ok(Some(body))
+}
+
+async fn fetch_evidence(manifest_url: &str, now: DateTime<Utc>) -> Result<Evidence, String> {
+    let client = http_client()?;
+    // GitHub answers 404 when no published release provides a manifest.
+    let Some(body) = fetch_bounded(
+        &client,
+        manifest_url,
+        MAX_MANIFEST_BYTES,
+        "release manifest",
+    )
+    .await?
+    else {
+        return Ok(Evidence {
+            observed_at: now,
+            latest: None,
+        });
+    };
     let manifest: Manifest = serde_json::from_slice(&body).map_err(|_| {
         "The latest release manifest is not valid release-manifest JSON.".to_owned()
     })?;
