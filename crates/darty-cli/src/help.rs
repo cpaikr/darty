@@ -10,6 +10,10 @@ pub const VIEW_ABOUT: &str = "Fetch a DART report document list and table of con
 
 pub const VIEW_AFTER: &str = "Notes:\n  - toc[].id/section ID values are valid only inside one report. Do not reuse them across years, corrections, or other receipt numbers; fetch the TOC for each report first.\n  - If content.window.hasMore is true, continue with the same `--receipt`, `--document-id`, `--section-id`, and `--output-format`, passing content.window.nextStartByte as `--content-start-byte`. This value is based on the rendered body, not DART viewer offsets.\n  - Darty does not process PDFs internally. Download PDF links directly or open them with a separate PDF processing/reading tool.";
 
+/// Root help is the single top-level surface: bare `darty` and `darty --help`
+/// print it byte-for-byte, so no second command listing can drift from it.
+pub const ROOT_HELP: &str = include_str!("../resources/root-help.txt");
+
 pub fn command_help(argv: &[String]) -> Option<&'static str> {
     let mut arguments = argv
         .iter()
@@ -23,7 +27,7 @@ pub fn command_help(argv: &[String]) -> Option<&'static str> {
         _ => {}
     }
     match arguments.as_slice() {
-        ["--help" | "-h"] => Some(include_str!("../resources/root-help.txt")),
+        [] | ["--help" | "-h"] => Some(ROOT_HELP),
         ["search-company", "--help" | "-h"] => {
             Some(include_str!("../resources/search-company-help.txt"))
         }
@@ -43,6 +47,7 @@ pub fn command_help(argv: &[String]) -> Option<&'static str> {
             Some(include_str!("../resources/report-guide-help.txt"))
         }
         ["version", "--help" | "-h"] => Some(include_str!("../resources/version-help.txt")),
+        ["upgrade", "--help" | "-h"] => Some(include_str!("../resources/upgrade-help.txt")),
         _ => None,
     }
 }

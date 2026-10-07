@@ -1,6 +1,7 @@
 mod help;
 mod operations;
 mod release_check;
+mod upgrade;
 
 use std::process::ExitCode;
 
@@ -68,11 +69,22 @@ enum Command {
     )]
     ViewReport(ViewReportArgs),
     Version(VersionArgs),
+    Upgrade(UpgradeArgs),
 }
 
 #[derive(Debug, Args)]
 struct VersionArgs {
     /// Compare with the latest stable GitHub release and report evidence freshness.
+    #[arg(long)]
+    check: bool,
+    /// Print human-readable indented JSON.
+    #[arg(long)]
+    pretty: bool,
+}
+
+#[derive(Debug, Args)]
+struct UpgradeArgs {
+    /// Report whether a newer release is available without installing it.
     #[arg(long)]
     check: bool,
     /// Print human-readable indented JSON.
@@ -385,7 +397,10 @@ async fn main() -> ExitCode {
         }
         Err(problem) => {
             write_failure(&problem.value, problem.pretty, debug);
-            ExitCode::FAILURE
+            // A timed-out upgrade download can also leave a blocking DNS lookup
+            // behind, so exit as the success path does.
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+            std::process::exit(1)
         }
     }
 }
@@ -464,12 +479,14 @@ async fn run(cli: Cli) -> Result<Output, CliFailure> {
     // Failure diagnostics are emitted at the process boundary in main.
     let Cli { command, debug: _ } = cli;
     let command = match command {
-        None => {
-            return Ok(Output::Text(
-                include_str!("../resources/home.json").to_owned(),
-            ));
-        }
+        None => return Ok(Output::Text(help::ROOT_HELP.to_owned())),
         Some(Command::Version(args)) => return Ok(run_version(args).await),
+        Some(Command::Upgrade(args)) => {
+            return upgrade::run(args.check)
+                .await
+                .map(|value| Output::local(value, args.pretty))
+                .map_err(|value| CliFailure::new(value, args.pretty));
+        }
         Some(command) => command,
     };
     let client = client().map_err(|error| CliFailure::sdk(&error, false, &[], &[]))?;
@@ -488,7 +505,9 @@ async fn run(cli: Cli) -> Result<Output, CliFailure> {
         Command::SearchCompany(args) => run_company(&client, args).await,
         Command::SearchCompanyReports(args) => run_reports(&client, args).await,
         Command::ViewReport(args) => run_view(&client, args).await,
-        Command::Version(_) => unreachable!("version runs without a DART client"),
+        Command::Version(_) | Command::Upgrade(_) => {
+            unreachable!("version and upgrade run without a DART client")
+        }
     }
 }
 

@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync,
-  readdirSync, rmSync, writeFileSync,
+  readdirSync, realpathSync, rmSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -88,7 +88,8 @@ export function renderInstallers() {
     readFileSync(join(root, "scripts/install", name), "utf8")
       .replaceAll("@@VERSION@@", version)
       .replace("@@UNIX_TARGETS@@", unixCases)
-      .replace("@@WINDOWS_ARCHIVE@@", archiveName(windows[0])),
+      .replace("@@WINDOWS_ARCHIVE@@", archiveName(windows[0]))
+      .replace("@@WINDOWS_TARGET@@", windows[0].id),
   ]));
 }
 
@@ -104,7 +105,7 @@ function build(id, directory, prebuilt) {
     const executable = prebuilt ?? join(root, "target", target.rustTarget, "release", target.executable);
     const bytes = readFileSync(executable);
     verifyBinary(bytes, target);
-    for (const token of ["DARTY_FIXTURE_ORIGIN", "DARTY_FIXTURE_RELEASE_ORIGIN", "DARTY_NODE_TEST_FIXTURE_ORIGIN"]) {
+    for (const token of ["DARTY_FIXTURE_ORIGIN", "DARTY_FIXTURE_RELEASE_ORIGIN", "DARTY_FIXTURE_RUNNING_VERSION", "DARTY_NODE_TEST_FIXTURE_ORIGIN"]) {
       assert.equal(bytes.includes(Buffer.from(token)), false, "Refusing a fixture-enabled release executable");
     }
     const archive = archiveName(target);
@@ -150,6 +151,13 @@ function certify(id, directory, reportPath) {
     run("sh", [installer, join(directory, record.archive), checksums, bin], { cwd: consumer });
     const executable = join(bin, target.executable);
     assert.equal(digest(readFileSync(executable)), record.executableSha256, "Installer changed executable bytes");
+    const receiptPath = join(bin, ".darty-receipt.json");
+    const receipt = readFileSync(receiptPath);
+    assert.deepEqual(JSON.parse(receipt), {
+      schemaVersion: 1, manager: "standalone", version, target: target.id,
+      executable: join(realpathSync(bin), target.executable), releaseRepository: "cpaikr/darty",
+      releaseTag: `v${version}`, assetName: record.archive, sha256: record.executableSha256,
+    }, "Installer wrote an unexpected upgrade receipt");
     // No JS runtime or package manager is available to the subject process.
     const emptyPath = join(consumer, "empty-path");
     mkdirSync(emptyPath);
@@ -163,6 +171,7 @@ function certify(id, directory, reportPath) {
     const rejected = spawnSync("sh", [installer, join(directory, record.archive), checksums, bin], { cwd: consumer, encoding: "utf8" });
     assert.notEqual(rejected.status, 0, "Corrupt checksum must fail installation");
     assert.equal(digest(readFileSync(executable)), record.executableSha256, "Failed install changed previous binary");
+    assert.deepEqual(readFileSync(receiptPath), receipt, "Failed install changed the previous receipt");
     mkdirSync(dirname(reportPath), { recursive: true });
     writeJson(reportPath, { ...record, certified: true, os: process.platform, arch: process.arch, contract: "cli-v1-process", runtimeRequired: false });
   } finally {

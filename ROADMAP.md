@@ -6,6 +6,8 @@ system, and [VISION](VISION.md) defines the accepted target.
 
 ## Current
 
+[CLI upgrade](plans/cli-upgrade.md) and bare `darty` printing root help are
+prepared for release in v0.7.0.
 [CLI version checking](plans/cli-version-checking.md) shipped in v0.6.3.
 The Windows installer upgrade fix and unattended installation guidance shipped
 in v0.6.4.
