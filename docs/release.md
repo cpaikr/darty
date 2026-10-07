@@ -91,6 +91,19 @@ publication and cannot change a published manifest. Record it here instead.
   executable's SHA-256,
   `e7884ccbc1def1ca5ee0951852e8a1434addacbb6a8c5312a6e27e06f1f5afbb`, matches
   `darty.exe` in the release archive, whose digest matches `SHA256SUMS`.
+- **v0.7.0, 2026-10-07, Windows 11 (10.0.26200) x64.** The installed v0.6.4
+  reported comparison `newer` for v0.7.0 through `darty version --check`. The
+  README unattended recipe reinstalled `%USERPROFILE%\.local\bin` with the
+  released `install.ps1`, which wrote `.darty-receipt.json`; `darty upgrade
+  --check` accepted that receipt and reported v0.7.0 as current.
+  `verify-windows-install.ps1 -BinDirectory "$env:USERPROFILE\.local\bin" -ExpectedVersion 0.7.0`
+  passed with ancestry
+  `powershell.exe <- WmiPrvSE.exe <- svchost.exe <- services.exe`. The installed
+  executable's SHA-256,
+  `9151faa85de8ac45b6c8d372a4ab191430a28ec999891c80af777988ad448f9d`, matches
+  `darty.exe` in the release archive and the receipt, and the archive digest
+  matches `SHA256SUMS`. A receipt-managed `darty upgrade` replacement awaits the
+  next release.
 
 A clean Linux Node consumer installs the downloaded native tarball offline with
 lifecycle scripts disabled. A clean external Rust consumer compiles and runs
