@@ -201,6 +201,12 @@ by `fetchReportContent`.
   document; when none carries it, the first selectable body or attachment
   option in parse order is current. The title attribute wins over collapsed
   option text when non-empty.
+- `SHELL-FAMILY-1` — **Observed, 2026-10-30.** `#family` also lists related
+  filings under their own `rcpNo`, such as a filing's correction history
+  (`20220105000455`) or other same-type submissions (`20251119000186`).
+  Body options whose receipt differs from the current document's are not
+  documents of the report and are omitted before `document:body:N` ids are
+  assigned. An attachment with a different receipt remains `source_changed`.
 - `SHELL-TREE-1` — **Observed.** The shell initializes `treeData` through
   JavaScript statements that create `nodeN = {}`, assign string fields, push
   child nodes, and push roots into `treeData`. Required section fields are

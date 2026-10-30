@@ -388,44 +388,40 @@ impl From<&'static str> for ShellParseError {
 
 pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, ShellParseError> {
     let document = Html::parse_document(html);
-    let mut documents = Vec::new();
-    parse_document_options(
-        &document,
-        &FAMILY_OPTIONS,
-        DocumentKind::Body,
-        &mut documents,
-    );
-    parse_document_options(
+    let mut options = document_options(&document, &FAMILY_OPTIONS, DocumentKind::Body);
+    options.extend(document_options(
         &document,
         &ATTACHMENT_OPTIONS,
         DocumentKind::Attachment,
-        &mut documents,
-    );
-    if documents.is_empty() {
-        return Err(ShellParseError::changed(
-            "report shell has no selectable document",
-        ));
-    }
-    let selected_document_index = documents
+    ));
+    let (receipt_number, selected_document_number) = options
         .iter()
-        .position(|document| document.public.selected)
-        .unwrap_or(0);
-    if !documents.iter().any(|document| document.public.selected) {
-        documents[selected_document_index].public.selected = true;
-    }
-
-    let selected_query = &documents[selected_document_index].query;
-    let (receipt_number, selected_document_number) = document_identity(selected_query)
-        .ok_or("report shell selected document has no receipt number")?;
-    let (toc, initial_locator) = parse_shell_script(html, &receipt_number)?;
-    if documents.iter().any(|document| {
-        document_identity(&document.query)
-            .is_none_or(|(document_receipt, _)| document_receipt != receipt_number)
-    }) {
+        .find(|option| option.selected)
+        .or_else(|| options.first())
+        .map(|option| (option.receipt.clone(), option.document_number.clone()))
+        .ok_or("report shell has no selectable document")?;
+    // `#family` also lists related filings, such as earlier corrections or
+    // same-type submissions, under their own receipts. They are other reports,
+    // not documents of this one. Attachments must still share the receipt.
+    options.retain(|option| {
+        option.kind == DocumentKind::Attachment || option.receipt == receipt_number
+    });
+    if options
+        .iter()
+        .any(|option| option.receipt != receipt_number)
+    {
         return Err(ShellParseError::changed(
             "report shell document identity is inconsistent",
         ));
     }
+    let mut documents = numbered_documents(options);
+    let selected_document_index = documents
+        .iter()
+        .position(|document| document.public.selected)
+        .unwrap_or(0);
+    documents[selected_document_index].public.selected = true;
+
+    let (toc, initial_locator) = parse_shell_script(html, &receipt_number)?;
     if !valid_locator(&initial_locator, &receipt_number, None) {
         return Err(ShellParseError::changed(
             "report shell initial viewer locator is invalid",
@@ -450,41 +446,77 @@ pub(crate) fn report_shell(html: &str) -> Result<ParsedShell, ShellParseError> {
     })
 }
 
-fn parse_document_options(
+struct DocumentOption {
+    kind: DocumentKind,
+    query: String,
+    receipt: String,
+    document_number: Option<String>,
+    title: String,
+    selected: bool,
+}
+
+fn document_options(
     document: &Html,
     selector: &Selector,
     kind: DocumentKind,
-    documents: &mut Vec<ParsedDocument>,
-) {
-    let mut kind_index = 0_u32;
+) -> Vec<DocumentOption> {
+    let mut options = Vec::new();
     for option in document.select(selector) {
         let Some(query) = option.value().attr("value") else {
             continue;
         };
-        if query == "null" || document_identity(query).is_none() {
+        if query == "null" {
             continue;
         }
-        kind_index += 1;
+        let Some((receipt, document_number)) = document_identity(query) else {
+            continue;
+        };
         let title = option
             .value()
             .attr("title")
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .map_or_else(|| collapsed_text(option), str::to_owned);
-        let id_kind = match kind {
-            DocumentKind::Body => "body",
-            DocumentKind::Attachment => "attachment",
-        };
-        documents.push(ParsedDocument {
-            public: ReportDocument {
-                id: format!("document:{id_kind}:{kind_index}"),
-                title,
-                kind,
-                selected: option.value().attr("selected").is_some(),
-            },
+        options.push(DocumentOption {
+            kind,
             query: query.to_owned(),
+            receipt,
+            document_number,
+            title,
+            selected: option.value().attr("selected").is_some(),
         });
     }
+    options
+}
+
+/// Assigns opaque ids by position among the report's own documents of each kind.
+fn numbered_documents(options: Vec<DocumentOption>) -> Vec<ParsedDocument> {
+    let mut body_index = 0_u32;
+    let mut attachment_index = 0_u32;
+    options
+        .into_iter()
+        .map(|option| {
+            let (id_kind, kind_index) = match option.kind {
+                DocumentKind::Body => {
+                    body_index += 1;
+                    ("body", body_index)
+                }
+                DocumentKind::Attachment => {
+                    attachment_index += 1;
+                    ("attachment", attachment_index)
+                }
+            };
+            ParsedDocument {
+                public: ReportDocument {
+                    id: format!("document:{id_kind}:{kind_index}"),
+                    title: option.title,
+                    kind: option.kind,
+                    selected: option.selected,
+                },
+                query: option.query,
+            }
+        })
+        .collect()
 }
 
 #[derive(Debug, Default)]
@@ -1355,6 +1387,45 @@ mod tests {
         assert_eq!(shell.documents[0].public.id, "document:body:1");
         assert_eq!(shell.documents[1].public.kind, DocumentKind::Attachment);
         assert_eq!(shell.toc[0].children[0].id, "section:1.1");
+    }
+
+    #[test]
+    fn family_options_for_other_receipts_are_not_report_documents() {
+        // Observed on 20220105000455: `#family` lists the correction history,
+        // each entry under its own receipt, around the selected filing.
+        let html = SHELL.replace(
+            r#"<option value="rcpNo=20260101000001" selected title="가람전자 사업보고서">2026.01.01 사업보고서</option>"#,
+            r#"<option value="rcpNo=20260301000009">2026.03.01 [정정] 사업보고서</option>
+  <option value="rcpNo=20260101000001" selected title="가람전자 사업보고서">2026.01.01 [정정] 사업보고서</option>
+  <option value="rcpNo=20251201000003">2025.12.01 사업보고서</option>"#,
+        );
+        let shell = report_shell(&html).unwrap();
+        assert_eq!(shell.receipt_number, "20260101000001");
+        let documents = shell
+            .documents
+            .iter()
+            .map(|document| (document.public.id.as_str(), document.query.as_str()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            documents,
+            [
+                ("document:body:1", "rcpNo=20260101000001"),
+                ("document:attachment:1", "rcpNo=20260101000001&dcmNo=10000002"),
+            ]
+        );
+        assert_eq!(shell.selected_document_index, 0);
+    }
+
+    #[test]
+    fn attachments_for_other_receipts_remain_inconsistent() {
+        let html = SHELL.replace(
+            "rcpNo=20260101000001&amp;dcmNo=10000002",
+            "rcpNo=20251201000003&amp;dcmNo=10000002",
+        );
+        assert_eq!(
+            report_shell(&html).unwrap_err().reason,
+            "report shell document identity is inconsistent"
+        );
     }
 
     #[test]
