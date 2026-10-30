@@ -1410,7 +1410,10 @@ mod tests {
             documents,
             [
                 ("document:body:1", "rcpNo=20260101000001"),
-                ("document:attachment:1", "rcpNo=20260101000001&dcmNo=10000002"),
+                (
+                    "document:attachment:1",
+                    "rcpNo=20260101000001&dcmNo=10000002"
+                ),
             ]
         );
         assert_eq!(shell.selected_document_index, 0);
