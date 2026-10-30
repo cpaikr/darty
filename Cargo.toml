@@ -10,7 +10,7 @@ license = "Elastic-2.0"
 repository = "https://github.com/cpaikr/darty"
 
 [workspace.dependencies]
-ammonia = "4.1.4"
+ammonia = "4.2.4"
 async-trait = "0.1.89"
 chrono = { version = "0.4.42", default-features = false, features = ["clock", "serde"] }
 clap = { version = "4.6.6", features = ["derive"] }
