@@ -8,7 +8,7 @@ system, and [VISION](VISION.md) defines the accepted target.
 
 The `view-report` fix for shells listing related filings
 ([#49](https://github.com/cpaikr/darty/issues/49)) and the October 2026 RustSec
-dependency updates are prepared for release in v0.7.1.
+dependency updates shipped in v0.7.1.
 [CLI upgrade](plans/cli-upgrade.md) and bare `darty` printing root help shipped
 in v0.7.0.
 [CLI version checking](plans/cli-version-checking.md) shipped in v0.6.3.

@@ -87,7 +87,6 @@ keeps the darty-specific decisions.
 
 ## Next action
 
-After the next release is published, run `darty upgrade` on the receipt-managed
-Windows v0.7.0 installation recorded in the
-[release runbook](../docs/release.md#windows-validation-records) and record the
-result there.
+None. The first receipt-managed `darty upgrade` replacement, v0.7.0 to v0.7.1
+on Windows, passed on 2026-11-02; the
+[release runbook](../docs/release.md#windows-validation-records) records it.
