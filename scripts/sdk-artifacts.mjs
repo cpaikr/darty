@@ -27,6 +27,8 @@ export function checkVersions() {
   const metadata = JSON.parse(run("cargo", ["+1.88.0", "metadata", "--no-deps", "--format-version", "1", "--locked"]));
   for (const member of metadata.packages) assert.equal(member.version, version, `${member.name} version differs from package.json`);
   assert.equal(JSON.parse(readFileSync(join(root, "packages/node/package.json"), "utf8")).version, version);
+  // The skill hub tool package releases this CLI, so its sidecar cannot carry its own version.
+  assert.equal(JSON.parse(readFileSync(join(root, "crates/darty-cli/release.json"), "utf8")).version, version, "crates/darty-cli/release.json version differs from package.json");
 }
 
 export function packNode(target, addon, directory) {

@@ -1,0 +1,130 @@
+# Signed skill hub release of one package, triggered by a package tag
+# "<package>/v<version>": "darty/v<x.y.z>" for the skill in skill/darty and
+# "darty-cli/v<x.y.z>" for the CLI tool in crates/darty-cli. The glob "*/v*"
+# never matches the GitHub Release source tags "vX.Y.Z" (a "*" stops at "/"),
+# and this workflow never creates tags or GitHub Releases. Formats and the tag
+# scheme: cli/internal/manifest/FORMAT.md in cpaikr/cpai. Runbook:
+# docs/release.md#skill-hub-packages.
+
+name: Skill hub release
+
+on:
+  push:
+    tags:
+      - "*/v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-hub-release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  # cpaikr/cpai commit that provides cpai-release. Update deliberately; it
+  # decides the manifest format and signing code every release uses.
+  CPAI_COMMIT: 4fd701329bb1704f1f2bffc41028e03c3ce4f463
+
+jobs:
+  # Runs repository build code with no secrets in the job.
+  tool:
+    if: github.event_name == 'push' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && startsWith(github.ref, 'refs/tags/')
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.12.0
+      - run: rustup toolchain install 1.88.0 --profile minimal
+      # crates/darty-cli/release.json must carry the Cargo/package.json version.
+      - run: node scripts/sdk-artifacts.mjs versions
+      - name: Cross-build the Windows x64 CLI
+        run: |
+          set -euo pipefail
+          bash scripts/cross-build.sh win32-x64 x86_64-pc-windows-msvc
+          exe=target/x86_64-pc-windows-msvc/release/darty.exe
+          if [ "$(head -c 2 "$exe")" != "MZ" ]; then
+            echo "$exe is not a Windows executable." >&2
+            exit 1
+          fi
+          # cpai-release reads tool binaries from <os>-<arch>/<binary>.exe.
+          mkdir -p "$RUNNER_TEMP/bin/windows-amd64"
+          cp "$exe" "$RUNNER_TEMP/bin/windows-amd64/darty.exe"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: skill-hub-bin
+          path: ${{ runner.temp }}/bin/
+          if-no-files-found: error
+          retention-days: 14
+
+  # Holds the signing key; runs only cpai-release, never repository build code.
+  release:
+    if: github.event_name == 'push' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && startsWith(github.ref, 'refs/tags/')
+    needs: tool
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 20
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      # A dot folder: cpai-release does not scan it for sidecars.
+      - name: Check out cpai-release source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          repository: cpaikr/cpai
+          ref: ${{ env.CPAI_COMMIT }}
+          ssh-key: ${{ secrets.CPAI_DEPLOY_KEY }}
+          path: .cpai
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: .cpai/cli/go.mod
+          cache: false
+      - name: Build cpai-release
+        run: |
+          set -euo pipefail
+          test "$(git -C .cpai rev-parse HEAD)" = "$CPAI_COMMIT"
+          go build -C .cpai/cli -trimpath -o "$RUNNER_TEMP/tools/cpai-release" ./cmd/cpai-release
+          echo "$RUNNER_TEMP/tools" >> "$GITHUB_PATH"
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: skill-hub-bin
+          path: ${{ runner.temp }}/bin
+      # Rejects a tag naming an unknown package or a version other than the sidecar's.
+      - name: Check the tag against the package sidecars
+        run: cpai-release plan --tag "$TAG"
+      - name: Build and sign the release
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: >-
+          cpai-release build --tag "$TAG" --bin-dir "$RUNNER_TEMP/bin" --out "$RUNNER_TEMP/dist"
+          --source-repository "$GITHUB_REPOSITORY" --source-commit "$GITHUB_SHA"
+      - name: Verify against the public key
+        env:
+          RELEASE_PUBLIC_KEY: ${{ vars.RELEASE_PUBLIC_KEY }}
+        run: cpai-release verify --dir "$RUNNER_TEMP/dist" --pubkey "$RELEASE_PUBLIC_KEY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: skill-hub-release
+          path: ${{ runner.temp }}/dist/
+          if-no-files-found: error
+          retention-days: 14
+
+      # PLACEHOLDER: upload every file in $RUNNER_TEMP/dist/ to the hub's object
+      # storage under a key with the package name and version, failing if the
+      # key exists (a published version is never overwritten).
+      - name: Upload to object storage (PLACEHOLDER)
+        run: |
+          echo "::error::Skill hub object storage upload is not implemented yet."
+          exit 1
+
+      # PLACEHOLDER: send manifest.json and manifest.sig to the hub publish API.
+      - name: Publish to the hub (PLACEHOLDER)
+        run: |
+          echo "::error::Skill hub publish API is not wired yet."
+          exit 1
