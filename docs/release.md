@@ -135,7 +135,9 @@ requires both the original actor and the rerun actor to be `sjunepark`. CI runs
 automatically for pull requests authored by `sjunepark` from a branch of this
 repository, and otherwise only by manual dispatch. Other authors' pull requests,
 tags, and schedules do not authorize a run; their CI jobs are skipped. Release
-has only a manual dispatch trigger. All outside contributors also require
+has only a manual dispatch trigger. The one tag trigger is the
+[skill hub release](#skill-hub-packages), which runs only for `<package>/v<version>`
+tags the maintainer pushes and never creates GitHub Releases. All outside contributors also require
 workflow approval in the repository's fork policy, including returning
 contributors.
 
@@ -293,6 +295,37 @@ The release operator owns failures and recovery:
   assets fail verification; corrections require a new version.
 - A moved or deleted tag, uncertain GitHub lookup, or failed asset readback stops
   completion. Inspect the remaining draft/published state before retrying.
+
+## Skill hub packages
+
+The skill hub (`cpaikr/cpai`, private) distributes two packages from this
+repository, each with a `release.json` sidecar in the format that
+`cli/internal/manifest/FORMAT.md` there defines:
+
+- `darty`, the skill in `skill/darty`, versioned on its own and requiring a
+  `darty-cli` range. Widen the range when a CLI minor release keeps the
+  commands the skill uses.
+- `darty-cli`, the CLI tool in `crates/darty-cli`, released for Windows x64.
+  Its version is the repository version: `check:versions` fails when the
+  sidecar differs from `package.json`, so a version change updates it in the
+  same commit, together with its `changelog` and `behavior_change`.
+
+[`skill-hub-release.yml`](../.github/workflows/skill-hub-release.yml) runs for
+a pushed tag `<package>/v<version>` (`darty/v0.1.0`, `darty-cli/v0.7.1`). These
+tags contain `/` and never match the `vx.y.z` source tags above, and the
+workflow neither creates tags nor touches GitHub Releases. Its first job
+cross-builds the Windows CLI with no secrets; the second builds `cpai-release`
+from a pinned `cpaikr/cpai` commit (`CPAI_COMMIT`), checks the tag against
+the sidecars, signs the manifest, verifies it with the public key, and keeps
+the output as a workflow artifact. Uploading to the hub's storage and the hub
+publish call are not implemented, so a run ends failed at those placeholder
+steps. Push one package tag at a time, on a commit with successful CI.
+
+| Name | Kind | Content |
+|---|---|---|
+| `RELEASE_SIGNING_KEY` | secret | `signing.key` from `cpai-release keygen` |
+| `RELEASE_PUBLIC_KEY` | variable | the matching `signing.pub` |
+| `CPAI_DEPLOY_KEY` | secret | private half of a read-only deploy key on `cpaikr/cpai` |
 
 ## Local validation
 

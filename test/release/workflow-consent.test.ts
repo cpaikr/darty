@@ -6,10 +6,14 @@ const workflowDirectory = resolve(import.meta.dir, "../../.github/workflows");
 const dispatchConsent = "github.event_name == 'workflow_dispatch' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark'";
 // CI and the reusable workflows it calls also run for same-repository pull
 // requests the maintainer authored; everyone else's pull requests skip.
+// Skill hub package tags ("<package>/v<version>") run only when the
+// maintainer pushed them.
+const tagConsent = "github.event_name == 'push' && github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && startsWith(github.ref, 'refs/tags/')";
 const maintainerConsent = "github.actor == 'sjunepark' && github.triggering_actor == 'sjunepark' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.user.login == 'sjunepark' && github.event.pull_request.head.repo.full_name == github.repository))";
 const allowedEvents: Record<string, string[]> = {
   "ci.yml": ["workflow_dispatch", "pull_request"],
   "release.yml": ["workflow_dispatch"],
+  "skill-hub-release.yml": ["push"],
   "standalone.yml": ["workflow_call"],
   "validate.yml": ["workflow_call"],
 };
@@ -30,10 +34,13 @@ describe("maintainer-controlled Actions", () => {
       expect(Object.keys(workflow.on).sort()).toEqual([...expectedEvents].sort());
       // Filters on pull_request would silently narrow validation.
       if (name === "ci.yml") expect(workflow.on.pull_request).toBeNull();
+      // Package tags contain "/", so they never match GitHub Release "vX.Y.Z" tags.
+      if (name === "skill-hub-release.yml") expect(workflow.on.push).toEqual({ tags: ["*/v*"] });
       // Partial reruns do not rerun successful dependencies, so every job,
       // including reusable-workflow jobs, must independently check consent.
       for (const [id, job] of Object.entries(workflow.jobs)) {
-        let condition = name === "release.yml" ? dispatchConsent : maintainerConsent;
+        let condition = name === "release.yml" ? dispatchConsent
+          : name === "skill-hub-release.yml" ? tagConsent : maintainerConsent;
         if (name === "ci.yml" && id === "status_complete") {
           condition = "always() && " + condition;
         }

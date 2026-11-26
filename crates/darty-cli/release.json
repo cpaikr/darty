@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "name": "darty-cli",
+  "kind": "tool",
+  "version": "0.7.1",
+  "description": "Read-only command line for searching Korean DART disclosures and retrieving company, filing, and report-section evidence.",
+  "changelog": "First skill hub release of the darty CLI, built from v0.7.1.",
+  "behavior_change": false,
+  "tool": {
+    "binary": "darty",
+    "platforms": ["windows/amd64"]
+  }
+}

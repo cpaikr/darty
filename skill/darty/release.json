@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "name": "darty",
+  "kind": "skill",
+  "version": "0.1.0",
+  "description": "Search Korean DART disclosures and retrieve verifiable company, filing, and report-section evidence with the Darty CLI.",
+  "changelog": "First skill hub release of the darty skill.",
+  "behavior_change": false,
+  "requires": { "darty-cli": ">=0.7.1 <0.8" }
+}
