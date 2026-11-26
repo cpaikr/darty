@@ -1,5 +1,10 @@
 [advisories]
 version = 2
+ignore = [
+  # Unmaintained notice only, not a vulnerability, and no maintained chrono
+  # release exists. Remove once darty migrates its date handling off chrono.
+  { id = "RUSTSEC-2026-0543", reason = "chrono unmaintained; migration off chrono tracked separately" },
+]
 
 [licenses]
 confidence-threshold = 0.8
