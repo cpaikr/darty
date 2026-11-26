@@ -10,7 +10,7 @@ license = "Elastic-2.0"
 repository = "https://github.com/cpaikr/darty"
 
 [workspace.dependencies]
-ammonia = "4.2.4"
+ammonia = "4.2.5"
 async-trait = "0.1.89"
 chrono = { version = "0.4.42", default-features = false, features = ["clock", "serde"] }
 clap = { version = "4.6.6", features = ["derive"] }
@@ -33,7 +33,7 @@ tar = { version = "0.4.44", default-features = false }
 thiserror = "2.0.18"
 tokio = { version = "1.49.0", features = ["io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
 tokio-util = "0.7.18"
-url = { version = "2.5.8", features = ["serde"] }
+url = { version = "2.5.9", features = ["serde"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
