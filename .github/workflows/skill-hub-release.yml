@@ -23,7 +23,7 @@ concurrency:
 env:
   # cpaikr/cpai commit that provides cpai-release. Update deliberately; it
   # decides the manifest format and signing code every release uses.
-  CPAI_COMMIT: 4fd701329bb1704f1f2bffc41028e03c3ce4f463
+  CPAI_COMMIT: 5fefa77bc49973c4e62874769da9cd0572676d82
 
 jobs:
   # Runs repository build code with no secrets in the job.
